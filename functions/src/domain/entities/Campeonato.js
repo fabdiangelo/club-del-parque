@@ -10,4 +10,18 @@ export default class Campeonato {
         this.federadosCampeonatoIDs = [];
         this.etapasIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            descripcion: this.descripcion,
+            inicio: this.inicio,
+            fin: this.fin,
+            ultimaPosicionJugable: this.ultimaPosicionJugable,
+            formatoCampeonatoID: this.formatoCampeonatoID,
+            federadosCampeonatoIDs: this.federadosCampeonatoIDs,
+            etapasIDs: this.etapasIDs,
+        };
+    }
 }

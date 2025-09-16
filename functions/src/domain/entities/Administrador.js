@@ -7,4 +7,19 @@ export default class Administrador extends Usuario{
         this.BlogsIDs = [];
         this.ChatsIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            email: this.email,
+            nombre: this.nombre,
+            apellido: this.apellido,
+            estado: this.estado,
+            nacimiento: this.nacimiento,
+            genero: this.genero,
+            superAdmin: this.superAdmin,
+            BlogsIDs: this.BlogsIDs,
+            ChatsIDs: this.ChatsIDs
+        };
+    }
 }

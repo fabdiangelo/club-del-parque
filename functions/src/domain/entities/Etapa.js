@@ -5,4 +5,13 @@ export default class Etapa {
         this.campeonatoID = campeonatoID;
         this.partidosIDs = partidosIDs;
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            campeonatoID: this.campeonatoID,
+            partidosIDs: this.partidosIDs,
+        };
+    }
 }

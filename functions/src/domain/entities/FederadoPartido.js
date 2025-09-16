@@ -8,4 +8,16 @@ export default class FederadoPartido {
         this.horariosLibresIDs = [];
         this.setsIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            resultado: this.resultado,
+            puntosRanking: this.puntosRanking,
+            federadoID: this.federadoID,
+            partidoID: this.partidoID,
+            horariosLibresIDs: this.horariosLibresIDs,
+            setsIDs: this.setsIDs,
+        };
+    }
 }

@@ -10,4 +10,22 @@ export default class Federado extends Usuario{
         this.rankingsIDs = [];
         this.logrosIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            email: this.email,
+            nombre: this.nombre,
+            apellido: this.apellido,
+            estado: this.estado,
+            nacimiento: this.nacimiento,
+            genero: this.genero,
+            chatsIDs: this.chatsIDs,
+            subscripcionesIDs: this.subscripcionesIDs,
+            federadoCampeonatosIDs: this.federadoCampeonatosIDs,
+            federadoPartidosIDs: this.federadoPartidosIDs,
+            rankingsIDs: this.rankingsIDs,
+            logrosIDs: this.logrosIDs,
+        };
+    }
 }

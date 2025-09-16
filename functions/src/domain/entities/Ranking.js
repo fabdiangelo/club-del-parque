@@ -5,4 +5,13 @@ export default class Ranking {
         this.usuarioID = usuarioID;
         this.puntos = 0;
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            temporadaID: this.temporadaID,
+            usuarioID: this.usuarioID,
+            puntos: this.puntos,
+        };
+    }
 }

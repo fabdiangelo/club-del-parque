@@ -7,4 +7,15 @@ export default class Registrado{
         this.administradorID = administradorID;
         this.mdContent = mdContent;
     }
+    
+    toPlainObject() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            titulo: this.titulo,
+            tipo: this.tipo,
+            administradorID: this.administradorID,
+            mdContent: this.mdContent,
+        };
+    }
 }

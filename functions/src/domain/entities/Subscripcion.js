@@ -7,4 +7,15 @@ export default class Subscripcion {
         this.planID = planID;
         this.pagoID = null;
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            fechaInicio: this.fechaInicio,
+            fechaFin: this.fechaFin,
+            federadoID: this.federadoID,
+            planID: this.planID,
+            pagoID: this.pagoID,
+        };
+    }
 }

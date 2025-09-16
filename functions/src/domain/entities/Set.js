@@ -4,4 +4,12 @@ export default class Set {
         this.federadosIDs = federadosIDs;
         this.PartidoID = PartidoID;
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            federadosIDs: this.federadosIDs,
+            PartidoID: this.PartidoID,
+        };
+    }
 }

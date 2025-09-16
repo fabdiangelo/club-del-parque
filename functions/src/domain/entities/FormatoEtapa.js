@@ -9,4 +9,17 @@ export default class FormatoEtapa {
         this.cantidadDeJugadoresFin = cantidadDeJugadoresFin;
         this.formatosCampeonatosIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            tipoEtapa: this.tipoEtapa,
+            cantidadSets: this.cantidadSets,
+            juegosPorSet: this.juegosPorSet,
+            cantidadPartidos: this.cantidadPartidos,
+            cantidadDeJugadoresIni: this.cantidadDeJugadoresIni,
+            cantidadDeJugadoresFin: this.cantidadDeJugadoresFin,
+            formatosCampeonatosIDs: this.formatosCampeonatosIDs,
+        };
+    }
 }

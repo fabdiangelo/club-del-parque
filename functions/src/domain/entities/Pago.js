@@ -8,4 +8,16 @@ export default class Pago {
         this.estado = estado;
         this.subscripcionID = subscripcionID;
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            fecha: this.fecha,
+            monto: this.monto,
+            moneda: this.moneda,
+            descripcion: this.descripcion,
+            estado: this.estado,
+            subscripcionID: this.subscripcionID,
+        };
+    }
 }

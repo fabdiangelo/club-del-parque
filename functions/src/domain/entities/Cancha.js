@@ -4,4 +4,12 @@ export default class Cancha{
         this.nombre = nombre;
         this.partidosIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            partidosIDs: this.partidosIDs,
+        };
+    }
 }

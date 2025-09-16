@@ -7,4 +7,15 @@ export default class Logro {
         this.icono = icono;
         this.usuariosIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            descripcion: this.descripcion,
+            condicion: this.condicion,
+            icono: this.icono,
+            usuariosIDs: this.usuariosIDs,
+        };
+    }
 }

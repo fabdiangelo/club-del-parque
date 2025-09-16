@@ -6,4 +6,14 @@ export default class FormatoCampeonato {
         this.formatosEtapasIDs = formatosEtapasIDs;
         this.campeonatosIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            cantidadJugadores: this.cantidadJugadores,
+            formatosEtapasIDs: this.formatosEtapasIDs,
+            campeonatosIDs: this.campeonatosIDs,
+        };
+    }
 }

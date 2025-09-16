@@ -6,4 +6,14 @@ export default class FederadoCampeonato {
         this.federadoID = federadoID;
         this.campeonatoID = campeonatoID
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            puntaje: this.puntaje,
+            lugar: this.lugar,
+            federadoID: this.federadoID,
+            campeonatoID: this.campeonatoID,
+        };
+    }
 }

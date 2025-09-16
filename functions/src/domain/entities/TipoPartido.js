@@ -6,4 +6,14 @@ export default class TipoPartido {
         this.temporadasIDs = [];
         this.partidosIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            nombre: this.nombre,
+            descripcion: this.descripcion,
+            temporadasIDs: this.temporadasIDs,
+            partidosIDs: this.partidosIDs,
+        };
+    }
 }

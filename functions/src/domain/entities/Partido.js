@@ -9,4 +9,17 @@ export default class Partido {
         this.etapaID = etapaID;
         this.federadosPartidoIDs = federadosPartidoIDs;
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            timestamp: this.timestamp,
+            estado: this.estado,
+            tipoPartidoID: this.tipoPartidoID,
+            temporadaID: this.temporadaID,
+            canchaID: this.canchaID,
+            etapaID: this.etapaID,
+            federadosPartidoIDs: this.federadosPartidoIDs,
+        };
+    }
 }

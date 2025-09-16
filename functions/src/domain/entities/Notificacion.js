@@ -7,4 +7,15 @@ export default class Notificacion {
         this.leido = leido;
         this.usuarioID = usuarioID;
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            tipo: this.tipo,
+            timestamp: this.resumen,
+            fecha: this.fecha,
+            leido: this.leido,
+            usuarioID: this.usuarioID,
+        };
+    }
 }

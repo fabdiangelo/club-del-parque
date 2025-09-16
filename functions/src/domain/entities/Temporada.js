@@ -9,4 +9,17 @@ export default class Temporada {
         this.rankingsIDs = [];
         this.partidosIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            anio: this.anio,
+            inicio: this.inicio,
+            fin: this.fin,
+            estado: this.estado,
+            tipoPartidoID: this.tipoPartidoID,
+            rankingsIDs: this.rankingsIDs,
+            partidosIDs: this.partidosIDs,
+        };
+    }
 }

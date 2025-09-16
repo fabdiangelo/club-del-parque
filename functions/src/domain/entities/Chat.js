@@ -4,4 +4,12 @@ export default class Chat {
         this.usuariosIDs = usuariosIDs;
         this.mensajesIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            usuariosIDs: this.usuariosIDs,
+            mensajesIDs: this.mensajesIDs,
+        };
+    }
 }

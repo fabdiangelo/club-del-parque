@@ -5,4 +5,13 @@ export default class Plan {
         this.frecuenciaRenovacion = frecuenciaRenovacion;
         this.subscripcionesIDs = [];
     }
+
+    toPlainObject() {
+        return {
+            id: this.id,
+            tipo: this.tipo,
+            frecuenciaRenovacion: this.frecuenciaRenovacion,
+            subscripcionesIDs: this.subscripcionesIDs,
+        };
+    }
 }
