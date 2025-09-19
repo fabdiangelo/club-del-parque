@@ -1,10 +1,14 @@
+import { Routes, Route } from 'react-router-dom';
+
 import Registro from "./pages/Registro";
+import Login from "./pages/Login";
 
 function App() {
   return (
-    <div>
-      <Registro />
-    </div>
+    <Routes>
+      <Route path="/register" element={<Registro />} />
+      <Route path="/" element={<Login />} />
+    </Routes>
   );
 }
 

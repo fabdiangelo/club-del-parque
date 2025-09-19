@@ -35,7 +35,7 @@ npm run dev
 
 ### 2. Emuladores Firebase (Hosting, Functions, Firestore):
 ``` bash
-firebase emulators:start
+firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data
 ```
 
 ---
