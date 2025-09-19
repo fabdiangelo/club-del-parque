@@ -1,9 +1,10 @@
 import Registro from "./pages/Registro";
+import Home from "./pages/Homepage";
 
 function App() {
   return (
     <div>
-      <Registro />
+      <Home />
     </div>
   );
 }
