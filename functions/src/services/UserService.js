@@ -1,11 +1,11 @@
 import Registrado from "../domain/entities/Registrado.js";
-import admin from "firebase-admin";
-
-admin.initializeApp();
-const auth = admin.auth();
-const db = admin.firestore();
+import DBConnection from "../infraestructure/DBConnection.js";
 
 class UserService {
+  constructor(){
+    this.db = new DBConnection();
+  }
+
   async registerUser(email, password, nombre, apellido, estado, nacimiento, genero) {
     // Crear usuario en Firebase Auth
     const userRecord = await auth.createUser({
@@ -25,7 +25,7 @@ class UserService {
       genero
     );
 
-    await db.collection("usuarios").doc(userRecord.uid).set(userData.toPlainObject());
+    await this.db.putItem("usuarios", userData.toPlainObject(), userRecord.uid);
 
     return userData;
   }

@@ -1,12 +1,9 @@
-import admin from "firebase-admin";
-
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
-db.settings?.({ ignoreUndefinedProperties: true });
+import DBConnection from "../infraestructure/DBConnection";
 
 class AuthService {
+  constructor(){
+    this.db = new DBConnection();
+  }
     /**
    * Verifica idToken, obtiene uid y busca en Firestore en orden:
    * administradores -> federados -> usuarios
@@ -21,7 +18,7 @@ class AuthService {
     const collectionsOrder = ["administradores", "federados", "usuarios"];
 
     for (const col of collectionsOrder) {
-      const snap = await db.collection(col).doc(uid).get();
+      const snap = await this.db.getItem(col, uid);
       if (snap.exists) {
         const data = snap.data();
         return {
@@ -48,40 +45,6 @@ class AuthService {
       } : null,
       provider: decoded.firebase?.sign_in_provider || null,
     };
-  }
-
-  async loginWithGoogle(idToken) {
-    try {
-      // Verificar token emitido por Firebase (Google)
-      const decoded = await admin.auth().verifyIdToken(idToken);
-
-      // Buscar al usuario en alguna colección
-      const uid = decoded.uid;
-
-      let userDoc =
-        (await db.collection("usuarios").doc(uid).get()) ||
-        (await db.collection("federados").doc(uid).get()) ||
-        (await db.collection("administradores").doc(uid).get());
-
-      let role = "unknown";
-      if (userDoc.exists) {
-        role = userDoc.ref.parent.id; // "usuarios" | "federados" | "administradores"
-      } else {
-        // Si es primera vez que entra, lo guardamos en "federados"
-        await db.collection("federados").doc(uid).set({
-          email: decoded.email,
-          nombre: decoded.name,
-          foto: decoded.picture,
-          creadoEn: new Date(),
-        });
-        role = "federados";
-      }
-
-      return { uid, email: decoded.email, role };
-    } catch (err) {
-      console.error("auth verify error:", err);
-      throw err;
-    }
   }
 }
 
