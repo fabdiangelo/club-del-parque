@@ -1,34 +1,13 @@
 import React from "react";
+import { Link } from 'react-router-dom';
+
+import Navbar from "../components/Navbar";
 
 export default function Home() {
   return (
     <div className="min-h-dvh flex flex-col bg-neutral-800 text-white">
       {/* NAVBAR */}
-      <header className="w-full bg-neutral-800 sticky top-0 z-50">
-        <nav className="mx-auto max-w-7xl h-16 px-6 lg:px-8 flex items-center justify-between">
-          {/* Logo */}
-          <button className="flex items-center gap-2">
-            <Logo className="h-7 w-7" />
-          </button>
-
-          {/* Links */}
-          <ul className="hidden md:flex items-center gap-8">
-            {['Inicio','Nosotros','Ranking','Campeonatos'].map((item) => (
-              <li key={item}>
-                <button className="px-4 py-2 text-sm font-medium text-white/90 hover:text-white transition">
-                  {item}
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          {/* Login */}
-          <button className="rounded-full bg-sky-400 px-6 py-2 text-white font-medium hover:bg-sky-500 transition">
-            Login
-          </button>
-        </nav>
-      </header>
-
+      <Navbar />
       {/* HERO */}
       <section className="relative overflow-hidden flex-1 flex items-center">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center">
@@ -42,9 +21,9 @@ export default function Home() {
               <button className="rounded-full bg-sky-400 px-6 py-3 font-semibold text-white hover:bg-sky-500 transition">
                 Ver Campeonatos
               </button>
-              <button className="rounded-full border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/10 transition">
+              <Link to="/register" className="rounded-full border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/10 transition">
                 Registrarse
-              </button>
+              </Link>
             </div>
           </div>
           <div className="relative h-[300px] sm:h-[400px] lg:h-[500px]">

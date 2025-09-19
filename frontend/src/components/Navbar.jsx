@@ -6,7 +6,7 @@ export default function Navbar() {
   const activeItem = "text-white";
 
   return (
-    <header className="w-full bg-neutral-800">
+    <header className="w-full bg-neutral-800" style={{'position': 'fixed', 'top': '0', 'zIndex': '200'}}>
       <nav className="mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
           <Logo className="h-7 w-7" />

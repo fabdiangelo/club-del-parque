@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { loginAndSendToBackend, signInWithGoogle } from "../utils/LoginProviders.js";
-import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+
+import Navbar from "../components/Navbar.jsx";
+
+import { loginAndSendToBackend, signInWithGoogle } from "../utils/LoginProviders.js";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/club-del-parque-68530/us-central1/api"
 
 function Login() {
@@ -57,6 +60,7 @@ function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Navbar />
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <h2 className="text-xl font-bold mb-4">Iniciar sesión / Registro</h2>
 

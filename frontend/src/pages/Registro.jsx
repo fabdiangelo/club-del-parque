@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import Navbar from "../components/Navbar.jsx";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/club-del-parque-68530/us-central1/api"
 
 function Registro() {
@@ -51,6 +53,7 @@ function Registro() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Navbar />
       <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Registro</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
