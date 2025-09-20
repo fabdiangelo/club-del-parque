@@ -1,8 +1,13 @@
-import DBConnection from "../infraestructure/DBConnection";
+import DBConnection from "../infraestructure/DBConnection.js";
+import AuthConnection from "../infraestructure/AuthConnection.js";
+
+import jwt from "jsonwebtoken";
+const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 
 class AuthService {
   constructor(){
     this.db = new DBConnection();
+    this.auth = new AuthConnection();
   }
     /**
    * Verifica idToken, obtiene uid y busca en Firestore en orden:
@@ -11,40 +16,40 @@ class AuthService {
    */
   async verifyIdTokenAndGetProfile(idToken) {
     // Verifica token (lanza si inválido/expirado)
-    const decoded = await admin.auth().verifyIdToken(idToken);
-    const uid = decoded.uid;
-    const email = decoded.email || null;
+    try{
+      const decoded = await this.auth.decodeToken(idToken);
+      const uid = decoded.uid;
+      const email = decoded.email || null;
 
-    const collectionsOrder = ["administradores", "federados", "usuarios"];
+      const collectionsOrder = ["administradores", "federados", "usuarios"];
+      let user = null;
+      let role = "unknown";
 
-    for (const col of collectionsOrder) {
-      const snap = await this.db.getItem(col, uid);
-      if (snap.exists) {
-        const data = snap.data();
-        return {
-          uid,
-          email,
-          role: col,          // "administradores" | "federados" | "usuarios"
-          profile: data,
-          provider: decoded.firebase?.sign_in_provider || null,
-        };
+      for (const col of collectionsOrder) {
+        const snap = await this.db.getItem(col, uid);
+        if (snap.exists) {
+          role = col;
+          user = snap.data();
+          break;
+        }
       }
-    }
 
-    // Si no está en ninguna colección, devolver al menos los datos básicos
-    // (podés decidir crear el doc en "usuarios" aquí o devolver role: 'unknown')
-    const authUser = await admin.auth().getUser(uid).catch(() => null);
-    return {
-      uid,
-      email,
-      role: "unknown",
-      profile: authUser ? {
-        uid: authUser.uid,
-        email: authUser.email,
-        displayName: authUser.displayName || null,
-      } : null,
-      provider: decoded.firebase?.sign_in_provider || null,
-    };
+      // Si no está en ninguna colección, devolver al menos los datos básicos
+      // const authUser = await admin.auth().getUser(uid).catch(() => null);
+      const payload = {
+        uid,
+        email,
+        role,
+        nombre: user.nombre,
+      };
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "2h" });
+      
+      return { token, user: payload };
+    
+    } catch (err){
+      console.error("auth verify error:", err);
+      throw err;
+    }
   }
 }
 

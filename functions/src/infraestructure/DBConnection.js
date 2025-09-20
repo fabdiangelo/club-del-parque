@@ -1,13 +1,7 @@
-import admin from "firebase-admin";
+import { db } from './FirebaseServices.js'
 
 export default class DBConnection{
     constructor(){
-        if (!admin.apps.length) {
-            admin.initializeApp();
-        }
-        const db = admin.firestore();
-        db.settings?.({ ignoreUndefinedProperties: true });
-
         this.db = db;
     }
 

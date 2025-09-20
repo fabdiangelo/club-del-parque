@@ -2,8 +2,6 @@ import { useState } from "react";
 
 import Navbar from "../components/Navbar.jsx";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/club-del-parque-68530/us-central1/api"
-
 function Registro() {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -30,9 +28,10 @@ function Registro() {
     setSuccess("");
 
     try {
-      const response = await fetch(API_URL + "/register", {
+      const response = await fetch("api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 

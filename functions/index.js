@@ -11,6 +11,7 @@ import { setGlobalOptions } from "firebase-functions";
 import * as functions from "firebase-functions";
 import express from "express";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 
 import userController from "./src/controllers/UserController.js";
@@ -22,14 +23,24 @@ import AuthController from "./src/controllers/AuthController.js";
 // Limitar instancias (control de costes)
 setGlobalOptions({ maxInstances: 10 });
 
-// Crear app express
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173"
+
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: FRONTEND_URL,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}))
+
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 // Rutas
-app.post("/register", (req, res) => userController.register(req, res));
+app.post("/auth/register", (req, res) => userController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
+
 // Exportar función HTTP
 export const api = functions.https.onRequest(app);
