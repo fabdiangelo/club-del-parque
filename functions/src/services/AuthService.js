@@ -1,4 +1,5 @@
-import DBConnection from "../infraestructure/DBConnection";
+import { admin } from "../config/firebase.js";
+import DBConnection from "../infraestructure/DBConnection.js";
 
 class AuthService {
   constructor(){

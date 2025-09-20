@@ -1,14 +1,13 @@
-import admin from "firebase-admin";
+import { db } from "../config/firebase.js";
 
 export default class DBConnection{
     constructor(){
-        if (!admin.apps.length) {
-            admin.initializeApp();
-        }
-        const db = admin.firestore();
-        db.settings?.({ ignoreUndefinedProperties: true });
-
         this.db = db;
+    }
+
+    // Método necesario para FirestoreReporteRepository
+    collection(collectionName) {
+        return this.db.collection(collectionName);
     }
 
     async getItem(collection, id){
@@ -16,10 +15,10 @@ export default class DBConnection{
     }
 
     async putItem(collection, item, id){
-        return await db.collection(collection).doc(id).set(item);
+        return await this.db.collection(collection).doc(id).set(item);
     }
 
-    async putItem(collection, item){
-        return await db.collection(collection).set(item);
+    async addItem(collection, item){
+        return await this.db.collection(collection).add(item);
     }
 }

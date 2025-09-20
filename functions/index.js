@@ -15,11 +15,9 @@ import cors from "cors";
 
 import userController from "./src/controllers/UserController.js";
 import AuthController from "./src/controllers/AuthController.js";
+import { reporteController } from "./src/config/dependencies.js";
 
-// Para logs podés seguir usando el logger de firebase-functions
-// import * as logger from "firebase-functions/logger.js";
 
-// Limitar instancias (control de costes)
 setGlobalOptions({ maxInstances: 10 });
 
 // Crear app express
@@ -31,5 +29,7 @@ app.use(bodyParser.json());
 app.post("/register", (req, res) => userController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
+app.post("/reportes", (req, res) => reporteController.crearReporte(req, res));
+app.get('/reportes', (req, res) => reporteController.obtenerReportes(req, res));
 // Exportar función HTTP
 export const api = functions.https.onRequest(app);
