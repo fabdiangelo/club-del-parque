@@ -1,5 +1,5 @@
 import Registrado from "../domain/entities/Registrado.js";
-import DBConnection from "../infraestructure/DBConnection.js";
+import DBConnection from "../infraestructure/ports/DBConnection.js";
 
 class UserService {
   constructor(){

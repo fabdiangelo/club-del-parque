@@ -1,5 +1,5 @@
-import DBConnection from "../infraestructure/DBConnection.js";
-import AuthConnection from "../infraestructure/AuthConnection.js";
+import DBConnection from "../infraestructure/ports/DBConnection.js";
+import AuthConnection from "../infraestructure/ports/AuthConnection.js";
 
 import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
