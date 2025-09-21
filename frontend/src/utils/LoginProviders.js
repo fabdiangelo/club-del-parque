@@ -32,7 +32,7 @@ export const loginAndSendToBackend = async (email, password) => {
     const text = await response.text();
     throw new Error(text || "Login failed");
   }
-  return response.json();
+  return await response.json();
 }
 
 export const googleProvider = new GoogleAuthProvider();

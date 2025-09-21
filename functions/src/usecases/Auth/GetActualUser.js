@@ -2,9 +2,10 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 
 class GetActualUser {
-  async execute(token) {
+  execute(token) {
     try{
-      return jwt.verify(token, JWT_SECRET);
+      const decodedUser = jwt.verify(token, JWT_SECRET);
+      return decodedUser;
     } catch (err){
       console.error("auth verify error:", err);
       throw err;

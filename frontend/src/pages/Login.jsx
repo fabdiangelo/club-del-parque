@@ -40,7 +40,7 @@ function Login() {
     try {
       const result = await loginAndSendToBackend(email, password);
       console.log("Backend auth result:", result);
-      if(!result.uid){
+      if(!result.user.uid){
         setMsg("Algo salió mal")
       }else{
         await refetchUser();

@@ -11,7 +11,7 @@ export default class DBConnection{
     }
 
     async getItem(collection, id){
-        return await this.db.collection(collection).doc(id).get();
+        return (await this.db.collection(collection).doc(id).get()).data();
     }
 
     async getAllItems(collection) {

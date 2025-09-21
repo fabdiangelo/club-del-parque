@@ -79,13 +79,20 @@ class AuthController{
 
       // Verificar la cookie
       const user = GetActualUser.execute(sessionCookie)
-      const { uid, email, role, nombre } = user;
+      const { uid, email, rol, nombre } = user;
 
-      return res.json({ uid, email, role, nombre });
+      console.log(user)
+      console.log(nombre)
+      return res.json({ uid, email, rol, nombre });
     } catch (error) {
       console.error("Error in /me:", error);
       return res.status(401).json({ error: "Invalid or expired session" });
     }
+  }
+
+  logout(req, res) {
+    res.clearCookie("session", { httpOnly: true, sameSite: "lax" });
+    res.status(200).json({ message: "Logout successful" });
   }
 }
 

@@ -28,8 +28,11 @@ class Login {
         case 'federado': collection = 'federados'; break;
         case 'usuario': collection = 'usuarios'; break;
       }
-      let user = await this.db.getItem(col, uid).data();
-
+      if(!collection){
+        throw new Error("El usuario no tiene un rol asignado")
+      }
+      let user = await this.db.getItem(collection, uid);
+      console.log(user)
       const payload = {
         uid,
         email,

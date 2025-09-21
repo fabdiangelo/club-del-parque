@@ -1,9 +1,12 @@
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
+import { useNavigate } from "react-router-dom";
 import logoUrl from "../assets/Logo.svg";
 
 export default function Navbar() {
-  const { user, loading, logout } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   console.log(user)
 
   const navItem =
@@ -14,6 +17,7 @@ export default function Navbar() {
     <header
       className="w-full bg-neutral-800 fixed top-0 z-[200]"
       role="banner"
+      style={{'left': '0'}}
     >
       <nav className="mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
@@ -24,12 +28,6 @@ export default function Navbar() {
             loading="eager"
           />
         </Link>
-        {user &&
-          <>
-            <span>{user.name || user.email}</span>
-            <button onClick={() => logout()}>Logout</button>
-          </>
-        }
 
         <ul className="hidden md:flex items-center gap-8">
           <li>
@@ -77,12 +75,23 @@ export default function Navbar() {
         </ul>
 
         <div className="flex items-center gap-3">
-          <Link
+          {user ?
+            <>
+              <span className="text-white">{user.nombre || user.email}</span>
+              <button 
+                className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
+                onClick={() => navigate('/perfil')}> 
+                Perfil 
+              </button>
+            </>
+          :
+            <Link
             to="/login"
             className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
-          >
-            Login
-          </Link>
+            >
+              Login
+            </Link>
+          }
         </div>
       </nav>
     </header>

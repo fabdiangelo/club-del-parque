@@ -19,7 +19,7 @@ export default function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("api/me", {
+      const res = await fetch("api/auth/me", {
         method: "GET",
         credentials: "include",
         headers: { Accept: "application/json" },
@@ -113,10 +113,17 @@ export default function AuthProvider({ children }) {
         method: "POST",
         credentials: "include",
       });
-      // limpiar user y volver a consultar /me
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `Logout failed: ${res.status}`);
+      }
+      
+      setUser(null);
       await fetchMe();
       setLoading(false);
-      return res.ok;
+      
+      return true;
     } catch (err) {
       console.error("logout error:", err);
       setErrorFromCatch(err);
