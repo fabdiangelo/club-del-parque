@@ -1,4 +1,5 @@
-import { db } from "../config/firebase.js";
+import {db} from '../FirebaseService.js';
+
 
 export default class DBConnection{
     constructor(){
@@ -13,6 +14,10 @@ export default class DBConnection{
     async getItem(collection, id){
         return await this.db.collection(collection).doc(id).get();
     }
+
+    async getAllItems(collection) {
+        return await this.db.collection(collection).get();
+    } 
 
     async putItem(collection, item, id){
         return await this.db.collection(collection).doc(id).set(item);

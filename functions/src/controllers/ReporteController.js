@@ -1,7 +1,13 @@
-export class ReporteController {
-    constructor(crearReporteUseCase, obtenerAllReportesUseCase) {
-        this.crearReporteUseCase = crearReporteUseCase;
-        this.obtenerAllReportesUseCase = obtenerAllReportesUseCase;
+import { ReporteRepository } from '../infraestructure/adapters/ReportRepository.js';
+
+import {CrearReporte} from '../usecases/Reportes/CrearReporte.js'
+import {ObtenerAllReportes} from '../usecases/Reportes/ObtenerAllReportes.js'
+
+
+class ReporteController {
+    constructor() {
+        this.crearReporteUseCase = new CrearReporte(new ReporteRepository());
+        this.obtenerAllReportes = new ObtenerAllReportes(new ReporteRepository());
     }
 
     async crearReporte(req, res) {
@@ -32,7 +38,7 @@ export class ReporteController {
 
     async obtenerReportes(req, res) {
         try {
-            const reportes = await this.obtenerAllReportesUseCase.execute();
+            const reportes = await this.obtenerAllReportes.execute();
             res.status(200).json(reportes);
         } catch (error) {
             console.error("Error al obtener reportes:", error);
@@ -40,3 +46,5 @@ export class ReporteController {
         }
     }
 }
+
+export default new ReporteController();
