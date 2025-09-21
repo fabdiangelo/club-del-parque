@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { noticias } from "../data/noticias";
+//import logoUrl from "../assets/Logo.png";
 
 export default function Noticias() {
   return (
@@ -52,7 +53,7 @@ export default function Noticias() {
                   <div className="mt-4 flex items-center justify-between">
                     <Link
                       to={`/noticias/${n.id}`}
-                      className="rounded-md bg-sky-500 px-3 py-1.5 text-sm hover:bg-sky-600 transition"
+                      className="rounded-md px-3 py-1.5 text-sm hover:bg-grey-100 transition"
                     >
                       Leer más
                     </Link>

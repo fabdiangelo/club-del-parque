@@ -2,7 +2,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { noticias } from "../data/noticias"; // asegúrate de tener este archivo
+import { noticias } from "../data/noticias";
+import logoUrl from "../assets/Logo.png";
 
 export default function Home() {
   return (
@@ -17,10 +18,10 @@ export default function Home() {
             <h1 className="text-sky-400 font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6">
               Club del Parque
             </h1>
-            <p className="text-neutral-200/90 font-medium italic">TENIS Y PÁDEL</p>
+            <p className="text-neutral-200/90 font-medium italic">Tenis y pádel</p>
             <p className="text-neutral-300 mt-2">San José de Mayo, Uruguay</p>
             <div className="mt-10 flex gap-4">
-              <button className="rounded-full bg-sky-400 px-6 py-3 font-semibold text-white hover:bg-sky-500 transition">
+              <button className="rounded-full bg-sky-600 px-6 py-3 font-semibold text-white hover:bg-sky-500 transition">
                 Ver Campeonatos
               </button>
               <Link
@@ -32,14 +33,19 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative h-[300px] sm:h-[400px] lg:h-[500px]">
-            <TennisBall className="absolute right-0 top-4 h-full w-auto" />
-          </div>
+<div className="relative h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
+  <img
+    src={logoUrl}
+    alt="Club del Parque Logo"
+    className="h-full w-auto opacity-80"
+  />
+</div>
+
         </div>
       </section>
 
       {/* INSTALACIONES */}
-      <section className="bg-sky-400 text-neutral-900 py-20">
+      <section className="bg-sky-600 text-neutral-900 py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <h2 className="text-4xl font-extrabold">Instalaciones</h2>
           <p className="mt-4 max-w-2xl">
@@ -108,7 +114,7 @@ export default function Home() {
                     <MatchRow key={i} score={score} />
                   ))}
                 </div>
-                <button className="mt-8 inline-flex w-full justify-center rounded-xl bg-sky-400 px-5 py-3 font-semibold text-white hover:bg-sky-500">
+                <button className="mt-8 inline-flex w-full justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white hover:bg-sky-500">
                   Ver torneos
                 </button>
               </div>
@@ -121,17 +127,6 @@ export default function Home() {
 }
 
 /* ---------- Subcomponentes ---------- */
-
-function TennisBall({ className = "" }) {
-  return (
-    <svg className={className} viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="300" cy="300" r="260" fill="#4fd0ff" />
-      <path d="M110,300c0-120,97-217,217-217" stroke="#2f2f2f" strokeWidth="28" fill="none" />
-      <path d="M490,300c0,120-97,217-217,217" stroke="#2f2f2f" strokeWidth="28" fill="none" />
-      <path d="M420,100c60,30,130,110,110,250" stroke="#2f2f2f" strokeWidth="28" fill="none" />
-    </svg>
-  );
-}
 
 function ArticleCard({ id, date, title, excerpt }) {
   return (
