@@ -1,5 +1,9 @@
 import { Link, NavLink } from "react-router-dom";
+<<<<<<< HEAD
 import { useAuth } from "../contexts/AuthProvider";
+=======
+import logoUrl from "../assets/Logo.png";
+>>>>>>> origin/master
 
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
@@ -10,10 +14,18 @@ export default function Navbar() {
   const activeItem = "text-white";
 
   return (
-    <header className="w-full bg-neutral-800" style={{'position': 'fixed', 'top': '0', 'zIndex': '200'}}>
+    <header
+      className="w-full bg-neutral-800 fixed top-0 z-[200]"
+      role="banner"
+    >
       <nav className="mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
-          <Logo className="h-7 w-7" />
+          <img
+            src={logoUrl}
+            alt="Club del Parque"
+            className="h-8 w-auto object-contain"
+            loading="eager"
+          />
         </Link>
         {user &&
           <>
@@ -27,19 +39,23 @@ export default function Navbar() {
             <NavLink
               to="/"
               end
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
+              className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
             >
               Inicio
             </NavLink>
           </li>
           <li>
             <NavLink
+              to="/Noticias"
+              className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
+            >
+              Noticias
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to="/nosotros"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
+              className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
             >
               Nosotros
             </NavLink>
@@ -47,9 +63,7 @@ export default function Navbar() {
           <li>
             <NavLink
               to="/ranking"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
+              className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
             >
               Ranking
             </NavLink>
@@ -57,45 +71,23 @@ export default function Navbar() {
           <li>
             <NavLink
               to="/campeonatos"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
+              className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
             >
               Campeonatos
             </NavLink>
           </li>
+          
         </ul>
 
-        {/* Right: Login */}
         <div className="flex items-center gap-3">
           <Link
             to="/login"
-            className="rounded-full bg-sky-400 px-6 py-2 text-white font-medium hover:bg-sky-500 transition"
+            className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
           >
             Login
           </Link>
         </div>
       </nav>
     </header>
-  );
-}
-
-function Logo({ className = "" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 32 32"
-      aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle cx="16" cy="16" r="12" fill="#5ad0f5" />
-      <path
-        d="M7 16c0-5 4-9 9-9m9 9c0 5-4 9-9 9"
-        fill="none"
-        stroke="#0e7490"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
