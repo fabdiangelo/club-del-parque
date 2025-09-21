@@ -1,9 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
-<<<<<<< HEAD
 import { useAuth } from "../contexts/AuthProvider";
-=======
-import logoUrl from "../assets/Logo.png";
->>>>>>> origin/master
+import logoUrl from "../assets/Logo.svg";
 
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
