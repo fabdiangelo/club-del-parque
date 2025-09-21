@@ -16,7 +16,8 @@ import cors from "cors";
 
 import userController from "./src/controllers/UserController.js";
 import AuthController from "./src/controllers/AuthController.js";
-import { reporteController } from "./src/config/dependencies.js";
+import ReporteController from "./src/controllers/ReporteController.js";
+
 
 
 setGlobalOptions({ maxInstances: 10 });
@@ -39,5 +40,7 @@ app.use(cookieParser());
 app.post("/auth/register", (req, res) => userController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
+app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
+app.get('/reportes', (req, res) => ReporteController.obtenerReportes(req, res));
 // Exportar función HTTP
 export const api = functions.https.onRequest(app);
