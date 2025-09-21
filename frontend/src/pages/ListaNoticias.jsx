@@ -15,7 +15,7 @@ export default function Noticias() {
             Noticias
           </h1>
           <p className="mt-4 max-w-2xl text-white/80">
-            Todas las novedades del club (placeholders).
+            Las novedades del club más recientes.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">

@@ -8,7 +8,6 @@ export default function NoticiaDetalle() {
   const { id } = useParams();
   const noticia = noticias.find((n) => String(n.id) === String(id));
 
-  // Asegura que arranca arriba al entrar a la página
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);

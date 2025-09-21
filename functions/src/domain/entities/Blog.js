@@ -1,4 +1,4 @@
-export default class Registrado{
+export default class Blog{
     constructor (id, nombre, titulo, tipo, administradorID, mdContent) {
         this.id = id;
         this.nombre = nombre;
