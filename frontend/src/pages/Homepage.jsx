@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { noticias } from "../data/noticias";
-import logoUrl from "../assets/Logo.png";
+import logoUrl from "../assets/Logo.svg";
 
 export default function Home() {
   return (
@@ -37,7 +37,7 @@ export default function Home() {
   <img
     src={logoUrl}
     alt="Club del Parque Logo"
-    className="h-full w-auto opacity-80"
+    className="h-90 w-auto opacity-80"
   />
 </div>
 

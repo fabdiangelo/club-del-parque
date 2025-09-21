@@ -16,25 +16,23 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 connectAuthEmulator(auth, "http://localhost:9099");
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/club-del-parque-68530/us-central1/api"
-
 export const loginAndSendToBackend = async (email, password) => {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const user = cred.user;
-  const idToken = await user.getIdToken(); // token que ENVÍAS al backend
+  const idToken = await user.getIdToken();
 
-  const res = await fetch("/api/auth/login", {
+  const response = await fetch("api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({ idToken }),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
+  if (!response.ok) {
+    const text = await response.text();
     throw new Error(text || "Login failed");
   }
-  return res.json();
+  return response.json();
 }
 
 export const googleProvider = new GoogleAuthProvider();
@@ -44,11 +42,10 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     const idToken = await result.user.getIdToken();
     
-    // Mandar el idToken a tu backend
-    const response = await fetch("/api/auth/google", {
+    const response = await fetch("api/auth/google", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // credentials: "include",
+      credentials: "include",
       body: JSON.stringify({ idToken })
     });
 

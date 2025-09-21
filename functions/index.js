@@ -18,8 +18,6 @@ import userController from "./src/controllers/UserController.js";
 import AuthController from "./src/controllers/AuthController.js";
 import ReporteController from "./src/controllers/ReporteController.js";
 
-
-
 setGlobalOptions({ maxInstances: 10 });
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173"
@@ -36,11 +34,15 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// Rutas
-app.post("/auth/register", (req, res) => userController.register(req, res));
+// Auth
+app.post("/auth/register", (req, res) => AuthController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
+app.get("/auth/me", (req, res) => AuthController.getActualUser(req, res));
+
+// Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get('/reportes', (req, res) => ReporteController.obtenerReportes(req, res));
+
 // Exportar función HTTP
 export const api = functions.https.onRequest(app);
