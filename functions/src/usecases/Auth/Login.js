@@ -1,10 +1,10 @@
-import DBConnection from "../infraestructure/DBConnection.js";
-import AuthConnection from "../infraestructure/AuthConnection.js";
+import DBConnection from "../../infraestructure/ports/DBConnection.js";
+import AuthConnection from "../../infraestructure/ports/AuthConnection.js";
 
 import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 
-class AuthService {
+class Login {
   constructor(){
     this.db = new DBConnection();
     this.auth = new AuthConnection();
@@ -14,32 +14,26 @@ class AuthService {
    * administradores -> federados -> usuarios
    * Devuelve objeto con role y profile (datos del documento si existe)
    */
-  async verifyIdTokenAndGetProfile(idToken) {
+  async execute(idToken) {
     // Verifica token (lanza si inválido/expirado)
     try{
       const decoded = await this.auth.decodeToken(idToken);
       const uid = decoded.uid;
       const email = decoded.email || null;
+      const rol = decoded.rol;
 
-      const collectionsOrder = ["administradores", "federados", "usuarios"];
-      let user = null;
-      let role = "unknown";
-
-      for (const col of collectionsOrder) {
-        const snap = await this.db.getItem(col, uid);
-        if (snap.exists) {
-          role = col;
-          user = snap.data();
-          break;
-        }
+      let collection = '';
+      switch (rol){
+        case 'administrador': collection = 'administradores'; break;
+        case 'federado': collection = 'federados'; break;
+        case 'usuario': collection = 'usuarios'; break;
       }
+      let user = await this.db.getItem(col, uid).data();
 
-      // Si no está en ninguna colección, devolver al menos los datos básicos
-      // const authUser = await admin.auth().getUser(uid).catch(() => null);
       const payload = {
         uid,
         email,
-        role,
+        rol,
         nombre: user.nombre,
       };
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "2h" });
@@ -53,4 +47,4 @@ class AuthService {
   }
 }
 
-export default new AuthService();
+export default new Login();

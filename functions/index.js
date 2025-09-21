@@ -38,9 +38,10 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Rutas
-app.post("/auth/register", (req, res) => userController.register(req, res));
+app.post("/auth/register", (req, res) => AuthController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
+app.get("/auth/me", (req, res) => AuthController.getActualUser(req, res));
 
 // Exportar función HTTP
 export const api = functions.https.onRequest(app);

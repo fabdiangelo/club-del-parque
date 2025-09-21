@@ -1,6 +1,10 @@
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../contexts/AuthProvider";
 
 export default function Navbar() {
+  const { user, loading, logout } = useAuth();
+  console.log(user)
+
   const navItem =
     "px-4 py-2 text-sm sm:text-base font-medium text-white/90 hover:text-white transition";
   const activeItem = "text-white";
@@ -11,6 +15,12 @@ export default function Navbar() {
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
           <Logo className="h-7 w-7" />
         </Link>
+        {user &&
+          <>
+            <span>{user.name || user.email}</span>
+            <button onClick={() => logout()}>Logout</button>
+          </>
+        }
 
         <ul className="hidden md:flex items-center gap-8">
           <li>

@@ -10,6 +10,14 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/login" element={<Login />} />
+      {/* <Route
+        path="/"
+        element={
+          <ProtectedRoute fallback={<Navigate to="/login" />}>
+            <Home />
+          </ProtectedRoute>
+        }
+      /> */}
     </Routes>
   );
 }
