@@ -23,9 +23,10 @@ export const loginAndSendToBackend = async (email, password) => {
   const user = cred.user;
   const idToken = await user.getIdToken(); // token que ENVÍAS al backend
 
-  const res = await fetch(API_URL + "/auth/login", {
+  const res = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ idToken }),
   });
 
@@ -44,9 +45,10 @@ export const signInWithGoogle = async () => {
     const idToken = await result.user.getIdToken();
     
     // Mandar el idToken a tu backend
-    const response = await fetch(API_URL + "/auth/google", {
+    const response = await fetch("/api/auth/google", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      // credentials: "include",
       body: JSON.stringify({ idToken })
     });
 
