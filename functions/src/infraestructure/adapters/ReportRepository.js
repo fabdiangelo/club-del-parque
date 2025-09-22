@@ -1,5 +1,5 @@
 import DBConnection from '../ports/DBConnection.js';
-import WPP from '../ports/WPP.js';
+
 
 export class ReporteRepository {
     constructor() {

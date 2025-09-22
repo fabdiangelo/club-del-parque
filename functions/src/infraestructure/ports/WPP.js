@@ -1,24 +1,24 @@
 export default class WPP {
-    constructor(mensaje, telefono) {
-        this.mensaje = mensaje;
-        this.telefono = telefono;
-    }
+    constructor() {
+        this.instanceKey = process.env.INSTANCEKEYWHATSAPP;
+        this.apiKey = process.env.APIKEYWHATSAPP;
+        }
 
 
     enviarWPP = async(mensaje, telefono) => {
 
-        if (!this.telefono || !this.mensaje) {
+        if (!telefono || !mensaje) {
             throw new Error("El número de teléfono y el mensaje son obligatorios");
         } 
 
         const response = await fetch(
-    ``,
+    `https://7105.api.greenapi.com/${this.instanceKey}/sendMessage/${this.apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chatId: `${this.telefono}@c.us`,
-        message: this.mensaje,
+        chatId: `${telefono}@c.us`,
+        message: mensaje,
       }),
     }
   );
