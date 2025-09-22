@@ -16,6 +16,7 @@ import cors from "cors";
 import userController from "./src/controllers/UserController.js";
 import AuthController from "./src/controllers/AuthController.js";
 import ReporteController from "./src/controllers/ReporteController.js";
+import SendWhatsappController from "./src/controllers/SendWhatsappController.js";
 
 
 setGlobalOptions({ maxInstances: 10 });
@@ -31,5 +32,6 @@ app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res)
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get('/reportes', (req, res) => ReporteController.obtenerReportes(req, res));
+app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
 // Exportar función HTTP
 export const api = functions.https.onRequest(app);

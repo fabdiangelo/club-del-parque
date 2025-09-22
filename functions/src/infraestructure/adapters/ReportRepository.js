@@ -1,4 +1,5 @@
 import DBConnection from '../ports/DBConnection.js';
+import WPP from '../ports/WPP.js';
 
 export class ReporteRepository {
     constructor() {
@@ -17,6 +18,7 @@ export class ReporteRepository {
         const docRef = await this.db.addItem('reportes', reporte);
         return docRef.id;
     }
+
 
     async update(id, estado) {
         await this.db.putItem('reportes', { estado }, id);
