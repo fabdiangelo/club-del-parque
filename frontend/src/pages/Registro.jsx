@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../contexts/AuthProvider";
 
 import Navbar from "../components/Navbar.jsx";
 
@@ -13,8 +15,11 @@ function Registro() {
     genero: ""
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const { register, error } = useAuth()
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,27 +29,19 @@ function Registro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    // setError("");
     setSuccess("");
 
     try {
-      const response = await fetch("api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error en el registro");
+      const ok = await register("api/auth/register", formData)
+      if(!ok){
+        throw new Error(ok || "Error en el registro");
       }
-
       setSuccess("Usuario registrado con éxito ✅");
       setFormData({ nombre: "", email: "", password: "" });
+      navigate("/");
     } catch (err) {
-      setError(err.message);
+      // setError(err.message);
     } finally {
       setLoading(false);
     }

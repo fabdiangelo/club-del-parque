@@ -1,5 +1,4 @@
-import {db} from '../FirebaseService.js';
-
+import { db } from '../FirebaseServices.js'
 
 export default class DBConnection{
     constructor(){
@@ -12,18 +11,18 @@ export default class DBConnection{
     }
 
     async getItem(collection, id){
-        return await this.db.collection(collection).doc(id).get();
+        return (await this.db.collection(collection).doc(id).get()).data();
     }
 
     async getAllItems(collection) {
         return await this.db.collection(collection).get();
-    } 
-
-    async putItem(collection, item, id){
-        return await this.db.collection(collection).doc(id).set(item);
     }
 
-    async addItem(collection, item){
-        return await this.db.collection(collection).add(item);
+    async putItem(collection, item, id = null) {
+        if (id) {
+            return await this.db.collection(collection).doc(id).set(item);
+        } else {
+            return await this.db.collection(collection).add(item);
+        }
     }
 }
