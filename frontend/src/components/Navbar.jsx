@@ -10,7 +10,7 @@ export default function Navbar() {
   console.log(user)
 
   const navItem =
-    "px-4 py-2 text-sm sm:text-base font-medium text-white/90 hover:text-white transition";
+    "px-4 py-2 text-sm sm:text-base font-normal text-white/90 hover:text-white transition";
   const activeItem = "text-white";
 
   return (

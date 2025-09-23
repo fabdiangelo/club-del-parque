@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import Perfil from './pages/Perfil';
 import Noticias from './pages/ListaNoticias';
 import NoticiaDetalle from './pages/NoticiaDetalle';
+import SistemaReporte from './pages/SistemaReporte';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
       /> */}
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
+      <Route path="/report" element={<SistemaReporte />} />
     </Routes>
   );
 }

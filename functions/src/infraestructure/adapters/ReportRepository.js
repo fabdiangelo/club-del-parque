@@ -1,5 +1,6 @@
 import DBConnection from '../ports/DBConnection.js';
 
+
 export class ReporteRepository {
     constructor() {
         this.db = new DBConnection();
@@ -17,6 +18,7 @@ export class ReporteRepository {
         const docRef = await this.db.addItem('reportes', reporte);
         return docRef.id;
     }
+
 
     async update(id, estado) {
         await this.db.putItem('reportes', { estado }, id);
