@@ -8,6 +8,7 @@ export default class Noticia {
     mdContent,
     imagenUrl,
     imagenPath,
+    imagenes, 
     fechaCreacion,
     fechaActualizacion,
   }) {
@@ -17,8 +18,9 @@ export default class Noticia {
     this.tipo = tipo ?? "";
     this.administradorID = administradorID ?? "";
     this.mdContent = mdContent ?? "";
-    this.imagenUrl = imagenUrl ?? null;   
-    this.imagenPath = imagenPath ?? null;
+    this.imagenUrl = imagenUrl ?? null;     
+    this.imagenPath = imagenPath ?? null;  
+    this.imagenes = Array.isArray(imagenes) ? imagenes : []; 
     this.fechaCreacion = fechaCreacion ?? new Date().toISOString();
     this.fechaActualizacion = fechaActualizacion ?? new Date().toISOString();
   }
@@ -37,6 +39,7 @@ export default class Noticia {
       mdContent: this.mdContent,
       imagenUrl: this.imagenUrl,
       imagenPath: this.imagenPath,
+      imagenes: this.imagenes,
       fechaCreacion: this.fechaCreacion,
       fechaActualizacion: this.fechaActualizacion,
     };
@@ -52,6 +55,7 @@ export default class Noticia {
       mdContent: data.mdContent,
       imagenUrl: data.imagenUrl,
       imagenPath: data.imagenPath,
+      imagenes: data.imagenes,
       fechaCreacion: data.fechaCreacion,
       fechaActualizacion: data.fechaActualizacion,
     });
