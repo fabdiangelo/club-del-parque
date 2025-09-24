@@ -1,10 +1,11 @@
+// functions/index.js
 import { setGlobalOptions } from "firebase-functions";
 import * as functions from "firebase-functions";
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import multer from "multer";
+// import multer from "multer";  // temporarily not needed
 
 import NoticiaController from "./src/controllers/NoticiaController.js";
 import UserController from "./src/controllers/UserController.js";
@@ -15,36 +16,21 @@ import EmailController from "./src/controllers/EmailController.js";
 
 setGlobalOptions({ maxInstances: 10 });
 
-const FRONTEND_URL =
-  process.env.FRONTEND_URL || "http://localhost:5173";
-
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const app = express();
 
-/* ---------------- Multer ---------------- */
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
-});
-
-function optionalUpload(fieldName = "imagen") {
-  return (req, res, next) => {
-    const ct = req.headers["content-type"] || "";
-    if (ct.startsWith("multipart/form-data")) {
-      return upload.single(fieldName)(req, res, next);
-    }
-    next();
-  };
-}
-
-/* ---------------- JSON body-parser (guarded) ---------------- */
+/* ---------------- JSON body-parser ---------------- */
 const jsonParser = bodyParser.json();
-function optionalJson() {
-  return (req, res, next) => {
-    const ct = req.headers["content-type"] || "";
-    if (ct.startsWith("multipart/form-data")) return next();
-    return jsonParser(req, res, next);
-  };
-}
+app.use((req, res, next) => {
+  const ct = req.headers["content-type"] || "";
+  if (/^multipart\/form-data/i.test(ct)) {
+    // reject multipart for now
+    return res.status(415).json({
+      error: "Uploads temporarily disabled. Send JSON (application/json) without image.",
+    });
+  }
+  return jsonParser(req, res, next);
+});
 
 /* ---------------- Middlewares ---------------- */
 app.use(cors({
@@ -53,7 +39,6 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
-app.use(optionalJson());
 app.use(cookieParser());
 
 /* ---------------- Routes ---------------- */
@@ -74,15 +59,22 @@ app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
 // Noticias
 app.get("/noticias", (req, res) => NoticiaController.listar(req, res));
 app.get("/noticias/:id", (req, res) => NoticiaController.obtenerPorId(req, res));
-app.post("/noticias", optionalUpload("imagen"), (req, res) => NoticiaController.crear(req, res));
-app.put("/noticias/:id", optionalUpload("imagen"), (req, res) => NoticiaController.actualizar(req, res));
-app.post("/noticias/:id/imagen", upload.single("imagen"), (req, res) => NoticiaController.subirImagen(req, res));
-app.delete("/noticias/:id/imagen", (req, res) => NoticiaController.eliminarImagen(req, res));
+app.post("/noticias", (req, res) => NoticiaController.crear(req, res)); // JSON only
+app.put("/noticias/:id", (req, res) => NoticiaController.actualizar(req, res)); // JSON only
+// image routes disabled for now
+// app.post("/noticias/:id/imagen", ...);
+// app.delete("/noticias/:id/imagen", ...);
 app.delete("/noticias/:id", (req, res) => NoticiaController.eliminar(req, res));
 
 // Whatsapp & Email
 app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));
 app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));
+
+/* ---------------- Error handlers ---------------- */
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
 
 /* ---------------- Export Firebase Function ---------------- */
 export const api = functions.https.onRequest(app);

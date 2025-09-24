@@ -47,97 +47,99 @@ export default function CrearNoticia() {
     []
   );*/
 
-  const fetchNoticias = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/noticias`, { credentials: "include" });
-      if (!res.ok) throw new Error(`GET /noticias ${res.status}`);
-      const data = await res.json();
-      setNoticias(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setError(e.message || "Error listando noticias");
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchNoticias = async () => {
+  setLoading(true);
+  setError("");
+  try {
+    const res = await fetch(`${API_BASE}/noticias`);
+    if (!res.ok) throw new Error(`GET /noticias ${res.status}`);
+    const data = await res.json();
+    setNoticias(Array.isArray(data) ? data : []);
+  } catch (e) {
+    setError(e.message || "Error listando noticias");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const fetchNoticiaById = async (id) => {
-    setBusyId(id);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/noticias/${id}`, { credentials: "include" });
-      if (!res.ok) throw new Error(`GET /noticias/${id} ${res.status}`);
-      const data = await res.json();
-      setSelected(data);
-    } catch (e) {
-      setError(e.message || "Error obteniendo la noticia");
-    } finally {
-      setBusyId(null);
-    }
-  };
+const fetchNoticiaById = async (id) => {
+  setBusyId(id);
+  setError("");
+  try {
+    const res = await fetch(`${API_BASE}/noticias/${id}`);
+    if (!res.ok) throw new Error(`GET /noticias/${id} ${res.status}`);
+    const data = await res.json();
+    setSelected(data);
+  } catch (e) {
+    setError(e.message || "Error obteniendo la noticia");
+  } finally {
+    setBusyId(null);
+  }
+};
+
 
   useEffect(() => {
     fetchNoticias();
   }, []);
 
-  const onCreate = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append("nombre", field(form.nombre));
-      fd.append("titulo", field(form.titulo));
-      fd.append("tipo", field(form.tipo));
-      fd.append("administradorID", field(form.administradorID));
-      fd.append("mdContent", field(form.mdContent));
-      if (form.imagen) fd.append("imagen", form.imagen);
-
-      const res = await fetch(`${API_BASE}/noticias`, {
-        method: "POST",
-        body: fd,
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const t = await safeText(res);
-        throw new Error(`POST /noticias ${res.status} ${t}`);
-      }
-      await fetchNoticias();
-      setForm({
-        nombre: "",
-        titulo: "",
-        tipo: "",
-        administradorID: "",
-        mdContent: "",
-        imagen: null,
-      });
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (e) {
-      setError(e.message || "Error creando noticia");
-    } finally {
-      setLoading(false);
+const onCreate = async (e) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
+  try {
+    if (form.imagen) {
+      throw new Error("Subida de imágenes deshabilitada temporalmente. Crea la noticia sin imagen.");
     }
-  };
 
-  const onDelete = async (id) => {
-    if (!confirm("¿Eliminar esta noticia?")) return;
-    setBusyId(id);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/noticias/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error(`DELETE /noticias/${id} ${res.status}`);
-      await fetchNoticias();
-      if (selected?.id === id) setSelected(null);
-    } catch (e) {
-      setError(e.message || "Error eliminando noticia");
-    } finally {
-      setBusyId(null);
+    const payload = {
+      nombre: field(form.nombre),
+      titulo: field(form.titulo),
+      tipo: field(form.tipo),
+      administradorID: field(form.administradorID),
+      mdContent: field(form.mdContent),
+    };
+
+    const res = await fetch(`${API_BASE}/noticias`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload), // <-- JSON
+      // credentials: "omit" // (default)
+    });
+
+    if (!res.ok) {
+      const t = await safeText(res);
+      throw new Error(`POST /noticias ${res.status} ${t}`);
     }
-  };
+
+    await fetchNoticias();
+    setForm({
+      nombre: "", titulo: "", tipo: "", administradorID: "", mdContent: "", imagen: null,
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  } catch (e) {
+    setError(e.message || "Error creando noticia");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+const onDelete = async (id) => {
+  if (!confirm("¿Eliminar esta noticia?")) return;
+  setBusyId(id);
+  setError("");
+  try {
+    const res = await fetch(`${API_BASE}/noticias/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(`DELETE /noticias/${id} ${res.status}`);
+    await fetchNoticias();
+    if (selected?.id === id) setSelected(null);
+  } catch (e) {
+    setError(e.message || "Error eliminando noticia");
+  } finally {
+    setBusyId(null);
+  }
+};
+
 
   const openEdit = (n) => {
     setEdit({
@@ -155,41 +157,48 @@ export default function CrearNoticia() {
   const closeEdit = () =>
     setEdit((s) => ({ ...s, open: false, imagen: null }));
 
-  const onUpdate = async (e) => {
-    e.preventDefault();
-    if (!edit.id) return;
+const onUpdate = async (e) => {
+  e.preventDefault();
+  if (!edit.id) return;
 
-    setBusyId(edit.id);
-    setError("");
+  setBusyId(edit.id);
+  setError("");
 
-    try {
-      const fd = new FormData();
-      fd.append("nombre", field(edit.nombre));
-      fd.append("titulo", field(edit.titulo));
-      fd.append("tipo", field(edit.tipo));
-      fd.append("administradorID", field(edit.administradorID));
-      fd.append("mdContent", field(edit.mdContent));
-      if (edit.imagen) fd.append("imagen", edit.imagen);
-
-      const res = await fetch(`${API_BASE}/noticias/${edit.id}`, {
-        method: "PUT",
-        body: fd,
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const t = await safeText(res);
-        throw new Error(`PUT /noticias/${edit.id} ${res.status} ${t}`);
-      }
-
-      await fetchNoticias();
-      if (selected?.id === edit.id) await fetchNoticiaById(edit.id);
-      closeEdit();
-    } catch (e2) {
-      setError(e2.message || "Error actualizando noticia");
-    } finally {
-      setBusyId(null);
+  try {
+    if (edit.imagen) {
+      throw new Error("Subida de imágenes deshabilitada temporalmente. Guarda cambios sin imagen.");
     }
-  };
+
+    const payload = {
+      nombre: field(edit.nombre),
+      titulo: field(edit.titulo),
+      tipo: field(edit.tipo),
+      administradorID: field(edit.administradorID),
+      mdContent: field(edit.mdContent),
+    };
+
+    const res = await fetch(`${API_BASE}/noticias/${edit.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload), // <-- JSON
+      // credentials: "omit"
+    });
+
+    if (!res.ok) {
+      const t = await safeText(res);
+      throw new Error(`PUT /noticias/${edit.id} ${res.status} ${t}`);
+    }
+
+    await fetchNoticias();
+    if (selected?.id === edit.id) await fetchNoticiaById(edit.id);
+    closeEdit();
+  } catch (e2) {
+    setError(e2.message || "Error actualizando noticia");
+  } finally {
+    setBusyId(null);
+  }
+};
+
 
   const onReplaceImage = async (id, file) => {
     if (!file) return;
