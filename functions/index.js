@@ -4,7 +4,9 @@ import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import multer from "multer";
 
+import NoticiaController from "./src/controllers/NoticiaController.js";
 import UserController from "./src/controllers/UserController.js";
 import AuthController from "./src/controllers/AuthController.js";
 import ReporteController from "./src/controllers/ReporteController.js";
@@ -13,27 +15,52 @@ import EmailController from "./src/controllers/EmailController.js";
 
 setGlobalOptions({ maxInstances: 10 });
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173"
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "http://localhost:5173";
 
 const app = express();
 
+/* ---------------- Multer ---------------- */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+function optionalUpload(fieldName = "imagen") {
+  return (req, res, next) => {
+    const ct = req.headers["content-type"] || "";
+    if (ct.startsWith("multipart/form-data")) {
+      return upload.single(fieldName)(req, res, next);
+    }
+    next();
+  };
+}
+
+/* ---------------- JSON body-parser (guarded) ---------------- */
+const jsonParser = bodyParser.json();
+function optionalJson() {
+  return (req, res, next) => {
+    const ct = req.headers["content-type"] || "";
+    if (ct.startsWith("multipart/form-data")) return next();
+    return jsonParser(req, res, next);
+  };
+}
+
+/* ---------------- Middlewares ---------------- */
 app.use(cors({
   origin: FRONTEND_URL,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-}))
-
-app.use(bodyParser.json());
+}));
+app.use(optionalJson());
 app.use(cookieParser());
 
+/* ---------------- Routes ---------------- */
 // Auth
 app.post("/auth/register", (req, res) => AuthController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
-
-app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
-app.get('/reportes', (req, res) => ReporteController.obtenerReportes(req, res));
 app.get("/auth/me", (req, res) => AuthController.getActualUser(req, res));
 app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 
@@ -42,9 +69,20 @@ app.get("/usuario/:id", (req, res) => UserController.getUserData(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
-app.get('/reportes', (req, res) => ReporteController.obtenerReportes(req, res));
+app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
 
-app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
-app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
-// Exportar función HTTP
+// Noticias
+app.get("/noticias", (req, res) => NoticiaController.listar(req, res));
+app.get("/noticias/:id", (req, res) => NoticiaController.obtenerPorId(req, res));
+app.post("/noticias", optionalUpload("imagen"), (req, res) => NoticiaController.crear(req, res));
+app.put("/noticias/:id", optionalUpload("imagen"), (req, res) => NoticiaController.actualizar(req, res));
+app.post("/noticias/:id/imagen", upload.single("imagen"), (req, res) => NoticiaController.subirImagen(req, res));
+app.delete("/noticias/:id/imagen", (req, res) => NoticiaController.eliminarImagen(req, res));
+app.delete("/noticias/:id", (req, res) => NoticiaController.eliminar(req, res));
+
+// Whatsapp & Email
+app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));
+app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));
+
+/* ---------------- Export Firebase Function ---------------- */
 export const api = functions.https.onRequest(app);

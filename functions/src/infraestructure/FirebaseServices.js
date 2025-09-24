@@ -1,15 +1,21 @@
 import admin from "firebase-admin";
 
-let app;
 if (!admin.apps.length) {
-  app = admin.initializeApp();
+  admin.initializeApp({
+    storageBucket: process.env.GCLOUD_STORAGE_BUCKET,
+  });
 } else {
-  app = admin.app();
+  admin.app();
 }
 
 const auth = admin.auth();
 const db = admin.firestore();
+const storage = admin.storage();
+
+const FieldValue = admin.firestore.FieldValue;
+const Timestamp = admin.firestore.Timestamp;
 
 db.settings?.({ ignoreUndefinedProperties: true });
 
-export { auth, db };
+export { auth, db, storage, FieldValue, Timestamp };
+export default { auth, db, storage, FieldValue, Timestamp };
