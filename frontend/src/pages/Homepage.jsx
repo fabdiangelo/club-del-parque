@@ -1,13 +1,95 @@
 // src/pages/Homepage.jsx
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { noticias } from "../data/noticias";
 import logoUrl from "../assets/Logo.svg";
 
+// Configurable endpoint (VITE_NOTICIAS_API) or fallback
+const NOTICIAS_ENDPOINT =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_NOTICIAS_API) ||
+  "/api/noticias";
+
+// Tailwind gap "space-y-12" => 3rem => 48px
+const NEWS_GAP_PX = 48;
+
+// Brand accents
+const BRAND_CYAN = "#22d3ee";     // cyan-400-ish
+const BRAND_GRADIENT_FROM = "#0ea5e9"; // sky-500
+const BRAND_GRADIENT_TO = "#0284c7";   // sky-600
+
+/* --- Utils --- */
+function stripMarkdown(md = "") {
+  if (!md) return "";
+  let text = md;
+  text = text.replace(/```[\s\S]*?```/g, " ");
+  text = text.replace(/`[^`]*`/g, " ");
+  text = text.replace(/!\[[^\]]*\]\([^)]+\)/g, " ");
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  text = text.replace(/^\s{0,3}#{1,6}\s*/gm, "");
+  text = text.replace(/^\s{0,3}>\s?/gm, "");
+  text = text.replace(/^\s*[-*+]\s+/gm, "");
+  text = text.replace(/[*_~]/g, "");
+  text = text.replace(/\s+/g, " ");
+  return text.trim();
+}
+function excerptFromMd(md = "", max = 200) {
+  const raw = stripMarkdown(md);
+  if (raw.length <= max) return raw;
+  const cut = raw.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trim() + "…";
+}
+
 export default function Home() {
+  const [noticias, setNoticias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setFetchError("");
+      try {
+        const res = await fetch(NOTICIAS_ENDPOINT, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!isCancelled) setNoticias(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (!isCancelled) setFetchError(err?.message || "Error desconocido");
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const top3 = useMemo(() => (noticias || []).slice(0, 3), [noticias]);
+  const hasNoticias = top3.length > 0;
+
+  // Measure a sample card height to size the empty-state box like 3 cards
+  const measureRef = useRef(null);
+  const [cardHeight, setCardHeight] = useState(0);
+  useEffect(() => {
+    if (measureRef.current) {
+      const h = measureRef.current.offsetHeight || 0;
+      if (h && h !== cardHeight) setCardHeight(h);
+    }
+  }, [measureRef, cardHeight, hasNoticias, top3]);
+
+  const emptyMinHeight = cardHeight
+    ? 3 * cardHeight + 2 * NEWS_GAP_PX
+    : undefined;
+
   return (
-    <div className="min-h-[100svh] min-h-screen flex flex-col bg-neutral-800 text-white w-full">
+    <div className="min-h-[100svh] min-h-screen flex flex-col bg-base-200 text-base-content w-full">
       {/* NAVBAR */}
       <Navbar />
 
@@ -15,48 +97,58 @@ export default function Home() {
       <section className="relative overflow-hidden flex-1 flex items-center w-full">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full">
           <div>
-            <h1 className="text-sky-400 font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6">
+            <h1
+              className="font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6"
+              style={{ color: BRAND_CYAN }}
+            >
               Club del Parque
             </h1>
-            <p className="text-neutral-200/90 font-medium italic">Tenis y pádel</p>
-            <p className="text-neutral-300 mt-2">San José de Mayo, Uruguay</p>
+            <p className="opacity-80 font-medium italic">Tenis y pádel</p>
+            <p className="opacity-70 mt-2">San José de Mayo, Uruguay</p>
             <div className="mt-10 flex gap-4">
-              <button className="rounded-full bg-sky-600 px-6 py-3 font-semibold text-white hover:bg-sky-500 transition">
-                Ver Campeonatos
-              </button>
-              <Link
-                to="/register"
-                className="rounded-full border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/10 transition"
-              >
+              <button className="btn btn-primary">Ver Campeonatos</button>
+              <Link to="/register" className="btn btn-outline">
                 Registrarse
               </Link>
             </div>
+
+            {(loading || fetchError) && (
+              <p className="mt-6 text-sm opacity-70">
+                {loading
+                  ? "Cargando noticias…"
+                  : `No se pudieron cargar noticias (${fetchError}).`}
+              </p>
+            )}
           </div>
 
-<div className="relative h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
-  <img
-    src={logoUrl}
-    alt="Club del Parque Logo"
-    className="h-90 w-auto opacity-80"
-  />
-</div>
-
+          <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
+            <img
+              src={logoUrl}
+              alt="Club del Parque Logo"
+              className="h-90 w-auto opacity-80"
+            />
+          </div>
         </div>
       </section>
 
-      {/* INSTALACIONES */}
-      <section className="bg-sky-600 text-neutral-900 py-20">
+      {/* INSTALACIONES — gradient in brand blue family */}
+      <section
+        className="text-primary-content py-20"
+        style={{
+          backgroundImage: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM} 0%, ${BRAND_GRADIENT_TO} 100%)`,
+        }}
+      >
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <h2 className="text-4xl font-extrabold">Instalaciones</h2>
-          <p className="mt-4 max-w-2xl">
+          <p className="mt-4 max-w-2xl opacity-95">
             Texto placeholder sobre las instalaciones. Cámbialo por tu propio contenido.
           </p>
 
           <div className="mt-12 grid lg:grid-cols-12 gap-10">
             <div className="lg:col-span-7">
-              <div className="rounded-3xl overflow-hidden shadow-xl ring-1 ring-black/10">
-                <div className="w-full h-[320px] bg-neutral-200 grid place-items-center">
-                  <span className="text-neutral-600">Mapa Placeholder</span>
+              <div className="card shadow-xl bg-base-200/20 backdrop-blur-[1px]">
+                <div className="w-full h-[320px] bg-base-100/20 grid place-items-center rounded-box">
+                  <span className="opacity-90">Mapa Placeholder</span>
                 </div>
               </div>
               <p className="mt-6">
@@ -70,94 +162,129 @@ export default function Home() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl overflow-hidden shadow-lg ring-1 ring-black/10 bg-white h-[120px] grid place-items-center"
+                  className="card shadow rounded-box bg-base-200/20 h-[120px] grid place-items-center"
                 >
-                  <span className="text-neutral-500 text-sm">Foto {i + 1}</span>
+                  <span className="opacity-90 text-sm">Foto {i + 1}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </section>
+<section className="bg-white text-neutral-900 py-20">
+  <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
+    <h2 className="text-5xl font-extrabold text-center mb-12">Noticias</h2>
+    <div className="grid lg:grid-cols-12 gap-10">
+      {/* Lista principal */}
+      <div className="lg:col-span-8 space-y-12 relative">
+        {/* Hidden sample card to measure height */}
+        <div className="absolute -left-[9999px] -top-[9999px]" aria-hidden>
+          <ArticleCard
+            ref={measureRef}
+            id="measure"
+            date="01/01/2025"
+            title="Título de ejemplo para medir"
+            excerpt="Contenido de ejemplo para medir la altura de una tarjeta en la sección de noticias."
+          />
+        </div>
 
-      {/* NOTICIAS */}
-      <section className="bg-white text-neutral-900 py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
-          <h2 className="text-5xl font-extrabold text-center mb-12">Noticias</h2>
-          <div className="grid lg:grid-cols-12 gap-10">
-            {/* Lista principal */}
-            <div className="lg:col-span-8 space-y-12">
-              {(noticias || []).slice(0, 3).map((n) => (
-                <ArticleCard
-                  key={n.id}
-                  id={n.id}
-                  date={n.fecha}
-                  title={n.titulo}
-                  excerpt={n.resumen}
-                />
-              ))}
-
-              <Link
-                to="/noticias"
-                className="mt-4 inline-flex rounded-md bg-neutral-800 px-5 py-3 text-white font-semibold hover:bg-neutral-700"
-              >
-                Ver más noticias
-              </Link>
+        {hasNoticias ? (
+          <>
+            {top3.map((n) => (
+              <ArticleCard
+                key={n.id}
+                id={n.id}
+                date={
+                  n?.fechaCreacion
+                    ? new Date(n.fechaCreacion).toLocaleDateString()
+                    : "—"
+                }
+                title={n?.titulo || "Título"}
+                excerpt={excerptFromMd(n?.mdContent || "", 200)}
+              />
+            ))}
+          </>
+        ) : (
+          <div
+            className="card border border-neutral-200 bg-neutral-50 shadow"
+            style={{ minHeight: emptyMinHeight }}
+          >
+            <div className="card-body items-center justify-center">
+              <p className="text-2xl font-extrabold m-0">
+                No hay noticias de momento
+              </p>
             </div>
+          </div>
+        )}
 
-            {/* Aside de últimos partidos */}
-            <aside className="lg:col-span-4">
-              <div className="rounded-3xl bg-neutral-800 text-white p-6 shadow-xl">
-                <h3 className="text-xl font-extrabold">Últimos partidos</h3>
-                <div className="mt-6 space-y-6">
-                  {["3 - 5", "6 - 4", "7 - 5"].map((score, i) => (
-                    <MatchRow key={i} score={score} />
-                  ))}
-                </div>
-                <button className="mt-8 inline-flex w-full justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white hover:bg-sky-500">
-                  Ver torneos
-                </button>
-              </div>
-            </aside>
+        {/* Button stays at the same position */}
+        <Link to="/noticias" className="btn btn-neutral">
+          Ver más noticias
+        </Link>
+      </div>
+
+      {/* Aside de últimos partidos */}
+      <aside className="lg:col-span-4">
+        <div className="card bg-neutral-900 text-neutral-content shadow-xl">
+          <div className="card-body">
+            <h3 className="card-title">Últimos partidos</h3>
+            <div className="mt-2 space-y-6">
+              {["3 - 5", "6 - 4", "7 - 5"].map((score, i) => (
+                <MatchRow key={i} score={score} />
+              ))}
+            </div>
+            <div className="card-actions mt-6">
+              <button className="btn btn-primary w-full">Ver torneos</button>
+            </div>
           </div>
         </div>
-      </section>
+      </aside>
+    </div>
+  </div>
+</section>
     </div>
   );
 }
 
 /* ---------- Subcomponentes ---------- */
 
-function ArticleCard({ id, date, title, excerpt }) {
+// forwardRef so we can measure this card’s height
+const ArticleCard = React.forwardRef(function ArticleCard(
+  { id, date, title, excerpt },
+  ref
+) {
   return (
-    <article className="rounded-3xl border border-neutral-200 bg-white shadow-sm p-6">
-      <h4 className="text-2xl font-extrabold">{title}</h4>
-      <p className="text-sm text-neutral-500 mt-1">{date}</p>
-      <p className="mt-3 text-neutral-700">{excerpt}</p>
-
-      <Link
-        to={`/noticias/${id}`}
-        className="mt-4 inline-flex rounded-md bg-neutral-800 px-4 py-2 text-white text-sm hover:bg-neutral-700"
-      >
-        Ver Más ▷
-      </Link>
-    </article>
+    <div
+      ref={ref}
+      className="card bg-white border border-base-200 shadow"
+    >
+      <div className="card-body">
+        <h4 className="card-title">{title}</h4>
+        <p className="text-sm text-neutral/70">{date}</p>
+        <p className="mt-3 text-neutral-700">{excerpt}</p>
+        <div className="card-actions justify-start">
+          <Link to={`/noticias/${id}`} className="btn btn-neutral btn-sm">
+            Ver Más ▷
+          </Link>
+        </div>
+      </div>
+    </div>
   );
-}
+});
 
 function MatchRow({ score }) {
   return (
     <div className="relative">
       <div className="flex items-center gap-4">
-        <span className="h-10 w-10 rounded-full bg-neutral-600" />
+        <div className="skeleton h-10 w-10 rounded-full" />
         <div className="flex-1">
           <div className="text-sm font-semibold">Jugador A</div>
           <div className="text-2xl font-extrabold">{score}</div>
           <div className="text-sm">Jugador B</div>
         </div>
-        <span className="h-10 w-10 rounded-full bg-neutral-600" />
+        <div className="skeleton h-10 w-10 rounded-full" />
       </div>
-      <div className="mt-3 h-px w-full bg-white/15" />
+      <div className="mt-3 divider m-0" />
     </div>
   );
 }
