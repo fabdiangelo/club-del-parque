@@ -1,75 +1,77 @@
-// StorageConnection.js
 import { storage as defaultStorage } from "../FirebaseServices.js";
 import path from "path";
 import { randomUUID } from "crypto";
 
-function resolveBucketName(storage, bucketName) {
-  return (
-    bucketName ||
-    process.env.GCLOUD_STORAGE_BUCKET ||
-    storage.app?.options?.storageBucket ||
-    "demo-bucket"
+function isEmulator() {
+  return Boolean(
+    process.env.STORAGE_EMULATOR_HOST ||
+    process.env.FIREBASE_EMULATOR_HUB ||
+    process.env.FUNCTIONS_EMULATOR ||
+    process.env.GCLOUD_PROJECT === "demo-project"
   );
 }
 
-function isEmulator() {
-  // Any of these indicates local emulation / places where ACLs won’t work
-  return !!(
-    process.env.FUNCTIONS_EMULATOR ||
-    process.env.FIREBASE_EMULATOR_HUB ||
-    process.env.STORAGE_EMULATOR_HOST ||
-    process.env.GCLOUD_PROJECT === "demo-project"
-  );
+function buildPublicUrl({ bucket, objectPath, token }) {
+  if (isEmulator()) {
+    const raw = process.env.STORAGE_EMULATOR_HOST || "127.0.0.1:9199";
+    const host = raw.startsWith("http") ? raw : `http://${raw}`;
+    return `${host}/v0/b/${bucket}/o/${encodeURIComponent(objectPath)}?alt=media&token=${token}`;
+  }
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(objectPath)}?alt=media&token=${token}`;
+}
+
+function sanitizeFileName(name = "uploaded") {
+  return name.replace(/[^a-z0-9._-]+/gi, "_");
 }
 
 export default class StorageConnection {
   constructor({ storage = defaultStorage, bucketName } = {}) {
     if (!storage) throw new Error("StorageConnection: `storage` is required");
-    const name = resolveBucketName(storage, bucketName);
+    const name =
+      bucketName ||
+      process.env.GCLOUD_STORAGE_BUCKET ||
+      storage.app?.options?.storageBucket ||
+      "demo-bucket";
     this.bucket = storage.bucket(name);
   }
 
-  /**
-   * Uploads a buffer and returns a public URL that works in emulator and prod.
-   * We avoid ACLs and instead use Firebase download tokens.
-   */
-  async uploadBuffer(buffer, destinationPath, contentType = "application/octet-stream", _makePublic = false) {
+  async uploadBuffer(buffer, destinationPath, contentType = "application/octet-stream") {
     const file = this.bucket.file(destinationPath);
     const token = randomUUID();
+
+    console.log("[storage] bucket:", this.bucket.name, "emu:", !!process.env.STORAGE_EMULATOR_HOST, "dest:", destinationPath, "ctype:", contentType);
+    console.time(`[file.save] ${destinationPath}`);
 
     await file.save(buffer, {
       metadata: {
         contentType,
         cacheControl: "public, max-age=31536000",
-        // This is what makes the `v0` URL accessible without auth:
         metadata: { firebaseStorageDownloadTokens: token },
       },
       resumable: false,
-      // Using ACLs (`public: true` / makePublic) won’t work on emulator/UBLA
       public: false,
       validation: false,
     });
 
-    // Always return Firebase download-token URL (works on emulator and prod)
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${this.bucket.name}/o/${encodeURIComponent(
-      destinationPath
-    )}?alt=media&token=${token}`;
+    console.timeEnd(`[file.save] ${destinationPath}`);
+
+    const publicUrl = buildPublicUrl({
+      bucket: this.bucket.name,
+      objectPath: destinationPath,
+      token,
+    });
 
     return { publicUrl, storagePath: destinationPath };
   }
 
   async delete(storagePath) {
     if (!storagePath) return;
-    try {
-      await this.bucket.file(storagePath).delete({ ignoreNotFound: true });
-    } catch {
-      // best-effort
-    }
+    try { await this.bucket.file(storagePath).delete({ ignoreNotFound: true }); } catch {}
   }
 
   buildDestination(baseDir, id, fileName) {
     const ts = Date.now();
-    const clean = (fileName || "image").replace(/\s+/g, "-");
+    const clean = sanitizeFileName(fileName || "image");
     return path.posix.join(baseDir, id, `${ts}-${clean}`);
   }
 }

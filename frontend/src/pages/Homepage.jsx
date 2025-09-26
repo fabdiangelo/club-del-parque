@@ -15,9 +15,9 @@ const NOTICIAS_ENDPOINT =
 const NEWS_GAP_PX = 48;
 
 // Brand accents
-const BRAND_CYAN = "#22d3ee";     // cyan-400-ish
+const BRAND_CYAN = "#22d3ee"; // cyan-400-ish
 const BRAND_GRADIENT_FROM = "#0ea5e9"; // sky-500
-const BRAND_GRADIENT_TO = "#0284c7";   // sky-600
+const BRAND_GRADIENT_TO = "#0284c7"; // sky-600
 
 /* --- Utils --- */
 function stripMarkdown(md = "") {
@@ -141,7 +141,8 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <h2 className="text-4xl font-extrabold">Instalaciones</h2>
           <p className="mt-4 max-w-2xl opacity-95">
-            Texto placeholder sobre las instalaciones. Cámbialo por tu propio contenido.
+            Texto placeholder sobre las instalaciones. Cámbialo por tu propio
+            contenido.
           </p>
 
           <div className="mt-12 grid lg:grid-cols-12 gap-10">
@@ -171,77 +172,95 @@ export default function Home() {
           </div>
         </div>
       </section>
-<section className="bg-white text-neutral-900 py-20">
-  <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
-    <h2 className="text-5xl font-extrabold text-center mb-12">Noticias</h2>
-    <div className="grid lg:grid-cols-12 gap-10">
-      {/* Lista principal */}
-      <div className="lg:col-span-8 space-y-12 relative">
-        {/* Hidden sample card to measure height */}
-        <div className="absolute -left-[9999px] -top-[9999px]" aria-hidden>
-          <ArticleCard
-            ref={measureRef}
-            id="measure"
-            date="01/01/2025"
-            title="Título de ejemplo para medir"
-            excerpt="Contenido de ejemplo para medir la altura de una tarjeta en la sección de noticias."
-          />
-        </div>
 
-        {hasNoticias ? (
-          <>
-            {top3.map((n) => (
-              <ArticleCard
-                key={n.id}
-                id={n.id}
-                date={
-                  n?.fechaCreacion
-                    ? new Date(n.fechaCreacion).toLocaleDateString()
-                    : "—"
-                }
-                title={n?.titulo || "Título"}
-                excerpt={excerptFromMd(n?.mdContent || "", 200)}
-              />
-            ))}
-          </>
-        ) : (
-          <div
-            className="card border border-neutral-200 bg-neutral-50 shadow"
-            style={{ minHeight: emptyMinHeight }}
-          >
-            <div className="card-body items-center justify-center">
-              <p className="text-2xl font-extrabold m-0">
-                No hay noticias de momento
-              </p>
+      {/* NOTICIAS */}
+      <section className="bg-white text-neutral-900 py-20">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
+          <h2 className="text-5xl font-extrabold text-center mb-12">
+            Noticias
+          </h2>
+          <div className="grid lg:grid-cols-12 gap-10">
+            {/* Lista principal */}
+            <div className="lg:col-span-8 space-y-12 relative">
+              {/* Hidden sample card to measure height */}
+              <div
+                className="absolute -left-[9999px] -top-[9999px]"
+                aria-hidden
+              >
+                <ArticleCard
+                  ref={measureRef}
+                  id="measure"
+                  date="01/01/2025"
+                  title="Título de ejemplo para medir"
+                  excerpt="Contenido de ejemplo para medir la altura de una tarjeta en la sección de noticias."
+                />
+              </div>
+
+              {hasNoticias ? (
+                <>
+                  {top3.map((n) => {
+                    const imgs = Array.isArray(n?.imagenes)
+                      ? n.imagenes.map((it) => it?.imageUrl).filter(Boolean)
+                      : [];
+                    if (imgs.length === 0 && n?.imagenUrl)
+                      imgs.push(n.imagenUrl); // legacy fallback
+
+                    return (
+                      <ArticleCard
+                        key={n.id}
+                        id={n.id}
+                        date={
+                          n?.fechaCreacion
+                            ? new Date(n.fechaCreacion).toLocaleDateString()
+                            : "—"
+                        }
+                        title={n?.titulo || "Título"}
+                        excerpt={excerptFromMd(n?.mdContent || "", 200)}
+                        images={imgs}
+                      />
+                    );
+                  })}
+                </>
+              ) : (
+                <div
+                  className="card border border-neutral-200 bg-neutral-50 shadow"
+                  style={{ minHeight: emptyMinHeight }}
+                >
+                  <div className="card-body items-center justify-center">
+                    <p className="text-2xl font-extrabold m-0">
+                      No hay noticias de momento
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Button stays at the same position */}
+              <Link to="/noticias" className="btn btn-neutral">
+                Ver más noticias
+              </Link>
             </div>
+
+            {/* Aside de últimos partidos */}
+            <aside className="lg:col-span-4">
+              <div className="card bg-neutral-900 text-neutral-content shadow-xl">
+                <div className="card-body">
+                  <h3 className="card-title">Últimos partidos</h3>
+                  <div className="mt-2 space-y-6">
+                    {["3 - 5", "6 - 4", "7 - 5"].map((score, i) => (
+                      <MatchRow key={i} score={score} />
+                    ))}
+                  </div>
+                  <div className="card-actions mt-6">
+                    <button className="btn btn-primary w-full">
+                      Ver torneos
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
-        )}
-
-        {/* Button stays at the same position */}
-        <Link to="/noticias" className="btn btn-neutral">
-          Ver más noticias
-        </Link>
-      </div>
-
-      {/* Aside de últimos partidos */}
-      <aside className="lg:col-span-4">
-        <div className="card bg-neutral-900 text-neutral-content shadow-xl">
-          <div className="card-body">
-            <h3 className="card-title">Últimos partidos</h3>
-            <div className="mt-2 space-y-6">
-              {["3 - 5", "6 - 4", "7 - 5"].map((score, i) => (
-                <MatchRow key={i} score={score} />
-              ))}
-            </div>
-            <div className="card-actions mt-6">
-              <button className="btn btn-primary w-full">Ver torneos</button>
-            </div>
-          </div>
         </div>
-      </aside>
-    </div>
-  </div>
-</section>
+      </section>
     </div>
   );
 }
@@ -250,22 +269,88 @@ export default function Home() {
 
 // forwardRef so we can measure this card’s height
 const ArticleCard = React.forwardRef(function ArticleCard(
-  { id, date, title, excerpt },
+  { id, date, title, excerpt, images = [] },
   ref
 ) {
+  const [idx, setIdx] = React.useState(0);
+  const [fadeIn, setFadeIn] = React.useState(true);
+
+  // rotate every 6s (respect reduced motion)
+  React.useEffect(() => {
+    if (!images.length) return;
+    const mediaOK = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (mediaOK?.matches) return;
+
+    const t = setInterval(() => {
+      setFadeIn(false);
+      requestAnimationFrame(() => {
+        setIdx((i) => (i + 1) % images.length);
+        setFadeIn(true);
+      });
+    }, 6000);
+
+    return () => clearInterval(t);
+  }, [images.length]);
+
+  // prefetch next image
+  React.useEffect(() => {
+    const next = images[(idx + 1) % images.length];
+    if (next) {
+      const img = new Image();
+      img.src = next;
+    }
+  }, [idx, images]);
+
+  const current = images[idx];
+
   return (
     <div
       ref={ref}
-      className="card bg-white border border-base-200 shadow"
+      className="card bg-white border border-base-200 shadow overflow-hidden rounded-xl"
     >
-      <div className="card-body">
-        <h4 className="card-title">{title}</h4>
-        <p className="text-sm text-neutral/70">{date}</p>
-        <p className="mt-3 text-neutral-700">{excerpt}</p>
-        <div className="card-actions justify-start">
-          <Link to={`/noticias/${id}`} className="btn btn-neutral btn-sm">
-            Ver Más ▷
-          </Link>
+      {/* Two-column card: left image, right content */}
+      <div className="grid grid-cols-[220px_1fr] md:grid-cols-[280px_1fr]">
+        {/* LEFT: image (with soft fade/rotate) */}
+        <div className="relative h-[160px] md:h-[190px]">
+          {current ? (
+            <>
+              <img
+                key={current}
+                src={current}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{
+                  opacity: fadeIn ? 1 : 0,
+                  transition: "opacity 700ms ease",
+                }}
+                loading="lazy"
+              />
+              {/* optional soft gradient on top of image */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(0deg, rgba(0,0,0,0.05), rgba(0,0,0,0))",
+                }}
+              />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-base-200 grid place-items-center text-sm text-neutral-500">
+              Sin imagen
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT: content */}
+        <div className="p-5 md:p-6">
+          <h4 className="card-title m-0">{title}</h4>
+          <p className="text-sm text-neutral/70 mt-1">{date}</p>
+          <p className="mt-3 text-neutral-700 line-clamp-3">{excerpt}</p>
+          <div className="card-actions mt-4">
+            <Link to={`/noticias/${id}`} className="btn btn-neutral btn-sm">
+              Ver Más ▷
+            </Link>
+          </div>
         </div>
       </div>
     </div>

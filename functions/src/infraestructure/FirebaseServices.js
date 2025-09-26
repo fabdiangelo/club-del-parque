@@ -1,21 +1,34 @@
+// FirebaseServices.js
 import admin from "firebase-admin";
+
+const projectId =
+  process.env.GCLOUD_PROJECT ||
+  process.env.GOOGLE_CLOUD_PROJECT ||
+  "demo-project";
+
+const storageBucket =
+  process.env.GCLOUD_STORAGE_BUCKET ||
+  `${projectId}.appspot.com`;
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    storageBucket: process.env.GCLOUD_STORAGE_BUCKET,
+    projectId,
+    storageBucket
   });
-} else {
-  admin.app();
 }
 
-const auth = admin.auth();
-const db = admin.firestore();
-const storage = admin.storage();
+// Quick logs to confirm emulator wiring at boot
+console.log("[admin] projectId =", projectId);
+console.log("[admin] storageBucket =", storageBucket);
+console.log("[admin] STORAGE_EMULATOR_HOST =", process.env.STORAGE_EMULATOR_HOST || "(not set)");
 
-const FieldValue = admin.firestore.FieldValue;
-const Timestamp = admin.firestore.Timestamp;
+export const auth = admin.auth();
+export const db = admin.firestore();
+export const storage = admin.storage();
+
+export const FieldValue = admin.firestore.FieldValue;
+export const Timestamp = admin.firestore.Timestamp;
 
 db.settings?.({ ignoreUndefinedProperties: true });
 
-export { auth, db, storage, FieldValue, Timestamp };
 export default { auth, db, storage, FieldValue, Timestamp };

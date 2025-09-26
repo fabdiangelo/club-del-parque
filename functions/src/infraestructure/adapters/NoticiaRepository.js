@@ -133,40 +133,48 @@ export default class NoticiaRepository extends INoticiaRepository {
     return this.update(id, {}, null, { removeImage: true });
   }
 
-  /** NEW — push one image into `imagenes` array */
-  async addImage(id, image) {
-    const normalized = normalizeImageInput(image);
-    if (!normalized) throw new Error("addImage: invalid image");
 
-    // Upload
-    const fname = `${Date.now()}-${sanitizeFileName(normalized.fileName)}`;
-    const dest = this.storage.buildDestination("noticias", id, fname);
-    const uploaded = await this.storage.uploadBuffer(
-      normalized.imageBuffer,
-      dest,
-      normalized.contentType || "image/jpeg",
-      true
-    );
-    const entry = {
-      imageUrl: uploaded.publicUrl,
-      imagePath: uploaded.storagePath,
-      uploadedAt: this.db.serverTimestamp?.() ?? new Date().toISOString(),
-    };
+async addImage(id, image) {
+  const normalized = normalizeImageInput(image);
+  if (!normalized) throw new Error("addImage: invalid image");
 
-    // Read current doc, append
-    const snap = await this.db.getItem(COLLECTION, id);
-    if (!snap || !snap.exists) throw new Error("Noticia not found");
-    const data = snap.data() || {};
-    const imagenes = Array.isArray(data.imagenes) ? data.imagenes : [];
-    imagenes.push(entry);
-
-    await this.db.updateItem(COLLECTION, id, {
-      imagenes,
-      fechaActualizacion: this.db.serverTimestamp?.() ?? new Date().toISOString(),
-    });
-
-    return entry; // { imageUrl, imagePath, uploadedAt }
+  // Ensure the noticia exists
+  const snap = await this.db.getItem(COLLECTION, id);
+  if (!snap || !snap.exists) {
+    throw new Error(`Noticia not found: ${id}`);
   }
+  const data = snap.data() || {};
+  const imagenes = Array.isArray(data.imagenes) ? data.imagenes.slice() : [];
+
+  // Upload
+  const fname = `${Date.now()}-${sanitizeFileName(normalized.fileName)}`;
+  const dest = this.storage.buildDestination("noticias", id, fname);
+  const uploaded = await this.storage.uploadBuffer(
+    normalized.imageBuffer,
+    dest,
+    normalized.contentType || "image/jpeg",
+    true
+  );
+
+  // IMPORTANT: Do NOT use serverTimestamp() inside arrays
+  const nowIso = new Date().toISOString(); // store ISO; or use Date.now() if you prefer millis
+  const entry = {
+    imageUrl: uploaded.publicUrl,
+    imagePath: uploaded.storagePath,
+    uploadedAt: nowIso, // <-- real value, not FieldValue.serverTimestamp()
+  };
+
+  imagenes.push(entry);
+
+  await this.db.updateItem(COLLECTION, id, {
+    imagenes,
+    // serverTimestamp is fine at top-level
+    fechaActualizacion: this.db.serverTimestamp?.() ?? new Date().toISOString(),
+  });
+
+  return entry;
+}
+
 
   /** NEW — remove a specific image either by imagePath or by index */
   async removeImageBy(id, { imagePath, index } = {}) {

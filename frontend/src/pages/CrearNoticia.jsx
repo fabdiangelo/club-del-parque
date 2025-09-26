@@ -24,7 +24,7 @@ export default function CrearNoticia() {
     tipo: "",
     administradorID: "",
     mdContent: "",
-    imagenes: [], // <-- multiple files
+    imagenes: [], // <-- multiple File objects
   });
 
   // EDIT modal state
@@ -35,7 +35,7 @@ export default function CrearNoticia() {
     tipo: "",
     administradorID: "",
     mdContent: "",
-    imagenesNew: [], // <-- new files to add on save
+    imagenesNew: [], // <-- new File objects
     open: false,
   });
 
@@ -77,40 +77,62 @@ export default function CrearNoticia() {
     fetchNoticias();
   }, []);
 
-  /* ---------------- Images helpers ---------------- */
-  async function uploadImages(noticiaId, files) {
-    if (!files || files.length === 0) return null;
-    const fd = new FormData();
-    // IMPORTANT: field name must be 'imagenes'
-    for (const f of files) {
-      if (f) fd.append("imagenes", f);
+  /* ---------------- Images helpers (JSON base64) ---------------- */
+  async function fileToBase64(file) {
+    // Robust base64 (no giant strings through FileReader)
+    const buf = await file.arrayBuffer();
+    // Convert ArrayBuffer -> base64 in chunks to avoid call stack issues
+    let binary = "";
+    const bytes = new Uint8Array(buf);
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(
+        null,
+        bytes.subarray(i, i + chunkSize)
+      );
     }
-    const res = await fetch(`${API_BASE}/noticias/${noticiaId}/imagenes`, {
+    // btoa expects binary string
+    return btoa(binary);
+  }
+
+  async function uploadImagesJson(noticiaId, files) {
+    if (!files || files.length === 0) return null;
+    const payload = {
+      images: await Promise.all(
+        files.map(async (f) => ({
+          filename: f.name || "image",
+          contentType: f.type || "application/octet-stream",
+          dataBase64: await fileToBase64(f),
+        }))
+      ),
+    };
+    const res = await fetch(`${API_BASE}/noticias/${noticiaId}/imagenes-json`, {
       method: "POST",
-      body: fd,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const t = await safeText(res);
       throw new Error(
-        `POST /noticias/${noticiaId}/imagenes ${res.status} ${t}`
+        `POST /noticias/${noticiaId}/imagenes-json ${res.status} ${t}`
       );
     }
-    return res.json(); // e.g. { added: [ { imageUrl, imagePath }, ... ] }
+    return res.json();
   }
 
   async function removeImageByPath(noticiaId, imagePath) {
-    const res = await fetch(`${API_BASE}/noticias/${noticiaId}/imagenes`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imagePath }),
-    });
+    const url = new URL(
+      `${API_BASE}/noticias/${encodeURIComponent(noticiaId)}/imagenes`
+    );
+    url.searchParams.set("imagePath", imagePath);
+    const res = await fetch(url.toString(), { method: "DELETE" });
     if (!res.ok) {
       const t = await safeText(res);
       throw new Error(
         `DELETE /noticias/${noticiaId}/imagenes ${res.status} ${t}`
       );
     }
-    return res.json(); // { ok: true }
+    return res.json();
   }
 
   /* ---------------- CRUD actions ---------------- */
@@ -140,9 +162,9 @@ export default function CrearNoticia() {
       const created = await res.json(); // { id }
       const newId = created?.id;
 
-      // 2) Upload images (optional, multiple)
+      // 2) Upload images as JSON (optional, multiple)
       if (newId && form.imagenes?.length) {
-        await uploadImages(newId, form.imagenes);
+        await uploadImagesJson(newId, form.imagenes);
       }
 
       await fetchNoticias();
@@ -167,7 +189,9 @@ export default function CrearNoticia() {
     setBusyId(id);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/noticias/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/noticias/${id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error(`DELETE /noticias/${id} ${res.status}`);
       await fetchNoticias();
       if (selected?.id === id) setSelected(null);
@@ -221,9 +245,9 @@ export default function CrearNoticia() {
         throw new Error(`PUT /noticias/${edit.id} ${res.status} ${t}`);
       }
 
-      // 2) Upload any newly selected images
+      // 2) Upload any newly selected images (JSON base64)
       if (edit.imagenesNew?.length) {
-        await uploadImages(edit.id, edit.imagenesNew);
+        await uploadImagesJson(edit.id, edit.imagenesNew);
       }
 
       await fetchNoticias();
@@ -242,7 +266,7 @@ export default function CrearNoticia() {
     setBusyId(id);
     setError("");
     try {
-      await uploadImages(id, files);
+      await uploadImagesJson(id, files);
       await fetchNoticias();
       if (selected?.id === id) await fetchNoticiaById(id);
       if (addImagesRefs.current[id]) addImagesRefs.current[id].value = "";
@@ -403,7 +427,9 @@ export default function CrearNoticia() {
 
                     <div className="p-4 space-y-2">
                       <h3 className="text-lg font-bold">{n.titulo || "—"}</h3>
-                      <p className="text-sm text-neutral-300">{n.nombre || "—"}</p>
+                      <p className="text-sm text-neutral-300">
+                        {n.nombre || "—"}
+                      </p>
                       <p className="text-xs text-neutral-400">
                         {fmtDate(n.fechaCreacion)} · {n.tipo || "—"}
                       </p>
@@ -478,7 +504,8 @@ export default function CrearNoticia() {
               </p>
 
               {/* Gallery if multiple images exist */}
-              {Array.isArray(selected.imagenes) && selected.imagenes.length > 0 ? (
+              {Array.isArray(selected.imagenes) &&
+              selected.imagenes.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {selected.imagenes.map((img, idx) => (
                     <div
@@ -491,7 +518,9 @@ export default function CrearNoticia() {
                         alt={`img-${idx}`}
                       />
                       <button
-                        onClick={() => onRemoveImage(selected.id, img.imagePath)}
+                        onClick={() =>
+                          onRemoveImage(selected.id, img.imagePath)
+                        }
                         disabled={busyId === selected.id}
                         className="absolute top-2 right-2 text-xs rounded-md bg-red-600 px-2 py-1 opacity-0 group-hover:opacity-100 transition"
                         title="Eliminar imagen"

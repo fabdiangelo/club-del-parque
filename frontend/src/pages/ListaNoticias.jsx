@@ -134,15 +134,22 @@ export default function Noticias() {
                   ? new Date(n.fechaCreacion).toLocaleDateString()
                   : "—";
                 const excerpt = excerptFromMd(n?.mdContent || "", 200);
+
+                // 👇 Prefer first from array, fallback to legacy imagenUrl
+                const firstImg =
+                  (Array.isArray(n.imagenes) && n.imagenes[0]?.imageUrl) ||
+                  n.imagenUrl ||
+                  null;
+
                 return (
                   <div
                     key={n.id}
                     className="card bg-base-100 border border-base-200 shadow-sm"
                   >
-                    {n?.imagenUrl ? (
+                    {firstImg ? (
                       <figure className="aspect-[16/9] overflow-hidden">
                         <img
-                          src={n.imagenUrl}
+                          src={firstImg}
                           alt={n?.titulo || "Noticia"}
                           className="w-full h-full object-cover"
                           loading="lazy"
