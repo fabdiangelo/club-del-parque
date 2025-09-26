@@ -4,7 +4,11 @@ import { useAuth } from "../contexts/AuthProvider";
 
 import Navbar from "../components/Navbar.jsx";
 
-import { loginAndSendToBackend, signInWithGoogle } from "../utils/LoginProviders.js";
+import { 
+  loginAndSendToBackend, 
+  signInWithGoogle,
+  linkGoogleToExistingAccount, 
+} from "../utils/LoginProviders.js";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -17,18 +21,78 @@ function Login() {
 
   const handleGoogleLogin = async () => {
     setMsg(null);
+    setLoading(true);
     try {
-      const result = await signInWithGoogle();
-      console.log("Google auth result:", result);
-      if(!result.user.uid){
-        setMsg("Algo salió mal")
-      }else{
+      const res = await signInWithGoogle();
+
+      // Caso OK: ya autenticado con Google
+      if (res.ok) {
+        // Enviamos idToken al backend para crear sesión (cookie httpOnly)
+        const response = await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken: res.idToken }),
+        });
+        if (!response.ok) {
+          // Si el usuario no existe, mostrar mensaje claro
+          const data = await response.json().catch(() => null);
+          if (data && data.error && data.error.includes("No existe una cuenta previa")) {
+            setMsg("No existe una cuenta previa para este usuario. Debes registrarte primero con email y contraseña.");
+            setLoading(false);
+            return;
+          }
+          const text = await response.text();
+          throw new Error(text || "Backend google login failed");
+        }
         await refetchUser();
         navigate("/");
+        return;
+      }
+
+      // Caso account exists -> necesitamos linkear
+      if (res.accountExists) {
+        const { email, pendingCred } = res;
+        // pedir contraseña al usuario (reemplazar por modal)
+        const pwd = window.prompt(
+          `Se encontró una cuenta con ${email}. Ingresa tu contraseña para vincular Google a la cuenta existente:`
+        );
+        if (!pwd) {
+          setMsg("Vinculación cancelada");
+          setLoading(false);
+          return;
+        }
+
+        // Autenticar con email/password
+        const cred = await signInWithEmailAndPassword(auth, email, pwd);
+        // Linkear la credencial pendiente (google) con este usuario
+        await linkGoogleToExistingAccount(cred.user, pendingCred);
+
+        // Tras linkear, obtenemos idToken y lo mandamos al backend
+        const idToken = await cred.user.getIdToken(true);
+        const response = await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          if (data && data.error && data.error.includes("No existe una cuenta previa")) {
+            setMsg("No existe una cuenta previa para este usuario. Debes registrarte primero con email y contraseña.");
+            setLoading(false);
+            return;
+          }
+          const text = await response.text();
+          throw new Error(text || "Backend google login failed");
+        }
+        await refetchUser();
+        navigate("/");
+        return;
       }
     } catch (err) {
-      console.error(Object.keys(err.customData));
-      setMsg(err.code.replace(/-/g, ' ').replace('auth/', ''))
+      console.error("Error en signInWithGoogle flow:", err);
+      setMsg(err.message || "Error en login con Google");
     } finally {
       setLoading(false);
     }

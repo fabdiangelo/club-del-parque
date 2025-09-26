@@ -15,4 +15,13 @@ export default class AuthConnection{
     async decodeToken(idToken){
         return await this.auth.verifyIdToken(idToken);
     }
+
+    async setRole(uid, rol){
+        console.log(`Setting role ${rol} for user ${uid}`);
+        return await this.auth.setCustomUserClaims(uid, { rol });
+    }
+
+    async getUserByEmail(email){
+        return await this.auth.getUserByEmail(email);
+    }
 }

@@ -14,6 +14,7 @@ export default class Registrado extends Usuario{
             estado: this.estado,
             nacimiento: this.nacimiento,
             genero: this.genero,
+            rol: this.rol,
         };
     }
 }

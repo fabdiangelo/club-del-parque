@@ -20,19 +20,36 @@ class Login {
       const decoded = await this.auth.decodeToken(idToken);
       const uid = decoded.uid;
       const email = decoded.email || null;
-      const rol = decoded.rol;
+      console.log(decoded)
+      let rol = decoded.rol;
 
+      // Solo permitir login si el usuario existe en la base de datos
+      let user = null;
       let collection = '';
-      switch (rol){
+      if (!rol) {
+        // Buscar en usuarios por defecto si no hay rol
+        const allData = await this.db.getItem("usuarios", uid);
+        if (!allData) {
+          throw new Error("No existe una cuenta previa para este usuario");
+        }
+        console.log(allData)
+        rol = allData.rol;
+        await this.auth.setRole(uid, rol);
+      }
+
+      switch (rol) {
         case 'administrador': collection = 'administradores'; break;
         case 'federado': collection = 'federados'; break;
         case 'usuario': collection = 'usuarios'; break;
       }
-      if(!collection){
-        throw new Error("El usuario no tiene un rol asignado")
+      if (!collection) {
+        throw new Error("El usuario no tiene un rol asignado");
       }
-      let user = await this.db.getItem(collection, uid);
-      console.log(user)
+      user = await this.db.getItem(collection, uid);
+      if (!user) {
+        throw new Error("No existe una cuenta previa para este usuario");
+      }
+      console.log(user);
       const payload = {
         uid,
         email,
@@ -40,10 +57,8 @@ class Login {
         nombre: user.nombre,
       };
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "2h" });
-      
       return { token, user: payload };
-    
-    } catch (err){
+    } catch (err) {
       console.error("auth verify error:", err);
       throw err;
     }

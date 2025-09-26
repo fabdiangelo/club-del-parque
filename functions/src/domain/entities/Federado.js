@@ -20,6 +20,7 @@ export default class Federado extends Usuario{
             estado: this.estado,
             nacimiento: this.nacimiento,
             genero: this.genero,
+            rol: this.rol,
             chatsIDs: this.chatsIDs,
             subscripcionesIDs: this.subscripcionesIDs,
             federadoCampeonatosIDs: this.federadoCampeonatosIDs,

@@ -12,5 +12,6 @@ export default class Usuario {
     this.nacimiento = nacimiento;
     this.genero = genero;
     this.notificacionesIDs = [];
+    this.rol = "usuario";
   }
 }

@@ -1,5 +1,12 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  connectAuthEmulator,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  linkWithCredential,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDUm2HjqeRufuyFS9SbvDCXJhQycDUPnjI",
@@ -37,21 +44,38 @@ export const loginAndSendToBackend = async (email, password) => {
 
 export const googleProvider = new GoogleAuthProvider();
 
-export const signInWithGoogle = async () => {
+/**
+ * Intenta login con Google. Puede devolver:
+ * - { ok: true, idToken } en caso de éxito completo
+ * - { accountExists: true, email, pendingCred } si existe cuenta con otro proveedor
+ * - lanza error en otro caso
+ */
+export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    console.log("Google sign-in result:", result);
     const idToken = await result.user.getIdToken();
-    
-    const response = await fetch("api/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ idToken })
-    });
-
-    return await response.json();
+    return { ok: true, idToken, user: result.user };
   } catch (error) {
-    console.error("Error en signInWithGoogle:", error);
+    // Caso: email ya existe pero con otro proveedor (p.ej. password)
+    if (error.code === "auth/account-exists-with-different-credential") {
+      const email = error.customData?.email || null;
+      const pendingCred = GoogleAuthProvider.credentialFromError(error);
+      return { accountExists: true, email, pendingCred };
+    }
+    // Otros errores
     throw error;
   }
-};
+}
+
+/**
+ * Helper que vincula la credencial pendiente (Google) a la cuenta actual del usuario
+ * - currentUser: usuario ya autenticado (con password)
+ * - pendingCred: credential retornado por GoogleProvider.credentialFromError
+ */
+export async function linkGoogleToExistingAccount(currentUser, pendingCred) {
+  // linkWithCredential hace que el proveedor se añada al usuario
+  const linked = await linkWithCredential(currentUser, pendingCred);
+  // linked.user ahora tiene el provider agregado
+  return linked;
+}
