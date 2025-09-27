@@ -25,7 +25,7 @@ function App() {
       /> */}
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
-      <Route path="/report" element={<SistemaReporte />} />
+      <Route path="/reportes" element={<SistemaReporte />} />
     </Routes>
   );
 }
