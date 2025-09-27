@@ -8,6 +8,9 @@ export default function Perfil() {
   const [userData, setUserData] = useState(null);
   const { user, loading, error, logout } = useAuth();
   const navigate = useNavigate();
+  const [showFederateModal, setShowFederateModal] = useState(false);
+  const [federateText, setFederateText] = useState("");
+  const [federateLoading, setFederateLoading] = useState(false);
 
   const handleLogout = async () => {
     const ok = await logout();
@@ -23,7 +26,6 @@ export default function Perfil() {
       setLoadingUser(false);
       return;
     }
-
     const fetchUserData = async () => {
       setLoadingUser(true);
       try {
@@ -32,18 +34,15 @@ export default function Perfil() {
           credentials: "include",
           headers: { Accept: "application/json" },
         });
-
         if (res.status === 204 || res.status === 401) {
           setUserData(null);
           setLoadingUser(false);
           return;
         }
-
         if (!res.ok) {
           const txt = await res.text();
           throw new Error(`Unexpected /usuario response: ${res.status} ${txt}`);
         }
-
         const data = await res.json();
         setUserData(data);
         setLoadingUser(false);
@@ -53,9 +52,42 @@ export default function Perfil() {
         setLoadingUser(false);
       }
     };
-
     fetchUserData();
   }, [user]);
+
+  // Modal federar
+  const openFederateModal = () => {
+    setFederateText("");
+    setShowFederateModal(true);
+  };
+  const closeFederateModal = () => {
+    setShowFederateModal(false);
+    setFederateLoading(false);
+  };
+
+  const handleFederateSubmit = async (e) => {
+    e.preventDefault();
+    if (!user || !federateText.trim()) return;
+    setFederateLoading(true);
+    try {
+      const res = await fetch(`api/usuario/${user.uid}/solicitud-federacion`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ justificante: federateText }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `Unexpected /federar response: ${res.status}`);
+      }
+      closeFederateModal();
+      alert("Solicitud de federación enviada. Serás notificado por email cuando se valide tu federación.");
+    } catch (err) {
+      setFederateLoading(false);
+      console.error("Federation request error:", err);
+      alert(`Error al solicitar federación: ${err.message || String(err)}`);
+    }
+  };
 
   // Loading state
   if (loading || loadingUser) {
@@ -131,6 +163,9 @@ export default function Perfil() {
                   <button className="btn btn-sm btn-error" onClick={handleLogout}>
                     Cerrar sesión
                   </button>
+                  <button className="btn btn-sm btn-info" onClick={openFederateModal}>
+                    Solicitar Federación
+                  </button>
                 </div>
               </div>
             </div>
@@ -186,10 +221,55 @@ export default function Perfil() {
           </div>
         </div>
 
+        {/* Modal federar */}
+        {showFederateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-base-100 rounded-lg shadow-lg max-w-md w-full p-6 relative">
+              <button
+                className="absolute top-2 right-2 btn btn-xs btn-circle btn-ghost"
+                onClick={closeFederateModal}
+                aria-label="Cerrar"
+              >✕</button>
+              <h2 className="text-xl font-bold mb-2">Solicitud de Federación</h2>
+              <p className="mb-4 text-sm text-gray-700">
+                <strong>Importante:</strong> Los pagos <span className="text-error">no se realizan por la aplicación</span>.<br />
+                Debes ingresar un justificante o explicación que permita a los administradores identificar el pago y validar tu federación.<br />
+                Serás notificado por email cuando tu federación sea validada.
+              </p>
+              <form onSubmit={handleFederateSubmit}>
+                <label className="block mb-2 text-sm font-medium" htmlFor="federateJustificante">
+                  Justificante o explicación del pago
+                </label>
+                <textarea
+                  id="federateJustificante"
+                  className="textarea textarea-bordered w-full mb-4"
+                  rows={3}
+                  value={federateText}
+                  onChange={e => setFederateText(e.target.value)}
+                  required
+                  placeholder="Ejemplo: Transferencia bancaria, fecha, monto, referencia, etc."
+                  disabled={federateLoading}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={closeFederateModal}
+                    disabled={federateLoading}
+                  >Cancelar</button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={federateLoading || !federateText.trim()}
+                  >{federateLoading ? "Enviando..." : "Enviar solicitud"}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 flex justify-center">
-          <button className="btn btn-outline" onClick={() => navigate("/")}>
-            Volver
-          </button>
+          <button className="btn btn-outline" onClick={() => navigate("/")}>Volver</button>
         </div>
       </div>
     </div>

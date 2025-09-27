@@ -14,7 +14,7 @@ class Login {
    * administradores -> federados -> usuarios
    * Devuelve objeto con role y profile (datos del documento si existe)
    */
-  async execute(idToken) {
+  async execute(idToken, conGoogle = false) {
     // Verifica token (lanza si inválido/expirado)
     try{
       const decoded = await this.auth.decodeToken(idToken);
@@ -28,7 +28,11 @@ class Login {
       let collection = '';
       if (!rol) {
         // Buscar en usuarios por defecto si no hay rol
-        const allData = await this.db.getItem("usuarios", uid);
+        let allData = await this.db.getItem("usuarios", uid);
+        if (!allData) {
+          allData = await this.db.getItem("administradores", uid);
+        }
+        console.log(allData)
         if (!allData) {
           throw new Error("No existe una cuenta previa para este usuario");
         }
