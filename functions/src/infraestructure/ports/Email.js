@@ -5,10 +5,6 @@ export default class Email {
     constructor() {
         sgMail.setApiKey(process.env.EMAILAPIKEY);
     }
-
-
-
-
     
     enviarEmail = async(destinatario, asunto, mensaje) => {
         if (!destinatario || !asunto || !mensaje) {
