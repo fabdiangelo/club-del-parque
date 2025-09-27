@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 import Navbar from "../components/Navbar.jsx";
+import SinSesion from "../components/SinSesion.jsx";
 
 export default function Perfil() {
   const [loadingUser, setLoadingUser] = useState(true);
@@ -71,24 +72,7 @@ export default function Perfil() {
 
   // Not authenticated
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200 p-6">
-        <div className="card w-full max-w-md bg-base-100 shadow-md">
-          <div className="card-body text-center">
-            <h2 className="card-title">No hay sesión activa</h2>
-            <p>Inicia sesión para ver los detalles de tu perfil.</p>
-            <div className="card-actions justify-center mt-4">
-              <button
-                className="btn btn-primary"
-                onClick={() => navigate("/login")}
-              >
-                Ir a Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return ( <SinSesion /> );
   }
 
   // Authenticated view

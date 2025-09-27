@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthProvider";
+import SoloAdmin from "../components/SoloAdmin";
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -16,6 +18,8 @@ export default function CrearNoticia() {
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState(null);
+  const { user } = useAuth();
+  
 
   // CREATE form state
   const [form, setForm] = useState({
@@ -292,6 +296,12 @@ export default function CrearNoticia() {
       setBusyId(null);
     }
   };
+
+  // Not authenticated
+    if (!user || user.rol !== 'administrador') {
+      console.log(user)
+      return ( <SoloAdmin /> );
+    }
 
   /* ---------------- Render ---------------- */
   return (
