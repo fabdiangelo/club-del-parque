@@ -1,59 +1,70 @@
 
-import { ChatRepository } from "../infraestructure/adapters/ChatRepository";
-import { CrearChat } from "../usecases/Chat/CrearChat";
-import { EnviarMensaje } from "../usecases/Chat/EnviarMensaje";
-import { EscucharNuevosMensajes } from "../usecases/Chat/EscucharNuevosMensajes";
-import { ObtenerChatPorId } from "../usecases/Chat/ObtenerChatPorId";
-import { ObtenerChatsPorUsuario } from "../usecases/Chat/ObtenerChatsPorUsuario";
-import { ObtenerMensajes } from "../usecases/Chat/ObtenerMensajes";
+import { ChatRepository } from "../infraestructure/adapters/ChatRepository.js";
+import { CrearChat } from "../usecases/Chat/CrearChat.js";
+import { EnviarMensaje } from "../usecases/Chat/EnviarMensaje.js";
+import { EscucharNuevosMensajes } from "../usecases/Chat/EscucharNuevosMensajes.js";
+import { ObtenerChatPorId } from "../usecases/Chat/ObtenerChatPorId.js";
+import { ObtenerChatsPorUsuario } from "../usecases/Chat/ObtenerChatsPorUsuario.js";
+import { ObtenerMensajes } from "../usecases/Chat/ObtenerMensajes.js";
 
 class ChatController {
     constructor() {
-        this.obtenerChatPorId = new ObtenerChatPorId(new ChatRepository());
-        this.enviarMensaje = new EnviarMensaje(new ChatRepository());
-        this.obtenerMensajes = new ObtenerMensajes(new ChatRepository());
-        this.escucharNuevosMensajes = new EscucharNuevosMensajes(new ChatRepository());
-        this.obtenerChatsPorUsuario = new ObtenerChatsPorUsuario(new ChatRepository());
-        this.crearChat = new CrearChat(new ChatRepository());
+        this.obtenerChatPorIdUseCase = new ObtenerChatPorId(new ChatRepository());
+        this.enviarMensajeUseCase = new EnviarMensaje(new ChatRepository());
+        this.obtenerMensajesUseCase = new ObtenerMensajes(new ChatRepository());
+        this.escucharNuevosMensajesUseCase = new EscucharNuevosMensajes(new ChatRepository());
+        this.obtenerChatsPorUsuarioUseCase = new ObtenerChatsPorUsuario(new ChatRepository());
+        this.crearChatUseCase = new CrearChat(new ChatRepository());
     
     }
 
-    async getChatById(req, res) {
+    prueba() {
+        return "Hello World";
+    }
+
+    getChatById = async(req, res) => {
         const { chatId } = req.params;
-        const chat = await this.obtenerChatPorId.execute(chatId);
+        const chat = await this.obtenerChatPorIdUseCase.execute(chatId);
         res.json(chat);
     }
 
-    async crearChat(req, res) {
-        const { participantes } = req.body;
-        const nuevoChat = await this.crearChat.execute(participantes);
-        res.status(201).json(nuevoChat);
+    crearChat = async(req, res) => {
+        try {
+
+            const { participantes } = req.body;
+            const nuevoChat = await this.crearChatUseCase.execute(participantes);
+            return res.status(201).json(nuevoChat);
+        } catch (error) {
+            console.error("Error creando chat:", error);
+            return res.status(500).json({ error: "Error creando chat" });
+        }
+
     }
 
-    async enviarMensaje(req, res) {
+    enviarMensaje = async(req, res) => {
         const { chatId, message } = req.body;
-        await this.enviarMensaje.execute(chatId, message);
-        res.status(201).send();
+        await this.enviarMensajeUseCase.execute(chatId, message);
+        return res.status(201).send();
     }
 
-    async getMensajes(req, res) {
+    getMensajes = async(req, res) => {
         const { chatId } = req.params;
-        const mensajes = await this.obtenerMensajes.execute(chatId);
-        res.json(mensajes);
+        const mensajes = await this.obtenerMensajesUseCase.execute(chatId);
+        return res.json(mensajes);
     }
 
-    async escucharPorMensajes(req, res) {
+    escucharPorMensajes = async(req, res) => {
         const { chatId } = req.params;
         const callback = (mensaje) => {
             res.json(mensaje);
         };
-        await this.escucharNuevosMensajes.execute(chatId, callback);
+        return await this.escucharNuevosMensajesUseCase.execute(chatId, callback);
     }
 
-    async getChatByUser(req, res) {
+    getChatByUser = async(req, res) => {
         const { userId } = req.params;
-        const chats = await this.obtenerChatsPorUsuario.execute(userId);
-        res.json(chats);
+        const chats = await this.obtenerChatsPorUsuarioUseCase.execute(userId);
+        return res.json(chats);
     }
 }
 

@@ -1,12 +1,12 @@
-import { ChatPort } from "../ports/ChatPort";
+import { ChatPort } from "../ports/ChatPort.js";
 
 export class ChatRepository {
     constructor() {
         this.chatport = new ChatPort();
     }
 
-    async crearChat(nuevoChat) {
-        await this.chatport.crearChat(nuevoChat);
+    async crearChat(participantes) {
+        await this.chatport.crearChat(participantes);
     }
 
     async obtenerMensajes(chatId) {

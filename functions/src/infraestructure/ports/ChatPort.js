@@ -65,7 +65,7 @@ export class ChatPort {
         } catch(error) {
             console.error("Error buscando chat por ID:", error);
 
-            throw new error;
+            throw error;
         }
     }
 

@@ -1,9 +1,42 @@
 import { useState } from 'react';
 import NavbarBlanco from '../components/NavbarBlanco';
 import '../styles/Chats.css';
+import { useEffect } from 'react';
+import { useAuth } from '../contexts/AuthProvider';
 
 const Chats = () => {
     const [selectedChat, setSelectedChat] = useState(null);
+    const { user } = useAuth();
+
+    console.log(user);
+
+    const crearChat = async (participante1, participante2) => {
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({participante1, participante2}),
+            })
+
+            if (!response.ok) {
+                throw new Error('Error al crear chat');
+            }
+
+            const data = await response.json();
+            setChats(prevChats => [...prevChats, data]);
+
+            console.log("SE HA CREADO UN NUEVO CHAT CON LOS USUARIOS" + participante1 + participante2)
+        } catch (error) {
+            console.info("Error al crear chat:", error);
+            throw error;
+        }
+    }
+
+    
 
     // Datos de ejemplo para los chats
     const [chats, setChats] = useState([
@@ -82,9 +115,11 @@ const Chats = () => {
     return (
         <div className="chats-page">
 
-            
+           
+
             <div className="chats-layout">
                 {/* COLUMNA IZQUIERDA - Lista de Chats */}
+                 <button onClick={() => crearChat(user.email, 'nuevo_participante@example.com')}>Crear Chat</button>
                 <div className="chats-sidebar">
                     <div className="chats-header">
                         <h2>Chats</h2>

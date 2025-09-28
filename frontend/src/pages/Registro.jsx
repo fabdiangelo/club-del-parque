@@ -33,6 +33,8 @@ function Registro() {
     // setError("");
     setSuccess("");
 
+    console.log("Registrando usuario:", formData);
+
     try {
       const ok = await register("api/auth/register", formData)
       if(!ok){

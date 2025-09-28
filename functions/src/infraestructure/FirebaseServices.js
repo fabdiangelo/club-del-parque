@@ -14,4 +14,4 @@ const FieldValue = admin.firestore.FieldValue;
 db.settings?.({ ignoreUndefinedProperties: true });
 
 
-export { auth, db };
+export { auth, db, FieldValue };
