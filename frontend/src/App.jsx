@@ -7,6 +7,7 @@ import Perfil from './pages/Perfil';
 import Noticias from './pages/ListaNoticias';
 import NoticiaDetalle from './pages/NoticiaDetalle';
 import SistemaReporte from './pages/SistemaReporte';
+import Chats from './pages/Chats';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <Route path="/register" element={<Registro />} />
       <Route path="/login" element={<Login />} />
       <Route path="/perfil" element={<Perfil />} />
+      <Route path="/chats" element={<Chats />} />
       {/* <Route
         path="/"
         element={

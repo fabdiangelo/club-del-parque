@@ -19,6 +19,7 @@ import AuthController from "./src/controllers/AuthController.js";
 import ReporteController from "./src/controllers/ReporteController.js";
 import SendWhatsappController from "./src/controllers/SendWhatsappController.js";
 import EmailController from "./src/controllers/EmailController.js";
+import ChatController from "./src/controllers/ChatController.js";
 
 setGlobalOptions({ maxInstances: 10 });
 
@@ -56,4 +57,12 @@ app.get('/reportes', (req, res) => ReporteController.obtenerReportes(req, res));
 app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
 app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
 // Exportar función HTTP
+
+// Chat
+
+app.get('/chats', (req, res) => ChatController.obtenerChatsPorUsuario(req, res));
+app.post('/chats', (req, res) => ChatController.crearChat(req, res));
+app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
+app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
+app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
 export const api = functions.https.onRequest(app);

@@ -9,7 +9,9 @@ if (!admin.apps.length) {
 
 const auth = admin.auth();
 const db = admin.firestore();
+const FieldValue = admin.firestore.FieldValue;
 
 db.settings?.({ ignoreUndefinedProperties: true });
+
 
 export { auth, db };
