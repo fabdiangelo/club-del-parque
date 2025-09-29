@@ -6,7 +6,12 @@ export class ChatRepository {
     }
 
     async crearChat(participantes) {
-        await this.chatport.crearChat(participantes);
+        console.log("ChatRepository - creando chat con participantes:", participantes);
+        return await this.chatport.crearChat(participantes);
+    }
+
+    async obtenerChatPorId(chatId) {
+        return await this.chatport.buscarChatPorId(chatId);
     }
 
     async obtenerMensajes(chatId) {
@@ -14,7 +19,7 @@ export class ChatRepository {
     }
 
     async enviarMensaje(chatId, nuevoMensaje) {
-        await this.chatport.enviarMensaje(chatId, nuevoMensaje);
+        return await this.chatport.enviarMensaje(chatId, nuevoMensaje);
     }
 
     async escucharNuevosMensajes(chatId, callback) {

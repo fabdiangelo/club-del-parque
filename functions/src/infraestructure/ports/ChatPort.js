@@ -8,7 +8,10 @@ export class ChatPort {
     }
 
     pairKey(participantes) {
-        return [...participantes].sort().join('___');
+    const arr = Array.isArray(participantes)
+        ? participantes
+        : Object.values(participantes); // toma los valores del objeto
+    return arr.sort().join('___');
     }
 
 
@@ -18,6 +21,15 @@ export class ChatPort {
 
         !participante1 || !participante2 ? (() => { throw new Error("Debe haber al menos un participante") })() : null;
 
+
+        const existenUsuarios = await Promise.all(chat.participantes.map(async (uid) => {
+            const userDoc = await this.db.collection('usuarios').doc(uid).get();
+            return userDoc.exists;
+        }));
+
+        if (!existenUsuarios.every(Boolean)) {
+            throw new Error("Uno o más participantes no existen");
+        }
 
         console.log("Creando un chat..." + chat);
         try {
@@ -32,7 +44,8 @@ export class ChatPort {
             
             
             const datos = {
-                ...chat,
+                participantes: [participante1, participante2],
+                lastMessage: "Inicia la conversación",
                 pairKey: pairKey
             }
             
@@ -51,15 +64,15 @@ export class ChatPort {
     async buscarChatPorId(chatId) {
         try {
             const docRef =  this.db.collection('chats').doc(chatId);
-
+            console.log(docRef);
             const snapshot = await docRef.get();
 
             if (!snapshot.exists) {
-                throw new Error("Chat no encontrado");
+                return null;
             }
 
 
-            return {ref: doc, data: snapshot.data()};
+            return {ref: docRef, data: snapshot.data()};
 
 
         } catch(error) {
@@ -94,19 +107,35 @@ export class ChatPort {
 
     async enviarMensaje(chatId, nuevoMensaje) {
 
-        try {
-            const chatRef = await this.buscarChatPorId(chatId);
+        if(!chatId || !nuevoMensaje) throw new Error("chatId y nuevoMensaje son requeridos");
 
-            if (!chatRef.get().exists) {
-                throw new Error("Chat no encontrado");
+        const { autorId, contenido } = nuevoMensaje;
+
+
+
+
+        !autorId || !contenido ? (() => { throw new Error("El mensaje debe tener autorId y contenido") })() : null;
+
+        try {
+            
+            const chatRef = await this.buscarChatPorId(chatId);
+            console.log(chatRef);
+
+            if (autorId != chatRef.data.participantes[0] && autorId != chatRef.data.participantes[1]) {
+                throw new Error("No autorizado para enviar mensaje en este chat");
             }
 
             const mensaje = {
                 ...nuevoMensaje,
+                lastMessage: contenido,
+                fecha: FieldValue.serverTimestamp()
             }
 
-            await chatRef.ref.collection('mensajes').add(mensaje);
+            console.log("Mensaje a enviar:", mensaje);
 
+            const msjRef = await chatRef.ref.collection('mensajes').add(mensaje);
+
+            return msjRef.id;
         } catch(error) {
             console.error("Error enviando mensaje:", error);
             throw error;
@@ -133,17 +162,22 @@ export class ChatPort {
 
     async crearChat(participantes) {
         try {
+
+            console.log("Creando chat con participantes desde CHATPORT:", participantes);
             if (!participantes || participantes.length < 2) {
                 throw new Error("Debe haber al menos dos participantes para crear un chat");
             }
 
             const pairKey = this.pairKey(participantes);
+
+            console.log("pairkey:", pairKey);
             const datos = {
                 participantes,
                 pairKey
             };
 
             const docRef = await this.db.collection('chats').add(datos);
+
             return docRef.id;
         } catch (error) {
             console.error("Error creando chat:", error);
@@ -151,19 +185,23 @@ export class ChatPort {
         }
     }
 
-    async obtenerChatsDeUsuario(usuarioId) {
-        try {
+ async obtenerChatsDeUsuario(usuarioId) {
+    try {
 
-            const q = this.db.collection('chats').where('participantes', 'array-contains', usuarioId);
-
-            return await q.get().then(snapshot => {
-                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            });
-
-        } catch(error) {
-            throw error;
-        }
+        const snapshot = await db.collection('chats').get();
+const chats = snapshot.docs
+  .map(doc => ({ id: doc.id, ...doc.data() }))
+  .filter(chat => {
+    console.log(chat);
+    return (chat.participantes?.participante1 === usuarioId ||
+ chat.participantes?.participante2 === usuarioId)
+  });
+  return chats;
+    } catch(error) {
+        throw error;
     }
+}
+
 
 
     escucharNuevosMensajes(chatId, callback) {

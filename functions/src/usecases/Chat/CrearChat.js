@@ -7,6 +7,6 @@ export class CrearChat {
 
 
     async execute(nuevoChat) {
-        await this.chatRepository.crearChat(nuevoChat);
+        return await this.chatRepository.crearChat(nuevoChat);
     }
 }

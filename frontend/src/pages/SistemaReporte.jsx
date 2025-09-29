@@ -42,7 +42,7 @@ const SistemaReporte = () => {
         console.log('Enviando:', formInfo);
 
         try {
-            const response = await fetch(`${process.env.LINKTEMPORAL}/reportes`, {
+            const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/reportes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -25,14 +25,31 @@ class ChatController {
     getChatById = async(req, res) => {
         const { chatId } = req.params;
         const chat = await this.obtenerChatPorIdUseCase.execute(chatId);
-        res.json(chat);
+        if(!chat) {
+            return res.status(404).json({ error: "Chat no encontrado" });
+        } else {
+
+            res.json(chat);
+        }
+        
     }
 
     crearChat = async(req, res) => {
+        
+        console.log("ChatController - crearChat llamado");
+        console.log("Request body:", req.body);
         try {
+            console.log("Creando chat con datos:", req.body);
+            
 
-            const { participantes } = req.body;
+            const { participante1, participante2 } = req.body;
+            const participantes = {
+                participante1,
+                participante2
+            }
             const nuevoChat = await this.crearChatUseCase.execute(participantes);
+
+            console.log("Chat creado con ID:", nuevoChat);
             return res.status(201).json(nuevoChat);
         } catch (error) {
             console.error("Error creando chat:", error);
@@ -42,9 +59,23 @@ class ChatController {
     }
 
     enviarMensaje = async(req, res) => {
-        const { chatId, message } = req.body;
-        await this.enviarMensajeUseCase.execute(chatId, message);
-        return res.status(201).send();
+        const { autorId, contenido, chatId} = req.body;
+
+    
+        const message = { autorId, contenido };
+        
+        console.log("Enviando mensaje:", message, "al chatId:", chatId);
+        
+        if (!autorId || !chatId || !contenido) {
+            return res.status(400).json({ error: "Faltan datos requeridos" });
+        }
+
+        const msj = await this.enviarMensajeUseCase.execute(chatId, message);
+        return res.status(201).json(msj);
+    }
+
+    prueba = (req, res) => {
+        res.send("Hello World");
     }
 
     getMensajes = async(req, res) => {
@@ -62,8 +93,10 @@ class ChatController {
     }
 
     getChatByUser = async(req, res) => {
-        const { userId } = req.params;
-        const chats = await this.obtenerChatsPorUsuarioUseCase.execute(userId);
+        const { idUser } = req.params;
+
+        console.log(idUser);
+        const chats = await this.obtenerChatsPorUsuarioUseCase.execute(idUser);
         return res.json(chats);
     }
 }

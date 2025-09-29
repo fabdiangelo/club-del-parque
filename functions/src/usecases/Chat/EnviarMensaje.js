@@ -6,6 +6,6 @@ export class EnviarMensaje {
     }
 
     async execute(chatId, nuevoMensaje) {
-        await this.chatRepository.enviarMensaje(chatId, nuevoMensaje);
+        return await this.chatRepository.enviarMensaje(chatId, nuevoMensaje);
     }
 }

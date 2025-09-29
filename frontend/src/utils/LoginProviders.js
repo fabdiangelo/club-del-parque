@@ -15,7 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 connectAuthEmulator(auth, "http://localhost:9099");
-
 export const loginAndSendToBackend = async (email, password) => {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const user = cred.user;
