@@ -62,11 +62,16 @@ export class ChatPort {
 
 
     async buscarChatPorId(chatId) {
+
+        console.log("Buscando chat por ID:", chatId);
+        if (!chatId || typeof chatId !== 'string' || chatId.trim() === '') {
+            throw new Error('chatId inválido');
+        }
         try {
             const docRef =  this.db.collection('chats').doc(chatId);
             console.log(docRef);
             const snapshot = await docRef.get();
-
+            console.log(snapshot);
             if (!snapshot.exists) {
                 return null;
             }
@@ -121,9 +126,6 @@ export class ChatPort {
             const chatRef = await this.buscarChatPorId(chatId);
             console.log(chatRef);
 
-            if (autorId != chatRef.data.participantes[0] && autorId != chatRef.data.participantes[1]) {
-                throw new Error("No autorizado para enviar mensaje en este chat");
-            }
 
             const mensaje = {
                 ...nuevoMensaje,
@@ -145,6 +147,8 @@ export class ChatPort {
 
     async obtenerMensajes(chatId) {
         try {
+            console.log("Obteniendo mensajes para chatId:", chatId);
+
             const chatRef = await this.buscarChatPorId(chatId);
             if (!chatRef.data) {
                 throw new Error("Chat no encontrado");

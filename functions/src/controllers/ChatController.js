@@ -59,7 +59,10 @@ class ChatController {
     }
 
     enviarMensaje = async(req, res) => {
-        const { autorId, contenido, chatId} = req.body;
+        const {id} = req.params;
+        const chatId = id;
+     
+        const { autorId, contenido} = req.body;
 
     
         const message = { autorId, contenido };
@@ -79,8 +82,8 @@ class ChatController {
     }
 
     getMensajes = async(req, res) => {
-        const { chatId } = req.params;
-        const mensajes = await this.obtenerMensajesUseCase.execute(chatId);
+        const { id } = req.params;
+        const mensajes = await this.obtenerMensajesUseCase.execute(id);
         return res.json(mensajes);
     }
 

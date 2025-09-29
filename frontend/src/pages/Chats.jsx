@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthProvider.jsx";
 import UserModal from "../components/UserModal.jsx";
-
+import { getDatabase, ref, onValue, push, set } from "firebase/database";
+import { dbRT } from "../utils/FirebaseService.js";
 const Chats = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +65,6 @@ const Chats = () => {
   useEffect(() => {
     if (user?.uid) fetchChats();
   }, [user]);
-  // Obtener los chats del usuario al cargar
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -84,15 +84,26 @@ const Chats = () => {
     if (user?.uid) fetchChats();
   }, [user]);
 
-  // Obtener mensajes del chat seleccionado
   useEffect(() => {
     const fetchMensajes = async () => {
       if (!selectedChat?.id) return;
       try {
+        console.log("SELECTED CHAT ID => ", selectedChat.id);
         const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${selectedChat.id}/mensajes`);
-        if (!response.ok) throw new Error('Error obteniendo mensajes');
+        
+        if (!response.ok) return null;
+        
         const data = await response.json();
-        setMensajes(Array.isArray(data) ? data : []);
+
+        const formateado = data.map(msg => {
+          return {
+            ...msg,
+            fechaFormateada: msg.fecha ? new Date(msg.fecha._seconds * 1000).toLocaleTimeString() : '',
+          };
+        });
+        console.log(formateado);
+
+        setMensajes(Array.isArray(formateado) ? formateado : []);
         mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
         console.error(error);
@@ -102,32 +113,52 @@ const Chats = () => {
     fetchMensajes();
   }, [selectedChat]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!nuevoMensaje.trim() || !selectedChat?.id) return;
-    try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/mensaje`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          autorId: user.uid,
-          contenido: nuevoMensaje,
-          chatId: selectedChat.id,
-        }),
-      });
-      if (!response.ok) throw new Error('Error enviando mensaje');
-      setNuevoMensaje("");
-      // Recargar mensajes
-      const mensajesRes = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${selectedChat.id}/mensajes`);
-      if (mensajesRes.ok) {
-        const data = await mensajesRes.json();
-        setMensajes(Array.isArray(data) ? data : []);
-        mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  useEffect(() => {
+  if (!selectedChat?.id) return;
+  const mensajesRef = ref(dbRT, `chats/${selectedChat.id}/mensajes`);
+  const unsubscribe = onValue(mensajesRef, (snapshot) => {
+    const data = snapshot.val() || {};
+    const mensajesEnTiempoReal = Object.entries(data).map(([id, msg]) => ({
+      id,
+      ...msg,
+      fechaFormateada: msg.fecha
+        ? new Date(msg.fecha).toLocaleTimeString()
+        : "",
+    }));
+    setMensajes(mensajesEnTiempoReal);
+    mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  });
+  return () => mensajesRef.off && mensajesRef.off();
+}, [selectedChat]);
+
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  if (!nuevoMensaje.trim()) return;
+
+  const mensajesRef = ref(dbRT, `chats/${selectedChat.id}/mensajes`);
+  const nuevoRef = push(mensajesRef);
+  await set(nuevoRef, {
+    autorId: user.uid,
+    contenido: nuevoMensaje,
+    fecha: Date.now(),
+  });
+  try {
+    await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${selectedChat.id}/mensajes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contenido: nuevoMensaje,
+        autorId: user.uid,
+        fecha: Date.now(),
+      }),
+    });
+  } catch (error) {
+    console.error("Error actualizando último mensaje en el chat:", error);
+  }
+
+  setNuevoMensaje("");
+};
+
   return (
     <div className="h-screen w-full bg-gray-100 flex items-center justify-center p-4">
       
@@ -146,7 +177,6 @@ const Chats = () => {
             </button>
           </div>
 
-          {/* LISTA */}
           <div className="flex-1 overflow-y-auto">
             {Array.isArray(chats) && chats.length > 0 ? (
               chats.map((chat) => (
@@ -166,7 +196,6 @@ const Chats = () => {
           </div>
         </div>
 
-        {/* --------- ÁREA DE MENSAJES --------- */}
         <div className="flex-1 flex flex-col bg-white">
           {selectedChat ? (
             <>
@@ -180,7 +209,7 @@ const Chats = () => {
                     <div className={`chat-bubble px-4 py-2 max-w-[70%] ${msg.autorId === user.uid ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}>
                       <span>{msg.contenido}</span>
                       <div className="text-xs text-right mt-1 opacity-70">
-                        {msg.fecha ? new Date(msg.fecha).toLocaleTimeString() : ''}
+                        {msg.fechaFormateada || 'Fecha invalida'}
                       </div>
                     </div>
                   </div>
