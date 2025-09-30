@@ -54,6 +54,7 @@ app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 
 // Usuario
 app.get("/usuario/:id", (req, res) => UserController.getUserData(req, res));
+app.post("/usuario/:id/solicitud-federacion", (req, res) => UserController.solicitarFederarUsuario(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));

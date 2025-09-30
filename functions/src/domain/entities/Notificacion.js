@@ -12,7 +12,7 @@ export default class Notificacion {
         return {
             id: this.id,
             tipo: this.tipo,
-            timestamp: this.resumen,
+            resumen: this.resumen,
             fecha: this.fecha,
             leido: this.leido,
             usuarioID: this.usuarioID,
