@@ -4,7 +4,7 @@ import NavbarBlanco from "../components/NavbarBlanco";
 import { useState } from "react";
 
 // Recordar cambiar esto cuando se haga deploy
-const LINK = 'http://127.0.0.1:5001/club-del-parque-68530/us-central1/api'
+const LINK = 'api'
 
 const SistemaReporte = () => {
     const [formData, setFormData] = useState({

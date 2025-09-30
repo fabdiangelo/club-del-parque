@@ -1,0 +1,421 @@
+import React, { useState, useEffect } from 'react';
+import Navbar from '../components/Navbar';
+import GraficoGauge from '../components/GraficoGauge';
+import FondoAdmin from '../assets/FondoAdmin.svg';
+import { Flame, Server, Database, Users, AlertCircle, CheckCircle, Clock, Calendar  } from 'lucide-react';
+
+const API_BASE_URL = 'api';
+
+
+
+const Administracion = () => {
+  const [metricas, setMetricas] = useState(null);
+  const [reportes, setReportes] = useState([]);
+  const [cantidadUsuarios, setCantidadUsuarios] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [modalReporte, setModalReporte] = useState(null); // id del reporte abierto en modal
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Obtener métricas
+      const metricasRes = await fetch(`${API_BASE_URL}/firebase/metricas`);
+      const metricasData = await metricasRes.json();
+      setMetricas(metricasData);
+      
+      // Obtener todos los reportes
+      const reportesRes = await fetch(`${API_BASE_URL}/notificaciones/obtener-todos-reportes`);
+      const reportesData = await reportesRes.json();
+      setReportes(reportesData);
+      
+      // Obtener cantidad de usuarios
+      const usuariosRes = await fetch(`${API_BASE_URL}/usuarios/cant-usuarios`);
+      const usuariosData = await usuariosRes.json();
+      setCantidadUsuarios(usuariosData.cantidad);
+      
+      setLoading(false);
+    } catch (err) {
+      setError('Error al cargar los datos: ' + err.message);
+      setLoading(false);
+    }
+  };
+
+  const marcarComoLeido = async (idReporte) => {
+    try {
+      await fetch(`${API_BASE_URL}/notificaciones/marcar-leido/${idReporte}`, {
+        method: 'PUT'
+      });
+      setReportes(reportes.map(reporte => 
+        reporte.id === idReporte ? { ...reporte, leido: true } : reporte
+      ));
+      setModalReporte(null);
+    } catch (err) {
+      console.error('Error al marcar como leído:', err);
+    }
+  };
+
+  const marcarComoNoLeido = async (idReporte) => {
+    try {
+      await fetch(`${API_BASE_URL}/notificaciones/marcar-leido/${idReporte}`, {
+        method: 'PUT'
+      });
+      setReportes(reportes.map(reporte => 
+        reporte.id === idReporte ? { ...reporte, leido: false } : reporte
+      ));
+      setModalReporte(null);
+    } catch (err) {
+      console.error('Error al marcar como leído:', err);
+    }
+  };
+
+  // Acciones federación
+  const validarFederacion = async (idReporte) => {
+    try {
+      await fetch(`${API_BASE_URL}/notificaciones/validar-federacion/${idReporte}`, {
+        method: 'PUT'
+      });
+      marcarComoLeido(idReporte);
+    } catch (err) {
+      console.error('Error al validar federación:', err);
+    }
+  };
+
+  const negarFederacion = async (idReporte) => {
+    try {
+      await fetch(`${API_BASE_URL}/notificaciones/negar-federacion/${idReporte}`, {
+        method: 'PUT'
+      });
+      marcarComoLeido(idReporte);
+    } catch (err) {
+      console.error('Error al negar federación:', err);
+    }
+  };
+
+  const getTipoColor = (tipo) => {
+    switch (tipo) {
+      case 'bug': return 'bg-red-100 text-red-800';
+      case 'sugerencia', 'solicitud_federacion': return 'bg-blue-100 text-blue-800';
+      case 'soporte': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTipoIcon = (tipo) => {
+    switch (tipo) {
+      case 'bug': return AlertCircle;
+      case 'sugerencia': return Clock;
+      case 'soporte', 'solicitud_federacion': return Users;
+      default: return AlertCircle;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <p className="text-red-800 text-center">{error}</p>
+          <button 
+            onClick={fetchData}
+            className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8 relative overflow-hidden">
+      {/* Fondo SVG en la parte inferior */}
+      <div className="absolute left-0 bottom-0 w-full" style={{ zIndex: 0, pointerEvents: 'none' }}>
+        <img src={FondoAdmin} style={{ width: '100vw', height: (28 + reportes.length * 5) + 'rem', objectFit: 'cover', display: 'block' }} />
+      </div>
+      <Navbar />
+      <div className="max-w-7xl mx-auto relative" style={{ marginTop: '3rem', zIndex: 1 }}>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Panel de Administración
+          </h1>
+          <p className="text-gray-600">
+            Monitoreo de consumo y reportes de Firebase
+          </p>
+        </div>
+
+        {/* Gasto Total */}
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+          <h2 className="text-xl font-semibold mb-2">Gasto Total del Mes</h2>
+          <p className="text-4xl font-bold">${metricas?.gastoTotal.toFixed(2)}</p>
+          <p className="text-sm opacity-90 mt-2">
+            Período: {new Date(metricas?.periodo.inicio).toLocaleDateString()} - {new Date(metricas?.periodo.fin).toLocaleDateString()}
+          </p>
+        </div>
+
+        {/* Gauges de Uso */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <GraficoGauge
+            value={metricas?.cloudFunctions.usado}
+            max={metricas?.cloudFunctions.limite}
+            title="Servidor (invocaciones)"
+            icon={Flame}
+            color="#F59E0B"
+          />
+          
+          <GraficoGauge
+            value={metricas?.hosting.usado}
+            max={metricas?.hosting.limite}
+            title="Hosting (GB)"
+            icon={Server}
+            color="#8B5CF6"
+          />
+          
+          <GraficoGauge
+            value={metricas?.firestore.porcentajePromedio}
+            max={100}
+            title="Almacenamiento"
+            icon={Database}
+            color="#3B82F6"
+          />
+        </div>
+
+        {/* Detalles de Firestore */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <Database className="w-6 h-6 text-blue-600" />
+            Detalles de Almacenamiento
+          </h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="border-l-4 border-blue-500 pl-4">
+              <p className="text-sm text-gray-600">Lecturas</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {metricas?.firestore.lecturas.porcentaje}%
+              </p>
+              <p className="text-xs text-gray-500">
+                {metricas?.firestore.lecturas.usado.toLocaleString()} / {metricas?.firestore.lecturas.limite.toLocaleString()}
+              </p>
+            </div>
+            
+            <div className="border-l-4 border-green-500 pl-4">
+              <p className="text-sm text-gray-600">Escrituras</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {metricas?.firestore.escrituras.porcentaje}%
+              </p>
+              <p className="text-xs text-gray-500">
+                {metricas?.firestore.escrituras.usado.toLocaleString()} / {metricas?.firestore.escrituras.limite.toLocaleString()}
+              </p>
+            </div>
+            
+            <div className="border-l-4 border-red-500 pl-4">
+              <p className="text-sm text-gray-600">Eliminaciones</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {metricas?.firestore.eliminaciones.porcentaje}%
+              </p>
+              <p className="text-xs text-gray-500">
+                {metricas?.firestore.eliminaciones.usado.toLocaleString()} / {metricas?.firestore.eliminaciones.limite.toLocaleString()}
+              </p>
+            </div>
+            
+            <div className="border-l-4 border-purple-500 pl-4">
+              <p className="text-sm text-gray-600">Almacenamiento</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {metricas?.firestore.almacenamiento.porcentaje}%
+              </p>
+              <p className="text-xs text-gray-500">
+                {metricas?.firestore.almacenamiento.usado} GB / {metricas?.firestore.almacenamiento.limite} GB
+              </p>
+            </div>
+          </div>
+        </div>
+      
+
+      
+
+
+
+      <div className="bg-gray-800 rounded-lg shadow-lg p-8">
+          {/* Tickets/Reportes */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold text-white">TICKETS ({reportes.length})</h2>
+              {/* {reportesNoLeidos > 0 && (
+                <span className="badge badge-error badge-lg">{reportesNoLeidos} sin leer</span>
+              )} */}
+            </div>
+            
+            <div className="overflow-x-auto flex flex-col justify-center">
+              <table className="table w-full">
+                <thead>
+                  <tr className="text-gray-300">
+                    <th>Datos</th>
+                    <th>Mensaje</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportes.map((reporte) => {
+                    const TipoIcon = getTipoIcon(reporte.tipo);
+                    return (
+                      <tr key={reporte.id} className={`text-white ${reporte.leido ? 'opacity-50' : ''}`}>
+                        <td>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTipoColor(reporte.tipo)} flex items-center gap-1`}>
+                              <TipoIcon className="w-3 h-3" />
+                              {reporte.tipo}
+                            </span>
+                            {reporte.leido && (
+                              <span className="flex items-center gap-1 text-xs text-green-600">
+                                <CheckCircle className="w-3 h-3" />
+                                Leído
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" style={{ color: '#4AC0E4' }} />
+                            {new Date(reporte.fecha).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="text-white max-w-md">
+                          <p className="truncate">{reporte.resumen}</p>
+                          <p className="text-xs text-gray-400">{reporte.usuario}</p>
+                        </td>
+                        <td>
+                          {reporte.leido ? (
+                            <button
+                              onClick={() => marcarComoNoLeido(reporte.id)}
+                              className="btn btn-sm"
+                              style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+                            >
+                              DESMARCAR
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                className="btn btn-sm"
+                                style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+                                onClick={() => setModalReporte(reporte.id)}
+                              >
+                                VER MÁS
+                              </button>
+                              {/* Modal DaisyUI */}
+                              {modalReporte === reporte.id && (
+                                <dialog id="modal-reporte" className="modal modal-open">
+                                  <div className="modal-box">
+                                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                                      <TipoIcon className="w-5 h-5" />
+                                      {reporte.tipo}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mb-1">Usuario: <span className="font-semibold">{reporte.usuario}</span></p>
+                                    <p className="text-sm text-gray-500 mb-1">Fecha: <span className="font-semibold">{new Date(reporte.fecha).toLocaleDateString()}</span></p>
+                                    <p className="text-sm text-gray-500 mb-4">Resumen: <span className="font-semibold">{reporte.resumen}</span></p>
+                                    {reporte.tipo === 'solicitud_federacion' ? (
+                                      <div className="flex flex-col gap-2">
+                                        <button
+                                          className="btn btn-success"
+                                          onClick={() => validarFederacion(reporte.id)}
+                                        >
+                                          Validar federación
+                                        </button>
+                                        <button
+                                          className="btn btn-error"
+                                          onClick={() => negarFederacion(reporte.id)}
+                                        >
+                                          Negar federación
+                                        </button>
+                                        <button
+                                          className="btn"
+                                          onClick={() => setModalReporte(null)}
+                                        >
+                                          No hacer nada de momento
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex flex-col gap-2">
+                                        <button
+                                          className="btn btn-info"
+                                          onClick={() => marcarComoLeido(reporte.id)}
+                                        >
+                                          Marcar como leído
+                                        </button>
+                                        <button
+                                          className="btn"
+                                          onClick={() => setModalReporte(null)}
+                                        >
+                                          No hacer nada de momento
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <form method="dialog" className="modal-backdrop">
+                                    <button onClick={() => setModalReporte(null)}>Cerrar</button>
+                                  </form>
+                                </dialog>
+                              )}
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <button
+                onClick={() => window.location.href = '/usuarios'}
+                className="btn btn-lg mt-4"
+                style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+              >
+                VER TODOS LOS TICKETS
+              </button>
+            </div>
+          </div>
+
+
+          {/* Usuarios */}
+          <div className="border-t border-gray-700 pt-8">
+            <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-2">
+              <Users className="w-6 h-6" style={{ color: '#4AC0E4' }} />
+              USUARIOS
+            <span className="text-5xl font-bold ml-3" style={{ color: '#4AC0E4' }}>{cantidadUsuarios.toLocaleString()}</span>
+            </h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-2xl">
+                  Usuarios Federados: <span className="text-xl font-semibold" style={{ color: '#4AC0E4' }}>56</span>
+                </p>
+              </div>
+              
+              <button
+                onClick={() => window.location.href = '/usuarios'}
+                className="btn btn-lg"
+                style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+              >
+                ADMINISTRAR USUARIOS
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Administracion;

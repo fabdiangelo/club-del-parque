@@ -15,7 +15,7 @@ export class ReporteRepository {
     }
 
     async save(reporte) {
-        const docRef = await this.db.addItem('reportes', reporte);
+        const docRef = await this.db.putItem('reportes', reporte);
         return docRef.id;
     }
 

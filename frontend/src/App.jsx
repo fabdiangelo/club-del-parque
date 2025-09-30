@@ -8,6 +8,7 @@ import Noticias from './pages/ListaNoticias';
 import NoticiaDetalle from './pages/NoticiaDetalle';
 import SistemaReporte from './pages/SistemaReporte';
 import CrearNoticia from './pages/CrearNoticia';
+import Administracion from './pages/Adminsitracion';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
       <Route path="/report" element={<SistemaReporte />} />
+      <Route path="/administracion" element={<Administracion />} />
     </Routes>
   );
 }
