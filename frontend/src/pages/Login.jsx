@@ -9,6 +9,7 @@ import {
   signInWithGoogle,
   linkGoogleToExistingAccount, 
 } from "../utils/LoginProviders.js";
+import NavbarBlanco from "../components/NavbarBlanco.jsx";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -120,7 +121,7 @@ function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Navbar />
+      <NavbarBlanco />
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <h2 className="text-xl font-bold mb-4">Iniciar sesión / Registro</h2>
 

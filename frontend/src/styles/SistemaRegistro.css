@@ -1,0 +1,23 @@
+body {
+    background-color: white;
+    margin: 0;
+    padding: 0;
+}
+
+.input {
+    background-color: white;
+    color: black;
+}
+
+.input:disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border-color: #d1d5db;
+    cursor: not-allowed;
+}
+
+.btn:disabled {
+    background-color: #9ca3af;
+    color: white;
+    cursor: not-allowed;
+}

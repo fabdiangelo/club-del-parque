@@ -10,6 +10,10 @@ export default class DBConnection{
         return this.db.collection(collectionName);
     }
 
+    async addItem(collection, item) {
+        return await this.db.collection(collection).add(item);
+    }
+
     async getItem(collection, id){
         return (await this.db.collection(collection).doc(id).get()).data();
     }
