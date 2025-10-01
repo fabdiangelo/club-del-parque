@@ -1,5 +1,5 @@
 import DBConnection from "../../infraestructure/ports/DBConnection.js";
-import Notificacion from "../../domain/entities/Notificacion.js";
+import Reporte from "../../domain/entities/Reporte.js";
 
 class SolicitarFederacion {
   constructor(){
@@ -7,25 +7,21 @@ class SolicitarFederacion {
   }
   async execute(uid, justificante) {
     try{
-
       let user = await this.db.getItem("usuarios", uid);
       console.log(user)
       const id = user.id + '-solicitud_federacion-' + new Date().toISOString();
       // Create a notify for aech administrator
-      const admins = await this.db.getAllItems("administradores");
-      admins.forEach(async (adminDoc) => {
-        const admin = adminDoc.data();
-        const newNotify = new Notificacion(
-          id,
-          'solicitud_federacion',
-          `El usuario ${user.nombre} ${user.apellido} ha solicitado federarse.
-          Justificante: ${justificante}`,
-          new Date(),
-          false,
-          admin.id
-        );
-        await this.db.putItem("notificaciones", newNotify.toPlainObject(), id);
-      });
+      const newReport = new Reporte(
+        id,
+        `El usuario ${user.nombre} ${user.apellido} ha solicitado federarse`,
+        justificante,
+        new Date(),
+        'pendiente',
+        user.email,
+        false,
+        'solicitud_federacion'
+      );
+      await this.db.putItem("reportes", newReport.toPlainObject(), id);
 
       // Return user data
       user.estado = "pendiente de federacion";

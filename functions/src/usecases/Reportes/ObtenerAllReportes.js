@@ -4,6 +4,13 @@ export class ObtenerAllReportes {
     }
 
     async execute() {
-        return await this.reporteRepository.findAll();
+        const reportes = await this.reporteRepository.findAll();
+        for (let reporte of reportes) {
+            if(!reporte.leido){
+                reporte.leido = false;
+                this.reporteRepository.leido(reporte.id);
+            }
+        }
+        return reportes;
     }
 }

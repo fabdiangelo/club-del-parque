@@ -9,6 +9,7 @@ import NoticiaDetalle from './pages/NoticiaDetalle';
 import SistemaReporte from './pages/SistemaReporte';
 import CrearNoticia from './pages/CrearNoticia';
 import Administracion from './pages/Adminsitracion';
+import Chats from './pages/Chats';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Route path="/register" element={<Registro />} />
       <Route path="/login" element={<Login />} />
       <Route path="/perfil" element={<Perfil />} />
+      <Route path="/chats" element={<Chats />} />
       {/* <Route
         path="/"
         element={
@@ -28,7 +30,7 @@ function App() {
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
-      <Route path="/report" element={<SistemaReporte />} />
+      <Route path="/reportes" element={<SistemaReporte />} />
       <Route path="/administracion" element={<Administracion />} />
     </Routes>
   );

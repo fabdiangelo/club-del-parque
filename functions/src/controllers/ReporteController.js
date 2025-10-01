@@ -1,7 +1,11 @@
 import { ReporteRepository } from '../infraestructure/adapters/ReportRepository.js';
 
-import {CrearReporte} from '../usecases/Reportes/CrearReporte.js'
-import {ObtenerAllReportes} from '../usecases/Reportes/ObtenerAllReportes.js'
+import GetActualUser from "../usecases/Auth/GetActualUser.js";
+
+import SolicitarFederacion from "../usecases/Reportes/SolicitarFederacion.js";
+import MarcarReporteResuelto from '../usecases/Reportes/MarcarReporteResuelto.js';
+import { CrearReporte } from '../usecases/Reportes/CrearReporte.js'
+import { ObtenerAllReportes } from '../usecases/Reportes/ObtenerAllReportes.js'
 import { EnviarMail } from '../usecases/EnviarMail.js';
 import { EmailRepository } from '../infraestructure/adapters/EmailRepository.js';
 import { EnviarWPP } from '../usecases/EnviarWPP.js';
@@ -44,7 +48,7 @@ class ReporteController {
 
     async crearReporte(req, res) {
         try {
-            const { motivo, descripcion, fecha, estado, idUsuario, leido } = req.body;
+            const { motivo, descripcion, fecha, estado, mailUsuario, leido, tipo } = req.body;
             
             // Validaciones básicas
             if (!motivo || !descripcion) {
@@ -56,8 +60,9 @@ class ReporteController {
                 descripcion, 
                 fecha: fecha || new Date().toISOString(), 
                 estado: estado || 'pendiente', 
-                idUsuario, 
-                leido: leido || false 
+                mailUsuario, 
+                leido: leido || false,
+                tipo: tipo || 'reporte_bug' 
             };
             
             const resultado = await this.crearReporteUseCase.execute(reporte);
@@ -68,21 +73,16 @@ class ReporteController {
             //const usuario = await this.usuarioRepository.obtenerPorId(idUsuario);
             // temporalmente
             const asunto = `Nuevo reporte creado: ${resultado}`;
-            const mensaje = `Motivo: ${motivo}
-Descripción: ${descripcion}`;
+            const mensaje = `Motivo: ${motivo}\nDescripción: ${descripcion}`;
 
             const telefono = process.env.TELEFONOTEMPORAL;
             const destinatario = process.env.MAILTEMPORAL;
 
-            const mensajeWPP = `Nuevo reporte ha sido creado: ${resultado}
+            const mensajeWPP = `Nuevo reporte ha sido creado: ${resultado}\n${mensaje}\n\nUsuario: ${mailUsuario}`;
 
-${mensaje}
-            
-Usuario: ${destinatario}`;
+            // this.enviarWPPReporte(mensajeWPP, telefono);
 
-            this.enviarWPPReporte(mensajeWPP, telefono);
-
-            this.enviarMailReporte(destinatario, asunto, mensaje);
+            // this.enviarMailReporte(destinatario, asunto, mensaje);
 
             
 
@@ -94,11 +94,61 @@ Usuario: ${destinatario}`;
 
     async obtenerReportes(req, res) {
         try {
+            const sessionCookie = req.cookies.session || "";
+            if (!sessionCookie) {
+                return res.status(401).json({ error: "No session cookie found" });
+            }
+            // Verificar la cookie
+            const user = GetActualUser.execute(sessionCookie)
+            if(user.rol !== "administrador"){
+                return res.status(403).json({ error: "Acceso no autorizado" });
+            }
             const reportes = await this.obtenerAllReportes.execute();
             res.status(200).json(reportes);
         } catch (error) {
             console.error("Error al obtener reportes:", error);
             res.status(500).json({ error: "Error al obtener reportes" });
+        }
+    }
+
+    async solicitarFederarUsuario(req, res) {
+        try {
+            const sessionCookie = req.cookies.session || "";
+            if (!sessionCookie) {
+                return res.status(401).json({ error: "No session cookie found" });
+            }
+            const userId = req.params.id;
+            if (!userId) {
+                return res.status(401).json({ error: "No user id found" });
+            }
+            const { justificante } = req.body;
+            if (!justificante) {
+                return res.status(400).json({ error: "Faltan datos obligatorios" });
+            }
+
+            const msg = await SolicitarFederacion.execute(userId, justificante);
+            return res.json(msg);
+        } catch (error) {
+            console.error("Error al enviar solicitud de federacion", error);
+            return res.status(401).json({ error: "Invalid or expired session" });
+        }
+    }
+
+    async marcarResuelto(req, res) {
+        try {
+            const sessionCookie = req.cookies.session || "";
+            if (!sessionCookie) {
+                return res.status(401).json({ error: "No session cookie found" });
+            }
+            const reporteId = req.params.id;
+            if (!reporteId) {
+                return res.status(401).json({ error: "No report id found" });
+            }
+            const resultado = await MarcarReporteResuelto.execute(reporteId);
+            res.status(200).json(resultado);
+        } catch (error) {
+            console.error("Error al marcar reporte como resuelto:", error);
+            res.status(500).json({ error: "Error al marcar reporte como resuelto" });
         }
     }
 }

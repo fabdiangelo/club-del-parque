@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import SoloAdmin from '../components/SoloAdmin';
 import Navbar from '../components/Navbar';
 import GraficoGauge from '../components/GraficoGauge';
 import FondoAdmin from '../assets/FondoAdmin.svg';
 import { Flame, Server, Database, Users, AlertCircle, CheckCircle, Clock, Calendar  } from 'lucide-react';
 
+
 const API_BASE_URL = 'api';
-
-
 
 const Administracion = () => {
   const [metricas, setMetricas] = useState(null);
@@ -15,6 +15,7 @@ const Administracion = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalReporte, setModalReporte] = useState(null); // id del reporte abierto en modal
+  const [isUnauthorized, setIsUnauthorized] = useState(false); // para error 401
 
   useEffect(() => {
     fetchData();
@@ -23,22 +24,33 @@ const Administracion = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
       // Obtener métricas
-      const metricasRes = await fetch(`${API_BASE_URL}/firebase/metricas`);
+      let metricasRes = await fetch('api/infraestructura/metricas', { credentials: 'include' });
+      if (metricasRes.status === 401) {
+        setIsUnauthorized(true);
+        setLoading(false);
+        return;
+      }
       const metricasData = await metricasRes.json();
       setMetricas(metricasData);
-      
       // Obtener todos los reportes
-      const reportesRes = await fetch(`${API_BASE_URL}/notificaciones/obtener-todos-reportes`);
+      let reportesRes = await fetch('api/reportes', { credentials: 'include' });
+      if (reportesRes.status === 401) {
+        setIsUnauthorized(true);
+        setLoading(false);
+        return;
+      }
       const reportesData = await reportesRes.json();
       setReportes(reportesData);
-      
       // Obtener cantidad de usuarios
-      const usuariosRes = await fetch(`${API_BASE_URL}/usuarios/cant-usuarios`);
+      let usuariosRes = await fetch('api/usuarios', { credentials: 'include' });
+      if (usuariosRes.status === 401) {
+        setIsUnauthorized(true);
+        setLoading(false);
+        return;
+      }
       const usuariosData = await usuariosRes.json();
-      setCantidadUsuarios(usuariosData.cantidad);
-      
+      setCantidadUsuarios(usuariosData.length);
       setLoading(false);
     } catch (err) {
       setError('Error al cargar los datos: ' + err.message);
@@ -46,41 +58,60 @@ const Administracion = () => {
     }
   };
 
-  const marcarComoLeido = async (idReporte) => {
+  const marcarComoResuelto = async (idReporte) => {
     try {
-      await fetch(`${API_BASE_URL}/notificaciones/marcar-leido/${idReporte}`, {
-        method: 'PUT'
+      const res = await fetch(`api/reportes/marcar-resuleto/${idReporte}`, {
+        method: 'PUT',
+        credentials: 'include'
       });
+      if (res.status === 401) {
+        setIsUnauthorized(true);
+        setModalReporte(null);
+        return;
+      }
       setReportes(reportes.map(reporte => 
-        reporte.id === idReporte ? { ...reporte, leido: true } : reporte
+        reporte.id === idReporte ? { ...reporte, estado: 'resuelto' } : reporte
       ));
+      console.log("Reporte marcado como resuelto, id:", idReporte);
       setModalReporte(null);
     } catch (err) {
-      console.error('Error al marcar como leído:', err);
+      console.error('Error al marcar como resuleto:', err);
     }
   };
 
-  const marcarComoNoLeido = async (idReporte) => {
+  const marcarComoNoResuelto = async (idReporte) => {
     try {
-      await fetch(`${API_BASE_URL}/notificaciones/marcar-leido/${idReporte}`, {
-        method: 'PUT'
+      const res = await fetch(`api/reportes/marcar-resuelto/${idReporte}`, {
+        method: 'PUT',
+        credentials: 'include'
       });
+      if (res.status === 401) {
+        setIsUnauthorized(true);
+        setModalReporte(null);
+        return;
+      }
       setReportes(reportes.map(reporte => 
-        reporte.id === idReporte ? { ...reporte, leido: false } : reporte
+        reporte.id === idReporte ? { ...reporte, estado: 'pendiente' } : reporte
       ));
       setModalReporte(null);
     } catch (err) {
-      console.error('Error al marcar como leído:', err);
+      console.error('Error al desmarcar como resuelto:', err);
     }
   };
 
   // Acciones federación
   const validarFederacion = async (idReporte) => {
     try {
-      await fetch(`${API_BASE_URL}/notificaciones/validar-federacion/${idReporte}`, {
-        method: 'PUT'
+      const res = await fetch(`${API_BASE_URL}/notificaciones/validar-federacion/${idReporte}`, {
+        method: 'PUT',
+        credentials: 'include'
       });
-      marcarComoLeido(idReporte);
+      if (res.status === 401) {
+        setIsUnauthorized(true);
+        setModalReporte(null);
+        return;
+      }
+      marcarComoResuelto(idReporte);
     } catch (err) {
       console.error('Error al validar federación:', err);
     }
@@ -88,10 +119,16 @@ const Administracion = () => {
 
   const negarFederacion = async (idReporte) => {
     try {
-      await fetch(`${API_BASE_URL}/notificaciones/negar-federacion/${idReporte}`, {
-        method: 'PUT'
+      const res = await fetch(`${API_BASE_URL}/notificaciones/negar-federacion/${idReporte}`, {
+        method: 'PUT',
+        credentials: 'include'
       });
-      marcarComoLeido(idReporte);
+      if (res.status === 401) {
+        setIsUnauthorized(true);
+        setModalReporte(null);
+        return;
+      }
+      marcarComoResuelto(idReporte);
     } catch (err) {
       console.error('Error al negar federación:', err);
     }
@@ -99,8 +136,8 @@ const Administracion = () => {
 
   const getTipoColor = (tipo) => {
     switch (tipo) {
-      case 'bug': return 'bg-red-100 text-red-800';
-      case 'sugerencia', 'solicitud_federacion': return 'bg-blue-100 text-blue-800';
+      case 'reporte_bug': return 'bg-red-100 text-red-800';
+      case 'sugerencia': case 'solicitud_federacion': return 'bg-blue-100 text-blue-800';
       case 'soporte': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -108,13 +145,16 @@ const Administracion = () => {
 
   const getTipoIcon = (tipo) => {
     switch (tipo) {
-      case 'bug': return AlertCircle;
+      case 'reporte_bug': return AlertCircle;
       case 'sugerencia': return Clock;
-      case 'soporte', 'solicitud_federacion': return Users;
+      case 'soporte': case 'solicitud_federacion': return Users;
       default: return AlertCircle;
     }
   };
 
+  if (isUnauthorized) {
+    return <SoloAdmin />;
+  }
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -125,7 +165,6 @@ const Administracion = () => {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -275,17 +314,17 @@ const Administracion = () => {
                   {reportes.map((reporte) => {
                     const TipoIcon = getTipoIcon(reporte.tipo);
                     return (
-                      <tr key={reporte.id} className={`text-white ${reporte.leido ? 'opacity-50' : ''}`}>
+                      <tr key={reporte.id} className={`text-white ${reporte.estado == 'resuelto' ? 'opacity-50' : ''}`}>
                         <td>
                           <div className="flex items-center gap-2 mb-2">
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTipoColor(reporte.tipo)} flex items-center gap-1`}>
                               <TipoIcon className="w-3 h-3" />
                               {reporte.tipo}
                             </span>
-                            {reporte.leido && (
+                            {reporte.estado == 'resuelto' && (
                               <span className="flex items-center gap-1 text-xs text-green-600">
                                 <CheckCircle className="w-3 h-3" />
-                                Leído
+                                Resuelto
                               </span>
                             )}
                           </div>
@@ -295,13 +334,13 @@ const Administracion = () => {
                           </div>
                         </td>
                         <td className="text-white max-w-md">
-                          <p className="truncate">{reporte.resumen}</p>
-                          <p className="text-xs text-gray-400">{reporte.usuario}</p>
+                          <p className="truncate">{reporte.motivo}</p>
+                          <p className="text-xs text-gray-400">{reporte.mailUsuario}</p>
                         </td>
                         <td>
-                          {reporte.leido ? (
+                          {reporte.estado == 'resuelto' ? (
                             <button
-                              onClick={() => marcarComoNoLeido(reporte.id)}
+                              onClick={() => marcarComoNoResuelto(reporte.id)}
                               className="btn btn-sm"
                               style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
                             >
@@ -324,9 +363,10 @@ const Administracion = () => {
                                       <TipoIcon className="w-5 h-5" />
                                       {reporte.tipo}
                                     </h3>
-                                    <p className="text-sm text-gray-500 mb-1">Usuario: <span className="font-semibold">{reporte.usuario}</span></p>
+                                    <p className="text-sm text-gray-500 mb-1">Usuario: <span className="font-semibold">{reporte.mailUsuario}</span></p>
                                     <p className="text-sm text-gray-500 mb-1">Fecha: <span className="font-semibold">{new Date(reporte.fecha).toLocaleDateString()}</span></p>
-                                    <p className="text-sm text-gray-500 mb-4">Resumen: <span className="font-semibold">{reporte.resumen}</span></p>
+                                    <p className="text-sm text-gray-500 mb-4">Motivo: <span className="font-semibold">{reporte.motivo}</span></p>
+                                    <p className="text-sm text-gray-500 mb-4">Descripción: <span className="font-semibold">{reporte.descripcion}</span></p>
                                     {reporte.tipo === 'solicitud_federacion' ? (
                                       <div className="flex flex-col gap-2">
                                         <button
@@ -352,9 +392,9 @@ const Administracion = () => {
                                       <div className="flex flex-col gap-2">
                                         <button
                                           className="btn btn-info"
-                                          onClick={() => marcarComoLeido(reporte.id)}
+                                          onClick={() => marcarComoResuelto(reporte.id)}
                                         >
-                                          Marcar como leído
+                                          Marcar como resuelto
                                         </button>
                                         <button
                                           className="btn"
