@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReporteFederacionModal from '../components/administracion-reportes/ReporteFederacionModal';
+import ReporteDefaultModal from '../components/administracion-reportes/ReporteDefaultModal';
 import SoloAdmin from '../components/SoloAdmin';
 import Navbar from '../components/Navbar';
 import GraficoGauge from '../components/GraficoGauge';
@@ -72,10 +74,29 @@ const Administracion = () => {
       setReportes(reportes.map(reporte => 
         reporte.id === idReporte ? { ...reporte, estado: 'resuelto' } : reporte
       ));
-      console.log("Reporte marcado como resuelto, id:", idReporte);
       setModalReporte(null);
     } catch (err) {
       console.error('Error al marcar como resuleto:', err);
+    }
+  };
+
+  // Para federación, ahora recibe el plan
+  const validarFederacion = async (idReporte, planId) => {
+    try {
+      const res = await fetch(`api/usuarios/validar-federacion/${idReporte}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId })
+      });
+      if (res.status === 401) {
+        setIsUnauthorized(true);
+        setModalReporte(null);
+        return;
+      }
+      marcarComoResuelto(idReporte);
+    } catch (err) {
+      console.error('Error al validar federación:', err);
     }
   };
 
@@ -96,24 +117,6 @@ const Administracion = () => {
       setModalReporte(null);
     } catch (err) {
       console.error('Error al desmarcar como resuelto:', err);
-    }
-  };
-
-  // Acciones federación
-  const validarFederacion = async (idReporte) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/notificaciones/validar-federacion/${idReporte}`, {
-        method: 'PUT',
-        credentials: 'include'
-      });
-      if (res.status === 401) {
-        setIsUnauthorized(true);
-        setModalReporte(null);
-        return;
-      }
-      marcarComoResuelto(idReporte);
-    } catch (err) {
-      console.error('Error al validar federación:', err);
     }
   };
 
@@ -313,6 +316,10 @@ const Administracion = () => {
                 <tbody>
                   {reportes.map((reporte) => {
                     const TipoIcon = getTipoIcon(reporte.tipo);
+                    const reporteProps = {
+                      ...reporte,
+                      icon: TipoIcon
+                    };
                     return (
                       <tr key={reporte.id} className={`text-white ${reporte.estado == 'resuelto' ? 'opacity-50' : ''}`}>
                         <td>
@@ -355,60 +362,21 @@ const Administracion = () => {
                               >
                                 VER MÁS
                               </button>
-                              {/* Modal DaisyUI */}
                               {modalReporte === reporte.id && (
-                                <dialog id="modal-reporte" className="modal modal-open">
-                                  <div className="modal-box">
-                                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                                      <TipoIcon className="w-5 h-5" />
-                                      {reporte.tipo}
-                                    </h3>
-                                    <p className="text-sm text-gray-500 mb-1">Usuario: <span className="font-semibold">{reporte.mailUsuario}</span></p>
-                                    <p className="text-sm text-gray-500 mb-1">Fecha: <span className="font-semibold">{new Date(reporte.fecha).toLocaleDateString()}</span></p>
-                                    <p className="text-sm text-gray-500 mb-4">Motivo: <span className="font-semibold">{reporte.motivo}</span></p>
-                                    <p className="text-sm text-gray-500 mb-4">Descripción: <span className="font-semibold">{reporte.descripcion}</span></p>
-                                    {reporte.tipo === 'solicitud_federacion' ? (
-                                      <div className="flex flex-col gap-2">
-                                        <button
-                                          className="btn btn-success"
-                                          onClick={() => validarFederacion(reporte.id)}
-                                        >
-                                          Validar federación
-                                        </button>
-                                        <button
-                                          className="btn btn-error"
-                                          onClick={() => negarFederacion(reporte.id)}
-                                        >
-                                          Negar federación
-                                        </button>
-                                        <button
-                                          className="btn"
-                                          onClick={() => setModalReporte(null)}
-                                        >
-                                          No hacer nada de momento
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div className="flex flex-col gap-2">
-                                        <button
-                                          className="btn btn-info"
-                                          onClick={() => marcarComoResuelto(reporte.id)}
-                                        >
-                                          Marcar como resuelto
-                                        </button>
-                                        <button
-                                          className="btn"
-                                          onClick={() => setModalReporte(null)}
-                                        >
-                                          No hacer nada de momento
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <form method="dialog" className="modal-backdrop">
-                                    <button onClick={() => setModalReporte(null)}>Cerrar</button>
-                                  </form>
-                                </dialog>
+                                reporte.tipo === 'solicitud_federacion' ? (
+                                  <ReporteFederacionModal
+                                    reporte={reporteProps}
+                                    onValidar={validarFederacion}
+                                    onNegar={negarFederacion}
+                                    onClose={() => setModalReporte(null)}
+                                  />
+                                ) : (
+                                  <ReporteDefaultModal
+                                    reporte={reporteProps}
+                                    onResuelto={marcarComoResuelto}
+                                    onClose={() => setModalReporte(null)}
+                                  />
+                                )
                               )}
                             </>
                           )}
@@ -416,6 +384,13 @@ const Administracion = () => {
                       </tr>
                     );
                   })}
+                  {reportes.length === 0 && (
+                    <tr>
+                      <td colSpan="3" className="text-center text-gray-400 py-4">
+                        No hay tickets o reportes sin atender.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
               <button

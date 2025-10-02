@@ -15,7 +15,7 @@ class SolicitarFederacion {
         id,
         `El usuario ${user.nombre} ${user.apellido} ha solicitado federarse`,
         justificante,
-        new Date(),
+        new Date().toISOString(),
         'pendiente',
         user.email,
         false,

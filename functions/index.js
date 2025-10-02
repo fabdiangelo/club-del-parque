@@ -13,6 +13,7 @@ import EmailController from "./src/controllers/EmailController.js";
 import ChatController from "./src/controllers/ChatController.js";
 import UsuarioController from "./src/controllers/UsuarioController.js";
 import InfraestructuraController from "./src/controllers/InfraestructuraController.js";
+import PlanController from "./src/controllers/PlanController.js";
 
 /* ---------------- Global fn settings ---------------- */
 setGlobalOptions({
@@ -55,7 +56,7 @@ app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 // Usuario
 app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));
 app.get("/usuarios", (req, res) => UsuarioController.getAllUsuarios(req, res));
-app.get("/usuarios/cant-usuarios", (req, res) => UsuarioController.getCantUsuarios(req, res));
+app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
@@ -149,6 +150,9 @@ app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res
 app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
 app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
 
+// Planes
+app.post('/planes/precarga', (req, res) => PlanController.precargarPlanes(req, res));
+app.get('/planes', (req, res) => PlanController.getPlanes(req, res));
 
 /* ---------------- Errors ---------------- */
 app.use((err, req, res, _next) => {

@@ -1,6 +1,7 @@
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 import ObtenerDatosUsuario from "../usecases/Usuarios/ObtenerDatosUsuario.js";
 import GetAllUsuarios from '../usecases/Usuarios/GetAllUsuarios.js';
+import FederarUsuario from "../usecases/Usuarios/FederarUsuario.js";
 
 class UsuarioController {
   async getUserData(req, res) {
@@ -65,6 +66,40 @@ class UsuarioController {
       return res.json({cantidad: usuarios.length});
     } catch (error) {
       console.error("Error in /usuarios/cantidad:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  async validarFederacion (req, res) {
+    try {
+      const sessionCookie = req.cookies.session || "";
+      if (!sessionCookie) {
+        return res.status(401).json({ error: "No session cookie found" });
+      }
+      const user = GetActualUser.execute(sessionCookie)
+      if(user.rol !== "administrador"){
+        return res.status(403).json({ error: "Acceso no autorizado" });
+      }
+      const idReporte = req.params.idReporte;
+      if(!idReporte){
+        return res.status(400).json({ error: "Falta idReporte" });
+      }
+
+      const userId = idReporte.split("-")[0];
+      if(!userId){
+        return res.status(400).json({ error: "idReporte inválido" });
+      }
+
+      const usuarioAFederar = await ObtenerDatosUsuario.execute(userId);
+      if(!usuarioAFederar){
+        return res.status(404).json({ error: "Usuario no encontrado" });
+      }
+
+      await FederarUsuario.execute(usuarioAFederar);
+
+      return res.json({ ok: true });
+    } catch (error) {
+      console.error("Error in /usuarios/validar-federacion/:idReporte:", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }
