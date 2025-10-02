@@ -5,16 +5,15 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import StorageConnection from "./src/infraestructure/ports/StorageConnection.js";
-
 import NoticiaController from "./src/controllers/NoticiaController.js";
-import UserController from "./src/controllers/UserController.js";
 import AuthController from "./src/controllers/AuthController.js";
 import ReporteController from "./src/controllers/ReporteController.js";
 import SendWhatsappController from "./src/controllers/SendWhatsappController.js";
 import EmailController from "./src/controllers/EmailController.js";
 import ChatController from "./src/controllers/ChatController.js";
 import UsuarioController from "./src/controllers/UsuarioController.js";
+import InfraestructuraController from "./src/controllers/InfraestructuraController.js";
+import PlanController from "./src/controllers/PlanController.js";
 
 /* ---------------- Global fn settings ---------------- */
 setGlobalOptions({
@@ -55,13 +54,17 @@ app.get("/auth/me", (req, res) => AuthController.getActualUser(req, res));
 app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 
 // Usuario
-app.get("/usuario/:id", (req, res) => UserController.getUserData(req, res));
-app.post("/usuario/:id/solicitud-federacion", (req, res) => UserController.solicitarFederarUsuario(req, res));
+app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));
 app.get("/usuarios", (req, res) => UsuarioController.getAllUsuarios(req, res));
+app.get("/usuarios/cantidad", (req, res) => UsuarioController.cantUsuarios(req, res));
+app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
+app.get("/reportes/sin-resolver", (req, res) => ReporteController.obtenerCantReportesSinResolver(req, res));
+app.post("/reporte/:id/solicitud-federacion", (req, res) => ReporteController.solicitarFederarUsuario(req, res));
+app.put("/reportes/marcar-resuelto/:id", (req, res) => ReporteController.marcarResuelto(req, res));
 
 // Noticias
 app.get("/noticias", (req, res) => NoticiaController.listar(req, res));
@@ -133,18 +136,14 @@ app.post("/noticias/:id/imagenes-json", async (req, res) => {
   }
 });
 
-/* ---------------- Errors ---------------- */
-app.use((err, req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: "Internal Server Error" });
-});
+// Datos de la infraestructura
+app.get('/infraestructura/metricas', async (req, res) => InfraestructuraController.obtenerMetricas(req, res));
 
+// Notificaciones
 app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
 app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
-// Exportar función HTTP
 
 // Chat
-
 app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
 app.post('/chats', (req, res) => ChatController.crearChat(req, res));
 app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
@@ -152,4 +151,29 @@ app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, 
 app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
 app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
 app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
+
+// Planes
+app.post('/planes/precarga', (req, res) => PlanController.precargarPlanes(req, res));
+app.get('/planes', (req, res) => PlanController.getPlanes(req, res));
+
+// Mensajes por terceros
+app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
+app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
+
+// Chat
+app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
+app.post('/chats', (req, res) => ChatController.crearChat(req, res));
+app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
+app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
+app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
+app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
+app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
+
+/* ---------------- Errors ---------------- */
+app.use((err, req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
+// Exportar función HTTP
 export const api = functions.https.onRequest(app);

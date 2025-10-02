@@ -13,8 +13,6 @@ const SistemaReporte = () => {
         descripcion: '',
     });
 
-    
-
     const { user } = useAuth();
     const mailUsuario = user ? user.email : 'anónimo';
 
@@ -32,6 +30,7 @@ const SistemaReporte = () => {
         setMensaje(null);
 
         const formInfo = {
+            tipo: 'reporte_bug',
             motivo: formData.motivo,
             descripcion: formData.descripcion,
             estado: 'pendiente',
@@ -42,7 +41,7 @@ const SistemaReporte = () => {
         console.log('Enviando:', formInfo);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/reportes`, {
+            const response = await fetch(`api/reportes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

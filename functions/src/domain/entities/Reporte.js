@@ -1,12 +1,13 @@
 export default class Reporte {
-    constructor(id, motivo, descripcion, fecha, estado, mailUsuario, leido) {
+    constructor(id, motivo, descripcion, fecha, estado, mailUsuario, leido, tipo) {
         this.id = id;
         this.motivo = motivo;
         this.descripcion = descripcion;
         this.fecha = fecha;
         this.estado = estado;
-        this.mailUsuario = this.mailUsuario;
+        this.mailUsuario = mailUsuario;
         this.leido = leido;
+        this.tipo = tipo; // 'reporte_bug' o 'solicitud_federacion'
     }
 
 
@@ -19,6 +20,7 @@ export default class Reporte {
             estado: this.estado,
             mailUsuario: this.mailUsuario,
             leido: this.leido,
+            tipo: this.tipo,
         };
     }
 }

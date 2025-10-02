@@ -71,7 +71,7 @@ export default function Perfil() {
     if (!user || !federateText.trim()) return;
     setFederateLoading(true);
     try {
-      const res = await fetch(`api/usuario/${user.uid}/solicitud-federacion`, {
+      const res = await fetch(`api/reporte/${user.uid}/solicitud-federacion`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

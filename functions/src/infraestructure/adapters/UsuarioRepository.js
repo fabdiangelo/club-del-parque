@@ -1,14 +1,12 @@
 import DBConnection from "../ports/DBConnection.js";
 
-
 export class UsuarioRepository {
     constructor() {
         this.db = new DBConnection();
     }
 
-
-    getUserById(userId) {
-        return this.db.getItem("usuarios", userId);
+    async getUserById(userId) {
+        return await this.db.getItem("usuarios", userId);
     }
 
     async getAllUsers() {
@@ -18,6 +16,14 @@ export class UsuarioRepository {
             users.push({ id: doc.id, ...doc.data() });
         });
         return users;
+    }
+
+    async update(id, usuario) {
+        await this.db.putItem('usuarios', usuario, id);
+    }
+
+    async getCantUsuarios() {
+        return await this.db.cantItems("usuarios");
     }
 
 }

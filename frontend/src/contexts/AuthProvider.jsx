@@ -19,7 +19,7 @@ export default function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("api/auth/me", {
+      const res = await fetch("/api/auth/me", {
         method: "GET",
         credentials: "include",
         headers: { Accept: "application/json" },

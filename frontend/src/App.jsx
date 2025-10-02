@@ -8,6 +8,8 @@ import Noticias from './pages/ListaNoticias';
 import NoticiaDetalle from './pages/NoticiaDetalle';
 import SistemaReporte from './pages/SistemaReporte';
 import CrearNoticia from './pages/CrearNoticia';
+import Administracion from './pages/Adminsitracion';
+import Reportes from './pages/Reportes';
 import Chats from './pages/Chats';
 
 function App() {
@@ -30,6 +32,9 @@ function App() {
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
       <Route path="/reportes" element={<SistemaReporte />} />
+      <Route path="/administracion" element={<Administracion />} />
+      <Route path="/administracion/reportes" element={<Reportes />} />
+
     </Routes>
   );
 }

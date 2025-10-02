@@ -9,6 +9,8 @@ export default class Federado extends Usuario{
         this.federadoPartidosIDs = [];
         this.rankingsIDs = [];
         this.logrosIDs = [];
+        this.validoHasta = null;
+        this.rol = "federado";
     }
 
     toPlainObject() {
@@ -27,6 +29,7 @@ export default class Federado extends Usuario{
             federadoPartidosIDs: this.federadoPartidosIDs,
             rankingsIDs: this.rankingsIDs,
             logrosIDs: this.logrosIDs,
+            validoHasta: this.validoHasta,
         };
     }
 }

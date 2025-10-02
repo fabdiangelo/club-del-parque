@@ -29,4 +29,26 @@ export default class DBConnection{
             return await this.db.collection(collection).add(item);
         }
     }
+
+    async cantItems(collection) {
+        return await this.db.collection(collection).count().get().then((snapshot) => snapshot.data().count);
+    }
+
+    async getItemsByField(collection, field, value) {
+        const snapshot = await this.db.collection(collection).where(field, '==', value).get();
+        const items = [];
+        snapshot.forEach((doc) => {
+            items.push({ id: doc.id, ...doc.data() });
+        });
+        return items;
+    }
+
+    async getItemsWhereNotEqual(collection, field, value) {
+        const snapshot = await this.db.collection(collection).where(field, '!=', value).get();
+        const items = [];
+        snapshot.forEach((doc) => {
+            items.push({ id: doc.id, ...doc.data() });
+        });
+        return items;
+    }
 }
