@@ -13,6 +13,8 @@ import AuthController from "./src/controllers/AuthController.js";
 import ReporteController from "./src/controllers/ReporteController.js";
 import SendWhatsappController from "./src/controllers/SendWhatsappController.js";
 import EmailController from "./src/controllers/EmailController.js";
+import ChatController from "./src/controllers/ChatController.js";
+import UsuarioController from "./src/controllers/UsuarioController.js";
 
 /* ---------------- Global fn settings ---------------- */
 setGlobalOptions({
@@ -55,6 +57,7 @@ app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 // Usuario
 app.get("/usuario/:id", (req, res) => UserController.getUserData(req, res));
 app.post("/usuario/:id/solicitud-federacion", (req, res) => UserController.solicitarFederarUsuario(req, res));
+app.get("/usuarios", (req, res) => UsuarioController.getAllUsuarios(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
@@ -136,5 +139,17 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-/* ---------------- Export ---------------- */
+app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
+app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
+// Exportar función HTTP
+
+// Chat
+
+app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
+app.post('/chats', (req, res) => ChatController.crearChat(req, res));
+app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
+app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
+app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
+app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
+app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
 export const api = functions.https.onRequest(app);

@@ -44,7 +44,7 @@ class ReporteController {
 
     async crearReporte(req, res) {
         try {
-            const { motivo, descripcion, fecha, estado, idUsuario, leido } = req.body;
+            const { motivo, descripcion, fecha, estado, mailUsuario, leido } = req.body;
             
             // Validaciones básicas
             if (!motivo || !descripcion) {
@@ -56,7 +56,7 @@ class ReporteController {
                 descripcion, 
                 fecha: fecha || new Date().toISOString(), 
                 estado: estado || 'pendiente', 
-                idUsuario, 
+                mailUsuario, 
                 leido: leido || false 
             };
             
@@ -78,7 +78,7 @@ Descripción: ${descripcion}`;
 
 ${mensaje}
             
-Usuario: ${destinatario}`;
+Usuario: ${mailUsuario}`;
 
             this.enviarWPPReporte(mensajeWPP, telefono);
 

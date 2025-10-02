@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
 
 import Navbar from "../components/Navbar.jsx";
+import NavbarBlanco from "../components/NavbarBlanco.jsx";
 
 function Registro() {
   const [formData, setFormData] = useState({
@@ -32,6 +33,8 @@ function Registro() {
     // setError("");
     setSuccess("");
 
+    console.log("Registrando usuario:", formData);
+
     try {
       const ok = await register("api/auth/register", formData)
       if(!ok){
@@ -49,10 +52,10 @@ function Registro() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Navbar />
+      <NavbarBlanco />
       <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center">Registro</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <h2 className="text-2xl font-bold mb-6 text-center" style={{'color': 'var(--neutro)'}}>Registro</h2>
+        <form style={{'color': 'var(--neutro)'}} onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-1 font-medium">Nombre</label>
             <input

@@ -1,15 +1,18 @@
 export default class Chat {
-    constructor (id, usuariosIDs){
+
+
+    constructor(id, participantes, mensajes) {
         this.id = id;
-        this.usuariosIDs = usuariosIDs;
-        this.mensajesIDs = [];
+        this.mensajes = mensajes;
+        this.participantes = participantes;
+        this.fechaEmision = new Date().toISOString();
     }
 
     toPlainObject() {
         return {
             id: this.id,
-            usuariosIDs: this.usuariosIDs,
-            mensajesIDs: this.mensajesIDs,
-        };
+            participantes: this.participantes,
+            mensajes: this.mensajes
+        }
     }
 }

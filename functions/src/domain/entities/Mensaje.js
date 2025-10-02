@@ -1,9 +1,9 @@
 export default class Mensaje {
-    constructor (id, contenido, timestamp, emisorID){
+    constructor (id, contenido, timestamp, usuario){
         this.id = id;
         this.contenido = contenido;
         this.timestamp = timestamp;
-        this.emisorID = emisorID;
+        this.usuario = usuario;
     }
 
     toPlainObject() {
@@ -11,7 +11,7 @@ export default class Mensaje {
             id: this.id,
             contenido: this.contenido,
             timestamp: this.timestamp,
-            emisorID: this.emisorID,
+            usuario: this.usuario,
         };
     }
 }

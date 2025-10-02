@@ -3,14 +3,20 @@ import Navbar from "../components/Navbar";
 import NavbarBlanco from "../components/NavbarBlanco";
 import { useState } from "react";
 
+import  '../styles/SistemaRegistro.css';
+import { useAuth } from "../contexts/AuthProvider";
 // Recordar cambiar esto cuando se haga deploy
-const LINK = 'http://127.0.0.1:5001/club-del-parque-68530/us-central1/api'
 
 const SistemaReporte = () => {
     const [formData, setFormData] = useState({
         motivo: '',
         descripcion: '',
     });
+
+    
+
+    const { user } = useAuth();
+    const mailUsuario = user ? user.email : 'anónimo';
 
     const [mensaje, setMensaje] = useState(null);
     const [tipoMensaje, setTipoMensaje] = useState('');
@@ -29,14 +35,14 @@ const SistemaReporte = () => {
             motivo: formData.motivo,
             descripcion: formData.descripcion,
             estado: 'pendiente',
-            idUsuario: '12345',
+            mailUsuario: mailUsuario,
             leido: false
         }
 
         console.log('Enviando:', formInfo);
 
         try {
-            const response = await fetch(`${LINK}/reportes`, {
+            const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/reportes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -100,7 +106,7 @@ const SistemaReporte = () => {
                     <input 
                         type="text" 
                         placeholder="Motivo" 
-                        className="input w-full" 
+                        className="input w-full bg-white text-black disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" 
                         value={formData.motivo} 
                         onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
                         disabled={isLoading}
@@ -110,7 +116,7 @@ const SistemaReporte = () => {
                         type="text" 
                         placeholder="Descripción" 
                         value={formData.descripcion} 
-                        className="input w-full h-32 resize-none" 
+                        className="input w-full h-32 resize-none bg-white text-black disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed" 
                         onChange={(e) => handleValuesChange(e)}
                         disabled={isLoading}
                     />
@@ -118,7 +124,7 @@ const SistemaReporte = () => {
 
                     <button 
                         type="submit" 
-                        className="btn btn-primary"
+                        className="btn btn-primary disabled:bg-gray-400 disabled:cursor-not-allowed"
                         disabled={isLoading}
                     >
                         {isLoading ? 'Enviando...' : 'Enviar'}

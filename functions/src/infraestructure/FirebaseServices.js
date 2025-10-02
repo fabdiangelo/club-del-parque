@@ -32,3 +32,4 @@ export const Timestamp = admin.firestore.Timestamp;
 db.settings?.({ ignoreUndefinedProperties: true });
 
 export default { auth, db, storage, FieldValue, Timestamp };
+

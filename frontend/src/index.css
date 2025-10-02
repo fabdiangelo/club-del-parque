@@ -11,3 +11,9 @@
   --blanco: #FFFFFF; 
   --gris: rgb(233, 233, 233);
 }
+
+body {
+  background-color: white;
+  margin: 0;
+  padding: 0;
+}
