@@ -7,6 +7,7 @@ import cors from "cors";
 
 import NoticiaController from "./src/controllers/NoticiaController.js";
 import AuthController from "./src/controllers/AuthController.js";
+import AdministradorController from "./src/controllers/AdministradorController.js";
 import ReporteController from "./src/controllers/ReporteController.js";
 import SendWhatsappController from "./src/controllers/SendWhatsappController.js";
 import EmailController from "./src/controllers/EmailController.js";
@@ -52,6 +53,9 @@ app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res)
 app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
 app.get("/auth/me", (req, res) => AuthController.getActualUser(req, res));
 app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
+
+// Administrador
+app.post("/administrador/register", (req, res) => AdministradorController.crearAdministrador(req, res));
 
 // Usuario
 app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));

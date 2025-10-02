@@ -11,12 +11,14 @@ import CrearNoticia from './pages/CrearNoticia';
 import Administracion from './pages/Adminsitracion';
 import Reportes from './pages/Reportes';
 import Chats from './pages/Chats';
+import CrearAdmin from './pages/CrearAdmin';
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Registro />} />
+      <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/chats" element={<Chats />} />
