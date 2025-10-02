@@ -1,6 +1,5 @@
 import DBConnection from '../ports/DBConnection.js';
 
-
 export class ReporteRepository {
     constructor() {
         this.db = new DBConnection();
@@ -35,5 +34,9 @@ export class ReporteRepository {
         const reporte = await this.db.getItem('reportes', id);
         reporte.leido = true;
         await this.db.putItem('reportes', reporte, id);
+    }
+
+    async getReportesSinResolver() {
+        return await this.db.getItemsWhereNotEqual('reportes', 'estado', 'resuelto');
     }
 }

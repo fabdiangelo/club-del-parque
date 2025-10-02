@@ -1,6 +1,6 @@
 import DBConnection from "../ports/DBConnection.js";
 
-export class FederadoRepository {
+class FederadoRepository {
   constructor() {
     this.db = new DBConnection();
   }
@@ -19,7 +19,7 @@ export class FederadoRepository {
   }
 
   async save(federado) {
-    const docRef = await this.db.putItem('federados', federado);
+    const docRef = await this.db.putItem('federados', federado, federado.id);
     return docRef.id;
   }
 
@@ -27,16 +27,22 @@ export class FederadoRepository {
     await this.db.putItem('federados', federado, id);
   }
 
-  async agregarSubscripcion(id, plan) {
+  async agregarSubscripcion(id, subId) {
+    console.log('Agregando subscripcion', subId, 'al federado', id);
     const federado = await this.db.getItem('federados', id);
     if (!federado) {
       throw new Error("Federado no encontrado");
     }
-    if (!federado.planes) {
-      federado.planes = [];
+    if (!federado.subscripcionesIDs) {
+      federado.subscripcionesIDs = [];
     }
-    federado.planes.push(plan);
+    federado.subscripcionesIDs.unshift(subId);
     await this.db.putItem('federados', federado, id);
   }
 
+  async getCantFederados() {
+    return await this.db.cantItems("federados");
+  }
 }
+
+export { FederadoRepository };

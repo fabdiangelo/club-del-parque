@@ -2,6 +2,7 @@ import GetActualUser from "../usecases/Auth/GetActualUser.js";
 import ObtenerDatosUsuario from "../usecases/Usuarios/ObtenerDatosUsuario.js";
 import GetAllUsuarios from '../usecases/Usuarios/GetAllUsuarios.js';
 import FederarUsuario from "../usecases/Usuarios/FederarUsuario.js";
+import GetCantUsuarios from "../usecases/Usuarios/GetCantUsuarios.js";
 
 class UsuarioController {
   async getUserData(req, res) {
@@ -62,8 +63,8 @@ class UsuarioController {
       if(user.rol !== "administrador"){
         return res.status(403).json({ error: "Acceso no autorizado" });
       }
-      const usuarios = await GetAllUsuarios.execute();
-      return res.json({cantidad: usuarios.length});
+      const cant = await GetCantUsuarios.execute();
+      return res.json(cant);
     } catch (error) {
       console.error("Error in /usuarios/cantidad:", error);
       return res.status(500).json({ error: "Internal Server Error" });
@@ -90,12 +91,17 @@ class UsuarioController {
         return res.status(400).json({ error: "idReporte inválido" });
       }
 
+      const planId = req.body.planId;
+      if(!planId){
+        return res.status(400).json({ error: "Falta planId" });
+      }
+
       const usuarioAFederar = await ObtenerDatosUsuario.execute(userId);
       if(!usuarioAFederar){
         return res.status(404).json({ error: "Usuario no encontrado" });
       }
 
-      await FederarUsuario.execute(usuarioAFederar);
+      await FederarUsuario.execute(usuarioAFederar, planId);
 
       return res.json({ ok: true });
     } catch (error) {

@@ -56,13 +56,15 @@ app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 // Usuario
 app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));
 app.get("/usuarios", (req, res) => UsuarioController.getAllUsuarios(req, res));
+app.get("/usuarios/cantidad", (req, res) => UsuarioController.cantUsuarios(req, res));
 app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
+app.get("/reportes/sin-resolver", (req, res) => ReporteController.obtenerCantReportesSinResolver(req, res));
 app.post("/reporte/:id/solicitud-federacion", (req, res) => ReporteController.solicitarFederarUsuario(req, res));
-app.put("/reportes/marcar-resuleto/:id", (req, res) => ReporteController.marcarResuelto(req, res));
+app.put("/reportes/marcar-resuelto/:id", (req, res) => ReporteController.marcarResuelto(req, res));
 
 // Noticias
 app.get("/noticias", (req, res) => NoticiaController.listar(req, res));

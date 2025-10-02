@@ -4,6 +4,7 @@ import GetActualUser from "../usecases/Auth/GetActualUser.js";
 
 import SolicitarFederacion from "../usecases/Reportes/SolicitarFederacion.js";
 import MarcarReporteResuelto from '../usecases/Reportes/MarcarReporteResuelto.js';
+import ObtenerReportesSinResolver from '../usecases/Reportes/ObtenerReportesSinResolver.js';
 import { CrearReporte } from '../usecases/Reportes/CrearReporte.js'
 import { ObtenerAllReportes } from '../usecases/Reportes/ObtenerAllReportes.js'
 import { EnviarMail } from '../usecases/EnviarMail.js';
@@ -80,9 +81,9 @@ class ReporteController {
 
             const mensajeWPP = `Nuevo reporte ha sido creado: ${resultado}\n${mensaje}\n\nUsuario: ${mailUsuario}`;
 
-            // this.enviarWPPReporte(mensajeWPP, telefono);
+            this.enviarWPPReporte(mensajeWPP, telefono);
 
-            // this.enviarMailReporte(destinatario, asunto, mensaje);
+            this.enviarMailReporte(destinatario, asunto, mensaje);
 
             
 
@@ -149,6 +150,25 @@ class ReporteController {
         } catch (error) {
             console.error("Error al marcar reporte como resuelto:", error);
             res.status(500).json({ error: "Error al marcar reporte como resuelto" });
+        }
+    }
+
+    async obtenerCantReportesSinResolver(req, res) {
+        try {
+            const sessionCookie = req.cookies.session || "";
+            if (!sessionCookie) {
+                return res.status(401).json({ error: "No session cookie found" });
+            }
+            // Verificar la cookie
+            const user = GetActualUser.execute(sessionCookie)
+            if(user.rol !== "administrador"){
+                return res.status(403).json({ error: "Acceso no autorizado" });
+            }
+            const reportesSinResolver = await ObtenerReportesSinResolver.execute();
+            res.status(200).json(reportesSinResolver);
+        } catch (error) {
+            console.error("Error al obtener reportes sin resolver:", error);
+            res.status(500).json({ error: "Error al obtener reportes sin resolver" });
         }
     }
 }
