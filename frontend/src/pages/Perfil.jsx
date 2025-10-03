@@ -161,7 +161,7 @@ export default function Perfil() {
                 <h3 className="font-medium mb-2">Datos</h3>
                 <dl>
                   <dt className="text-xs text-gray-500">Nombre</dt>
-                  <dd className="mb-2">{user.nombre || "-"}</dd>
+                  <dd className="mb-2">{user.nombre || "-"} {userData?.apellido || ''}</dd>
 
                   <dt className="text-xs text-gray-500">Email</dt>
                   <dd className="mb-2">{user.email || "-"}</dd>
@@ -174,7 +174,20 @@ export default function Perfil() {
               <div className="p-4 bg-base-200 rounded-lg">
                 <h3 className="font-medium mb-2">Información adicional</h3>
                 <pre className="text-xs bg-base-100 p-3 rounded overflow-auto">
-                  {JSON.stringify(user, null, 2)}
+                  <dl>
+                    <dt className="text-xs text-gray-500">Genero</dt>
+                    <dd className="mb-2">{userData?.genero || "-"}</dd>
+
+                    <dt className="text-xs text-gray-500">Fecha de Nacimiento</dt>
+                    <dd className="mb-2">{userData?.nacimiento || "-"}</dd>
+
+                    {user.rol === "federado" && (
+                      <>
+                        <dt className="text-xs text-gray-500">Federacion Válida Hasta</dt>
+                        <dd className="mb-2">{userData?.validoHasta ? new Date(userData?.validoHasta).toLocaleDateString() : "-"}</dd>
+                      </>
+                    )}
+                  </dl>
                   {JSON.stringify(userData, null, 2)}
                 </pre>
               </div>

@@ -7,14 +7,7 @@ export default class Registrado extends Usuario{
 
     toPlainObject() {
         return {
-            id: this.id,
-            email: this.email,
-            nombre: this.nombre,
-            apellido: this.apellido,
-            estado: this.estado,
-            nacimiento: this.nacimiento,
-            genero: this.genero,
-            rol: this.rol,
+            ...super.toPlainObject()
         };
     }
 }

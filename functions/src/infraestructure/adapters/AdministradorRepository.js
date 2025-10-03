@@ -18,4 +18,9 @@ export class AdministradorRepository {
     }
     return { id: administrador.id, ...administrador};
   }
+
+  async update(id, administrador) {
+    const docRef = this.db.collection(this.collectionName).doc(id);
+    await docRef.set(administrador, { merge: true });
+  }
 }

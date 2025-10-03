@@ -18,7 +18,7 @@ class ObtenerDatosUsuario {
           throw new Error("Rol no válido")
         }
 
-        let user = await this.db.getItem(collection, uid);
+        user = await this.db.getItem(collection, uid);
       }else{
         user = await this.db.getItem('usuarios', uid);
         if(!user){

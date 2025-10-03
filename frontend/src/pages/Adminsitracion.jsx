@@ -63,7 +63,7 @@ const Administracion = () => {
 
   const marcarComoResuelto = async (idReporte) => {
     try {
-      const res = await fetch(`api/reportes/marcar-resuleto/${idReporte}`, {
+      const res = await fetch(`api/reportes/marcar-resuelto/${idReporte}`, {
         method: 'PUT',
         credentials: 'include'
       });

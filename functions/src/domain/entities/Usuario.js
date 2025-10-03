@@ -13,5 +13,31 @@ export default class Usuario {
     this.genero = genero;
     this.notificacionesIDs = [];
     this.rol = "usuario";
+
+    this.preferencias = {
+      mail: true,
+      whatsapp: true,
+      tipos: {
+        noticias: false,
+        campeonatos: true,
+        solicitudes: true,
+      },
+      tema: "light",
+    };
+  }
+
+  toPlainObject() {
+    return {
+      id: this.id,
+      email: this.email,
+      nombre: this.nombre,
+      apellido: this.apellido,
+      estado: this.estado,
+      nacimiento: this.nacimiento,
+      genero: this.genero,
+      notificacionesIDs: this.notificacionesIDs,
+      rol: this.rol,
+      preferencias: this.preferencias,
+    };
   }
 }

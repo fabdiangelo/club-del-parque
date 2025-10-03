@@ -1,5 +1,9 @@
+import jwt from "jsonwebtoken";
+const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
+
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 import ObtenerDatosUsuario from "../usecases/Usuarios/ObtenerDatosUsuario.js";
+import ActualizarUsuario from "../usecases/Usuarios/ActualizarUsuario.js";
 import GetAllUsuarios from '../usecases/Usuarios/GetAllUsuarios.js';
 import FederarUsuario from "../usecases/Usuarios/FederarUsuario.js";
 import GetCantUsuarios from "../usecases/Usuarios/GetCantUsuarios.js";
@@ -24,10 +28,10 @@ class UsuarioController {
       if( userId !== uid && user.rol !== "administrador"){
         return res.status(401).json({ error: "Acceso no autorizado" });
       }
-      
+      console.log('user: ' + JSON.stringify(user))
       const userData = await ObtenerDatosUsuario.execute(uid, user.rol);
 
-      console.log(userData)
+      console.log('user data: ' + userData)
       return res.json(userData);
     } catch (error) {
       console.error("Error in /me:", error);
@@ -49,6 +53,54 @@ class UsuarioController {
       return res.json(usuarios);
     } catch (error) {
       console.error("Error in /usuarios:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  async editarUsuario (req, res) {
+    try {
+      const sessionCookie = req.cookies.session || "";
+      if (!sessionCookie) {
+        return res.status(401).json({ error: "No session cookie found" });
+      }
+      const user = GetActualUser.execute(sessionCookie)
+      const userId = req.params.id;
+      if( userId !== user.uid && user.rol !== "administrador"){
+        return res.status(403).json({ error: "Acceso no autorizado" });
+      }
+      const updateData = req.body;
+      if(!updateData || typeof updateData !== "object"){
+        return res.status(400).json({ error: "No update data provided" });
+      }
+      console.log('Updating user:', userId, 'with data:', updateData);
+      const updatedUser = await ActualizarUsuario.execute(userId, updateData);
+
+      // Si el usuario que se editó es el mismo que la sesión actual, reemitimos la cookie
+      if (userId === user.uid) {
+        // Obtener datos actualizados del usuario para incluir en el token
+        const latest = await ObtenerDatosUsuario.execute(userId);
+        const payload = {
+          uid: userId,
+          email: latest?.email || user.email || null,
+          rol: latest?.rol || user.rol,
+          nombre: latest?.nombre || user.nombre,
+        };
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "2h" });
+
+        res.cookie("session", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 2 * 60 * 60 * 1000, // 2h
+        });
+
+        // Devolver también el nuevo payload para que el cliente pueda refrescar UI si lo desea
+        return res.json({ ok: true, user: payload });
+      }
+
+      return res.json(updatedUser);
+    } catch (error) {
+      console.error("Error in PUT /usuario/:id:", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }

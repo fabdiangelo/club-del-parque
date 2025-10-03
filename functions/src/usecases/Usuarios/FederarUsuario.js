@@ -92,6 +92,8 @@ class FederarUsuario {
         rol: "federado"
       });
 
+      
+
     } catch (err){
       console.error("Error federando usuario:", err);
       throw err;

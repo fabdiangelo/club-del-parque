@@ -4,6 +4,7 @@ import Home from "./pages/Homepage";
 import Registro from "./pages/Registro";
 import Login from "./pages/Login";
 import Perfil from './pages/Perfil';
+import EditarPerfil from './pages/EditarPerfil';
 import Noticias from './pages/ListaNoticias';
 import NoticiaDetalle from './pages/NoticiaDetalle';
 import SistemaReporte from './pages/SistemaReporte';
@@ -21,6 +22,7 @@ function App() {
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
       <Route path="/perfil" element={<Perfil />} />
+      <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />
       {/* <Route
         path="/"

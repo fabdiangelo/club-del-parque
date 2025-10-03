@@ -59,6 +59,7 @@ app.post("/administrador/register", (req, res) => AdministradorController.crearA
 
 // Usuario
 app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));
+app.put("/usuario/:id", (req, res) => UsuarioController.editarUsuario(req, res));
 app.get("/usuarios", (req, res) => UsuarioController.getAllUsuarios(req, res));
 app.get("/usuarios/cantidad", (req, res) => UsuarioController.cantUsuarios(req, res));
 app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));

@@ -1,8 +1,10 @@
 import DBConnection from "../ports/DBConnection.js";
+import AuthConnection from "../ports/AuthConnection.js";
 
 class FederadoRepository {
   constructor() {
     this.db = new DBConnection();
+    this.auth = new AuthConnection();
   }
 
   getFederadoById(userId) {
@@ -24,7 +26,10 @@ class FederadoRepository {
   }
 
   async update(id, federado) {
-    await this.db.putItem('federados', federado, id);
+    const docRef = this.db.collection('federados').doc(id);
+
+    await docRef.set(federado, { merge: true });
+    await this.auth.setRole(id, 'federado');
   }
 
   async agregarSubscripcion(id, subId) {

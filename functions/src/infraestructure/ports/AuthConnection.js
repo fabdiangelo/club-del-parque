@@ -24,4 +24,8 @@ export default class AuthConnection{
     async getUserByEmail(email){
         return await this.auth.getUserByEmail(email);
     }
+
+    async updateUser(uid, updates){
+        return await this.auth.updateUser(uid, updates);
+    }
 }
