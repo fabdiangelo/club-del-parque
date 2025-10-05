@@ -1,252 +1,539 @@
-import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../contexts/AuthProvider.jsx";
-import UserModal from "../components/UserModal.jsx";
-import { getDatabase, ref, onValue, push, set } from "firebase/database";
-import { dbRT } from "../utils/FirebaseService.js";
+
+
+import { useEffect, useState } from 'react';
+import '../styles/Chats.css'
+import { dbRT } from '../utils/FirebaseService.js'
+import { ref, onValue, getDatabase, push, set, get } from 'firebase/database';
+import { useAuth } from '../contexts/AuthProvider.jsx';
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
+
 const Chats = () => {
+
+  const [chats, setChats] = useState([])
+  const [searchTerm, setSearchTerm] = useState("");
+  const [chatSeleccionado, setChatSeleccionado] = useState(null);
+  const [mensajesChat, setMensajesChat] = useState([]);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [usuarios, setUsuarios] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [chats, setChats] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [mensajes, setMensajes] = useState([]);
-  const [nuevoMensaje, setNuevoMensaje] = useState("");
-  const mensajesEndRef = useRef(null);
+  const [showModal, setShowModal] = useState(false);
+  const [nuevoMensaje, setNuevoMensaje] = useState('');
+  const [verUsuario, setVerUsuario] = useState(false);
+  const [usuarioInfo, setUsuarioInfo] = useState(null);
+
 
   const { user } = useAuth();
+  console.log(user);
 
-  // Obtener usuarios para crear chat
-  const fetchUsuarios = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/usuarios`);
-      if (!response.ok) throw new Error("Error fetching users");
-      const data = await response.json();
-      const filtro = data.filter((u) => u.id !== user.uid);
-
-      console.log(filtro);
-      setUsuarios(filtro);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  // Crear chat usando endpoint REST
-  const handleCreateChat = async (usuarioSeleccionado) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participante1: user.uid, participante2: usuarioSeleccionado.id }),
-      });
-      if (!response.ok) throw new Error('Error creando chat');
-      const nuevoChat = await response.json();
-      await fetchChats(); // recarga la lista de chats
-      setSelectedChat({ ...nuevoChat, name: usuarioSeleccionado.nombre });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  // Obtener los chats del usuario al cargar y tras crear chat
-  const fetchChats = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${user.uid}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Error obteniendo chats');
-      const data = await response.json();
-      setChats(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error(error);
-      setChats([]);
-    }
-  };
-
-  useEffect(() => {
-    if (user?.uid) fetchChats();
-  }, [user]);
-  useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${user.uid}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (!response.ok) throw new Error('Error obteniendo chats');
-
-        const data = await response.json();
-        console.log(data);
-        setChats(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    if (user?.uid) fetchChats();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchMensajes = async () => {
-      if (!selectedChat?.id) return;
-      try {
-        console.log("SELECTED CHAT ID => ", selectedChat.id);
-        const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${selectedChat.id}/mensajes`);
-        
-        if (!response.ok) return null;
-        
-        const data = await response.json();
-
-        const formateado = data.map(msg => {
-          return {
-            ...msg,
-            fechaFormateada: msg.fecha ? new Date(msg.fecha._seconds * 1000).toLocaleTimeString() : '',
-          };
-        });
-        console.log(formateado);
-
-        setMensajes(Array.isArray(formateado) ? formateado : []);
-        mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      } catch (error) {
-        console.error(error);
-        setMensajes([]);
-      }
-    };
-    fetchMensajes();
-  }, [selectedChat]);
-
-  useEffect(() => {
-  if (!selectedChat?.id) return;
-  const mensajesRef = ref(dbRT, `chats/${selectedChat.id}/mensajes`);
-  const unsubscribe = onValue(mensajesRef, (snapshot) => {
-    const data = snapshot.val() || {};
-    const mensajesEnTiempoReal = Object.entries(data).map(([id, msg]) => ({
-      id,
-      ...msg,
-      fechaFormateada: msg.fecha
-        ? new Date(msg.fecha).toLocaleTimeString()
-        : "",
-    }));
-    setMensajes(mensajesEnTiempoReal);
-    mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  });
-  return () => mensajesRef.off && mensajesRef.off();
-}, [selectedChat]);
-
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (!nuevoMensaje.trim()) return;
-
-  const mensajesRef = ref(dbRT, `chats/${selectedChat.id}/mensajes`);
-  const nuevoRef = push(mensajesRef);
-  await set(nuevoRef, {
-    autorId: user.uid,
-    contenido: nuevoMensaje,
-    fecha: Date.now(),
-  });
-  try {
-    await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${selectedChat.id}/mensajes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contenido: nuevoMensaje,
-        autorId: user.uid,
-        fecha: Date.now(),
-      }),
+  const agregarMensaje = async (chatId) => {
+    if (!chatId || !nuevoMensaje) return;
+    const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`);
+    await push(mensajeRef, {
+      id: Date.now().toString(),
+      autor: user,
+      contenido: nuevoMensaje,
+      timestamp: Date.now(),
+      leido: false
     });
-  } catch (error) {
-    console.error("Error actualizando último mensaje en el chat:", error);
+    const ultimoRef = ref(dbRT, `chats/${chatId}/ultimoMensaje`);
+    await set(ultimoRef, { autor: user, contenido: nuevoMensaje, timestamp: Date.now() });
+
+    setNuevoMensaje('');
+  };
+
+  const filtrarChats = (texto) => {
+    if (!chatSeleccionado) return chats;
+    return chats.filter(c => c.participantes[1].nombre.toLowerCase().includes(texto.toLowerCase()) || c.participantes[0].nombre.toLowerCase().includes(texto.toLowerCase()));
   }
 
-  setNuevoMensaje("");
-};
+
+
+  const seleccionarChat = async (chatId) => {
+    console.log("Seleccionando chat con ID:", chatId);
+
+    const response = ref(dbRT, `chats/${chatId}`);
+    const snap = await get(response);
+
+    if (snap.exists()) {
+      const chatData = snap.val();
+      console.log("Datos del chat:", chatData);
+      setChatSeleccionado(chatData);
+
+      const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`)
+
+      onValue(mensajeRef, (mensajeSnap) => {
+        const data = mensajeSnap.val() || {};
+        // Incluye el ID (clave) en cada mensaje
+        const mensajesArr = Object.entries(data).map(([id, msg]) => ({
+          id,
+          ...msg
+        }));
+        console.log("Mensajes del chat:", mensajesArr);
+        setMensajesChat(mensajesArr);
+      });
+      return;
+    }
+
+  }
+
+  const crearChat = async () => {
+    console.log("ENTRANDO A CREAR CHAT");
+    const participante1 = {
+      uid: user.uid,
+      nombre: user.nombre,
+      email: user.email
+    };
+
+    const participante2 = {
+      uid: usuarioSeleccionado.id,
+      nombre: usuarioSeleccionado.nombre,
+      email: usuarioSeleccionado.email
+    }
+    console.log(participante1, participante2);
+    try {
+
+      const response = ref(dbRT, 'chats/');
+
+      const buscar = onValue(response, (snap) => {
+        const data = snap.val();
+
+        const dataArr = Array.isArray(data) ? data : Object.values(data);
+
+        dataArr.map((c) => {
+          if (c.participantes[0]?.uid === participante1.uid && c.participantes[1]?.uid === participante2.uid ||
+            c.participantes[0]?.uid === participante2.uid && c.participantes[1]?.uid === participante1.uid) {
+            setChatSeleccionado(c);
+            return;
+          }
+        });
+      });
+
+      const nuevoChatRef = push(response);
+
+      if (!nuevoChatRef) {
+        return;
+      }
+
+      const obj = {
+        id: nuevoChatRef.key,
+        participantes: [participante1, participante2],
+        mensajes: [],
+        ultimoMensaje: 'Todavía no hay mensajes'
+      }
+
+      await set(nuevoChatRef, obj);
+
+
+    } catch (error) {
+      throw error;
+    }
+
+  }
+
+  const cargarUsuarios = async () => {
+    console.log("USER", user);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/usuarios`, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+      if (!response.ok) {
+        throw new Error("Error cargando usuarios");
+      }
+
+
+      if (!response.ok) {
+        throw new Error("Error cargando usuarios");
+      }
+      const data = await response.json();
+
+      const dataFiltrada = data.map((d) => {
+
+        if (d.id != user?.uid) {
+          return d;
+        }
+      }).filter(Boolean);
+      setUsuarios(dataFiltrada);
+      console.log(dataFiltrada);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    cargarUsuarios();
+  }, [user]);
+
+  useEffect(() => {
+
+    const response = ref(dbRT, 'chats/');
+    const unsuscribe = onValue(response, (snap) => {
+      const data = snap.val();
+      const dataArr = Array.isArray(data) ? data : Object.values(data);
+
+      console.log(dataArr);
+
+      const chatsDelUsuario = dataArr.filter((chat) =>
+        chat.participantes &&
+        (chat.participantes[0]?.uid === user?.uid || chat.participantes[1]?.uid === user?.uid)
+      );
+
+      setChats(chatsDelUsuario);
+    });
+
+    return () => response.off && response.off();
+  }, [user]);
+
+
 
   return (
-    <div className="h-screen w-full bg-gray-100 flex items-center justify-center p-4">
-      
-      <div className="flex flex-col lg:flex-row w-full max-w-[1200px] h-full max-h-[800px] bg-white rounded-xl shadow-xl overflow-hidden">
-        <div className="w-full lg:w-1/3 border-r border-gray-300 flex flex-col">
-          <div className="p-4 flex items-center justify-between border-b border-gray-300">
-            <h2 className="text-xl font-bold text-black">Chats</h2>
+    <>
+      <NavbarBlanco />
+      {showModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+            padding: "32px 24px",
+            minWidth: "320px",
+            maxWidth: "90vw",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            position: "relative"
+          }}>
             <button
-              className="btn btn-sm btn-circle bg-blue-500 text-white hover:bg-blue-600"
-              onClick={() => {
-                setIsOpen(true);
-                fetchUsuarios();
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 16,
+                background: "#e0e0e0",
+                border: "none",
+                borderRadius: "50%",
+                width: "32px",
+                height: "32px",
+                fontSize: "1.2rem",
+                cursor: "pointer"
+              }}
+              onClick={() => setShowModal(false)}
+            >
+              ×
+            </button>
+            <h3 style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "18px" }}>Selecciona un usuario para crear chat</h3>
+            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
+              {usuarios.length === 0 ? (
+                <p style={{ color: "#888" }}>No hay otros usuarios disponibles.</p>
+              ) : (
+                usuarios.map(u => (
+                  <div
+                    key={u.id}
+                    style={{
+                      padding: "10px 16px",
+                      marginBottom: "8px",
+                      borderRadius: "8px",
+                      background: usuarioSeleccionado?.id === u.id ? "#e3f2fd" : "#f9f9f9",
+                      cursor: "pointer",
+                      border: usuarioSeleccionado?.id === u.id ? "2px solid #0D8ABC" : "1px solid #e0e0e0",
+                      fontWeight: 500
+                    }}
+                    onClick={() => setUsuarioSeleccionado(u)}
+                  >
+
+                    {u.nombre}
+                  </div>
+                ))
+              )}
+            </div>
+            <button
+              style={{
+                marginTop: "18px",
+                background: usuarioSeleccionado ? "#0D8ABC" : "#e0e0e0",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                padding: "10px 24px",
+                fontWeight: 600,
+                fontSize: "1em",
+                cursor: usuarioSeleccionado ? "pointer" : "not-allowed"
+              }}
+              disabled={!usuarioSeleccionado}
+              onClick={async () => {
+                if (!usuarioSeleccionado) return;
+                await crearChat();
+                setShowModal(false);
+                setUsuarioSeleccionado(null);
               }}
             >
-                +
+              Crear chat
             </button>
           </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {Array.isArray(chats) && chats.length > 0 ? (
-              chats.map((chat) => (
-                <div
-                  key={chat.id}
-                  onClick={() => setSelectedChat(chat)}
-                  className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-blue-50 transition
-                    ${selectedChat?.id === chat.id ? "bg-blue-100" : ""}`}
-                >
-                  <h3 className="font-medium text-black">{chat.name || chat.id}</h3>
-                  <p className="text-sm text-gray-600 truncate">{chat.lastMessage || ""}</p>
-                </div>
-              ))
+        </div>
+      )}
+      <div
+        className="chats-container"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "90vh",
+          background: "white"
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            minWidth: 320,
+            maxWidth: 400,
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+            padding: "24px",
+            marginRight: "32px",
+            display: "flex",
+            flexDirection: "column",
+            height: "600px"
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <h2 style={{ fontWeight: 500, fontSize: "1.3rem" }}>Conversaciónes</h2>
+            <button
+              style={{
+                background: "#0D8ABC",
+                border: "none",
+                borderRadius: "50%",
+                width: "36px",
+                height: "36px",
+                color: "#fff",
+                fontSize: "1.5rem",
+                cursor: "pointer"
+              }}
+              onClick={() => setShowModal(true)}
+            >
+              +
+            </button>
+          </div>
+          <div>
+            <input
+              placeholder="Buscar chat..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginBottom: "8px",  
+                borderRadius: "8px",
+                border: "1px solid #e0e0e0",
+                fontSize: "1em"
+              }}
+            />
+          </div>
+          <div style={{
+            flex: 1,
+            overflowY: "auto",
+            border: "1px solid #e0e0e0",
+            borderRadius: "8px",
+            padding: "8px",
+            background: "#f9f9f9"
+          }}>
+            {chats.length === 0 ? (
+              <p style={{ color: "#888" }}>No tienes chats aún.</p>
             ) : (
-              <div className="p-4 text-gray-500">No tienes chats aún.</div>
+              chats
+                .filter(chat =>
+                  chat.participantes.some(p =>
+                    p.nombre && p.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                )
+                .map(chat => (
+                  <div
+                    key={chat.id}
+                    style={{
+                      padding: "12px",
+                      marginBottom: "8px",
+                      borderRadius: "8px",
+                      background: chatSeleccionado?.id === chat.id ? "#e3f2fd" : "#fff",
+                      cursor: "pointer",
+                      boxShadow: chatSeleccionado?.id === chat.id ? "0 2px 8px rgba(13,138,188,0.08)" : "none"
+                    }}
+                    onClick={() => seleccionarChat(chat.id)}
+                  >
+                    <div style={{ fontWeight: 500 }}>{chat.participantes.map(p => p.nombre).join(", ")}</div>
+                    <div style={{ fontSize: "0.95em", color: "#666" }}>
+                      {chat.ultimoMensaje?.contenido || "Sin mensajes"}
+                    </div>
+                  </div>
+                ))
             )}
           </div>
         </div>
-
-        <div className="flex-1 flex flex-col bg-white">
-          {selectedChat ? (
+        <div
+          style={{
+            flex: 2,
+            minWidth: 400,
+            maxWidth: 700,
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+            padding: "24px",
+            display: "flex",
+            flexDirection: "column",
+            height: "600px"
+          }}
+        >
+          {verUsuario && usuarioInfo ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <img
+                style={{ width: '100px', height: '100px', borderRadius: '50%', marginBottom: '16px' }}
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(usuarioInfo.nombre || usuarioInfo.email || "U")}&background=0D8ABC&color=fff&size=128`}
+                alt="avatar"
+              />
+              <h2 style={{ fontWeight: 600, fontSize: "1.4rem", marginBottom: '8px' }}>{usuarioInfo.nombre}</h2>
+              <div style={{ fontSize: '1.1em', color: '#555', marginBottom: '8px' }}>Email: {usuarioInfo.email}</div>
+              <div style={{ fontSize: '1em', color: '#888', marginBottom: '24px' }}>ID: {usuarioInfo.uid}</div>
+              <button
+                style={{
+                  background: "#0D8ABC",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 24px",
+                  fontWeight: 600,
+                  fontSize: "1em",
+                  cursor: "pointer"
+                }}
+                onClick={() => setVerUsuario(false)}
+              >
+                Volver a los chats
+              </button>
+            </div>
+          ) : chatSeleccionado && chatSeleccionado.id ? (
             <>
-              <div className="p-4 border-b border-gray-300 flex items-center bg-white">
-                <h2 className="font-bold text-lg text-black">{selectedChat.name}</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: "16px", borderBottom: "1px solid #e0e0e0", paddingBottom: "8px" }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', cursor: 'pointer' }}
+                  onClick={() => {
+                    const info = chatSeleccionado.participantes.find(p => p.uid !== user.uid);
+                    setUsuarioInfo(info);
+                    setVerUsuario(true);
+                  }}
+                >
+                  <img
+                    style={{ width: '50px', height: '50px', borderRadius: '50%' }}
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      chatSeleccionado.participantes.filter(p => p.uid !== user.uid).map(p => p.nombre) || chatSeleccionado.participantes.filter(p => p.uid !== user.uid).map(p => p.email) || "U"
+                    )}&background=0D8ABC&color=fff&size=128`}
+                    alt="avatar"
+                  />
+                  <h2 style={{ fontWeight: 400, fontSize: "1.2rem" }}>
+                    {chatSeleccionado.participantes.filter(p => p.uid !== user.uid).map(p => p.nombre).join(", ")}
+                  </h2>
+                </div>
+                <div>
+                  <button style={{ cursor: 'pointer' }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="red" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                  </svg>
+                  </button>
+                </div>
               </div>
-
-              <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                {mensajes.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.autorId === user.uid ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`chat-bubble px-4 py-2 max-w-[70%] ${msg.autorId === user.uid ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}>
-                      <span>{msg.contenido}</span>
-                      <div className="text-xs text-right mt-1 opacity-70">
-                        {msg.fechaFormateada || 'Fecha invalida'}
+              <div style={{
+                flex: 1,
+                overflowY: "auto",
+                marginBottom: "16px",
+                borderRadius: "8px",
+                padding: "12px"
+              }}>
+                {mensajesChat.length === 0 ? (
+                  <p style={{ color: "#888" }}>No hay mensajes en este chat.</p>
+                ) : (
+                  mensajesChat.map((m, idx) => {
+                    // Detectar el UID del autor correctamente
+                    const autorUid = m.autor?.uid || m.autorId;
+                    const esUsuarioActual = autorUid === user.uid;
+                    return (
+                      <div
+                        key={m.id || idx}
+                        style={{
+                          display: "flex",
+                          justifyContent: esUsuarioActual ? "flex-end" : "flex-start",
+                          marginBottom: "10px"
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: esUsuarioActual ? "#0D8ABC" : "#ebe6e6ff",
+                            color: esUsuarioActual ? "#fff" : "#222",
+                            borderRadius: esUsuarioActual ? "16px 16px 4px 16px" : "16px 16px 16px 4px", // burbuja diferente
+                            padding: "10px 16px",
+                            maxWidth: "70%",
+                            fontSize: "1em",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                            alignSelf: esUsuarioActual ? "flex-end" : "flex-start"
+                          }}
+                        >
+                          <div>{m.contenido}</div>
+                          <div style={{ fontSize: "0.8em", textAlign: "right", marginTop: "4px", opacity: 0.7 }}>
+                            {m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-                <div ref={mensajesEndRef} />
+                    );
+                  })
+                )}
               </div>
-
-              {/* Input */}
-              <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-300 flex gap-2 bg-white">
+              <form
+                onSubmit={e => {
+                  e.preventDefault();
+                  agregarMensaje(chatSeleccionado.id);
+                }}
+                style={{ display: "flex", gap: "8px" }}
+              >
                 <input
                   type="text"
-                  placeholder="Escribe un mensaje..."
-                  className="input input-bordered flex-1 border-gray-300"
                   value={nuevoMensaje}
                   onChange={e => setNuevoMensaje(e.target.value)}
+                  placeholder="Escribe tu mensaje..."
+                  style={{
+                    flex: 1,
+                    borderRadius: "8px",
+                    border: "1px solid #e0e0e0",
+                    padding: "10px",
+                    fontSize: "1em"
+                  }}
                 />
-                <button type="submit" className="btn bg-blue-500 text-white hover:bg-blue-600">
+                <button
+                  type="submit"
+                  style={{
+                    background: "#0D8ABC",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "0 24px",
+                    fontWeight: 600,
+                    fontSize: "1em",
+                    cursor: "pointer"
+                  }}
+                >
                   Enviar
                 </button>
               </form>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
+            <div style={{ color: "#888", textAlign: "center", marginTop: "40%" }}>
               Selecciona un chat para empezar
             </div>
           )}
         </div>
       </div>
-
-      <UserModal
-        users={usuarios}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        onSelectUser={handleCreateChat}
-        />
-    </div>
+    </>
   );
-};
+}
 
 export default Chats;

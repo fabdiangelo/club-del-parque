@@ -18,14 +18,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/chats" element={<Chats />} />
-      {/* <Route
-        path="/"
-        element={
-          <ProtectedRoute fallback={<Navigate to="/login" />}>
-            <Home />
-          </ProtectedRoute>
-        }
-      /> */}
+      
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />

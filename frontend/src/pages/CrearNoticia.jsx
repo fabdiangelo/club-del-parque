@@ -44,9 +44,7 @@ export default function CrearNoticia() {
   });
 
   const fileInputRef = useRef(null);
-  const addImagesRefs = useRef({}); // list view "add images" inputs
-
-  /* ---------------- Data fetching ---------------- */
+  const addImagesRefs = useRef({});
   const fetchNoticias = async () => {
     setLoading(true);
     setError("");
