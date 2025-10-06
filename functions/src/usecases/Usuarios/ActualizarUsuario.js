@@ -14,7 +14,7 @@ class ActualizarUsuario {
       if(data.rol && !["usuario", "federado", "administrador"].includes(data.rol)){
         throw new Error("Rol inválido");
       }
-      console.log('updating for: ' + data)
+
       if(data.rol === "usuario" || data.rol === "federado"){
         await this.usuarioRepo.update(uid, data);
       }
@@ -26,8 +26,8 @@ class ActualizarUsuario {
       if(data.rol === "administrador"){
         await this.adminRepo.update(uid, data);
       }
-
-      return true;
+      
+      return data;
     } catch (err){
       console.error("Error updating user:", err);
       throw err;

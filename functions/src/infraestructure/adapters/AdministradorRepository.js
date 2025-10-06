@@ -1,18 +1,20 @@
-import DBConnection from "../DBConnection.js";
+import DBConnection from "../ports/DBConnection.js";
+import AuthConnection from "../ports/AuthConnection.js";
 
 export class AdministradorRepository {
   constructor() {
-    this.dbConnection = new DBConnection();
+    this.db = new DBConnection();
+    this.auth = new AuthConnection();
     this.collectionName = 'administradores';
   }
 
   async save(administrador) {
-    const docRef = await this.dbConnection.putItem(this.collectionName, administrador);
+    const docRef = await this.db.putItem(this.collectionName, administrador);
     return docRef.id;
   }
 
   async findById(id) {
-    const administrador = await this.dbConnection.getItem(this.collectionName, id);
+    const administrador = await this.db.getItem(this.collectionName, id);
     if (!administrador) {
       return null;
     }
@@ -20,7 +22,22 @@ export class AdministradorRepository {
   }
 
   async update(id, administrador) {
-    const docRef = this.db.collection(this.collectionName).doc(id);
-    await docRef.set(administrador, { merge: true });
+    await this.db.updateItem("administradores", id, administrador)
+
+    if (administrador.email) {
+        await this.auth.updateUser(id, { email: administrador.email });
+    }
+    if (administrador.password) {
+        await this.auth.updateUser(id, { password: administrador.password });
+    }
+  }
+
+  async getAll(){
+    const snapshot = await this.db.getAllItems(this.collectionName);
+    const users = [];
+    snapshot.forEach((doc) => {
+        users.push({ id: doc.id, ...doc.data() });
+    });
+    return users;
   }
 }

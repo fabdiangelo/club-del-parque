@@ -4,9 +4,12 @@ import ReporteDefaultModal from '../components/administracion-reportes/ReporteDe
 import SoloAdmin from '../components/SoloAdmin';
 import Navbar from '../components/Navbar';
 import GraficoGauge from '../components/GraficoGauge';
+import { useAuth } from '../contexts/AuthProvider';
 import { Flame, Server, Database, Users, AlertCircle, CheckCircle, Clock, Calendar  } from 'lucide-react';
 
 const Administracion = () => {
+  const { user } = useAuth();
+
   const [metricas, setMetricas] = useState(null);
   const [reportes, setReportes] = useState([]);
   const [cantidadUsuarios, setCantidadUsuarios] = useState(0);
@@ -122,15 +125,15 @@ const Administracion = () => {
 
   const negarFederacion = async (idReporte) => {
     try {
-      // const res = await fetch(`api/notificaciones/negar-federacion/${idReporte}`, {
-      //   method: 'PUT',
-      //   credentials: 'include'
-      // });
-      // if (res.status === 401) {
-      //   setIsUnauthorized(true);
-      //   setModalReporte(null);
-      //   return;
-      // }
+      const res = await fetch(`api/usuarios/negar-federacion/${idReporte}`, {
+        method: 'PUT',
+        credentials: 'include'
+      });
+      if (res.status === 401) {
+        setIsUnauthorized(true);
+        setModalReporte(null);
+        return;
+      }
       marcarComoResuelto(idReporte);
     } catch (err) {
       console.error('Error al negar federación:', err);
@@ -157,6 +160,10 @@ const Administracion = () => {
 
   if (isUnauthorized) {
     return <SoloAdmin />;
+  }
+  if (!user || user.rol !== 'administrador') {
+    console.log(user)
+    return ( <SoloAdmin /> );
   }
   if (loading) {
     return (
@@ -427,7 +434,7 @@ const Administracion = () => {
               </div>
               
               <button
-                onClick={() => window.location.href = '/usuarios'}
+                onClick={() => window.location.href = '/administracion/usuarios'}
                 className="btn btn-lg"
                 style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
               >

@@ -15,7 +15,7 @@ export default class DBConnection{
     }
 
     async getItem(collection, id){
-        return (await this.db.collection(collection).doc(id).get()).data();
+        return await this.db.collection(collection).doc(id).get().then(doc => doc.data());
     }
 
     async getAllItems(collection) {
@@ -50,5 +50,10 @@ export default class DBConnection{
             items.push({ id: doc.id, ...doc.data() });
         });
         return items;
+    }
+
+    async updateItem(collection, id, partial) {
+        await this.db.collection(collection).doc(id).update(partial);
+        return id;
     }
 }

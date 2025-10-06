@@ -26,10 +26,7 @@ class FederadoRepository {
   }
 
   async update(id, federado) {
-    const docRef = this.db.collection('federados').doc(id);
-
-    await docRef.set(federado, { merge: true });
-    await this.auth.setRole(id, 'federado');
+    return await this.db.updateItem("federados", id, federado)
   }
 
   async agregarSubscripcion(id, subId) {

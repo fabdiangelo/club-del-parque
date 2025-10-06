@@ -46,6 +46,7 @@ export default function Perfil() {
         }
         const data = await res.json();
         setUserData(data);
+        console.log(data)
         setLoadingUser(false);
       } catch (err) {
         console.error("fetchUserData error:", err);
@@ -133,9 +134,14 @@ export default function Perfil() {
                 <p className="text-sm opacity-70">{user.email}</p>
               </div>
 
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-end gap-2 inline">
                 <span className="badge badge-outline">
-                  {user.rol || user.role || "user"}
+                  {user.rol|| "user"}
+                </span>
+                <span className={`badge badge-outline ${ new Date(userData?.validoHasta) >= new Date() ? "badge-success" : "badge-error"}`}>
+                  {user.rol == "federado" && 
+                    new Date(userData?.validoHasta) >= new Date() ? "Activa" : "Vencida"
+                  }
                 </span>
                 <div className="btn-group">
                   <button
@@ -147,9 +153,13 @@ export default function Perfil() {
                   <button className="btn btn-sm btn-error" onClick={handleLogout}>
                     Cerrar sesión
                   </button>
-                  <button className="btn btn-sm btn-info" onClick={openFederateModal}>
-                    Solicitar Federación
-                  </button>
+                  { user.rol != "administrador" &&
+                    (
+                      <button className="btn btn-sm btn-info" onClick={openFederateModal} disabled={userData?.estado == "federacion_pendiente"}>
+                        Solicitar Federación
+                      </button>
+                    )
+                  }
                 </div>
               </div>
             </div>
@@ -167,7 +177,7 @@ export default function Perfil() {
                   <dd className="mb-2">{user.email || "-"}</dd>
 
                   <dt className="text-xs text-gray-500">Rol</dt>
-                  <dd className="mb-2">{user.rol || user.role || "-"}</dd>
+                  <dd className="mb-2">{user.rol || "-"}</dd>
                 </dl>
               </div>
 

@@ -17,7 +17,7 @@ const Chats = () => {
   // Obtener usuarios para crear chat
   const fetchUsuarios = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/usuarios`);
+      const response = await fetch(`api/usuarios`);
       if (!response.ok) throw new Error("Error fetching users");
       const data = await response.json();
       const filtro = data.filter((u) => u.id !== user.uid);
@@ -32,7 +32,7 @@ const Chats = () => {
   // Crear chat usando endpoint REST
   const handleCreateChat = async (usuarioSeleccionado) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats`, {
+      const response = await fetch(`api/chats`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ participante1: user.uid, participante2: usuarioSeleccionado.id }),
@@ -49,7 +49,7 @@ const Chats = () => {
   // Obtener los chats del usuario al cargar y tras crear chat
   const fetchChats = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${user.uid}`, {
+      const response = await fetch(`api/chats/${user.uid}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -68,7 +68,7 @@ const Chats = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${user.uid}`, {
+        const response = await fetch(`api/chats/${user.uid}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -89,7 +89,7 @@ const Chats = () => {
       if (!selectedChat?.id) return;
       try {
         console.log("SELECTED CHAT ID => ", selectedChat.id);
-        const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${selectedChat.id}/mensajes`);
+        const response = await fetch(`api/chats/${selectedChat.id}/mensajes`);
         
         if (!response.ok) return null;
         
@@ -143,7 +143,7 @@ const handleSendMessage = async (e) => {
     fecha: Date.now(),
   });
   try {
-    await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/chats/${selectedChat.id}/mensajes`, {
+    await fetch(`api/chats/${selectedChat.id}/mensajes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
