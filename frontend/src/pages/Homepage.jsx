@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import logoUrl from "../assets/Logo.svg";
+import '../styles/Home.css'
 
 // Configurable endpoint (VITE_NOTICIAS_API) or fallback
 const NOTICIAS_ENDPOINT =
@@ -18,6 +19,22 @@ const NEWS_GAP_PX = 48;
 const BRAND_CYAN = "#22d3ee"; // cyan-400-ish
 const BRAND_GRADIENT_FROM = "#0ea5e9"; // sky-500
 const BRAND_GRADIENT_TO = "#0284c7"; // sky-600
+
+// Inyectar @font-face para Amsterdam Four si no existe
+if (typeof document !== "undefined" && !document.getElementById("amsterdam-four-font")) {
+  const style = document.createElement("style");
+  style.id = "amsterdam-four-font";
+  style.innerHTML = `
+    @font-face {
+      font-family: 'Amsterdam Four';
+      src: url('/amsterdam-four.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 /* --- Utils --- */
 function stripMarkdown(md = "") {
@@ -106,7 +123,7 @@ export default function Home() {
       <section
         className="relative flex items-center justify-center w-full"
         style={{
-          minHeight: '100vh', // asumiendo que el navbar mide 64px
+          minHeight: '100vh',
           backgroundImage: "url('/fondohome.jpeg')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -127,7 +144,11 @@ export default function Home() {
           <div>
             <h1
               className="font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6"
-              style={{ color: BRAND_CYAN }}
+              style={{
+                color: BRAND_CYAN,
+                fontFamily: 'Amsterdam Four, serif',
+                letterSpacing: '0.04em',
+              }}
             >
               Club del Parque
             </h1>

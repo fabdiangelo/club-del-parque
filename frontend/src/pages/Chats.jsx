@@ -1,14 +1,14 @@
 
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import '../styles/Chats.css'
 import { dbRT } from '../utils/FirebaseService.js'
-import { ref, onValue, getDatabase, push, set, get } from 'firebase/database';
+import { ref, onValue, getDatabase, push, set, get, update } from 'firebase/database';
 import { useAuth } from '../contexts/AuthProvider.jsx';
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
-import { auth } from '../utils/LoginProviders.js';
-
 const Chats = () => {
+  
+  const scrollRef = useRef(null);
 
   const [chats, setChats] = useState([])
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,6 +23,8 @@ const Chats = () => {
   const [textoReporte, setTextoReporte] = useState('');
   const [mensaje, setMensaje] = useState(null);
   const [tipoMensaje, setTipoMensaje] = useState(null);
+  
+  const [notificaciones, setNotificaciones] = useState({});
 
   const [showModalReporte, setShowModalReporte] = useState(false);
 
@@ -107,25 +109,28 @@ const Chats = () => {
 
     if (snap.exists()) {
       const chatData = snap.val();
-      console.log("Datos del chat:", chatData);
       setChatSeleccionado(chatData);
 
-      const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`)
-
+      const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`);
       onValue(mensajeRef, (mensajeSnap) => {
         const data = mensajeSnap.val() || {};
-        // Incluye el ID (clave) en cada mensaje
         const mensajesArr = Object.entries(data).map(([id, msg]) => ({
           id,
           ...msg
         }));
-        console.log("Mensajes del chat:", mensajesArr);
         setMensajesChat(mensajesArr);
+
+        mensajesArr.forEach((msg) => {
+          if (!msg.leido && msg.autor?.uid !== user.uid) {
+            const msgRef = ref(dbRT, `chats/${chatId}/mensajes/${msg.id}`);
+            update(msgRef, { leido: true });
+          }
+        });
       });
+      setNotificaciones((prev) => ({ ...prev, [chatId]: 0 }));
       return;
     }
-
-  }
+  };
 
   const crearChat = async () => {
     console.log("ENTRANDO A CREAR CHAT");
@@ -213,22 +218,44 @@ const Chats = () => {
   }, [user]);
 
   useEffect(() => {
+  if (scrollRef.current) {
+    scrollRef.current.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth"
+    });
+  }
+}, [chatSeleccionado, mensajesChat]);
 
+
+
+  useEffect(() => {
     const response = ref(dbRT, 'chats/');
     const unsuscribe = onValue(response, (snap) => {
       const data = snap.val();
       const dataArr = Array.isArray(data) ? data : Object.values(data || {});
-
-      console.log(dataArr);
-
       const chatsDelUsuario = dataArr.filter((chat) =>
         chat.participantes &&
         (chat.participantes[0]?.uid === user?.uid || chat.participantes[1]?.uid === user?.uid)
       );
-
       setChats(chatsDelUsuario);
-    });
 
+      const notifs = {};
+      chatsDelUsuario.forEach((chat) => {
+        let count = 0;
+        if (chat.mensajes) {
+          const mensajesArr = Array.isArray(chat.mensajes)
+            ? chat.mensajes
+            : Object.values(chat.mensajes);
+          mensajesArr.forEach((msg) => {
+            if (!msg.leido && msg.autor?.uid !== user?.uid) {
+              count++;
+            }
+          });
+        }
+        notifs[chat.id] = count;
+      });
+      setNotificaciones(notifs);
+    });
     return () => response.off && response.off();
   }, [user]);
 
@@ -544,11 +571,28 @@ const Chats = () => {
                       borderRadius: "8px",
                       background: chatSeleccionado?.id === chat.id ? "#e3f2fd" : "#fff",
                       cursor: "pointer",
-                      boxShadow: chatSeleccionado?.id === chat.id ? "0 2px 8px rgba(13,138,188,0.08)" : "none"
+                      boxShadow: chatSeleccionado?.id === chat.id ? "0 2px 8px rgba(13,138,188,0.08)" : "none",
+                      position: "relative"
                     }}
                     onClick={() => seleccionarChat(chat.id)}
                   >
-                    <div style={{ fontWeight: 500 }}>{chat.participantes.map(p => p.nombre).join(", ")}</div>
+                    <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>{chat.participantes.map(p => p.nombre).join(", ")}</span>
+                      {notificaciones[chat.id] > 0 && (
+                        <span style={{
+                          background: '#0D8ABC',
+                          color: '#fff',
+                          borderRadius: '50%',
+                          padding: '4px 10px',
+                          fontSize: '0.9em',
+                          marginLeft: '8px',
+                          fontWeight: 700,
+                          boxShadow: '0 2px 8px rgba(13,138,188,0.12)'
+                        }}>
+                          {notificaciones[chat.id]}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: "0.95em", color: "#666" }}>
                       {chat.ultimoMensaje?.contenido || "Sin mensajes"}
                     </div>
@@ -600,7 +644,7 @@ const Chats = () => {
                   </button>
                 </div>
               </div>
-              <div style={{
+              <div ref={scrollRef} style={{
                 flex: 1,
                 overflowY: "auto",
                 marginBottom: "16px",
