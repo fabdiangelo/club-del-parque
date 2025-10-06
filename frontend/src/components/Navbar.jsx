@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import logoUrl from "../assets/Logo.svg";
 
-export default function Navbar() {
+export default function Navbar({ transparent }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -15,9 +15,11 @@ export default function Navbar() {
 
   return (
     <header
-      className="w-full bg-neutral-800 fixed top-0 z-[200]"
+      className={`w-full fixed top-0 z-[200] transition-colors duration-300 ${
+        transparent ? "backdrop-blur" : "bg-neutral-800"
+      }`}
       role="banner"
-      style={{'left': '0'}}
+      style={{ left: "0" }}
     >
       <nav className="mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">

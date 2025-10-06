@@ -43,6 +43,15 @@ function excerptFromMd(md = "", max = 200) {
 }
 
 export default function Home() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [noticias, setNoticias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -89,13 +98,32 @@ export default function Home() {
     : undefined;
 
   return (
-    <div className="min-h-[100svh] min-h-screen flex flex-col bg-base-200 text-base-content w-full">
-      {/* NAVBAR */}
-      <Navbar />
+  <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
+  {/* NAVBAR */}
+  <Navbar transparent={!scrolled} />
 
       {/* HERO */}
-      <section className="relative overflow-hidden flex-1 flex items-center w-full">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full">
+      <section
+        className="relative flex items-center justify-center w-full"
+        style={{
+          minHeight: '100vh', // asumiendo que el navbar mide 64px
+          backgroundImage: "url('/fondohome.jpeg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative',
+          flex: 1,
+        }}
+      >
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.6)',
+          zIndex: 1
+        }} />
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full" style={{ position: 'relative', zIndex: 2 }}>
           <div>
             <h1
               className="font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6"
@@ -125,7 +153,7 @@ export default function Home() {
             <img
               src={logoUrl}
               alt="Club del Parque Logo"
-              className="h-90 w-auto opacity-80"
+              className="h-90 w-auto opacity-100"
             />
           </div>
         </div>

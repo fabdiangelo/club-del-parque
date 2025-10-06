@@ -6,6 +6,7 @@ import { dbRT } from '../utils/FirebaseService.js'
 import { ref, onValue, getDatabase, push, set, get } from 'firebase/database';
 import { useAuth } from '../contexts/AuthProvider.jsx';
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
+import { auth } from '../utils/LoginProviders.js';
 
 const Chats = () => {
 
@@ -19,6 +20,11 @@ const Chats = () => {
   const [nuevoMensaje, setNuevoMensaje] = useState('');
   const [verUsuario, setVerUsuario] = useState(false);
   const [usuarioInfo, setUsuarioInfo] = useState(null);
+  const [textoReporte, setTextoReporte] = useState('');
+  const [mensaje, setMensaje] = useState(null);
+  const [tipoMensaje, setTipoMensaje] = useState(null);
+
+  const [showModalReporte, setShowModalReporte] = useState(false);
 
 
   const { user } = useAuth();
@@ -40,10 +46,56 @@ const Chats = () => {
     setNuevoMensaje('');
   };
 
-  const filtrarChats = (texto) => {
-    if (!chatSeleccionado) return chats;
-    return chats.filter(c => c.participantes[1].nombre.toLowerCase().includes(texto.toLowerCase()) || c.participantes[0].nombre.toLowerCase().includes(texto.toLowerCase()));
-  }
+
+  const enviarReporte = async(e) => {
+
+        const formInfo = {
+            tipo: 'reporte_jugador',
+            motivo: "Se reporta al usuario con mail: " + (chatSeleccionado.participantes.filter(p => p.uid !== user.uid).map(p => p.email) || "Desconocido"),
+            descripcion: textoReporte,
+            estado: 'pendiente',
+            mailUsuario: user ? user.email : 'anónimo',
+            leido: false
+        }
+
+
+        try {
+            const response = await fetch(`api/reportes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formInfo),
+            });
+
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al enviar el reporte');
+            }
+
+            const data = await response.json();
+            console.log('Success:', data);
+
+            setMensaje('Reporte enviado con éxito');
+            setTipoMensaje('success');
+            
+
+            setTextoReporte('');
+
+        } catch (error) {
+            console.error('Error:', error);
+            
+            setMensaje(error.message);
+            setTipoMensaje('error');
+        }
+
+
+        setTimeout(() => {
+            setMensaje(null);
+        }, 3000);
+    }
 
 
 
@@ -130,19 +182,19 @@ const Chats = () => {
   }
 
   const cargarUsuarios = async () => {
-    console.log("USER", user);
+ 
     try {
-      const response = await fetch(`${import.meta.env.VITE_LINKTEMPORAL}/usuarios`, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+      const response = await fetch("/api/usuarios", {
+      method: "GET",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" }
+    });
       if (!response.ok) {
+        console.log(response.text())
         throw new Error("Error cargando usuarios");
       }
 
-
-      if (!response.ok) {
-        throw new Error("Error cargando usuarios");
-      }
       const data = await response.json();
-
       const dataFiltrada = data.map((d) => {
 
         if (d.id != user?.uid) {
@@ -150,7 +202,6 @@ const Chats = () => {
         }
       }).filter(Boolean);
       setUsuarios(dataFiltrada);
-      console.log(dataFiltrada);
     } catch (error) {
       throw error;
     }
@@ -166,7 +217,7 @@ const Chats = () => {
     const response = ref(dbRT, 'chats/');
     const unsuscribe = onValue(response, (snap) => {
       const data = snap.val();
-      const dataArr = Array.isArray(data) ? data : Object.values(data);
+      const dataArr = Array.isArray(data) ? data : Object.values(data || {});
 
       console.log(dataArr);
 
@@ -186,6 +237,100 @@ const Chats = () => {
   return (
     <>
       <NavbarBlanco />
+
+      {mensaje && (
+  <div
+    role="alert"
+    className={`alert alert-${tipoMensaje === 'success' ? 'success' : 'error'}`}
+    style={{
+      position: "fixed",
+      left: "32px",
+      bottom: "32px",
+      zIndex: 9999,
+      minWidth: "300px",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.18)"
+    }}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tipoMensaje === 'success'
+        ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        : "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+    </svg>
+    <span>{mensaje}</span>
+  </div>
+)}
+
+
+      {showModalReporte && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+            padding: "32px 24px",
+            minWidth: "320px",
+            maxWidth: "90vw",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            position: "relative"
+          }}>
+            <button
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 16,
+                background: "#e0e0e0",
+                border: "none",
+                borderRadius: "50%",
+                width: "32px",
+                height: "32px",
+                fontSize: "1.2rem",
+                cursor: "pointer"
+              }}
+              onClick={() => setShowModalReporte(false)}
+            >
+              ×
+            </button>
+            <div style={{ maxHeight: "100vh", overflowY: "auto", marginTop: '30px' }}>
+              <textarea style={{height: '200px', width: '400px', resize: 'none'}} className='input' placeholder='Escribe tu reporte aquí...' value={textoReporte} onChange={(e) => setTextoReporte(e.target.value)} />
+            </div>
+            <button
+              style={{
+                marginTop: "18px",
+                background: textoReporte ? "#dc2618ff" : "#e0e0e0",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                padding: "10px 24px",
+                fontWeight: 600,
+                fontSize: "1em",
+                cursor: textoReporte ? "pointer" : "not-allowed"
+              }}
+              disabled={!textoReporte}
+              onClick={async () => {
+                if (!textoReporte) return;
+                await enviarReporte();
+                setShowModalReporte(false);
+              }}
+            >
+              Reportar
+            </button>
+          </div>
+        </div>
+      )}
+
+
       {showModal && (
         <div style={{
           position: "fixed",
@@ -227,8 +372,7 @@ const Chats = () => {
             >
               ×
             </button>
-            <h3 style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "18px" }}>Selecciona un usuario para crear chat</h3>
-            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
+            <div style={{ maxHeight: "50vh", overflowY: "auto", marginTop: '30px' }}>
               {usuarios.length === 0 ? (
                 <p style={{ color: "#888" }}>No hay otros usuarios disponibles.</p>
               ) : (
@@ -343,7 +487,46 @@ const Chats = () => {
             padding: "8px",
             background: "#f9f9f9"
           }}>
-            {chats.length === 0 ? (
+            {verUsuario && usuarioInfo ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <img
+                  style={{ width: '100px', height: '100px', borderRadius: '50%', marginBottom: '16px' }}
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(usuarioInfo.nombre || usuarioInfo.email || "U")}&background=0D8ABC&color=fff&size=128`}
+                  alt="avatar"
+                />
+                <h2 style={{ fontWeight: 600, fontSize: "1.4rem", marginBottom: '8px' }}>{usuarioInfo.nombre} {usuarioInfo.apellido || ''}</h2>
+
+                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px'}}>
+                  <p style={{textAlign: 'right'}}>Ranking: </p>
+                  <p style={{textAlign: 'left'}}>{usuarioInfo.ranking || '-'}</p>
+                </div>
+                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>
+                  <span>Categoría: </span>
+                  <span>{usuarioInfo.categoria || ''}</span>
+                </div>
+                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>
+                  <span>Mejor Posición en torneo: </span>
+                  <span>{usuarioInfo.mejorPosicionTorneo || ''}</span>
+                </div>
+                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>Partidos oficiales ganados: {usuarioInfo.partidosOficialesGanados || ''}</div>
+                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>Partidos oficiales perdidos: {usuarioInfo.partidosOficialesPerdidos || ''}</div>
+                <button
+                  style={{
+                    background: "#0D8ABC",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "10px 24px",
+                    fontWeight: 600,
+                    fontSize: "1em",
+                    cursor: "pointer"
+                  }}
+                  onClick={() => setVerUsuario(false)}
+                >
+                  Volver a los chats
+                </button>
+              </div>
+            ) : chats.length === 0 ? (
               <p style={{ color: "#888" }}>No tienes chats aún.</p>
             ) : (
               chats
@@ -388,33 +571,7 @@ const Chats = () => {
             height: "600px"
           }}
         >
-          {verUsuario && usuarioInfo ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <img
-                style={{ width: '100px', height: '100px', borderRadius: '50%', marginBottom: '16px' }}
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(usuarioInfo.nombre || usuarioInfo.email || "U")}&background=0D8ABC&color=fff&size=128`}
-                alt="avatar"
-              />
-              <h2 style={{ fontWeight: 600, fontSize: "1.4rem", marginBottom: '8px' }}>{usuarioInfo.nombre}</h2>
-              <div style={{ fontSize: '1.1em', color: '#555', marginBottom: '8px' }}>Email: {usuarioInfo.email}</div>
-              <div style={{ fontSize: '1em', color: '#888', marginBottom: '24px' }}>ID: {usuarioInfo.uid}</div>
-              <button
-                style={{
-                  background: "#0D8ABC",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "10px 24px",
-                  fontWeight: 600,
-                  fontSize: "1em",
-                  cursor: "pointer"
-                }}
-                onClick={() => setVerUsuario(false)}
-              >
-                Volver a los chats
-              </button>
-            </div>
-          ) : chatSeleccionado && chatSeleccionado.id ? (
+          {chatSeleccionado && chatSeleccionado.id ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: "16px", borderBottom: "1px solid #e0e0e0", paddingBottom: "8px" }}>
                 <div
@@ -437,7 +594,7 @@ const Chats = () => {
                   </h2>
                 </div>
                 <div>
-                  <button style={{ cursor: 'pointer' }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="red" class="size-6">
+                  <button style={{ cursor: 'pointer' }} onClick={() => setShowModalReporte(true)}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="red" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                   </svg>
                   </button>
@@ -454,7 +611,6 @@ const Chats = () => {
                   <p style={{ color: "#888" }}>No hay mensajes en este chat.</p>
                 ) : (
                   mensajesChat.map((m, idx) => {
-                    // Detectar el UID del autor correctamente
                     const autorUid = m.autor?.uid || m.autorId;
                     const esUsuarioActual = autorUid === user.uid;
                     return (
