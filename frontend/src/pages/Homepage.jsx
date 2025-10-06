@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import logoUrl from "../assets/Logo.svg";
+import '../styles/Home.css'
 
 // Configurable endpoint (VITE_NOTICIAS_API) or fallback
 const NOTICIAS_ENDPOINT =
@@ -18,6 +19,22 @@ const NEWS_GAP_PX = 48;
 const BRAND_CYAN = "#22d3ee"; // cyan-400-ish
 const BRAND_GRADIENT_FROM = "#0ea5e9"; // sky-500
 const BRAND_GRADIENT_TO = "#0284c7"; // sky-600
+
+// Inyectar @font-face para Amsterdam Four si no existe
+if (typeof document !== "undefined" && !document.getElementById("amsterdam-four-font")) {
+  const style = document.createElement("style");
+  style.id = "amsterdam-four-font";
+  style.innerHTML = `
+    @font-face {
+      font-family: 'Amsterdam Four';
+      src: url('/amsterdam-four.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 /* --- Utils --- */
 function stripMarkdown(md = "") {
@@ -43,6 +60,15 @@ function excerptFromMd(md = "", max = 200) {
 }
 
 export default function Home() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [noticias, setNoticias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -89,17 +115,40 @@ export default function Home() {
     : undefined;
 
   return (
-    <div className="min-h-[100svh] min-h-screen flex flex-col bg-base-200 text-base-content w-full">
-      {/* NAVBAR */}
-      <Navbar />
+  <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
+  {/* NAVBAR */}
+  <Navbar transparent={!scrolled} />
 
       {/* HERO */}
-      <section className="relative overflow-hidden flex-1 flex items-center w-full">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full">
+      <section
+        className="relative flex items-center justify-center w-full"
+        style={{
+          minHeight: '100vh',
+          backgroundImage: "url('/fondohome.jpeg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative',
+          flex: 1,
+        }}
+      >
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.6)',
+          zIndex: 1
+        }} />
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full" style={{ position: 'relative', zIndex: 2 }}>
           <div>
             <h1
               className="font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6"
-              style={{ color: BRAND_CYAN }}
+              style={{
+                color: BRAND_CYAN,
+                fontFamily: 'Amsterdam Four, serif',
+                letterSpacing: '0.04em',
+              }}
             >
               Club del Parque
             </h1>
@@ -125,7 +174,7 @@ export default function Home() {
             <img
               src={logoUrl}
               alt="Club del Parque Logo"
-              className="h-90 w-auto opacity-80"
+              className="h-90 w-auto opacity-100"
             />
           </div>
         </div>

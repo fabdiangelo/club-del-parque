@@ -46,10 +46,6 @@ class UsuarioController {
       if (!sessionCookie) {
         return res.status(401).json({ error: "No session cookie found" });
       }
-      const user = GetActualUser.execute(sessionCookie)
-      if(user.rol !== "administrador"){
-        return res.status(403).json({ error: "Acceso no autorizado" });
-      }
       const usuarios = await GetAllUsuarios.execute();
       return res.json(usuarios);
     } catch (error) {

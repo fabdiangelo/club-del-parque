@@ -64,12 +64,10 @@ function Login() {
           return;
         }
 
-        // Autenticar con email/password
         const cred = await signInWithEmailAndPassword(auth, email, pwd);
         // Linkear la credencial pendiente (google) con este usuario
         await linkGoogleToExistingAccount(cred.user, pendingCred);
 
-        // Tras linkear, obtenemos idToken y lo mandamos al backend
         const idToken = await cred.user.getIdToken(true);
         const response = await fetch("/api/auth/google", {
           method: "POST",
