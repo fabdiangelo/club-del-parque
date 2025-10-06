@@ -32,11 +32,12 @@ class Login {
         if (!allData) {
           allData = await this.db.getItem("administradores", uid);
         }
-        console.log(allData)
+        if(allData.estado == "inactivo"){
+          throw new Error("Este usuario se encuentra bloqueado. Consulte con un administrador si considera que es un error.");
+        }
         if (!allData) {
           throw new Error("No existe una cuenta previa para este usuario");
         }
-        console.log(allData)
         rol = allData.rol;
         await this.auth.setRole(uid, rol);
       }
@@ -52,6 +53,9 @@ class Login {
       user = await this.db.getItem(collection, uid);
       if (!user) {
         throw new Error("No existe una cuenta previa para este usuario");
+      }
+      if(user.estado == "inactivo"){
+        throw new Error("Este usuario se encuentra bloqueado. Consulte con un administrador si considera que es un error.");
       }
       console.log(user);
       const payload = {

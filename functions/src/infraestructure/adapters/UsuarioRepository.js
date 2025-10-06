@@ -20,10 +20,12 @@ export class UsuarioRepository {
         return users;
     }
 
-    async update(id, usuario) {
-        const docRef = this.db.collection('usuarios').doc(id);
+    async getOnlyUsers(){
+        return await this.db.getItemsByField("usuarios", "rol", "usuario");;
+    }
 
-        await docRef.set(usuario, { merge: true });
+    async update(id, usuario) {
+        await this.db.updateItem("usuarios", id, usuario)
 
         // Actualizar también el auth
         if (usuario.email) {

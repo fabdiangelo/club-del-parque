@@ -3,9 +3,12 @@ import ReporteFederacionModal from '../components/administracion-reportes/Report
 import ReporteDefaultModal from '../components/administracion-reportes/ReporteDefaultModal';
 import SoloAdmin from '../components/SoloAdmin';
 import Navbar from '../components/Navbar';
+import { useAuth } from '../contexts/AuthProvider';
 import { Users, AlertCircle, CheckCircle, Clock, Calendar  } from 'lucide-react';
 
-const Administracion = () => {
+const AdministracionReportes = () => {
+  const { user } = useAuth();
+
   const [reportes, setReportes] = useState([]);
   const [reportesNoLeidos, setReportesNoLeidos] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -136,6 +139,10 @@ const Administracion = () => {
 
   if (isUnauthorized) {
     return <SoloAdmin />;
+  }
+  if (!user || user.rol !== 'administrador') {
+    console.log(user)
+    return ( <SoloAdmin /> );
   }
   if (loading) {
     return (
@@ -296,4 +303,4 @@ const Administracion = () => {
   );
 };
 
-export default Administracion;
+export default AdministracionReportes;

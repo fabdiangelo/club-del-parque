@@ -110,8 +110,8 @@ function Login() {
         navigate("/");
       }
     } catch (err) {
-      console.error(Object.keys(err.customData));
-      setMsg(err.code.replace(/-/g, ' ').replace('auth/', ''))
+      console.error(err);
+      setMsg(err.code?.replace(/-/g, ' ').replace('auth/', '') || JSON.parse(err.message).error)
     } finally {
       setLoading(false);
     }

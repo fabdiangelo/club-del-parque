@@ -1,10 +1,14 @@
 import { ReporteRepository } from '../infraestructure/adapters/ReportRepository.js';
 
+import jwt from "jsonwebtoken";
+const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
+
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 
 import SolicitarFederacion from "../usecases/Reportes/SolicitarFederacion.js";
 import MarcarReporteResuelto from '../usecases/Reportes/MarcarReporteResuelto.js';
 import ObtenerReportesSinResolver from '../usecases/Reportes/ObtenerReportesSinResolver.js';
+import ObtenerDatosUsuario from '../usecases/Usuarios/ObtenerDatosUsuario.js';
 import { CrearReporte } from '../usecases/Reportes/CrearReporte.js'
 import { ObtenerAllReportes } from '../usecases/Reportes/ObtenerAllReportes.js'
 import { EnviarMail } from '../usecases/EnviarMail.js';
@@ -126,8 +130,33 @@ class ReporteController {
             if (!justificante) {
                 return res.status(400).json({ error: "Faltan datos obligatorios" });
             }
+            
+            const usuario = await ObtenerDatosUsuario.execute(userId)
+            if(!usuario){
+                return res.status(401).json({ error: "No se encontrpo al usuario" });
+            }
 
-            const msg = await SolicitarFederacion.execute(userId, justificante);
+            if(usuario.estado == "federacion_pendiente"){
+                return res.status(404).json({ error: "El usuario ya tiene una federacion pendiente" });
+            }
+
+            const msg = await SolicitarFederacion.execute(usuario, justificante);
+
+            const payload = {
+                uid: usuario.id,
+                email: usuario.email,
+                rol: usuario.rol,
+                nombre: usuario.nombre,
+            };
+            const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "2h" });
+    
+            res.cookie("session", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                maxAge: 2 * 60 * 60 * 1000, // 2h
+            });
+
             return res.json(msg);
         } catch (error) {
             console.error("Error al enviar solicitud de federacion", error);
