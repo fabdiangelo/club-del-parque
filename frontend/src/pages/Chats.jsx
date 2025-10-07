@@ -31,6 +31,7 @@ const Chats = () => {
   const [notificaciones, setNotificaciones] = useState({});
   const mensajesListenerRef = useRef(null);
   const [showModalReporte, setShowModalReporte] = useState(false);
+  const [showModalPartido, setShowModalPartido] = useState(false);
 
 
   const { user } = useAuth();
@@ -328,6 +329,61 @@ useEffect(() => {
   </div>
 )}
 
+      {showModalPartido && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+            padding: "32px 24px",
+            minWidth: "600px",
+            maxWidth: "90vw",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            position: "relative"
+          }}>
+            <div style={{ display: "flex",gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
+              <label>Fecha y hora</label>
+              <input className='input' type="datetime-local" />
+            </div>
+
+            <div style={{ display: "flex",gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
+              <label>Será cobrado a</label>
+              <select className='input'>
+                {usuarios.map((u) => {
+                  if (chatSeleccionado && chatSeleccionado.participantes.some(p => p.uid === u.id)) {
+                    return <option key={u.id} value={u.id}>{u.nombre}</option>;
+                  }
+                }).filter(Boolean)}
+
+                <option key={user.uid} value={user.uid}>{user.nombre}</option>
+              </select>
+
+
+            
+            </div>
+
+            <div style={{display: 'flex', gap: '4px', alignItems: 'center', marginBottom: '5px'}}>
+                <button style={{color: 'white', backgroundColor: 'green', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>Enviar</button>
+                <button style={{color: 'white', backgroundColor: 'red', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', ':hover': {backgroundColor: 'white'}}}>Cancelar</button>
+
+
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {showModalReporte && (
         <div style={{
@@ -496,7 +552,8 @@ useEffect(() => {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "90vh",
-          background: "white"
+          background: "white",
+          paddingTop: '50px'
         }}
       >
         <div
@@ -506,7 +563,7 @@ useEffect(() => {
             maxWidth: 400,
             background: "#fff",
             borderRadius: "16px",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+            boxShadow: "0 2px 12px rgba(12, 12, 12, 0.08)",
             padding: "24px",
             marginRight: "32px",
             display: "flex",
@@ -558,41 +615,60 @@ useEffect(() => {
             {verUsuario && usuarioInfo ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                 <img
-                  style={{ width: '100px', height: '100px', borderRadius: '50%', marginBottom: '16px' }}
+                  style={{ width: '80px', height: '80px', borderRadius: '50%', marginBottom: '16px' }}
                   src={`https://ui-avatars.com/api/?name=${encodeURIComponent(usuarioInfo.nombre || usuarioInfo.email || "U")}&background=0D8ABC&color=fff&size=128`}
                   alt="avatar"
                 />
                 <h2 style={{ fontWeight: 600, fontSize: "1.4rem", marginBottom: '8px' }}>{usuarioInfo.nombre} {usuarioInfo.apellido || ''}</h2>
 
-                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px'}}>
-                  <p style={{textAlign: 'right'}}>Ranking: </p>
+                
+                <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+                  <p style={{textAlign: 'center'}}>Ranking: </p>
                   <p style={{textAlign: 'left'}}>{usuarioInfo.ranking || '-'}</p>
                 </div>
-                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>
+                <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
                   <span>Categoría: </span>
-                  <span>{usuarioInfo.categoria || ''}</span>
+                  <span>{usuarioInfo.categoria || '-'}</span>
                 </div>
-                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>
+                <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
                   <span>Mejor Posición en torneo: </span>
-                  <span>{usuarioInfo.mejorPosicionTorneo || ''}</span>
+                  <span>{usuarioInfo.mejorPosicionTorneo || '-'}</span>
                 </div>
-                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>Partidos oficiales ganados: {usuarioInfo.partidosOficialesGanados || ''}</div>
-                <div style={{ fontSize: '1em', color: '#555', marginBottom: '24px' }}>Partidos oficiales perdidos: {usuarioInfo.partidosOficialesPerdidos || ''}</div>
-                <button
+                <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+                  <p>Partidos oficiales ganados: </p>
+                  <p>{usuarioInfo.partidosOficialesGanados || '-'}</p>
+                </div>
+                <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+                  <p>Partidos oficiales perdidos: </p>
+                  <p>{usuarioInfo.partidosOficialesPerdidos || '-'}</p>
+                </div>
+
+
+                <div style={{display: 'flex', gap: '12px'}}>
+<button
                   style={{
                     background: "#0D8ABC",
                     color: "#fff",
                     border: "none",
                     borderRadius: "8px",
-                    padding: "10px 24px",
+                    padding: "8px 16px",
                     fontWeight: 600,
                     fontSize: "1em",
                     cursor: "pointer"
                   }}
                   onClick={() => setVerUsuario(false)}
                 >
-                  Volver a los chats
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+</svg>
+
                 </button>
+
+                <button style={{backgroundColor: 'var(--neutro)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 600, fontSize: '1em', cursor: 'pointer'}} onClick={() => setShowModalPartido(true)}>Proponer partido</button>
+
+                </div>
+
+                
               </div>
             ) : chats.length === 0 ? (
               <p style={{ color: "#888" }}>No tienes chats aún.</p>
