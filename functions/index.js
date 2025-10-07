@@ -15,6 +15,10 @@ import ChatController from "./src/controllers/ChatController.js";
 import UsuarioController from "./src/controllers/UsuarioController.js";
 import InfraestructuraController from "./src/controllers/InfraestructuraController.js";
 import PlanController from "./src/controllers/PlanController.js";
+import FormatoController from "./src/controllers/FormatoController.js";
+import CampeonatosController from "./src/controllers/CampeonatosController.js";
+import FormatoEtapaController from "./src/controllers/FormatoEtapaController.js";
+import CampeonatosFederadosController from "./src/controllers/CampeonatosFederadosController.js";
 
 /* ---------------- Global fn settings ---------------- */
 setGlobalOptions({
@@ -162,6 +166,23 @@ app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
 // Planes
 app.post('/planes/precarga', (req, res) => PlanController.precargarPlanes(req, res));
 app.get('/planes', (req, res) => PlanController.getPlanes(req, res));
+
+// Formatos de campeonatos
+app.post('/formatos/precarga', (req, res) => FormatoController.precargarFormatos(req, res));
+app.get('/formatos', (req, res) => FormatoController.getFormatos(req, res));
+app.post('/formatos', (req, res) => FormatoController.saveFormato(req, res));
+app.put('/formatos/:id', (req, res) => FormatoController.saveFormato(req, res));
+
+// Formatos de etapa
+app.get('/formatos/etapas', (req, res) => FormatoEtapaController.getFormatosEtapas(req, res));
+app.post('/formatos/etapas', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
+app.put('/formatos/etapas/:id', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
+
+// Contar federados que cumplen requisitos
+app.get('/campeonatos/federados/count', (req, res) => CampeonatosFederadosController.contar(req, res));
+
+// Campeonatos
+app.post('/campeonatos', (req, res) => CampeonatosController.crear(req, res));
 
 // Mensajes por terceros
 app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
