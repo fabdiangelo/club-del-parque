@@ -6,6 +6,8 @@ import { dbRT } from '../utils/FirebaseService.js'
 import { ref, onValue, getDatabase, push, set, get, update } from 'firebase/database';
 import { useAuth } from '../contexts/AuthProvider.jsx';
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
+
+
 const Chats = () => {
   
   const scrollRef = useRef(null);
@@ -23,28 +25,27 @@ const Chats = () => {
   const [textoReporte, setTextoReporte] = useState('');
   const [mensaje, setMensaje] = useState(null);
   const [tipoMensaje, setTipoMensaje] = useState(null);
-  
   const [notificaciones, setNotificaciones] = useState({});
-
+  const mensajesListenerRef = useRef(null);
   const [showModalReporte, setShowModalReporte] = useState(false);
 
 
   const { user } = useAuth();
-  console.log(user);
-
+  
   const agregarMensaje = async (chatId) => {
-    if (!chatId || !nuevoMensaje) return;
+    if (!chatId || !nuevoMensaje.trim()) return;
     const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`);
-    await push(mensajeRef, {
-      id: Date.now().toString(),
+    const nuevoMensajeRef = push(mensajeRef);
+    await set(nuevoMensajeRef, {
+      id: nuevoMensajeRef.key,
       autor: user,
-      contenido: nuevoMensaje,
+      contenido: nuevoMensaje.trim(),
       timestamp: Date.now(),
       leido: false
     });
     const ultimoRef = ref(dbRT, `chats/${chatId}/ultimoMensaje`);
-    await set(ultimoRef, { autor: user, contenido: nuevoMensaje, timestamp: Date.now() });
-
+    await set(ultimoRef, { autor: user, contenido: nuevoMensaje.trim(), timestamp: Date.now() });
+    console.log("Mensaje agregado:", nuevoMensaje.trim());
     setNuevoMensaje('');
   };
 
@@ -104,6 +105,12 @@ const Chats = () => {
   const seleccionarChat = async (chatId) => {
     console.log("Seleccionando chat con ID:", chatId);
 
+    // Limpia el listener anterior si existe
+    if (mensajesListenerRef.current) {
+      mensajesListenerRef.current();
+      mensajesListenerRef.current = null;
+    }
+
     const response = ref(dbRT, `chats/${chatId}`);
     const snap = await get(response);
 
@@ -112,7 +119,7 @@ const Chats = () => {
       setChatSeleccionado(chatData);
 
       const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`);
-      onValue(mensajeRef, (mensajeSnap) => {
+      const unsubscribe = onValue(mensajeRef, (mensajeSnap) => {
         const data = mensajeSnap.val() || {};
         const mensajesArr = Object.entries(data).map(([id, msg]) => ({
           id,
@@ -127,7 +134,7 @@ const Chats = () => {
           }
         });
       });
-      setNotificaciones((prev) => ({ ...prev, [chatId]: 0 }));
+      mensajesListenerRef.current = unsubscribe;
       return;
     }
   };
@@ -206,7 +213,17 @@ const Chats = () => {
           return d;
         }
       }).filter(Boolean);
-      setUsuarios(dataFiltrada);
+
+      const noRepetirChats = dataFiltrada.map((d) => {
+        chats.map((c) => {
+          if (c.participantes[0]?.uid === user.uid && c.participantes[1]?.uid === d.id ||
+              c.participantes[0]?.uid === d.id && c.participantes[1]?.uid === user.uid) {
+            return null;
+          }
+          return d;
+        });
+      }).filter(Boolean);
+      setUsuarios(noRepetirChats);
     } catch (error) {
       throw error;
     }
@@ -254,6 +271,8 @@ const Chats = () => {
         }
         notifs[chat.id] = count;
       });
+      console.log("NOTIFS", notifs)
+
       setNotificaciones(notifs);
     });
     return () => response.off && response.off();

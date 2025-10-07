@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { app } from "../utils/FirebaseService.js";
 import {
   getAuth,
   connectAuthEmulator,
@@ -19,7 +19,6 @@ const firebaseConfig = {
   measurementId: "G-Q8TJD5C0ZM"
 };
 
-const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 connectAuthEmulator(auth, "http://localhost:9099");
 export const loginAndSendToBackend = async (email, password) => {
