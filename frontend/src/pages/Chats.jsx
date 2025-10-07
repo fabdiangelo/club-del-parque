@@ -1,6 +1,7 @@
 
 
 import { useEffect, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import '../styles/Chats.css'
 import { dbRT } from '../utils/FirebaseService.js'
 import { ref, onValue, getDatabase, push, set, get, update } from 'firebase/database';
@@ -15,6 +16,8 @@ const Chats = () => {
   const [chats, setChats] = useState([])
   const [searchTerm, setSearchTerm] = useState("");
   const [chatSeleccionado, setChatSeleccionado] = useState(null);
+  const location = useLocation();
+  
   const [mensajesChat, setMensajesChat] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [usuarios, setUsuarios] = useState([]);
@@ -111,6 +114,9 @@ const Chats = () => {
       mensajesListenerRef.current = null;
     }
 
+   
+
+
     const response = ref(dbRT, `chats/${chatId}`);
     const snap = await get(response);
 
@@ -130,6 +136,7 @@ const Chats = () => {
         mensajesArr.forEach((msg) => {
           if (!msg.leido && msg.autor?.uid !== user.uid) {
             const msgRef = ref(dbRT, `chats/${chatId}/mensajes/${msg.id}`);
+            console.log("Marcando mensaje como leído:", msg.id);
             update(msgRef, { leido: true });
           }
         });
@@ -185,6 +192,7 @@ const Chats = () => {
       }
 
       await set(nuevoChatRef, obj);
+      setChatSeleccionado(obj);
 
 
     } catch (error) {
@@ -215,6 +223,11 @@ const Chats = () => {
       }).filter(Boolean);
 
       const noRepetirChats = dataFiltrada.map((d) => {
+        console.log(chats);
+
+        if (!chats || chats.length === 0) {
+          return d;
+        }
         chats.map((c) => {
           if (c.participantes[0]?.uid === user.uid && c.participantes[1]?.uid === d.id ||
               c.participantes[0]?.uid === d.id && c.participantes[1]?.uid === user.uid) {
@@ -275,9 +288,18 @@ const Chats = () => {
 
       setNotificaciones(notifs);
     });
-    return () => response.off && response.off();
+    return () => unsuscribe();
   }, [user]);
 
+
+useEffect(() => {
+  return () => {
+    if (mensajesListenerRef.current) {
+      mensajesListenerRef.current(); // Esto desuscribe el listener
+      mensajesListenerRef.current = null;
+    }
+  };
+}, []);
 
 
   return (
