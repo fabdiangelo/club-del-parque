@@ -12,6 +12,13 @@ export default class AuthConnection{
         return newUser;
     }
 
+    async createAdmin(user){
+        const newUser = await this.auth.createUser(user)
+        await this.auth.setCustomUserClaims(newUser.uid, { rol: "administrador" });
+
+        return newUser;
+    }
+
     async decodeToken(idToken){
         return await this.auth.verifyIdToken(idToken);
     }

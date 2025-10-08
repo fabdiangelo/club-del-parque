@@ -13,6 +13,26 @@ export class AdministradorRepository {
     return docRef.id;
   }
 
+  async create(email, password, displayName) {
+    let userRecord;
+    try {
+      // Intentar crear usuario en Firebase Auth
+      userRecord = await this.auth.createAdmin({
+        email,
+        password,
+        displayName,
+      });
+    } catch (err) {
+      // Si el error es que el email ya existe, obtener el usuario
+      if (err.code === 'auth/email-already-exists' || err.message?.includes('already exists')) {
+        userRecord = await this.auth.getUserByEmail(email);
+      } else {
+        throw err;
+      }
+    }
+    return userRecord
+  }
+
   async findById(id) {
     const administrador = await this.db.getItem(this.collectionName, id);
     if (!administrador) {
