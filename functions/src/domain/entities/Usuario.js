@@ -1,5 +1,5 @@
 export default class Usuario {
-  constructor(id, email, nombre, apellido, estado, nacimiento, genero) {
+  constructor(id, email, nombre, apellido, estado, nacimiento, genero, rol="usuario") {
     if (new.target === Usuario) {
         throw new Error("No se puede instanciar un usuario directamente")
     }
@@ -12,7 +12,7 @@ export default class Usuario {
     this.nacimiento = nacimiento;
     this.genero = genero;
     this.notificacionesIDs = [];
-    this.rol = "usuario";
+    this.rol = rol;
 
     this.preferencias = {
       mail: true,
