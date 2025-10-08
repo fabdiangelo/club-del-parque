@@ -4,7 +4,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 import ObtenerDatosUsuario from "../usecases/Usuarios/ObtenerDatosUsuario.js";
 import ActualizarUsuario from "../usecases/Usuarios/ActualizarUsuario.js";
-import GetAllUsuarios from '../usecases/Usuarios/GetAllUsuarios.js';
+import GetAllUsuarios from '../usecases/Usuarios/getAllUsuarios.js';
 import FederarUsuario from "../usecases/Usuarios/FederarUsuario.js";
 import GetCantUsuarios from "../usecases/Usuarios/GetCantUsuarios.js";
 import BloquearUsuario from "../usecases/Usuarios/BloquearUsuario.js";
