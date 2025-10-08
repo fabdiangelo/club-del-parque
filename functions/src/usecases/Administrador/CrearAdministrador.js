@@ -14,7 +14,7 @@ class CrearAdministrador {
     const administradorId = await this.administradorRepository.create(administradorData.email, administradorData.password, administradorData.nombre);
     console.log(administradorId)
     const newAdmin = new Administrador(
-      administradorId.id,
+      administradorId.uid,
       administradorData.email,
       administradorData.nombre,
       administradorData.apellido,
@@ -25,7 +25,7 @@ class CrearAdministrador {
     );
     await this.administradorRepository.save(newAdmin.toPlainObject())
     const payload = {
-      uid: administradorId.id,
+      uid: administradorId.uid,
       email: administradorData.email,
       rol: "administrador",
       nombre:  administradorData.nombre,

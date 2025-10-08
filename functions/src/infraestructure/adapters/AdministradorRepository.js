@@ -9,7 +9,7 @@ export class AdministradorRepository {
   }
 
   async save(administrador) {
-    const docRef = await this.db.putItem(this.collectionName, administrador);
+    const docRef = await this.db.putItem(this.collectionName, administrador, administrador.id);
     return docRef.id;
   }
 
