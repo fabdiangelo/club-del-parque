@@ -1,5 +1,5 @@
 export default class Campeonato {
-    constructor(id, nombre, descripcion, inicio, fin, ultimaPosicionJugable, formatoCampeonatoID){
+    constructor(id, nombre, descripcion, inicio, fin, ultimaPosicionJugable, formatoCampeonatoID, requisitosParticipacion, dobles){
         this.id = id;
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -7,6 +7,14 @@ export default class Campeonato {
         this.fin = fin;
         this.ultimaPosicionJugable = ultimaPosicionJugable;
         this.formatoCampeonatoID = formatoCampeonatoID
+        this.requisitosParticipacion = {
+            genero: requisitosParticipacion.genero,
+            edadDesde: requisitosParticipacion.edadDesde,
+            edadHasta: requisitosParticipacion.edadHasta,
+            rankingDesde: requisitosParticipacion.rankingDesde,
+            rankingHasta: requisitosParticipacion.rankingHasta,
+        }
+        this.dobles = dobles,
         this.federadosCampeonatoIDs = [];
         this.etapasIDs = [];
     }
@@ -20,6 +28,8 @@ export default class Campeonato {
             fin: this.fin,
             ultimaPosicionJugable: this.ultimaPosicionJugable,
             formatoCampeonatoID: this.formatoCampeonatoID,
+            requisitosParticipacion: this.requisitosParticipacion,
+            dobles: this.dobles,
             federadosCampeonatoIDs: this.federadosCampeonatoIDs,
             etapasIDs: this.etapasIDs,
         };

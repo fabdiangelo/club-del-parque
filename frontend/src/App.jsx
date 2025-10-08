@@ -14,6 +14,7 @@ import AdministracionReportes from './pages/AdministracionReportes';
 import AdministracionUsuarios from './pages/AdministracionUsuarios';
 import Chats from './pages/Chats';
 import CrearAdmin from './pages/CrearAdmin';
+import CrearCampeonato from './pages/CrearCampeonato';
 
 function App() {
   return (
@@ -22,14 +23,16 @@ function App() {
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/noticias" element={<Noticias />} />
+      <Route path="/noticias/:id" element={<NoticiaDetalle />} />
+      <Route path="/reportes" element={<SistemaReporte />} />
+      
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />
       
-      <Route path="/noticias" element={<Noticias />} />
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
-      <Route path="/noticias/:id" element={<NoticiaDetalle />} />
-      <Route path="/reportes" element={<SistemaReporte />} />
+      <Route path="/crear-campeonato" element={<CrearCampeonato />} />
       <Route path="/administracion" element={<Administracion />} />
       <Route path="/administracion/reportes" element={<AdministracionReportes />} />
       <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />
