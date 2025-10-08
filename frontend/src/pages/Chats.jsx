@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import '../styles/Chats.css'
@@ -16,7 +14,6 @@ const Chats = () => {
   const [chats, setChats] = useState([])
   const [searchTerm, setSearchTerm] = useState("");
   const [chatSeleccionado, setChatSeleccionado] = useState(null);
-  const location = useLocation();
   
   const [mensajesChat, setMensajesChat] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
@@ -32,10 +29,80 @@ const Chats = () => {
   const mensajesListenerRef = useRef(null);
   const [showModalReporte, setShowModalReporte] = useState(false);
   const [showModalPartido, setShowModalPartido] = useState(false);
+  const [fechaPartido, setFechaPartido] = useState('');
+  const [quienPaga, setQuienPaga] = useState('');
 
+  const [alertaReserva, setAlertaReserva] = useState(false);
+  const [mensajeReserva, setMensajeReserva] = useState('');
+  const [tipoMensajeReserva, setTipoMensajeReserva] = useState(null);
 
   const { user } = useAuth();
-  
+
+  const generarReservaPartido = async() => {
+
+    console.log("Generando reserva para el partido el día", fechaPartido, "a ser cobrado a", quienPaga);
+
+    if (!fechaPartido || !quienPaga) {
+
+      setAlertaReserva(true);
+      setMensajeReserva("Por favor, complete todos los campos");
+      setTipoMensajeReserva("error");
+
+
+      setTimeout(() => {
+        setAlertaReserva(false);
+        setMensajeReserva('');
+        setTipoMensajeReserva(null);
+      }, 2000);
+      return;
+    }
+
+    if (new Date(fechaPartido) < new Date()) {
+      setAlertaReserva(true);
+      setMensajeReserva("La fecha del partido no puede ser en el pasado");
+      setTipoMensajeReserva("error");
+
+      setTimeout(() => {
+        setAlertaReserva(false);
+        setMensajeReserva('');
+        setTipoMensajeReserva(null);
+      }, 2000);
+      return;
+    }
+
+    if (!chatSeleccionado) {
+      setAlertaReserva(true);
+      setMensajeReserva("No hay chat seleccionado");
+      setTipoMensajeReserva("error");
+
+      setTimeout(() => {
+        setAlertaReserva(false);
+        setMensajeReserva('');
+        setTipoMensajeReserva(null);
+      }, 2000);
+      return;
+    }
+
+
+    const mensajeRef = ref(dbRT, `chats/${chatSeleccionado.id}/mensajes`);
+    const nuevoMensajeRef = push(mensajeRef);
+    const contenidoMensaje = `Se ha generado una reserva para un partido el día ${new Date(fechaPartido).toLocaleString()} a ser cobrado a ${chatSeleccionado.participantes.find(p => p.uid === quienPaga)?.nombre || 'Desconocido'}.`;
+
+    const nuevoMensaje = push(mensajeRef);
+    await set(nuevoMensaje, {
+      id: nuevoMensaje.key,
+      autor: user,
+      tipo: 'reserva_partido',
+      contenido: contenidoMensaje,
+      timestamp: Date.now(),
+      leido: false
+    });
+    const ultimoRef = ref(dbRT, `chats/${chatSeleccionado.id}/ultimoMensaje`);
+    await set(ultimoRef, { autor: user, contenido: contenidoMensaje, timestamp: Date.now() });
+    
+    setShowModalPartido(false);
+  }
+
   const agregarMensaje = async (chatId) => {
     if (!chatId || !nuevoMensaje.trim()) return;
     const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`);
@@ -43,13 +110,14 @@ const Chats = () => {
     await set(nuevoMensajeRef, {
       id: nuevoMensajeRef.key,
       autor: user,
+      tipo: 'normal',
       contenido: nuevoMensaje.trim(),
       timestamp: Date.now(),
       leido: false
     });
     const ultimoRef = ref(dbRT, `chats/${chatId}/ultimoMensaje`);
     await set(ultimoRef, { autor: user, contenido: nuevoMensaje.trim(), timestamp: Date.now() });
-    console.log("Mensaje agregado:", nuevoMensaje.trim());
+    
     setNuevoMensaje('');
   };
 
@@ -107,9 +175,7 @@ const Chats = () => {
 
 
   const seleccionarChat = async (chatId) => {
-    console.log("Seleccionando chat con ID:", chatId);
 
-    // Limpia el listener anterior si existe
     if (mensajesListenerRef.current) {
       mensajesListenerRef.current();
       mensajesListenerRef.current = null;
@@ -160,7 +226,6 @@ const Chats = () => {
       nombre: usuarioSeleccionado.nombre,
       email: usuarioSeleccionado.email
     }
-    console.log(participante1, participante2);
     try {
 
       const response = ref(dbRT, 'chats/');
@@ -219,7 +284,7 @@ const Chats = () => {
       const dataFiltrada = data.map((d) => {
 
         if (d.id != user?.uid) {
-          return d;
+          return { ...d, uid: d.id }; 
         }
       }).filter(Boolean);
 
@@ -296,7 +361,7 @@ const Chats = () => {
 useEffect(() => {
   return () => {
     if (mensajesListenerRef.current) {
-      mensajesListenerRef.current(); // Esto desuscribe el listener
+      mensajesListenerRef.current();
       mensajesListenerRef.current = null;
     }
   };
@@ -306,6 +371,28 @@ useEffect(() => {
   return (
     <>
       <NavbarBlanco />
+
+      {alertaReserva && (
+  <div
+    role="alert"
+    className={`alert alert-${tipoMensajeReserva === 'success' ? 'success' : 'error'}`}
+    style={{
+      position: "fixed",
+      left: "32px",
+      bottom: "32px",
+      zIndex: 9999,
+      minWidth: "300px",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.18)"
+    }}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tipoMensajeReserva === 'success'
+        ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        : "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+    </svg>
+    <span>{mensajeReserva}</span>
+  </div>
+)}
 
       {mensaje && (
   <div
@@ -355,19 +442,15 @@ useEffect(() => {
           }}>
             <div style={{ display: "flex",gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
               <label>Fecha y hora</label>
-              <input className='input' type="datetime-local" />
+              <input className='input' value={fechaPartido} type="datetime-local" onChange={(e) => setFechaPartido(e.target.value)} />
             </div>
 
             <div style={{ display: "flex",gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
               <label>Será cobrado a</label>
-              <select className='input'>
-                {usuarios.map((u) => {
-                  if (chatSeleccionado && chatSeleccionado.participantes.some(p => p.uid === u.id)) {
-                    return <option key={u.id} value={u.id}>{u.nombre}</option>;
-                  }
-                }).filter(Boolean)}
-
-                <option key={user.uid} value={user.uid}>{user.nombre}</option>
+              <select className='input' value={quienPaga} onChange={(e) => setQuienPaga(e.target.value)}>
+                {chatSeleccionado && chatSeleccionado.participantes.map((p) => (
+                  <option key={p.uid} value={p.uid}>{p.nombre}</option>
+                ))}
               </select>
 
 
@@ -375,8 +458,8 @@ useEffect(() => {
             </div>
 
             <div style={{display: 'flex', gap: '4px', alignItems: 'center', marginBottom: '5px'}}>
-                <button style={{color: 'white', backgroundColor: 'green', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>Enviar</button>
-                <button style={{color: 'white', backgroundColor: 'red', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', ':hover': {backgroundColor: 'white'}}}>Cancelar</button>
+                <button style={{color: 'white', backgroundColor: 'green', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer'}} onClick={() => generarReservaPartido()}>Enviar</button>
+                <button style={{color: 'white', backgroundColor: 'red', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', ':hover': {backgroundColor: 'white'}}} onClick={() => setShowModalPartido(false)}>Cancelar</button>
 
 
             </div>
@@ -774,6 +857,44 @@ useEffect(() => {
                   mensajesChat.map((m, idx) => {
                     const autorUid = m.autor?.uid || m.autorId;
                     const esUsuarioActual = autorUid === user.uid;
+                    if (m.tipo === 'reserva_partido') {
+                      return (
+                        <div
+                          key={m.id || idx}
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            marginBottom: "16px"
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: "#fffbe6",
+                              color: "#222",
+                              border: "2px solid #fbbf24",
+                              borderRadius: "18px",
+                              padding: "16px 20px",
+                              maxWidth: "80%",
+                              fontSize: "1.05em",
+                              boxShadow: "0 2px 8px rgba(251,191,36,0.08)",
+                              alignSelf: "center",
+                              position: "relative"
+                            }}
+                          >
+                            <div style={{ fontWeight: 700, color: '#b45309', marginBottom: '8px' }}>Reserva de partido</div>
+                            <div style={{ marginBottom: '10px' }}>{m.contenido}</div>
+                            <div style={{ fontSize: "0.8em", textAlign: "right", marginTop: "4px", opacity: 0.7 }}>
+                              {m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
+                              <button style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 16px', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('Reserva aceptada')}>Aceptar</button>
+                              <button style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 16px', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('Reserva rechazada')}>Rechazar</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    // Mensaje normal
                     return (
                       <div
                         key={m.id || idx}
