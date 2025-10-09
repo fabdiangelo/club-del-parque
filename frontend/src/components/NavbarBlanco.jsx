@@ -106,11 +106,11 @@ export default function NavbarBlanco() {
         background: '#0D8ABC',
         color: '#fff',
         borderRadius: '50%',
-        padding: '2px 7px',
-        fontSize: '0.8em',
+        padding: '1px 4px',
+        fontSize: '0.7em',
         fontWeight: 700,
         zIndex: 10,
-        minWidth: '22px',
+        minWidth: '10px',
         textAlign: 'center',
         boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
       }}
