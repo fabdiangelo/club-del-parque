@@ -1,5 +1,6 @@
-import { setGlobalOptions } from "firebase-functions";
-import * as functions from "firebase-functions";
+// functions/index.js  (ESM)
+
+import * as functions from "firebase-functions/v1"; // <-- v1 compat shim
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -20,37 +21,30 @@ import CampeonatosController from "./src/controllers/CampeonatosController.js";
 import FormatoEtapaController from "./src/controllers/FormatoEtapaController.js";
 import CampeonatosFederadosController from "./src/controllers/CampeonatosFederadosController.js";
 
-/* ---------------- Global fn settings ---------------- */
-setGlobalOptions({
-  maxInstances: 10,
-  timeoutSeconds: 180,
-  memory: "512MB",
-});
-
-/* ---------------- Boot logs (sanity) ---------------- */
+// ---- Boot logs
 console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
 console.log("[boot] GCLOUD_STORAGE_BUCKET =", process.env.GCLOUD_STORAGE_BUCKET || "(unset)");
 console.log("[boot] STORAGE_EMULATOR_HOST =", process.env.STORAGE_EMULATOR_HOST || "(unset)");
 
-/* ---------------- App + CORS ---------------- */
+// ---- App + CORS
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const app = express();
 
 app.use(
   cors({
     origin: FRONTEND_URL,
-    credentials: false,
+    credentials: false, // using Vite proxy: no browser cross-origin
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.options("*", cors());
 
-/* ---------------- Parsers ---------------- */
+// ---- Parsers
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(cookieParser());
 
-/* ---------------- Routes ---------------- */
+// ---- Routes (unchanged)
 // Auth
 app.post("/auth/register", (req, res) => AuthController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
@@ -92,9 +86,9 @@ app.delete("/noticias/:id/imagenes/:index?", async (req, res) => {
       (req.body && typeof req.body.imagePath === "string" ? req.body.imagePath : undefined);
 
     if (typeof index === "number" && Number.isFinite(index)) {
-      
+      // ok
     } else if (imagePath) {
-      index = undefined; 
+      index = undefined;
     } else if (req.body && typeof req.body.index === "number") {
       index = req.body.index;
     } else {
@@ -147,61 +141,30 @@ app.post("/noticias/:id/imagenes-json", async (req, res) => {
   }
 });
 
-// Datos de la infraestructura
-app.get('/infraestructura/metricas', async (req, res) => InfraestructuraController.obtenerMetricas(req, res));
+// Infraestructura
+app.get("/infraestructura/metricas", (req, res) => InfraestructuraController.obtenerMetricas(req, res));
 
 // Notificaciones
-app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
-app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
+app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));
+app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));
 
 // Chat
-app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
-app.post('/chats', (req, res) => ChatController.crearChat(req, res));
-app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
-app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
-app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
-app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
-app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
+app.get("/chats/:idUser", (req, res) => ChatController.getChatByUser(req, res));
+app.post("/chats", (req, res) => ChatController.crearChat(req, res));
+app.get("/chats/:chatId", (req, res) => ChatController.getChatById(req, res));
+app.post("/chats/:id/mensajes", (req, res) => ChatController.enviarMensaje(req, res));
+app.get("/chats/:id/mensajes", (req, res) => ChatController.getMensajes(req, res));
+app.get("/chats/:id/escuchar", (req, res) => ChatController.escucharPorMensajes(req, res));
+app.get("/chats/prueba", (req, res) => ChatController.prueba(req, res));
 
-// Planes
-app.post('/planes/precarga', (req, res) => PlanController.precargarPlanes(req, res));
-app.get('/planes', (req, res) => PlanController.getPlanes(req, res));
-
-// Formatos de campeonatos
-app.post('/formatos/precarga', (req, res) => FormatoController.precargarFormatos(req, res));
-app.get('/formatos', (req, res) => FormatoController.getFormatos(req, res));
-app.post('/formatos', (req, res) => FormatoController.saveFormato(req, res));
-app.put('/formatos/:id', (req, res) => FormatoController.saveFormato(req, res));
-
-// Formatos de etapa
-app.get('/formatos/etapas', (req, res) => FormatoEtapaController.getFormatosEtapas(req, res));
-app.post('/formatos/etapas', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
-app.put('/formatos/etapas/:id', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
-
-// Contar federados que cumplen requisitos
-app.get('/campeonatos/federados/count', (req, res) => CampeonatosFederadosController.contar(req, res));
-
-// Campeonatos
-app.post('/campeonatos', (req, res) => CampeonatosController.crear(req, res));
-
-// Mensajes por terceros
-app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
-app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
-
-// Chat
-app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
-app.post('/chats', (req, res) => ChatController.crearChat(req, res));
-app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
-app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
-app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
-app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
-app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
-
-/* ---------------- Errors ---------------- */
+// ---- Errors
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// Exportar función HTTP
-export const api = functions.https.onRequest(app);
+// ---- v1 export (region + runtime)
+export const api = functions
+  .region("us-central1")
+  .runWith({ memory: "512MB", timeoutSeconds: 180, maxInstances: 10 })
+  .https.onRequest(app);

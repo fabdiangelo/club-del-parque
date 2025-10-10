@@ -2,9 +2,7 @@ import React, { useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import { Crown, Search, X } from "lucide-react";
 import bgImg from "../assets/RankingsBackground.png";
-
 const NAVBAR_OFFSET_REM = 5;
-
 const PLACEHOLDER_ROWS = [
   { rank: 1, name: "Ana Pereira", wins: 12, losses: 2, points: 1240 },
   { rank: 2, name: "Marcos Gómez", wins: 10, losses: 4, points: 1100 },
@@ -15,13 +13,9 @@ const PLACEHOLDER_ROWS = [
   { rank: 7, name: "Valentina López", wins: 5, losses: 9, points: 790 },
   { rank: 8, name: "Tomás Silva", wins: 4, losses: 10, points: 760 },
 ];
-
-// 🔹 Placeholders for future DB data
 const SPORTS = ["Tenis", "Padel"];
 const CATEGORIES = ["Singles", "Doubles", "Mixto"];
 const SEASONS = ["2025", "2024", "2023"];
-
-// Accent-insensitive normalizer and highlighter for player names
 const normalizeStr = (s = "") => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 const renderHighlightedName = (name, q) => {
   if (!q) return name;
@@ -72,11 +66,10 @@ function AnimatedTitle({ text, className, style }) {
     </>
   );
 }
-
 export default function Rankings() {
-  const [sport, setSport] = useState(SPORTS[0]); // default Tenis
-  const [category, setCategory] = useState(CATEGORIES[0]); // default Singles
-  const [season, setSeason] = useState(SEASONS[0]); // default 2025
+  const [sport, setSport] = useState(SPORTS[0]);
+  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [season, setSeason] = useState(SEASONS[0]);
   const rows = useMemo(() => PLACEHOLDER_ROWS, []);
   const [query, setQuery] = useState("");
 
@@ -100,7 +93,6 @@ export default function Rankings() {
 
   return (
     <div className="relative min-h-screen w-full">
-      {/* Background */}
       <div
         aria-hidden
         className="fixed inset-0 z-0 bg-center bg-cover bg-no-repeat"
@@ -110,8 +102,6 @@ export default function Rankings() {
 
       <div className="relative z-10 flex min-h-screen flex-col">
         <Navbar />
-
-        {/* Header */}
         <header className="w-full">
           <div
             className="mx-auto max-w-7xl px-6 lg:px-8 text-center"
@@ -120,10 +110,7 @@ export default function Rankings() {
             <h1 className="text-6xl sm:text-7xl font-extrabold tracking-tight drop-shadow-xl" style={strokeTitle}>
               <AnimatedTitle text="Ranking" />
             </h1>
-
-            {/* Controls */}
             <div className="mt-8 flex flex-row flex-wrap items-center justify-center gap-3">
-              {/* Sport */}
               <label className="sr-only" htmlFor="sport">Deporte</label>
               <div className="relative">
                 <select
@@ -139,8 +126,6 @@ export default function Rankings() {
                 </select>
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/70">▾</span>
               </div>
-
-              {/* Season */}
               <label className="sr-only" htmlFor="season">Temporada</label>
               <div className="relative">
                 <select
@@ -156,8 +141,6 @@ export default function Rankings() {
                 </select>
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/70">▾</span>
               </div>
-
-              {/* Category Buttons (inline) */}
               <div className="flex flex-row flex-wrap items-center gap-3">
                 {CATEGORIES.map((c) => {
                   const active = category === c;
@@ -180,8 +163,6 @@ export default function Rankings() {
             </div>
           </div>
         </header>
-
-        {/* MAIN */}
         <main className="flex-1">
           <div className="mx-auto max-w-7xl px-6 lg:px-8 pb-20">
             <div className="rounded-2xl border border-white/20 bg-neutral-900/70 shadow-2xl backdrop-blur-sm overflow-hidden">
@@ -189,7 +170,6 @@ export default function Rankings() {
                 <h2 className="text-xl sm:text-2xl font-bold" style={strokeSmall}>
                   {sport} · {category} · Temporada {season}
                 </h2>
-                {/* Player Finder (top-right) */}
                 <div className="relative w-full max-w-sm">
                   <label className="sr-only" htmlFor="player-search">Buscar jugador</label>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" aria-hidden />
