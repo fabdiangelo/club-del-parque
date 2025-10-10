@@ -182,19 +182,20 @@ export default function Home() {
 
       {/* INSTALACIONES — gradient in brand blue family */}
       <section
-        className="text-primary-content py-20"
+        className="text-primary-content"
         style={{
+          height: '100vh',
           backgroundImage: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM} 0%, ${BRAND_GRADIENT_TO} 100%)`,
         }}
       >
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-6 " style={{height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
           <h2 className="text-4xl font-extrabold">Instalaciones</h2>
           <p className="mt-4 max-w-2xl opacity-95">
             Texto placeholder sobre las instalaciones. Cámbialo por tu propio
             contenido.
           </p>
 
-          <div className="mt-12 grid lg:grid-cols-12 gap-10">
+          <div className="mt-12 grid lg:grid-cols-12 gap-10" >
             <div className="lg:col-span-7">
               <div className="card shadow-xl bg-base-200/20 backdrop-blur-[1px]">
                 <div className="w-full h-[320px] bg-base-100/20 grid place-items-center rounded-box">

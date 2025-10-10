@@ -6,7 +6,6 @@ export class ChatRepository {
     }
 
     async crearChat(participantes) {
-        console.log("ChatRepository - creando chat con participantes:", participantes);
         return await this.chatport.crearChat(participantes);
     }
 

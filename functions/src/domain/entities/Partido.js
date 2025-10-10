@@ -1,13 +1,16 @@
 export default class Partido {
-    constructor(id, timestamp, estado, tipoPartidoID, temporadaID, canchaID, etapaID, federadosPartidoIDs){
+    constructor(id, timestamp, estado, tipoPartido, temporadaID, canchaID, etapa, jugadores, equipoLocal, equipoVisitante, resultado){
         this.id = id;
         this.timestamp = timestamp;
         this.estado = estado;
-        this.tipoPartidoID = tipoPartidoID;
+        this.tipoPartido = tipoPartido;
         this.temporadaID = temporadaID;
         this.canchaID = canchaID;
-        this.etapaID = etapaID;
-        this.federadosPartidoIDs = federadosPartidoIDs;
+        this.resultado = resultado;
+        this.etapa = etapa;
+        this.jugadores = jugadores;
+        this.equipoLocal = equipoLocal;
+        this.equipoVisitante = equipoVisitante
     }
 
     toPlainObject() {
@@ -15,11 +18,14 @@ export default class Partido {
             id: this.id,
             timestamp: this.timestamp,
             estado: this.estado,
-            tipoPartidoID: this.tipoPartidoID,
+            tipoPartido: this.tipoPartido,
             temporadaID: this.temporadaID,
             canchaID: this.canchaID,
-            etapaID: this.etapaID,
-            federadosPartidoIDs: this.federadosPartidoIDs,
+            etapa: this.etapa,
+            jugadores: this.jugadores,
+            equipoLocal: this.equipoLocal,
+            equipoVisitante: this.equipoVisitante,
+            resultado: this.resultado
         };
     }
 }

@@ -19,6 +19,8 @@ import FormatoController from "./src/controllers/FormatoController.js";
 import CampeonatosController from "./src/controllers/CampeonatosController.js";
 import FormatoEtapaController from "./src/controllers/FormatoEtapaController.js";
 import CampeonatosFederadosController from "./src/controllers/CampeonatosFederadosController.js";
+import PartidoController from "./src/controllers/PartidoController.js";
+import CanchaController from "./src/controllers/CanchaController.js";
 
 /* ---------------- Global fn settings ---------------- */
 setGlobalOptions({
@@ -197,11 +199,27 @@ app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res
 app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
 app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
 
-/* ---------------- Errors ---------------- */
+// Partidos
+app.get('/partidos/:id', (req, res) => PartidoController.getPartidoById(req, res));
+app.put('/partidos/:id', (req, res) => PartidoController.editarPartido(req, res));
+app.get('/partidos/temporada/:temporadaID', (req, res) => PartidoController.getPartidosByTemporada(req, res));
+app.get('/partidos/jugador/:jugadorID', (req, res) => PartidoController.getPartidosByJugador(req, res));
+
+// Temporada
+app.get('/temporadas/:id', (req, res) => TemporadaController.getTemporadaById(req, res));
+app.post('/temporadas', (req, res) => TemporadaController.createTemporada(req, res));
+app.delete('/temporadas/:id', (req, res) => TemporadaController.deleteTemporada(req, res));
+
+// Cancha
+app.get('/canchas/:id', (req, res) => CanchaController.getById(req, res));
+app.post('/canchas', (req, res) => CanchaController.crearCancha(req, res));
+app.delete('/canchas/:id', (req, res) => CanchaController.eliminarCancha(req, res));
+app.get('/canchas', (req, res) => CanchaController.getAll(req, res));
+
+
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// Exportar función HTTP
 export const api = functions.https.onRequest(app);
