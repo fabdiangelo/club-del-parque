@@ -1,4 +1,4 @@
-import DBConnection from "../DBConnection";
+import DBConnection from "../ports/DBConnection.js";
 
 export class TemporadaRepository {
     constructor() {
@@ -14,6 +14,7 @@ export class TemporadaRepository {
     }
 
     async save(temporada) {
+        console.log("Llegando hasta aca", temporada);
         const docRef = await this.db.putItem('temporadas', temporada, temporada.id);
         return docRef.id || temporada.id;
     }

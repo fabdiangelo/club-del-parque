@@ -21,6 +21,7 @@ import FormatoEtapaController from "./src/controllers/FormatoEtapaController.js"
 import CampeonatosFederadosController from "./src/controllers/CampeonatosFederadosController.js";
 import PartidoController from "./src/controllers/PartidoController.js";
 import CanchaController from "./src/controllers/CanchaController.js";
+import TemporadaController from "./src/controllers/TemporadaController.js";
 
 /* ---------------- Global fn settings ---------------- */
 setGlobalOptions({

@@ -21,7 +21,14 @@ export class CanchaRepository {
     }
 
     async eliminarCancha(id) {
-        return this.db.deleteItem('canchas', id);
+
+        try {
+
+            await this.db.deleteItem('canchas', id);
+            return id;
+        } catch(error) {
+            throw error;
+        }
     }
 
         

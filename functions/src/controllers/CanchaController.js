@@ -28,7 +28,7 @@ class CanchaController {
         const { id } = req.params;
         try {
             await this.eliminarCanchaUseCase.execute(id);
-            res.status(204).send();
+            res.status(204).send(`Cancha eliminada: ${id}`);
         } catch (error) {
             res.status(500).json({ error: error.message });
         }

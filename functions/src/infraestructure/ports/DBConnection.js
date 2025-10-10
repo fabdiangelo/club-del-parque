@@ -59,6 +59,11 @@ export default class DBConnection{
         return items;
     }
 
+    async deleteItem(collection, id) {
+        await this.db.collection(collection).doc(id).delete();
+        return id;
+    }
+
     async updateItem(collection, id, partial) {
         await this.db.collection(collection).doc(id).update(partial);
         return id;
