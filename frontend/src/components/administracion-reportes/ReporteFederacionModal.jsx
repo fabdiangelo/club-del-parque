@@ -7,7 +7,6 @@ const ReporteFederacionModal = ({ reporte, onValidar, onNegar, onClose }) => {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [loadingPlanes, setLoadingPlanes] = useState(true);
   const [errorPlanes, setErrorPlanes] = useState(null);
-
   const fetchPlanes = async () => {
     try {
       setLoadingPlanes(true);
@@ -22,30 +21,25 @@ const ReporteFederacionModal = ({ reporte, onValidar, onNegar, onClose }) => {
       setLoadingPlanes(false);
     }
   };
-
   useEffect(() => {
     fetchPlanes();
   }, []);
-
   const handlePrecargaPlanes = async () => {
     setPrecargaLoading(true);
     setPrecargaError(null);
     try {
       const res = await fetch('/api/planes/precarga', { method: 'POST', credentials: 'include' });
       if (!res.ok) throw new Error('Error al precargar los planes');
-      // Recargar lista de planes después de precarga
       await fetchPlanes();
     } catch (err) {
       setPrecargaError(err.message);
     }
     setPrecargaLoading(false);
   };
-
   return (
     <dialog id="modal-reporte" className="modal modal-open">
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-          {/* Icono y tipo */}
           {reporte.icon && <reporte.icon className="w-5 h-5" />}
           {reporte.tipo}
         </h3>
@@ -53,7 +47,6 @@ const ReporteFederacionModal = ({ reporte, onValidar, onNegar, onClose }) => {
         <p className="text-sm text-gray-500 mb-1">Fecha: <span className="font-semibold">{new Date(reporte.fecha).toLocaleDateString()}</span></p>
         <p className="text-sm text-gray-500 mb-4">Motivo: <span className="font-semibold">{reporte.motivo}</span></p>
         <p className="text-sm text-gray-500 mb-4">Descripción: <span className="font-semibold">{reporte.descripcion}</span></p>
-        {/* Dropdown de planes */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de plan:</label>
           {loadingPlanes ? (

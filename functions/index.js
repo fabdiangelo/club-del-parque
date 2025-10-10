@@ -1,6 +1,5 @@
 // functions/index.js  (ESM)
-
-import * as functions from "firebase-functions/v1"; // <-- v1 compat shim
+import * as functions from "firebase-functions/v1"; // v1 compat API
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -21,30 +20,30 @@ import CampeonatosController from "./src/controllers/CampeonatosController.js";
 import FormatoEtapaController from "./src/controllers/FormatoEtapaController.js";
 import CampeonatosFederadosController from "./src/controllers/CampeonatosFederadosController.js";
 
-// ---- Boot logs
+/* ---------------- Boot logs ---------------- */
 console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
 console.log("[boot] GCLOUD_STORAGE_BUCKET =", process.env.GCLOUD_STORAGE_BUCKET || "(unset)");
 console.log("[boot] STORAGE_EMULATOR_HOST =", process.env.STORAGE_EMULATOR_HOST || "(unset)");
 
-// ---- App + CORS
+/* ---------------- App + CORS ---------------- */
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const app = express();
 
 app.use(
   cors({
     origin: FRONTEND_URL,
-    credentials: false, // using Vite proxy: no browser cross-origin
+    credentials: false, // using Vite proxy → no browser cross-origin cookies here
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.options("*", cors());
 
-// ---- Parsers
+/* ---------------- Parsers ---------------- */
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(cookieParser());
 
-// ---- Routes (unchanged)
+/* ---------------- Routes ---------------- */
 // Auth
 app.post("/auth/register", (req, res) => AuthController.register(req, res));
 app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
@@ -111,7 +110,6 @@ app.post("/noticias/:id/imagenes-json", async (req, res) => {
     if (!Array.isArray(images) || images.length === 0) {
       return res.status(400).json({ error: "Faltan imágenes (images[])" });
     }
-
     const normalized = images.map((it, i) => {
       const fileName = it?.filename || `image-${i}.bin`;
       const contentType = it?.contentType || "application/octet-stream";
@@ -120,12 +118,7 @@ app.post("/noticias/:id/imagenes-json", async (req, res) => {
         throw new Error(`Imagen #${i} inválida (dataBase64)`);
       }
       const buffer = Buffer.from(dataB64, "base64");
-      return {
-        buffer,
-        originalname: fileName,
-        mimetype: contentType,
-        size: buffer.length,
-      };
+      return { buffer, originalname: fileName, mimetype: contentType, size: buffer.length };
     });
     console.log(`[imagenes-json] ${id}: ${normalized.length} file(s)`);
     const result = await NoticiaController.subirImagenes(id, normalized);
@@ -157,13 +150,34 @@ app.get("/chats/:id/mensajes", (req, res) => ChatController.getMensajes(req, res
 app.get("/chats/:id/escuchar", (req, res) => ChatController.escucharPorMensajes(req, res));
 app.get("/chats/prueba", (req, res) => ChatController.prueba(req, res));
 
-// ---- Errors
+// Planes
+app.post("/planes/precarga", (req, res) => PlanController.precargarPlanes(req, res));
+app.get("/planes", (req, res) => PlanController.getPlanes(req, res));
+
+// Formatos de campeonatos
+app.post("/formatos/precarga", (req, res) => FormatoController.precargarFormatos(req, res));
+app.get("/formatos", (req, res) => FormatoController.getFormatos(req, res));
+app.post("/formatos", (req, res) => FormatoController.saveFormato(req, res));
+app.put("/formatos/:id", (req, res) => FormatoController.saveFormato(req, res));
+
+// Formatos de etapa
+app.get("/formatos/etapas", (req, res) => FormatoEtapaController.getFormatosEtapas(req, res));
+app.post("/formatos/etapas", (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
+app.put("/formatos/etapas/:id", (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
+
+// Campeonatos federados count
+app.get("/campeonatos/federados/count", (req, res) => CampeonatosFederadosController.contar(req, res));
+
+// Campeonatos
+app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
+
+/* ---------------- Errors ---------------- */
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// ---- v1 export (region + runtime)
+/* ---------------- v1 export with region + runtime ---------------- */
 export const api = functions
   .region("us-central1")
   .runWith({ memory: "512MB", timeoutSeconds: 180, maxInstances: 10 })

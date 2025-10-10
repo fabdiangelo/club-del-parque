@@ -27,7 +27,7 @@ const Administracion = () => {
     try {
       setLoading(true);
       // Obtener métricas
-      let metricasRes = await fetch('api/infraestructura/metricas', { credentials: 'include' });
+      let metricasRes = await fetch('/api/infraestructura/metricas', { credentials: 'include' });
       if (metricasRes.status === 401) {
         setIsUnauthorized(true);
         setLoading(false);
@@ -36,7 +36,7 @@ const Administracion = () => {
       const metricasData = await metricasRes.json();
       setMetricas(metricasData);
       // Obtener todos los reportes
-      let reportesRes = await fetch('api/reportes/sin-resolver', { credentials: 'include' });
+      let reportesRes = await fetch('/api/reportes/sin-resolver', { credentials: 'include' });
       if (reportesRes.status === 401) {
         setIsUnauthorized(true);
         setLoading(false);
@@ -48,7 +48,7 @@ const Administracion = () => {
         setReportes(reportesData);
       }
       // Obtener cantidad de usuarios
-      let usuariosRes = await fetch('api/usuarios/cantidad', { credentials: 'include' });
+      let usuariosRes = await fetch('/api/usuarios/cantidad', { credentials: 'include' });
       if (usuariosRes.status === 401) {
         setIsUnauthorized(true);
         setLoading(false);
@@ -66,7 +66,7 @@ const Administracion = () => {
 
   const marcarComoResuelto = async (idReporte) => {
     try {
-      const res = await fetch(`api/reportes/marcar-resuelto/${idReporte}`, {
+      const res = await fetch(`/api/reportes/marcar-resuelto/${idReporte}`, {
         method: 'PUT',
         credentials: 'include'
       });
@@ -86,7 +86,7 @@ const Administracion = () => {
 
   const validarFederacion = async (idReporte, planId) => {
     try {
-      const res = await fetch(`api/usuarios/validar-federacion/${idReporte}`, {
+      const res = await fetch(`/api/usuarios/validar-federacion/${idReporte}`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -105,7 +105,7 @@ const Administracion = () => {
 
   const marcarComoNoResuelto = async (idReporte) => {
     try {
-      const res = await fetch(`api/reportes/marcar-resuelto/${idReporte}`, {
+      const res = await fetch(`/api/reportes/marcar-resuelto/${idReporte}`, {
         method: 'PUT',
         credentials: 'include'
       });
@@ -125,7 +125,7 @@ const Administracion = () => {
 
   const negarFederacion = async (idReporte) => {
     try {
-      const res = await fetch(`api/usuarios/negar-federacion/${idReporte}`, {
+      const res = await fetch(`/api/usuarios/negar-federacion/${idReporte}`, {
         method: 'PUT',
         credentials: 'include'
       });
