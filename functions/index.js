@@ -178,11 +178,9 @@ app.get('/formatos/etapas', (req, res) => FormatoEtapaController.getFormatosEtap
 app.post('/formatos/etapas', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
 app.put('/formatos/etapas/:id', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
 
-// Contar federados que cumplen requisitos
-app.get('/campeonatos/federados/count', (req, res) => CampeonatosFederadosController.contar(req, res));
-
 // Campeonatos
 app.post('/campeonatos', (req, res) => CampeonatosController.crear(req, res));
+app.get('/campeonatos/federados/count', (req, res) => CampeonatosFederadosController.contar(req, res));
 
 // Mensajes por terceros
 app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
