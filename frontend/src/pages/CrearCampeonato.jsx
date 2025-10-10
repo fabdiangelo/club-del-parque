@@ -53,9 +53,8 @@ const FormatoItem = ({ formato, onEdit }) => (
 const EtapaItem = ({ etapa, onEdit }) => (
   <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg hover:bg-base-300 transition-colors">
     <div className="flex-1">
-      <div className="font-semibold">{etapa.tipoEtapa}</div>
-      {etapa.descripcion && <div className="text-sm opacity-70">{etapa.descripcion}</div>}
-      <div className="text-xs opacity-50 mt-1">ID: {etapa.id}</div>
+      <div className="font-semibold">{etapa.id}</div>
+      <div className="text-xs opacity-50 mt-1">Tipo: {etapa.tipoEtapa}</div>
     </div>
     <button className="btn btn-sm btn-primary" onClick={() => onEdit(etapa)}>
       Editar
@@ -385,15 +384,21 @@ export default function CrearCampeonato() {
       const etapasToSend = etapasConfig.map((et, idx) => {
         if (typeof et.cantidadDeJugadoresFin === 'undefined' || et.cantidadDeJugadoresFin === '') throw new Error(`Etapa ${idx+1}: cantidad de jugadores al finalizar es obligatoria`);
         if (typeof et.duracionDias === 'undefined' || et.duracionDias === '') throw new Error(`Etapa ${idx+1}: duración (días) es obligatoria`);
+        const formatoEtapa = formatosEtapas.filter(el => el.id == et.id)[0];
         return {
-          id: et.id,
-          nombre: et.nombre,
+          tipoEtapa: formatoEtapa.tipoEtapa, 
+          cantidadSets: Number(formatoEtapa.cantidadSets), 
+          juegosPorSet: Number(formatoEtapa.juegosPorSet), 
+          permitirEmpate: formatoEtapa.permitirEmpate,
+          nombre: formatoEtapa.id,
           cantidadDeJugadoresFin: Number(et.cantidadDeJugadoresFin),
           duracionDias: Number(et.duracionDias),
         };
       });
 
-      const payload = { ...form, requisitosParticipacion: requisitos, etapas: etapasToSend };
+      const cantidadJugadores = formatos.filter(f => f.id == form.formatoCampeonatoID)[0].cantidadJugadores
+
+      const payload = { ...form, requisitosParticipacion: requisitos, etapas: etapasToSend, cantidadJugadores };
 
       console.log('AAAAAAAAAAAAAAAAA')
       console.log(payload)
@@ -712,11 +717,9 @@ export default function CrearCampeonato() {
                               return (
                                 <div key={et.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center p-2 bg-base-100 rounded">
                                   <div className="md:col-span-2">
-                                    <div className="font-medium">{idx+1}. {et.nombre}</div>
-                                    <div className="text-xs opacity-60">ID: {et.id}</div>
+                                    <div className="font-medium">{idx+1}. {et.id}</div>
+                                    <div className="text-xs opacity-60">Tipo: {et.nombre}</div>
                                   </div>
-                                  {console.log(et)}
-                                  {console.log(formatosEtapas.find(el => el.id == et.id))}
                                   {et.tipoEtapa == 'roundRobin' || et.nombre == 'roundRobin' ? (
                                     <div>
                                       <input type="number" min="1" className="input input-sm input-bordered w-full" placeholder="Cant. grupos" value={et.cantGrupos} onChange={e => handleEtapaChange(idx, 'cantGrupos', e.target.value)} required />
@@ -826,7 +829,7 @@ export default function CrearCampeonato() {
         <Modal 
           isOpen={!!editingFormato} 
           onClose={() => setEditingFormato(null)}
-          title={editingFormato?.id ? '✏️ Editar Formato' : '➕ Nuevo Formato'}
+          title={formatos.filter(etapa => etapa.id == (editingFormato?.id || '')).length > 0 ? '✏️ Editar Formato' : '➕ Nuevo Formato'}
         >
           <form onSubmit={saveFormato} className="space-y-4">
             <div className="form-control">
@@ -839,6 +842,7 @@ export default function CrearCampeonato() {
                 className="input input-bordered w-full"
                 placeholder="Ej: Eliminación Directa 16 Jugadores"
                 required
+                disabled={formatos.filter(etapa => etapa.id == (editingFormato?.id || '')).length > 0}
               />
             </div>
 
@@ -888,7 +892,7 @@ export default function CrearCampeonato() {
                       <div key={id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
                         <div className="flex items-center gap-2">
                           <span className="badge badge-neutral">{idx + 1}</span>
-                          <span>{meta ? `${meta.tipoEtapa}` : id}</span>
+                          <span>{meta ? `${meta.id}` : id}</span>
                         </div>
                         <button 
                           type="button" 
@@ -922,7 +926,7 @@ export default function CrearCampeonato() {
         <Modal 
           isOpen={!!editingEtapa} 
           onClose={() => setEditingEtapa(null)}
-          title={editingEtapa?.id ? '✏️ Editar Etapa' : '➕ Nueva Etapa'}
+          title={formatosEtapas.filter(etapa => etapa.id == (editingEtapa?.id || '')).length > 0 ? '✏️ Editar Etapa' : '➕ Nueva Etapa'}
         >
           <form onSubmit={saveEtapa} className="space-y-4">
             <div className="form-control">
@@ -935,6 +939,7 @@ export default function CrearCampeonato() {
                 className="input input-bordered w-full"
                 placeholder="Ej: Fase Grupos 3 Sets"
                 required
+                disabled={formatosEtapas.filter(etapa => etapa.id == (editingEtapa?.id || '')).length > 0}
               />
             </div>
 
@@ -960,8 +965,8 @@ export default function CrearCampeonato() {
               </label>
               <input
                 type='number'
-                value={editingEtapa?.cantSets || ''} 
-                onChange={e => setEditingEtapa(s => ({ ...s, cantSets: e.target.value }))} 
+                value={editingEtapa?.cantidadSets || ''} 
+                onChange={e => setEditingEtapa(s => ({ ...s, cantidadSets: e.target.value }))} 
                 className="input input-bordered w-full"
                 placeholder="Cuántos sets debe ganar un jugador para llevarse el partido"
                 rows="3"
@@ -974,8 +979,8 @@ export default function CrearCampeonato() {
               </label>
               <input
                 type='number'
-                value={editingEtapa?.juegosSet || ''} 
-                onChange={e => setEditingEtapa(s => ({ ...s, juegosSet: e.target.value }))} 
+                value={editingEtapa?.juegosPorSet || ''} 
+                onChange={e => setEditingEtapa(s => ({ ...s, juegosPorSet: e.target.value }))} 
                 className="input input-bordered w-full"
                 placeholder="Cuántos juegos se necesitan para ganar un set"
                 rows="3"
@@ -987,8 +992,8 @@ export default function CrearCampeonato() {
                 <input 
                   type="checkbox" 
                   name="empates" 
-                  checked={editingEtapa?.empates} 
-                  onChange={e => setEditingEtapa(s => ({ ...s, empates: e.target.checked }))} 
+                  checked={editingEtapa?.permitirEmpate} 
+                  onChange={e => setEditingEtapa(s => ({ ...s, permitirEmpate: e.target.checked }))} 
                   className="checkbox checkbox-primary" 
                 />
                 <span className="label-text font-semibold">Aceptar empates?</span>

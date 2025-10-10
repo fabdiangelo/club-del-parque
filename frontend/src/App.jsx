@@ -15,6 +15,7 @@ import AdministracionUsuarios from './pages/AdministracionUsuarios';
 import Chats from './pages/Chats';
 import CrearAdmin from './pages/CrearAdmin';
 import CrearCampeonato from './pages/CrearCampeonato';
+import FixtureCampeonato from './pages/FixtureCampeonato'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
       <Route path="/reportes" element={<SistemaReporte />} />
+      <Route path="/campeonatos/:id" element={<FixtureCampeonato />} />
       
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
