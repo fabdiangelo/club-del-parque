@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
+import Navbar from "../components/Navbar";
 import SoloAdmin from '../components/SoloAdmin';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -426,7 +427,9 @@ export default function CrearCampeonato() {
   }
 
   return (
-    <div className="min-h-screen bg-base-300 p-6">
+    <div className="min-h-screen bg-base-300 p-6 mt-12">
+      <Navbar />
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">

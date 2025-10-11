@@ -34,10 +34,15 @@ export default function ListaCampeonatos() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
+        <div className="mb-5 ml-5 mt-20">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
             Campeonatos
           </h1>
+          {user?.rol == "administrador" && 
+            <Link to="/crear-campeonato" className="btn btn-primary mt-4">
+              Crear Campeonato
+            </Link>
+          }
 
           {loading && (
             <p className="mt-4 text-sm opacity-70">Cargando campeonatos…</p>
