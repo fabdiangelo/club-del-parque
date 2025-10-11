@@ -16,6 +16,7 @@ import Chats from './pages/Chats';
 import CrearAdmin from './pages/CrearAdmin';
 import CrearCampeonato from './pages/CrearCampeonato';
 import Rankings from './pages/Ranking';
+import TemporadasPage from './pages/Temporadas';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
       <Route path="/administracion" element={<Administracion />} />
       <Route path="/administracion/reportes" element={<AdministracionReportes />} />
       <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />
+      <Route path="/temporada" element={<TemporadasPage />} />
 
     </Routes>
   );

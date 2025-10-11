@@ -1,5 +1,4 @@
-// functions/index.js  (ESM)
-import * as functions from "firebase-functions/v1"; // v1 compat API
+import * as functions from "firebase-functions/v1";
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -19,6 +18,7 @@ import FormatoController from "./src/controllers/FormatoController.js";
 import CampeonatosController from "./src/controllers/CampeonatosController.js";
 import FormatoEtapaController from "./src/controllers/FormatoEtapaController.js";
 import CampeonatosFederadosController from "./src/controllers/CampeonatosFederadosController.js";
+import TemporadaController from "./src/controllers/TemporadaController.js";
 
 /* ---------------- Boot logs ---------------- */
 console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
@@ -53,7 +53,12 @@ app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 
 // Administrador
 app.post("/administrador/register", (req, res) => AdministradorController.crearAdministrador(req, res));
-
+//
+app.post("/temporadas", (req, res) => TemporadaController.crear(req, res));
+app.get("/temporadas", (req, res) => TemporadaController.listar(req, res));
+app.get("/temporadas/activa", (req, res) => TemporadaController.activa(req, res));
+app.put("/temporadas/:id/activar", (req, res) => TemporadaController.activar(req, res));
+app.put("/temporadas/:id/estado", (req, res) => TemporadaController.setEstado(req, res));
 // Usuario
 app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));
 app.put("/usuario/:id", (req, res) => UsuarioController.editarUsuario(req, res));

@@ -1,5 +1,5 @@
 export default class Temporada {
-    constructor(id, anio, inicio, fin, estado, tipoPartidoID){
+    constructor(id, anio, inicio, fin, estado, tipoPartidoID = null){
         this.id = id;
         this.anio = anio;
         this.inicio = inicio;
@@ -9,7 +9,6 @@ export default class Temporada {
         this.rankingsIDs = [];
         this.partidosIDs = [];
     }
-
     toPlainObject() {
         return {
             id: this.id,
