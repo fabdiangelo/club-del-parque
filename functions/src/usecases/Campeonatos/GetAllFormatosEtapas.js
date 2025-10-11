@@ -2,11 +2,11 @@ import { FormatoEtapaRepository } from "../../infraestructure/adapters/FormatoEt
 
 class GetAllFormatosEtapas {
   constructor() {
-    this.repo = new FormatoEtapaRepository();
+    this.formatoEtapaRepository = new FormatoEtapaRepository();
   }
 
   async execute() {
-    return await this.repo.getAll();
+    return await this.formatoEtapaRepository.getAll();
   }
 }
 

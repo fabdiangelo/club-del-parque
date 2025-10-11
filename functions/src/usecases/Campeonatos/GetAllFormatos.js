@@ -2,11 +2,11 @@ import { FormatoCampeonatoRepository } from "../../infraestructure/adapters/Form
 
 class GetAllFormatos {
   constructor() {
-    this.repo = new FormatoCampeonatoRepository();
+    this.formatoCampeonatoRepository = new FormatoCampeonatoRepository();
   }
 
   async execute() {
-    return await this.repo.getAllFormatos();
+    return await this.formatoCampeonatoRepository.getAllFormatos();
   }
 }
 
