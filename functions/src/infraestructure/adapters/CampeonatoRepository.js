@@ -17,8 +17,7 @@ class CampeonatoRepository {
   }
 
   async getAll() {
-    const snapshot = await this.db.getAllItems('campeonatos');
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return await this.db.getAllItems('campeonatos');
   }
 }
 
