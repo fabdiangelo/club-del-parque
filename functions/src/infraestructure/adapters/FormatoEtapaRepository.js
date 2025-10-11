@@ -17,8 +17,7 @@ class FormatoEtapaRepository {
   }
 
   async getAll() {
-    const snapshot = await this.db.getAllItems('formatosEtapas');
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return await this.db.getAllItems('formatosEtapas');
   }
 }
 

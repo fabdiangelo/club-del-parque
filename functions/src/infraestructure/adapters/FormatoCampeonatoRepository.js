@@ -17,8 +17,7 @@ class FormatoCampeonatoRepository {
   }
 
   async getAllFormatos() {
-    const snapshot = await this.db.getAllItems('formatosCampeonatos');
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return await this.db.getAllItems('formatosCampeonatos');
   }
 }
 
