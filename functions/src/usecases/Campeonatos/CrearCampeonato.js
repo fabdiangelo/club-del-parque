@@ -59,8 +59,38 @@ class CrearCampeonato {
       et.fechaFin = fechaFin;
       et.cantidadDeJugadoresIni = cantidadDeJugadoresIni;
 
+      // Generar estructura según tipo de etapa
+      let estructuraEtapa = {};
+      
+      if (et.tipoEtapa === 'roundRobin') {
+        // Generar grupos vacíos
+        estructuraEtapa.grupos = this.generarGruposVacios(
+          et.cantidadDeJugadoresIni, 
+          et.cantGrupos || this.calcularCantidadGrupos(et.cantidadDeJugadoresIni, et.cantidadDeJugadoresFin)
+        );
+      } else if (et.tipoEtapa === 'eliminacion') {
+        // Generar rondas vacías
+        estructuraEtapa.rondas = this.generarRondasVacias(
+          et.cantidadDeJugadoresIni,
+          et.cantidadDeJugadoresFin
+        );
+      }
 
-      const etapa = new Etapa(etapaId, et.nombre || `Etapa ${i+1}`, c.id, et.tipoEtapa, et.cantidadSets, et.juegosPorSet, et.permitirEmpate, et.cantidadDeJugadoresIni || null, et.cantidadDeJugadoresFin, fechaFin);
+      const etapa = new Etapa(
+        etapaId, 
+        et.nombre || `Etapa ${i+1}`, 
+        c.id, 
+        et.tipoEtapa, 
+        et.cantidadSets, 
+        et.juegosPorSet, 
+        et.permitirEmpate, 
+        et.cantidadDeJugadoresIni || null, 
+        et.cantidadDeJugadoresFin, 
+        fechaFin,
+        estructuraEtapa.grupos || null,
+        estructuraEtapa.rondas || null
+      );
+      
       await this.etapaRepository.save(etapa.toPlainObject());
       c.etapasIDs.push(etapaId);
 
@@ -71,6 +101,140 @@ class CrearCampeonato {
 
     await this.campeonatoRepository.save(c.toPlainObject());
     return id;
+  }
+
+  /**
+   * Calcula la cantidad óptima de grupos basándose en jugadores iniciales y finales
+   * Asumiendo que clasifican los 2 primeros de cada grupo
+   */
+  calcularCantidadGrupos(jugadoresIni, jugadoresFin) {
+    // Si clasifican jugadoresFin jugadores y avanzan ~2 por grupo
+    const gruposNecesarios = Math.ceil(jugadoresFin / 2);
+    // Validar que tenga sentido dividir jugadoresIni en esa cantidad de grupos
+    const jugadoresPorGrupo = Math.floor(jugadoresIni / gruposNecesarios);
+    if (jugadoresPorGrupo < 3) {
+      // Si quedan menos de 3 por grupo, reducir cantidad de grupos
+      return Math.floor(jugadoresIni / 4); // Mínimo 4 jugadores por grupo
+    }
+    return gruposNecesarios;
+  }
+
+  /**
+   * Genera la estructura de grupos vacía para fase Round Robin
+   */
+  generarGruposVacios(cantidadJugadores, cantidadGrupos) {
+    const grupos = [];
+    const jugadoresPorGrupo = Math.ceil(cantidadJugadores / cantidadGrupos);
+    const nombresGrupos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+    for (let i = 0; i < cantidadGrupos; i++) {
+      const grupo = {
+        id: `grupo-${nombresGrupos[i] || (i + 1)}`,
+        nombre: `GRUPO ${nombresGrupos[i] || (i + 1)}`,
+        jugadores: [],
+        partidos: []
+      };
+
+      // Crear slots vacíos para jugadores
+      for (let j = 0; j < jugadoresPorGrupo; j++) {
+        grupo.jugadores.push({
+          id: null, // Se llenará al inscribirse
+          nombre: null,
+          posicion: j + 1,
+          ganados: 0,
+          perdidos: 0,
+          puntos: 0,
+          setsGanados: 0,
+          setsPerdidos: 0,
+          juegosGanados: 0,
+          juegosPerdidos: 0
+        });
+      }
+
+      // Generar partidos vacíos (todos contra todos)
+      for (let j = 0; j < jugadoresPorGrupo; j++) {
+        for (let k = j + 1; k < jugadoresPorGrupo; k++) {
+          grupo.partidos.push({
+            id: `partido-${i}-${j}-${k}`,
+            jugador1Index: j,
+            jugador2Index: k,
+            jugador1Id: null,
+            jugador2Id: null,
+            estado: 'pendiente', // pendiente, en_curso, finalizado
+            resultado: null,
+            sets: [],
+            fechaProgramada: null,
+            fechaJugado: null
+          });
+        }
+      }
+
+      grupos.push(grupo);
+    }
+
+    return grupos;
+  }
+
+  /**
+   * Genera la estructura de rondas vacía para fase de Eliminación
+   */
+  generarRondasVacias(cantidadJugadoresIni, cantidadJugadoresFin) {
+    const rondas = [];
+    let jugadoresActuales = cantidadJugadoresIni;
+    let indiceRonda = 0;
+
+    // Calcular cantidad de rondas necesarias
+    const cantidadRondas = Math.ceil(Math.log2(cantidadJugadoresIni));
+    
+    while (jugadoresActuales > cantidadJugadoresFin) {
+      const cantidadPartidos = Math.floor(jugadoresActuales / 2);
+      const nombreRonda = this.getNombreRonda(jugadoresActuales, cantidadJugadoresFin);
+      
+      const ronda = {
+        id: `ronda-${indiceRonda}`,
+        nombre: nombreRonda,
+        indice: indiceRonda,
+        cantidadPartidos: cantidadPartidos,
+        jugadoresEnRonda: jugadoresActuales,
+        partidos: []
+      };
+
+      // Crear partidos vacíos para esta ronda
+      for (let i = 0; i < cantidadPartidos; i++) {
+        ronda.partidos.push({
+          id: `partido-r${indiceRonda}-${i}`,
+          numeroPartido: i + 1,
+          jugador1Id: null,
+          jugador2Id: null,
+          jugador1Origen: indiceRonda === 0 ? 'inscripcion' : `ganador-r${indiceRonda-1}-${i*2}`,
+          jugador2Origen: indiceRonda === 0 ? 'inscripcion' : `ganador-r${indiceRonda-1}-${i*2+1}`,
+          estado: 'pendiente',
+          resultado: null,
+          ganadorId: null,
+          sets: [],
+          fechaProgramada: null,
+          fechaJugado: null
+        });
+      }
+
+      rondas.push(ronda);
+      jugadoresActuales = cantidadPartidos;
+      indiceRonda++;
+    }
+
+    return rondas;
+  }
+
+  /**
+   * Obtiene el nombre apropiado para una ronda según cantidad de jugadores
+   */
+  getNombreRonda(jugadoresEnRonda, jugadoresFin) {
+    if (jugadoresEnRonda === 2) return 'FINAL';
+    if (jugadoresEnRonda === 4) return 'SEMIFINALES';
+    if (jugadoresEnRonda === 8) return 'CUARTOS DE FINAL';
+    if (jugadoresEnRonda === 16) return 'OCTAVOS DE FINAL';
+    if (jugadoresEnRonda === 32) return 'DIECISEISAVOS DE FINAL';
+    return `RONDA DE ${jugadoresEnRonda}`;
   }
 }
 

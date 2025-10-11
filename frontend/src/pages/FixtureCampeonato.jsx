@@ -1,58 +1,51 @@
 import { ChevronLeft, ChevronRight, Trophy, Calendar } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthProvider";
 import Navbar from "../components/Navbar";
+import CampeonatoData from '../components/campeonato/CampeonatoData';
 
 export default function FixtureCampeonato() {
   const { id } = useParams();
-
+  const { user } = useAuth();
+  
   const [campeonato, setCampeonato] = useState(null);
   const [etapa, setEtapa] = useState(null);
   const [etapaActual, setEtapaActual] = useState(0);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include'});
-        if (res.ok) {
-          const data = await res.json();
-          setCampeonato(data)
-          setEtapa(campeonato?.etapas[etapaActual])
-          console.log(d)
-        } 
-      } catch (e) {
-        console.log(e)
-      }
+  async function load() {
+    try {
+      const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include'});
+      if (res.ok) {
+        const data = await res.json();
+        setCampeonato(data)
+        setEtapa(data.etapas[etapaActual])
+        console.log(data)
+      } 
+    } catch (e) {
+      console.log(e)
     }
+  }
+  useEffect(() => {
     load();
   }, [id]);
 
   const navegarEtapa = (direccion) => {
     if (direccion === 'prev' && etapaActual > 0) {
+      setEtapa(campeonato.etapas[etapaActual - 1]);
       setEtapaActual(etapaActual - 1);
     } else if (direccion === 'next' && etapaActual < campeonato?.etapas.length - 1) {
+      setEtapa(campeonato.etapas[etapaActual + 1]);
       setEtapaActual(etapaActual + 1);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8 mt-14">
       <Navbar />
-
+      
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center gap-3 mb-3">
-            <Trophy className="w-8 h-8 text-cyan-500" />
-            <h1 className="text-3xl font-bold text-gray-800">{campeonato?.nombre}</h1>
-          </div>
-          <p className="text-gray-600 mb-3 whitespace-pre-line">{campeonato?.descripcion}</p>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Calendar className="w-4 h-4" />
-            <span>{new Date(campeonato?.inicio).toLocaleDateString()} - {new Date(campeonato?.fin).toLocaleDateString()}</span>
-          </div>
-        </div>
-      </div>
+      <CampeonatoData id={id} nombre={campeonato?.nombre} descripcion={campeonato?.descripcion} inicio={campeonato?.inicio} fin={campeonato?.fin} requisitosParticipacion={campeonato?.requisitosParticipacion} rol={user?.rol} onRefresh={load} />
 
       {/* Navegación de etapas */}
       <div className="max-w-7xl mx-auto mb-6 flex items-center justify-center gap-4">
@@ -94,7 +87,7 @@ export default function FixtureCampeonato() {
 const FaseGrupos = ({ grupos }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {grupos?.map((grupo, idx) => (
+      {grupos.map((grupo, idx) => (
         <div key={idx} className="bg-gray-800 text-white rounded-xl shadow-xl overflow-hidden">
           <div className="bg-gray-900 px-6 py-4">
             <h3 className="text-xl font-bold">{grupo.nombre}</h3>
@@ -111,7 +104,7 @@ const FaseGrupos = ({ grupos }) => {
                 className="flex items-center bg-gray-700 rounded-lg px-3 py-3 mb-2 hover:bg-gray-600 transition-colors"
               >
                 <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                  {jugador.nombre.charAt(0)}
+                  {jugador.nombre?.charAt(0)}
                 </div>
                 <span className="flex-1 font-medium">{jugador.nombre}</span>
                 <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
@@ -125,21 +118,22 @@ const FaseGrupos = ({ grupos }) => {
   );
 };
 
-const FaseEliminacion = ({ rondas }) => {
-  const partidoGanado = { jugador1: "Laura Méndez", puntaje1: 7, jugador2: "Tamara Rodriguez", puntaje2: 6 };
+const FaseEliminacion = ({ rondas = [] }) => {
+
+  const partidoGanado = rondas[rondas.length - 1]?.partidos[0] || null;
   const ganador = partidoGanado?.ganador;
 
   return (
     <div className="relative bg-white rounded-xl shadow-xl overflow-hidden">
       {/* Fondo decorativo */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-tr from-cyan-400 via-cyan-500 to-transparent opacity-80"></div>
-        <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-bl from-gray-700 via-gray-600 to-transparent opacity-90"></div>
+        {/* <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-tr from-cyan-400 via-cyan-500 to-transparent opacity-80"></div> */}
+        {/* <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-bl from-gray-700 via-gray-600 to-transparent opacity-90"></div> */}
       </div>
 
       <div className="relative z-10 p-8">
         <div className="flex justify-between items-start gap-8">
-          {rondas?.map((ronda, rIdx) => (
+          {rondas.map((ronda, rIdx) => (
             <div key={rIdx} className="flex-1 min-w-0">
               <h3 className="text-center font-bold text-gray-800 mb-6 text-lg uppercase tracking-wide">
                 {ronda.nombre}
@@ -151,7 +145,7 @@ const FaseEliminacion = ({ rondas }) => {
                       <div className="flex items-center justify-between p-3">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                            {partido.jugador1.charAt(0)}
+                            {partido.jugador1?.charAt(0)}
                           </div>
                           <span className="font-medium text-white truncate">{partido.jugador1}</span>
                         </div>
@@ -160,7 +154,7 @@ const FaseEliminacion = ({ rondas }) => {
                       <div className="flex items-center justify-between p-3 border-t border-cyan-300 border-opacity-30">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                            {partido.jugador2.charAt(0)}
+                            {partido.jugador2?.charAt(0)}
                           </div>
                           <span className="font-medium text-white truncate">{partido.jugador2}</span>
                         </div>

@@ -15,6 +15,11 @@ class CampeonatoRepository {
     if (!item) return null;
     return { id: item.id, ...item };
   }
+
+  async getAll() {
+    const snapshot = await this.db.getAllItems('campeonatos');
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
 }
 
 export { CampeonatoRepository };

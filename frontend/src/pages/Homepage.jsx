@@ -155,7 +155,9 @@ export default function Home() {
             <p className="opacity-80 font-medium italic">Tenis y pádel</p>
             <p className="opacity-70 mt-2">San José de Mayo, Uruguay</p>
             <div className="mt-10 flex gap-4">
-              <button className="btn btn-primary">Ver Campeonatos</button>
+              <Link to="/campeonatos" className="btn btn-primary">
+                Ver Campeonatos
+              </Link>
               <Link to="/register" className="btn btn-outline">
                 Registrarse
               </Link>

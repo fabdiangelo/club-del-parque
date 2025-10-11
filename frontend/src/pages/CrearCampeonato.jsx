@@ -414,7 +414,7 @@ export default function CrearCampeonato() {
         throw new Error(txt || 'Error creando campeonato');
       }
       const saved = await res.json();
-      navigate(`/campeonatos/${saved.id}`);
+      navigate(`/campeonato/${saved.id}`);
     } catch (err) {
       console.error('createCampeonato err', err);
       alert(err.message || String(err));

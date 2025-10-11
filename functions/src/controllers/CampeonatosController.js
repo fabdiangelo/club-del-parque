@@ -1,5 +1,6 @@
 import CrearCampeonato from "../usecases/Campeonatos/CrearCampeonato.js";
 import ObtenerCampeonato from "../usecases/Campeonatos/ObtenerCampeonato.js";
+import ObtenerAllCampeonatos from "../usecases/Campeonatos/ObtenerAllCampeonatos.js";
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 
 class CampeonatosController {
@@ -35,6 +36,16 @@ class CampeonatosController {
 
     } catch (error) {
       console.error("Error in getCampeonatoById", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  async getAllCampeonatos (req, res) {
+    try {
+      const campeonatos = await ObtenerAllCampeonatos.execute();
+      return res.json(campeonatos);
+    } catch (error) {
+      console.error("Error in /campeonatos: ", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }

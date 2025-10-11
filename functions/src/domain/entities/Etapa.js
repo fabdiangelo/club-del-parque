@@ -1,5 +1,5 @@
 export default class Etapa {
-    constructor(id, nombre, campeonatoID, tipoEtapa, cantidadSets, juegosPorSet, permitirEmpate, cantidadDeJugadoresIni, cantidadDeJugadoresFin, fechaFin){
+    constructor(id, nombre, campeonatoID, tipoEtapa, cantidadSets, juegosPorSet, permitirEmpate, cantidadDeJugadoresIni, cantidadDeJugadoresFin, fechaFin, grupos = null, rondas = null){
         this.id = id;
         this.nombre = nombre;
         this.campeonatoID = campeonatoID;
@@ -11,6 +11,8 @@ export default class Etapa {
         this.cantidadDeJugadoresFin = cantidadDeJugadoresFin;
         this.fechaFin = fechaFin;
         this.partidosIDs = [];
+        this.grupos = grupos;
+        this.rondas = rondas;
     }
 
     toPlainObject() {
@@ -26,6 +28,8 @@ export default class Etapa {
             cantidadDeJugadoresIni: this.cantidadDeJugadoresIni,
             cantidadDeJugadoresFin: this.cantidadDeJugadoresFin,
             fechaFin: this.fechaFin,
+            grupos: this.grupos, 
+            rondas: this.rondas, 
         };
     }
 }
