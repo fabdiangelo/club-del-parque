@@ -8,6 +8,7 @@ import GetAllUsuarios from '../usecases/Usuarios/getAllUsuarios.js';
 import FederarUsuario from "../usecases/Usuarios/FederarUsuario.js";
 import GetCantUsuarios from "../usecases/Usuarios/GetCantUsuarios.js";
 import BloquearUsuario from "../usecases/Usuarios/BloquearUsuario.js";
+import GetAllFederados from "../usecases/Usuarios/getAllFederados.js";
 
 class UsuarioController {
   async getUserData(req, res) {
@@ -22,7 +23,6 @@ class UsuarioController {
         return res.status(401).json({ error: "No user id found" });
       }
 
-      // Verificar la cookie
       const user = GetActualUser.execute(sessionCookie)
       const { uid } = user;
 
@@ -37,6 +37,24 @@ class UsuarioController {
     } catch (error) {
       console.error("Error in /me:", error);
       return res.status(401).json({ error: "Invalid or expired session" });
+    }
+  }
+async getAllFederados(req, res) {
+    try {
+      const sessionCookie = req.cookies.session || "";
+      if (!sessionCookie) {
+        return res.status(401).json({ error: "No session cookie found" });
+      }
+      const user = GetActualUser.execute(sessionCookie);
+      if (user.rol !== "administrador") {
+        return res.status(403).json({ error: "Acceso no autorizado" });
+      }
+
+      const federados = await GetAllFederados.execute();
+      return res.json(federados);
+    } catch (error) {
+      console.error("Error in /usuarios/federados:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 
