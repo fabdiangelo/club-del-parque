@@ -66,6 +66,8 @@ export default class DBConnection{
 
     async updateItem(collection, id, partial) {
         await this.db.collection(collection).doc(id).update(partial);
-        return id;
+        // Obtener el documento actualizado
+        const updatedDoc = await this.db.collection(collection).doc(id).get();
+        return { id: updatedDoc.id, ...updatedDoc.data() };
     }
 }

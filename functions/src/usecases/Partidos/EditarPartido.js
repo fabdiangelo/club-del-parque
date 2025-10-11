@@ -3,7 +3,7 @@ export class EditarPartido {
         this.partidoRepository = partidoRepository;
     }
 
-    async execute(partido) {
-        return await this.partidoRepository.update(partido.id, partido);
+    async execute(id, partidoData) {
+        return await this.partidoRepository.update(id, partidoData);
     }
 }

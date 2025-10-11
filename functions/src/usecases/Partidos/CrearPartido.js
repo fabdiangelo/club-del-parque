@@ -1,9 +1,9 @@
 export class CrearPartido {
-    constructor(usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
+    constructor(partidoRepository) {
+        this.partidoRepository = partidoRepository;
     }
 
     async execute(partido) {
-        return await this.usuarioRepository.save(partido);
+        return await this.partidoRepository.save(partido);
     }
 }

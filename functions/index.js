@@ -203,13 +203,17 @@ app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
 // Partidos
 app.get('/partidos/:id', (req, res) => PartidoController.getPartidoById(req, res));
 app.put('/partidos/:id', (req, res) => PartidoController.editarPartido(req, res));
+app.post('/partidos', (req, res) => PartidoController.crearPartido(req, res));
+app.get('/partidos', (req, res) => PartidoController.getAllPartidos(req, res));
 app.get('/partidos/temporada/:temporadaID', (req, res) => PartidoController.getPartidosByTemporada(req, res));
 app.get('/partidos/jugador/:jugadorID', (req, res) => PartidoController.getPartidosByJugador(req, res));
+app.delete('/partidos/:id', (req, res) => PartidoController.eliminarPartido(req, res));
 
 // Temporada
 app.get('/temporadas/:id', (req, res) => TemporadaController.getTemporadaById(req, res));
 app.post('/temporadas', (req, res) => TemporadaController.createTemporada(req, res));
 app.delete('/temporadas/:id', (req, res) => TemporadaController.deleteTemporada(req, res));
+app.get('/temporadas', (req, res) => TemporadaController.getAllTemporadas(req, res));
 
 // Cancha
 app.get('/canchas/:id', (req, res) => CanchaController.getById(req, res));

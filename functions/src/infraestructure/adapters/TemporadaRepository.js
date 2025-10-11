@@ -6,7 +6,7 @@ export class TemporadaRepository {
     }
 
     async getAll() {
-        return this.db.getAll('temporadas');
+        return this.db.getAllItems('temporadas');
     }
 
     async getById(id) {
