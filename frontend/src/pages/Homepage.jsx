@@ -3,7 +3,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import logoUrl from "../assets/Logo.svg";
-import '../styles/Home.css'
+import "../styles/Home.css";
+import RichTextEditor from "../components/RichTextEditor";
 
 // Configurable endpoint (VITE_NOTICIAS_API) or fallback
 const NOTICIAS_ENDPOINT =
@@ -37,26 +38,38 @@ if (typeof document !== "undefined" && !document.getElementById("amsterdam-four-
 }
 
 /* --- Utils --- */
-function stripMarkdown(md = "") {
+// Strong cleaner: remove YAML front matter, HTML, kramdown attrs, shortcodes, etc.
+function cleanMdForPreview(md = "") {
   if (!md) return "";
-  let text = md;
-  text = text.replace(/```[\s\S]*?```/g, " ");
-  text = text.replace(/`[^`]*`/g, " ");
-  text = text.replace(/!\[[^\]]*\]\([^)]+\)/g, " ");
-  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-  text = text.replace(/^\s{0,3}#{1,6}\s*/gm, "");
-  text = text.replace(/^\s{0,3}>\s?/gm, "");
-  text = text.replace(/^\s*[-*+]\s+/gm, "");
-  text = text.replace(/[*_~]/g, "");
-  text = text.replace(/\s+/g, " ");
-  return text.trim();
+  let s = String(md);
+
+  // YAML front matter
+  s = s.replace(/^---[\s\S]*?---\s*/g, "");
+
+  // HTML tags
+  s = s.replace(/<[^>]+>/g, "");
+
+  // Kramdown attribute lists {: .class #id }
+  s = s.replace(/\{:\s*[^}]*\}/g, "");
+
+  // Shortcodes [tag ...] or [/tag]
+  s = s.replace(/\[(\/)?[a-zA-Z0-9_-]+(?:[^\]]*)\]/g, "");
+
+  // Excessive underscores/asterisks/tilde
+  s = s.replace(/[*_~]{1,}/g, "");
+
+  // Normalize CRLF + squeeze whitespace
+  s = s.replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n");
+
+  return s.trim();
 }
-function excerptFromMd(md = "", max = 200) {
-  const raw = stripMarkdown(md);
-  if (raw.length <= max) return raw;
-  const cut = raw.slice(0, max);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trim() + "…";
+
+function firstParagraph(md = "") {
+  if (!md) return "";
+  const parts = cleanMdForPreview(md).split(/\n{2,}/);
+  // Return first non-empty block
+  const p = parts.find((x) => x.trim().length > 0) || "";
+  return p.trim();
 }
 
 export default function Home() {
@@ -69,6 +82,7 @@ export default function Home() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
   const [noticias, setNoticias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -115,39 +129,44 @@ export default function Home() {
     : undefined;
 
   return (
-  <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
-  {/* NAVBAR */}
-  <Navbar transparent={!scrolled} />
+    <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
+      {/* NAVBAR */}
+      <Navbar transparent={!scrolled} />
 
       {/* HERO */}
       <section
         className="relative flex items-center justify-center w-full"
         style={{
-          minHeight: '100vh',
+          minHeight: "100vh",
           backgroundImage: "url('/fondohome.jpeg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          position: 'relative',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          position: "relative",
           flex: 1,
         }}
       >
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'rgba(0, 0, 0, 0.6)',
-          zIndex: 1
-        }} />
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full" style={{ position: 'relative', zIndex: 2 }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.6)",
+            zIndex: 1,
+          }}
+        />
+        <div
+          className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full"
+          style={{ position: "relative", zIndex: 2 }}
+        >
           <div>
             <h1
               className="font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6"
               style={{
                 color: BRAND_CYAN,
-                fontFamily: 'Amsterdam Four, serif',
-                letterSpacing: '0.04em',
+                fontFamily: "Amsterdam Four, serif",
+                letterSpacing: "0.04em",
               }}
             >
               Club del Parque
@@ -173,11 +192,7 @@ export default function Home() {
           </div>
 
           <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
-            <img
-              src={logoUrl}
-              alt="Club del Parque Logo"
-              className="h-90 w-auto opacity-100"
-            />
+            <img src={logoUrl} alt="Club del Parque Logo" className="h-90 w-auto opacity-100" />
           </div>
         </div>
       </section>
@@ -186,18 +201,20 @@ export default function Home() {
       <section
         className="text-primary-content"
         style={{
-          height: '100vh',
+          height: "100vh",
           backgroundImage: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM} 0%, ${BRAND_GRADIENT_TO} 100%)`,
         }}
       >
-        <div className="mx-auto max-w-7xl px-6 " style={{height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+        <div
+          className="mx-auto max-w-7xl px-6 "
+          style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}
+        >
           <h2 className="text-4xl font-extrabold">Instalaciones</h2>
           <p className="mt-4 max-w-2xl opacity-95">
-            Texto placeholder sobre las instalaciones. Cámbialo por tu propio
-            contenido.
+            Texto placeholder sobre las instalaciones. Cámbialo por tu propio contenido.
           </p>
 
-          <div className="mt-12 grid lg:grid-cols-12 gap-10" >
+          <div className="mt-12 grid lg:grid-cols-12 gap-10">
             <div className="lg:col-span-7">
               <div className="card shadow-xl bg-base-200/20 backdrop-blur-[1px]">
                 <div className="w-full h-[320px] bg-base-100/20 grid place-items-center rounded-box">
@@ -213,10 +230,7 @@ export default function Home() {
 
             <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="card shadow rounded-box bg-base-200/20 h-[120px] grid place-items-center"
-                >
+                <div key={i} className="card shadow rounded-box bg-base-200/20 h-[120px] grid place-items-center">
                   <span className="opacity-90 text-sm">Foto {i + 1}</span>
                 </div>
               ))}
@@ -228,23 +242,18 @@ export default function Home() {
       {/* NOTICIAS */}
       <section className="bg-white text-neutral-900 py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
-          <h2 className="text-5xl font-extrabold text-center mb-12">
-            Noticias
-          </h2>
+          <h2 className="text-5xl font-extrabold text-center mb-12">Noticias</h2>
           <div className="grid lg:grid-cols-12 gap-10">
             {/* Lista principal */}
             <div className="lg:col-span-8 space-y-12 relative">
               {/* Hidden sample card to measure height */}
-              <div
-                className="absolute -left-[9999px] -top-[9999px]"
-                aria-hidden
-              >
+              <div className="absolute -left-[9999px] -top-[9999px]" aria-hidden>
                 <ArticleCard
                   ref={measureRef}
                   id="measure"
                   date="01/01/2025"
                   title="Título de ejemplo para medir"
-                  excerpt="Contenido de ejemplo para medir la altura de una tarjeta en la sección de noticias."
+                  excerptMd="Contenido de ejemplo para medir la altura de una tarjeta en la sección de noticias."
                 />
               </div>
 
@@ -254,34 +263,24 @@ export default function Home() {
                     const imgs = Array.isArray(n?.imagenes)
                       ? n.imagenes.map((it) => it?.imageUrl).filter(Boolean)
                       : [];
-                    if (imgs.length === 0 && n?.imagenUrl)
-                      imgs.push(n.imagenUrl); // legacy fallback
+                    if (imgs.length === 0 && n?.imagenUrl) imgs.push(n.imagenUrl); // legacy fallback
 
                     return (
                       <ArticleCard
                         key={n.id}
                         id={n.id}
-                        date={
-                          n?.fechaCreacion
-                            ? new Date(n.fechaCreacion).toLocaleDateString()
-                            : "—"
-                        }
+                        date={n?.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "—"}
                         title={n?.titulo || "Título"}
-                        excerpt={excerptFromMd(n?.mdContent || "", 200)}
+                        excerptMd={n?.mdContent || ""}
                         images={imgs}
                       />
                     );
                   })}
                 </>
               ) : (
-                <div
-                  className="card border border-neutral-200 bg-neutral-50 shadow"
-                  style={{ minHeight: emptyMinHeight }}
-                >
+                <div className="card border border-neutral-200 bg-neutral-50 shadow" style={{ minHeight: emptyMinHeight }}>
                   <div className="card-body items-center justify-center">
-                    <p className="text-2xl font-extrabold m-0">
-                      No hay noticias de momento
-                    </p>
+                    <p className="text-2xl font-extrabold m-0">No hay noticias de momento</p>
                   </div>
                 </div>
               )}
@@ -303,9 +302,7 @@ export default function Home() {
                     ))}
                   </div>
                   <div className="card-actions mt-6">
-                    <button className="btn btn-primary w-full">
-                      Ver torneos
-                    </button>
+                    <button className="btn btn-primary w-full">Ver torneos</button>
                   </div>
                 </div>
               </div>
@@ -321,7 +318,7 @@ export default function Home() {
 
 // forwardRef so we can measure this card’s height
 const ArticleCard = React.forwardRef(function ArticleCard(
-  { id, date, title, excerpt, images = [] },
+  { id, date, title, excerptMd, images = [] },
   ref
 ) {
   const [idx, setIdx] = React.useState(0);
@@ -356,10 +353,7 @@ const ArticleCard = React.forwardRef(function ArticleCard(
   const current = images[idx];
 
   return (
-    <div
-      ref={ref}
-      className="card bg-white border border-base-200 shadow overflow-hidden rounded-xl"
-    >
+    <div ref={ref} className="card bg-white border border-base-200 shadow overflow-hidden rounded-xl">
       {/* Two-column card: left image, right content */}
       <div className="grid grid-cols-[220px_1fr] md:grid-cols-[280px_1fr]">
         {/* LEFT: image (with soft fade/rotate) */}
@@ -381,8 +375,7 @@ const ArticleCard = React.forwardRef(function ArticleCard(
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background:
-                    "linear-gradient(0deg, rgba(0,0,0,0.05), rgba(0,0,0,0))",
+                  background: "linear-gradient(0deg, rgba(0,0,0,0.05), rgba(0,0,0,0))",
                 }}
               />
             </>
@@ -393,11 +386,22 @@ const ArticleCard = React.forwardRef(function ArticleCard(
           )}
         </div>
 
-        {/* RIGHT: content */}
         <div className="p-5 md:p-6">
           <h4 className="card-title m-0">{title}</h4>
           <p className="text-sm text-neutral/70 mt-1">{date}</p>
-          <p className="mt-3 text-neutral-700 line-clamp-3">{excerpt}</p>
+
+          {/* Preview rendered with the same viewer, but only first paragraph and transparent */}
+          <div className="mt-3 text-neutral-700">
+            <RichTextEditor
+              valueMarkdown={firstParagraph(excerptMd)}
+              readOnly
+              hideToolbar
+              transparent
+              autoHeight
+              className="!rounded-none !overflow-visible"
+            />
+          </div>
+
           <div className="card-actions mt-4">
             <Link to={`/noticias/${id}`} className="btn btn-neutral btn-sm">
               Ver Más ▷

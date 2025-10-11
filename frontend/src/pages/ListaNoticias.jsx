@@ -1,6 +1,8 @@
+// src/pages/Noticias.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import RichTextEditor from "../components/RichTextEditor";
 
 // Endpoint configurable por .env (VITE_NOTICIAS_API). Fallback: /api/noticias
 const NOTICIAS_ENDPOINT =
@@ -12,26 +14,34 @@ const NOTICIAS_ENDPOINT =
 const BASE_FILTERS = ["Todas", "Club", "Torneos", "Ranking"];
 
 /* --- Utils --- */
-function stripMarkdown(md = "") {
+// Limpieza fuerte: quita front-matter YAML, HTML, atributos kramdown, shortcodes, etc.
+function cleanMdForPreview(md = "") {
   if (!md) return "";
-  let text = md;
-  text = text.replace(/```[\s\S]*?```/g, " ");
-  text = text.replace(/`[^`]*`/g, " ");
-  text = text.replace(/!\[[^\]]*\]\([^)]+\)/g, " ");
-  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-  text = text.replace(/^\s{0,3}#{1,6}\s*/gm, "");
-  text = text.replace(/^\s{0,3}>\s?/gm, "");
-  text = text.replace(/^\s*[-*+]\s+/gm, "");
-  text = text.replace(/[*_~]/g, "");
-  text = text.replace(/\s+/g, " ");
-  return text.trim();
+  let s = String(md);
+
+  // YAML front matter
+  s = s.replace(/^---[\s\S]*?---\s*/g, "");
+
+  // Etiquetas HTML
+  s = s.replace(/<[^>]+>/g, "");
+
+  // Atributos kramdown {: .class #id }
+  s = s.replace(/\{:\s*[^}]*\}/g, "");
+
+  // Shortcodes tipo [tag ...] o [/tag]
+  s = s.replace(/\[(\/)?[a-zA-Z0-9_-]+(?:[^\]]*)\]/g, "");
+
+  // Normalización mínima
+  s = s.replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n");
+
+  return s.trim();
 }
-function excerptFromMd(md = "", max = 220) {
-  const raw = stripMarkdown(md);
-  if (raw.length <= max) return raw;
-  const cut = raw.slice(0, max);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trim() + "…";
+
+function firstParagraph(md = "") {
+  if (!md) return "";
+  const parts = cleanMdForPreview(md).split(/\n{2,}/);
+  const p = parts.find((x) => x.trim().length > 0) || "";
+  return p.trim();
 }
 
 export default function Noticias() {
@@ -133,9 +143,8 @@ export default function Noticias() {
                 const fecha = n?.fechaCreacion
                   ? new Date(n.fechaCreacion).toLocaleDateString()
                   : "—";
-                const excerpt = excerptFromMd(n?.mdContent || "", 200);
 
-                // 👇 Prefer first from array, fallback to legacy imagenUrl
+                // Preferir la primera del array; fallback a imagenUrl legacy
                 const firstImg =
                   (Array.isArray(n.imagenes) && n.imagenes[0]?.imageUrl) ||
                   n.imagenUrl ||
@@ -164,14 +173,26 @@ export default function Noticias() {
                         {fecha}
                       </span>
                       <h2 className="card-title">{n?.titulo || "Título"}</h2>
-                      <p className="text-sm">{excerpt}</p>
-                      <div className="card-actions justify-between items-center">
-                        <Link to={`/noticias/${n.id}`} className="btn btn-neutral btn-sm">
+
+                      {/* Preview con el mismo viewer (solo primer párrafo), sin toolbar y transparente */}
+                      <div className="text-sm mt-1">
+                        <RichTextEditor
+                          valueMarkdown={firstParagraph(n?.mdContent || "")}
+                          readOnly
+                          hideToolbar
+                          transparent
+                          autoHeight
+                          className="!rounded-none !overflow-visible"
+                        />
+                      </div>
+
+                      <div className="card-actions justify-between items-center mt-2">
+                        <Link
+                          to={`/noticias/${n.id}`}
+                          className="btn btn-neutral btn-sm"
+                        >
                           Leer más
                         </Link>
-                        <div className="badge badge-ghost">
-                          {n?.tipo || "Noticia"}
-                        </div>
                       </div>
                     </div>
                   </div>

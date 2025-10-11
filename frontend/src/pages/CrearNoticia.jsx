@@ -3,56 +3,98 @@ import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 import SoloAdmin from "../components/SoloAdmin";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import RichTextEditor from "../components/RichTextEditor";
+import rehypeRaw from "rehype-raw";
 
+/* ---------------- CONFIG ---------------- */
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   "http://127.0.0.1:5001/club-del-parque-68530/us-central1/api";
 
-function field(v) {
-  return typeof v === "string" ? v.trim() : v ?? "";
-}
+/* ---------------- HELPERS ---------------- */
+const field = (v) => (typeof v === "string" ? v.trim() : v ?? "");
 
+function normalizeMarkdown(src = "") {
+  if (!src) return "";
+
+   const md = String(src).replace(/\r\n?/g, "\n");
+   return md.replace(
+     /([^\n])\n((?:\s*[-+*]\s+\S)|(?:\s*\d+\.\s+\S))/g,
+     (_m, a, b) => `${a}\n\n${b}`
+   );
+ }
+
+const fmtDate = (iso) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return iso;
+  }
+};
+
+const safeText = async (res) => {
+  try {
+    return await res.text();
+  } catch {
+    return "";
+  }
+};
+
+/* ---------------- MAIN ---------------- */
 export default function CrearNoticia() {
+  const { user } = useAuth();
+
   const [noticias, setNoticias] = useState([]);
+  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState("");
-  const [selected, setSelected] = useState(null);
-  const { user } = useAuth();
-  
 
-  // CREATE form state
+  // Create form
   const [form, setForm] = useState({
     nombre: "",
     titulo: "",
     tipo: "",
-    administradorID: "",
     mdContent: "",
-    imagenes: [], // <-- multiple File objects
+    imagenes: [],
   });
 
-  // EDIT modal state
+  // Edit modal
   const [edit, setEdit] = useState({
     id: "",
     nombre: "",
     titulo: "",
     tipo: "",
-    administradorID: "",
     mdContent: "",
-    imagenesNew: [], // <-- new File objects
+    imagenesNew: [],
     open: false,
   });
+  const [editFullscreen, setEditFullscreen] = useState(false);
 
+  const [editorHeight, setEditorHeight] = useState(360);
   const fileInputRef = useRef(null);
   const addImagesRefs = useRef({});
+
+  useEffect(() => {
+    const onResize = () => {
+      setEditorHeight(Math.max(280, Math.min(600, Math.floor(window.innerHeight * 0.55))));
+    };
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  /* ---------------- API ---------------- */
   const fetchNoticias = async () => {
     setLoading(true);
     setError("");
     try {
       const res = await fetch(`${API_BASE}/noticias`);
       if (!res.ok) throw new Error(`GET /noticias ${res.status}`);
-      const data = await res.json();
-      setNoticias(Array.isArray(data) ? data : []);
+      setNoticias(await res.json());
     } catch (e) {
       setError(e.message || "Error listando noticias");
     } finally {
@@ -66,10 +108,9 @@ export default function CrearNoticia() {
     try {
       const res = await fetch(`${API_BASE}/noticias/${id}`);
       if (!res.ok) throw new Error(`GET /noticias/${id} ${res.status}`);
-      const data = await res.json();
-      setSelected(data);
+      setSelected(await res.json());
     } catch (e) {
-      setError(e.message || "Error obteniendo la noticia");
+      setError(e.message || "Error obteniendo noticia");
     } finally {
       setBusyId(null);
     }
@@ -79,26 +120,20 @@ export default function CrearNoticia() {
     fetchNoticias();
   }, []);
 
-  /* ---------------- Images helpers (JSON base64) ---------------- */
+  /* ---------------- Files ---------------- */
   async function fileToBase64(file) {
-    // Robust base64 (no giant strings through FileReader)
     const buf = await file.arrayBuffer();
-    // Convert ArrayBuffer -> base64 in chunks to avoid call stack issues
     let binary = "";
     const bytes = new Uint8Array(buf);
     const chunkSize = 0x8000;
     for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode.apply(
-        null,
-        bytes.subarray(i, i + chunkSize)
-      );
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
     }
-    // btoa expects binary string
     return btoa(binary);
   }
 
   async function uploadImagesJson(noticiaId, files) {
-    if (!files || files.length === 0) return null;
+    if (!files?.length) return;
     const payload = {
       images: await Promise.all(
         files.map(async (f) => ({
@@ -113,71 +148,41 @@ export default function CrearNoticia() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-      const t = await safeText(res);
-      throw new Error(
-        `POST /noticias/${noticiaId}/imagenes-json ${res.status} ${t}`
-      );
-    }
+    if (!res.ok) throw new Error(`POST /noticias/${noticiaId}/imagenes-json ${res.status} ${await safeText(res)}`);
     return res.json();
   }
 
   async function removeImageByPath(noticiaId, imagePath) {
-    const url = new URL(
-      `${API_BASE}/noticias/${encodeURIComponent(noticiaId)}/imagenes`
-    );
+    const url = new URL(`${API_BASE}/noticias/${encodeURIComponent(noticiaId)}/imagenes`);
     url.searchParams.set("imagePath", imagePath);
     const res = await fetch(url.toString(), { method: "DELETE" });
-    if (!res.ok) {
-      const t = await safeText(res);
-      throw new Error(
-        `DELETE /noticias/${noticiaId}/imagenes ${res.status} ${t}`
-      );
-    }
+    if (!res.ok) throw new Error(`DELETE /noticias/${noticiaId}/imagenes ${res.status} ${await safeText(res)}`);
     return res.json();
   }
 
-  /* ---------------- CRUD actions ---------------- */
+  /* ---------------- CRUD ---------------- */
   const onCreate = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError("");
     try {
-      // 1) Create noticia (JSON)
       const payload = {
         nombre: field(form.nombre),
         titulo: field(form.titulo),
         tipo: field(form.tipo),
-        administradorID: field(form.administradorID),
-        mdContent: field(form.mdContent),
+        mdContent: normalizeMarkdown(field(form.mdContent)),
       };
-
       const res = await fetch(`${API_BASE}/noticias`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        const t = await safeText(res);
-        throw new Error(`POST /noticias ${res.status} ${t}`);
-      }
-      const created = await res.json(); // { id }
-      const newId = created?.id;
-
-      // 2) Upload images as JSON (optional, multiple)
-      if (newId && form.imagenes?.length) {
-        await uploadImagesJson(newId, form.imagenes);
-      }
+      if (!res.ok) throw new Error(`POST /noticias ${res.status} ${await safeText(res)}`);
+      const created = await res.json();
+      if (created?.id && form.imagenes?.length) await uploadImagesJson(created.id, form.imagenes);
 
       await fetchNoticias();
-      setForm({
-        nombre: "",
-        titulo: "",
-        tipo: "",
-        administradorID: "",
-        mdContent: "",
-        imagenes: [],
-      });
+      setForm({ nombre: "", titulo: "", tipo: "", mdContent: "", imagenes: [] });
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (e) {
       setError(e.message || "Error creando noticia");
@@ -186,14 +191,41 @@ export default function CrearNoticia() {
     }
   };
 
+  const onUpdate = async (e) => {
+    e.preventDefault();
+    if (!edit.id) return;
+    setBusyId(edit.id);
+    setError("");
+    try {
+      const payload = {
+        nombre: field(edit.nombre),
+        titulo: field(edit.titulo),
+        tipo: field(edit.tipo),
+        mdContent: normalizeMarkdown(field(edit.mdContent)),
+      };
+      const res = await fetch(`${API_BASE}/noticias/${edit.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`PUT /noticias/${edit.id} ${res.status} ${await safeText(res)}`);
+      if (edit.imagenesNew?.length) await uploadImagesJson(edit.id, edit.imagenesNew);
+
+      await fetchNoticias();
+      if (selected?.id === edit.id) await fetchNoticiaById(edit.id);
+      closeEdit();
+    } catch (e) {
+      setError(e.message || "Error actualizando noticia");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const onDelete = async (id) => {
     if (!confirm("¿Eliminar esta noticia?")) return;
     setBusyId(id);
-    setError("");
     try {
-      const res = await fetch(`${API_BASE}/noticias/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/noticias/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`DELETE /noticias/${id} ${res.status}`);
       await fetchNoticias();
       if (selected?.id === id) setSelected(null);
@@ -204,69 +236,9 @@ export default function CrearNoticia() {
     }
   };
 
-  const openEdit = (n) => {
-    setEdit({
-      id: n.id,
-      nombre: n.nombre || "",
-      titulo: n.titulo || "",
-      tipo: n.tipo || "",
-      administradorID: n.administradorID || "",
-      mdContent: n.mdContent || "",
-      imagenesNew: [],
-      open: true,
-    });
-  };
-
-  const closeEdit = () =>
-    setEdit((s) => ({ ...s, open: false, imagenesNew: [] }));
-
-  const onUpdate = async (e) => {
-    e.preventDefault();
-    if (!edit.id) return;
-
-    setBusyId(edit.id);
-    setError("");
-
-    try {
-      // 1) Update fields (JSON)
-      const payload = {
-        nombre: field(edit.nombre),
-        titulo: field(edit.titulo),
-        tipo: field(edit.tipo),
-        administradorID: field(edit.administradorID),
-        mdContent: field(edit.mdContent),
-      };
-
-      const res = await fetch(`${API_BASE}/noticias/${edit.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const t = await safeText(res);
-        throw new Error(`PUT /noticias/${edit.id} ${res.status} ${t}`);
-      }
-
-      // 2) Upload any newly selected images (JSON base64)
-      if (edit.imagenesNew?.length) {
-        await uploadImagesJson(edit.id, edit.imagenesNew);
-      }
-
-      await fetchNoticias();
-      if (selected?.id === edit.id) await fetchNoticiaById(edit.id);
-      closeEdit();
-    } catch (e2) {
-      setError(e2.message || "Error actualizando noticia");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  /* ---------------- Image actions from List/Detail ---------------- */
   const onAddImagesFromList = async (id, files) => {
-    if (!files || !files.length) return;
+    if (!files?.length) return;
     setBusyId(id);
-    setError("");
     try {
       await uploadImagesJson(id, files);
       await fetchNoticias();
@@ -280,10 +252,8 @@ export default function CrearNoticia() {
   };
 
   const onRemoveImage = async (noticiaId, imagePath) => {
-    if (!imagePath) return;
     if (!confirm("¿Quitar esta imagen?")) return;
     setBusyId(noticiaId);
-    setError("");
     try {
       await removeImageByPath(noticiaId, imagePath);
       await fetchNoticias();
@@ -295,23 +265,32 @@ export default function CrearNoticia() {
     }
   };
 
-  // Not authenticated
-    if (!user || user.rol !== 'administrador') {
-      console.log(user)
-      return ( <SoloAdmin /> );
-    }
+  const openEdit = (n) => {
+    setEdit({
+      id: n.id,
+      nombre: n.nombre || "",
+      titulo: n.titulo || "",
+      tipo: n.tipo || "",
+      mdContent: n.mdContent || "",
+      imagenesNew: [],
+      open: true,
+    });
+    setEditFullscreen(false);
+  };
 
-  /* ---------------- Render ---------------- */
+  const closeEdit = () => setEdit((s) => ({ ...s, open: false, imagenesNew: [] }));
+
+  /* ---------------- RENDER ---------------- */
+  if (!user || user.rol !== "administrador") return <SoloAdmin />;
+
   return (
     <div className="min-h-dvh flex flex-col bg-neutral-900 text-white">
       <Navbar />
       <main className="max-w-7xl w-full mx-auto px-6 lg:px-8 py-24 space-y-12">
+        {/* Header */}
         <header className="flex items-center justify-between gap-4">
-          <h1 className="text-4xl font-extrabold">Panel de Noticias (demo)</h1>
-          <Link
-            to="/noticias"
-            className="rounded-full bg-sky-400 px-5 py-2 font-semibold text-white hover:bg-sky-500"
-          >
+          <h1 className="text-4xl font-extrabold">Panel de Noticias</h1>
+          <Link to="/noticias" className="rounded-full bg-sky-400 px-5 py-2 font-semibold text-white hover:bg-sky-500">
             Ver lista pública
           </Link>
         </header>
@@ -326,38 +305,19 @@ export default function CrearNoticia() {
         <section className="rounded-3xl bg-neutral-800 border border-white/10 p-6">
           <h2 className="text-2xl font-bold mb-4">Crear Noticia</h2>
           <form onSubmit={onCreate} className="grid md:grid-cols-2 gap-4">
-            <TextInput
-              label="Nombre"
-              value={form.nombre}
-              onChange={(v) => setForm((s) => ({ ...s, nombre: v }))}
-            />
-            <TextInput
-              label="Título"
-              value={form.titulo}
-              onChange={(v) => setForm((s) => ({ ...s, titulo: v }))}
-            />
-            <TextInput
-              label="Tipo"
-              value={form.tipo}
-              onChange={(v) => setForm((s) => ({ ...s, tipo: v }))}
-            />
-            <TextInput
-              label="Administrador ID"
-              value={form.administradorID}
-              onChange={(v) => setForm((s) => ({ ...s, administradorID: v }))}
-            />
+            <TextInput label="Nombre" value={form.nombre} onChange={(v) => setForm((s) => ({ ...s, nombre: v }))} />
+            <TextInput label="Título" value={form.titulo} onChange={(v) => setForm((s) => ({ ...s, titulo: v }))} />
+            <TextInput label="Tipo" value={form.tipo} onChange={(v) => setForm((s) => ({ ...s, tipo: v }))} />
+
             <div className="md:col-span-2">
-              <Label>Contenido (Markdown)</Label>
-              <textarea
-                className="w-full mt-2 rounded-xl bg-neutral-700 border border-white/10 p-3"
-                rows={6}
-                value={form.mdContent}
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, mdContent: e.target.value }))
-                }
-                placeholder="Escribe el contenido en Markdown…"
+              <Label>Contenido</Label>
+              <RichTextEditor
+                valueMarkdown={form.mdContent}
+                onChangeMarkdown={(md) => setForm((s) => ({ ...s, mdContent: md }))}
+                height={editorHeight}
               />
             </div>
+
             <div className="md:col-span-2">
               <Label>Imágenes (múltiples, opcional)</Label>
               <input
@@ -366,19 +326,13 @@ export default function CrearNoticia() {
                 multiple
                 accept="image/*"
                 className="mt-2 block w-full text-sm"
-                onChange={(e) =>
-                  setForm((s) => ({
-                    ...s,
-                    imagenes: Array.from(e.target.files || []),
-                  }))
-                }
+                onChange={(e) => setForm((s) => ({ ...s, imagenes: Array.from(e.target.files || []) }))}
               />
               {!!form.imagenes?.length && (
-                <p className="text-xs text-neutral-400 mt-1">
-                  {form.imagenes.length} archivo(s) seleccionados.
-                </p>
+                <p className="text-xs text-neutral-400 mt-1">{form.imagenes.length} archivo(s) seleccionados.</p>
               )}
             </div>
+
             <div className="md:col-span-2">
               <button
                 type="submit"
@@ -395,10 +349,7 @@ export default function CrearNoticia() {
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Noticias</h2>
-            <button
-              onClick={fetchNoticias}
-              className="rounded-xl border border-white/20 px-4 py-2 hover:bg-white/10"
-            >
+            <button onClick={fetchNoticias} className="rounded-xl border border-white/20 px-4 py-2 hover:bg-white/10">
               Recargar
             </button>
           </div>
@@ -410,39 +361,23 @@ export default function CrearNoticia() {
           ) : (
             <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {noticias.map((n) => {
-                // prefer first image from `imagenes`, fallback to legacy `imagenUrl`
-                const firstImg =
-                  (Array.isArray(n.imagenes) && n.imagenes[0]?.imageUrl) ||
-                  n.imagenUrl ||
-                  null;
-
+                const firstImg = (Array.isArray(n.imagenes) && n.imagenes[0]?.imageUrl) || n.imagenUrl || null;
                 return (
-                  <li
-                    key={n.id}
-                    className="rounded-2xl bg-neutral-800 border border-white/10 overflow-hidden"
-                  >
+                  <li key={n.id} className="rounded-2xl bg-neutral-800 border border-white/10 overflow-hidden">
                     {firstImg ? (
-                      <img
-                        src={firstImg}
-                        alt={n.titulo}
-                        className="w-full h-40 object-cover"
-                      />
+                      <img src={firstImg} alt={n.titulo} className="w-full h-40 object-cover" />
                     ) : (
                       <div className="w-full h-40 bg-neutral-700 grid place-items-center text-neutral-400 text-sm">
                         Sin imagen
                       </div>
                     )}
-
                     <div className="p-4 space-y-2">
                       <h3 className="text-lg font-bold">{n.titulo || "—"}</h3>
-                      <p className="text-sm text-neutral-300">
-                        {n.nombre || "—"}
-                      </p>
+                      <p className="text-sm text-neutral-300">{n.nombre || "—"}</p>
                       <p className="text-xs text-neutral-400">
                         {fmtDate(n.fechaCreacion)} · {n.tipo || "—"}
                       </p>
 
-                      {/* Add more images from list */}
                       <div className="pt-2">
                         <label className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm hover:bg-amber-700 cursor-pointer inline-block">
                           Agregar imágenes
@@ -452,12 +387,7 @@ export default function CrearNoticia() {
                             accept="image/*"
                             className="hidden"
                             ref={(el) => (addImagesRefs.current[n.id] = el)}
-                            onChange={(e) =>
-                              onAddImagesFromList(
-                                n.id,
-                                Array.from(e.target.files || [])
-                              )
-                            }
+                            onChange={(e) => onAddImagesFromList(n.id, Array.from(e.target.files || []))}
                           />
                         </label>
                       </div>
@@ -470,10 +400,7 @@ export default function CrearNoticia() {
                         >
                           {busyId === n.id ? "Abriendo…" : "Ver"}
                         </button>
-                        <button
-                          onClick={() => openEdit(n)}
-                          className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-700"
-                        >
+                        <button onClick={() => openEdit(n)} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-700">
                           Editar
                         </button>
                         <button
@@ -498,40 +425,25 @@ export default function CrearNoticia() {
           {!selected ? (
             <p className="text-neutral-400">Elige “Ver” en una noticia.</p>
           ) : (
-            <article className="space-y-3">
+            <article className="space-y-4">
               <div className="flex items-center gap-3">
                 <h3 className="text-xl font-extrabold">{selected.titulo}</h3>
-                <span className="text-xs bg-white/10 rounded-full px-2 py-0.5">
-                  {selected.tipo || "—"}
-                </span>
+                <span className="text-xs bg-white/10 rounded-full px-2 py-0.5">{selected.tipo || "—"}</span>
               </div>
               <p className="text-sm text-neutral-300">
-                Por <strong>{selected.nombre || "—"}</strong> ·{" "}
-                {fmtDate(selected.fechaCreacion)} (actualizado{" "}
+                Por <strong>{selected.nombre || "—"}</strong> · {fmtDate(selected.fechaCreacion)} (actualizado{" "}
                 {fmtDate(selected.fechaActualizacion)})
               </p>
 
-              {/* Gallery if multiple images exist */}
-              {Array.isArray(selected.imagenes) &&
-              selected.imagenes.length > 0 ? (
+              {Array.isArray(selected.imagenes) && selected.imagenes.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {selected.imagenes.map((img, idx) => (
-                    <div
-                      key={img.imagePath || img.imageUrl || idx}
-                      className="relative group"
-                    >
-                      <img
-                        className="w-full h-40 object-cover rounded-xl border border-white/10"
-                        src={img.imageUrl}
-                        alt={`img-${idx}`}
-                      />
+                    <div key={img.imagePath || idx} className="relative group">
+                      <img className="w-full h-40 object-cover rounded-xl border border-white/10" src={img.imageUrl} alt={`img-${idx}`} />
                       <button
-                        onClick={() =>
-                          onRemoveImage(selected.id, img.imagePath)
-                        }
+                        onClick={() => onRemoveImage(selected.id, img.imagePath)}
                         disabled={busyId === selected.id}
                         className="absolute top-2 right-2 text-xs rounded-md bg-red-600 px-2 py-1 opacity-0 group-hover:opacity-100 transition"
-                        title="Eliminar imagen"
                       >
                         ✕
                       </button>
@@ -539,20 +451,18 @@ export default function CrearNoticia() {
                   ))}
                 </div>
               ) : selected.imagenUrl ? (
-                <img
-                  className="w-full max-h-96 object-cover rounded-xl border border-white/10"
-                  src={selected.imagenUrl}
-                  alt={selected.titulo}
-                />
+                <img className="w-full max-h-96 object-cover rounded-xl border border-white/10" src={selected.imagenUrl} alt={selected.titulo} />
               ) : (
                 <div className="w-full h-40 bg-neutral-700 grid place-items-center text-neutral-400 text-sm rounded-xl border border-white/10">
                   Sin imágenes
                 </div>
               )}
 
-              <pre className="whitespace-pre-wrap bg-neutral-900/60 rounded-xl p-4 border border-white/10 text-neutral-200 text-sm">
-                {selected.mdContent || "*Sin contenido*"}
-              </pre>
+              <div className="prose prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                  {selected.mdContent || "*Sin contenido*"}
+                </ReactMarkdown>
+              </div>
             </article>
           )}
         </section>
@@ -561,88 +471,66 @@ export default function CrearNoticia() {
       {/* EDIT MODAL */}
       {edit.open && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm grid place-items-center p-4">
-          <div className="w-full max-w-3xl rounded-2xl bg-neutral-900 border border-white/10 p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div
+            className={`w-full ${editFullscreen ? "max-w-[95vw]" : "max-w-3xl"} rounded-2xl bg-neutral-900 border border-white/10 flex flex-col`}
+            style={{ maxHeight: "90vh" }}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0 bg-neutral-900/90">
               <h3 className="text-xl font-bold">Editar Noticia</h3>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setEditFullscreen((v) => !v)} className="rounded-lg px-3 py-1.5 hover:bg-white/10 text-sm">
+                  {editFullscreen ? "Ventana" : "Pantalla completa"}
+                </button>
+                <button onClick={closeEdit} className="rounded-lg px-3 py-1.5 hover:bg-white/10">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 overflow-y-auto">
+              <form onSubmit={onUpdate} className="grid md:grid-cols-2 gap-4">
+                <TextInput label="Nombre" value={edit.nombre} onChange={(v) => setEdit((s) => ({ ...s, nombre: v }))} />
+                <TextInput label="Título" value={edit.titulo} onChange={(v) => setEdit((s) => ({ ...s, titulo: v }))} />
+                <TextInput label="Tipo" value={edit.tipo} onChange={(v) => setEdit((s) => ({ ...s, tipo: v }))} />
+
+                <div className="md:col-span-2">
+                  <Label>Contenido</Label>
+                  <RichTextEditor
+                    valueMarkdown={edit.mdContent}
+                    onChangeMarkdown={(md) => setEdit((s) => ({ ...s, mdContent: md }))}
+                    height={editFullscreen ? Math.max(500, window.innerHeight * 0.6) : editorHeight}
+                    placeholder="Edita el contenido…"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label>Agregar nuevas imágenes</Label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="mt-2 block w-full text-sm"
+                    onChange={(e) => setEdit((s) => ({ ...s, imagenesNew: Array.from(e.target.files || []) }))}
+                  />
+                  {!!edit.imagenesNew?.length && (
+                    <p className="text-xs text-neutral-400 mt-1">{edit.imagenesNew.length} archivo(s) para subir al guardar.</p>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div className="px-6 py-4 border-t border-white/10 sticky bottom-0 bg-neutral-900/90 flex gap-3">
               <button
-                onClick={closeEdit}
-                className="rounded-lg px-3 py-1.5 hover:bg-white/10"
+                onClick={onUpdate}
+                disabled={busyId === edit.id}
+                className="rounded-xl bg-sky-500 hover:bg-sky-600 px-5 py-3 font-semibold disabled:opacity-60"
               >
-                Cerrar
+                {busyId === edit.id ? "Guardando…" : "Guardar cambios"}
+              </button>
+              <button type="button" onClick={closeEdit} className="rounded-xl border border-white/20 px-5 py-3 hover:bg-white/10">
+                Cancelar
               </button>
             </div>
-            <form onSubmit={onUpdate} className="grid md:grid-cols-2 gap-4">
-              <TextInput
-                label="Nombre"
-                value={edit.nombre}
-                onChange={(v) => setEdit((s) => ({ ...s, nombre: v }))}
-              />
-              <TextInput
-                label="Título"
-                value={edit.titulo}
-                onChange={(v) => setEdit((s) => ({ ...s, titulo: v }))}
-              />
-              <TextInput
-                label="Tipo"
-                value={edit.tipo}
-                onChange={(v) => setEdit((s) => ({ ...s, tipo: v }))}
-              />
-              <TextInput
-                label="Administrador ID"
-                value={edit.administradorID}
-                onChange={(v) => setEdit((s) => ({ ...s, administradorID: v }))}
-              />
-              <div className="md:col-span-2">
-                <Label>Contenido (Markdown)</Label>
-                <textarea
-                  className="w-full mt-2 rounded-xl bg-neutral-800 border border-white/10 p-3"
-                  rows={6}
-                  value={edit.mdContent}
-                  onChange={(e) =>
-                    setEdit((s) => ({ ...s, mdContent: e.target.value }))
-                  }
-                />
-              </div>
-
-              {/* Add new images (optional, multiple) */}
-              <div className="md:col-span-2">
-                <Label>Agregar nuevas imágenes</Label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="mt-2 block w-full text-sm"
-                  onChange={(e) =>
-                    setEdit((s) => ({
-                      ...s,
-                      imagenesNew: Array.from(e.target.files || []),
-                    }))
-                  }
-                />
-                {!!edit.imagenesNew?.length && (
-                  <p className="text-xs text-neutral-400 mt-1">
-                    {edit.imagenesNew.length} archivo(s) para subir al guardar.
-                  </p>
-                )}
-              </div>
-
-              <div className="md:col-span-2 flex gap-3">
-                <button
-                  type="submit"
-                  disabled={busyId === edit.id}
-                  className="rounded-xl bg-sky-500 hover:bg-sky-600 px-5 py-3 font-semibold disabled:opacity-60"
-                >
-                  {busyId === edit.id ? "Guardando…" : "Guardar cambios"}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeEdit}
-                  className="rounded-xl border border-white/20 px-5 py-3 hover:bg-white/10"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
@@ -650,7 +538,7 @@ export default function CrearNoticia() {
   );
 }
 
-/* ---------- UI bits ---------- */
+/* ---------- UI BITS ---------- */
 function Label({ children }) {
   return <label className="text-sm text-neutral-300">{children}</label>;
 }
@@ -667,23 +555,4 @@ function TextInput({ label, value, onChange, placeholder }) {
       />
     </div>
   );
-}
-
-/* ---------- helpers ---------- */
-function fmtDate(iso) {
-  if (!iso) return "—";
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString();
-  } catch {
-    return iso;
-  }
-}
-
-async function safeText(res) {
-  try {
-    return await res.text();
-  } catch {
-    return "";
-  }
 }
