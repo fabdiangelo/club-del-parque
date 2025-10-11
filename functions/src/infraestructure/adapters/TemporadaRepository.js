@@ -1,0 +1,25 @@
+import DBConnection from "../ports/DBConnection.js";
+
+export class TemporadaRepository {
+    constructor() {
+        this.db = new DBConnection();
+    }
+
+    async getAll() {
+        return this.db.getAllItems('temporadas');
+    }
+
+    async getById(id) {
+        return this.db.getItem('temporadas', id);
+    }
+
+    async save(temporada) {
+        console.log("Llegando hasta aca", temporada);
+        const docRef = await this.db.putItem('temporadas', temporada, temporada.id);
+        return docRef.id || temporada.id;
+    }
+
+    async deleteTemporada(id) {
+        return this.db.deleteItem('temporadas', id);
+    }
+}

@@ -15,11 +15,18 @@ export default class DBConnection{
     }
 
     async getItem(collection, id){
+        console.log("DBConnection getItem called with collection:", collection, "id:", id);
         return await this.db.collection(collection).doc(id).get().then(doc => doc.data());
     }
 
     async getAllItems(collection) {
-        return await this.db.collection(collection).get();
+        return await this.db.collection(collection).get().then((snapshot) => {
+            const items = [];
+            snapshot.forEach((doc) => {
+                items.push({ id: doc.id, ...doc.data() });
+            });
+            return items;
+        });
     }
 
     async putItem(collection, item, id = null) {
@@ -52,8 +59,15 @@ export default class DBConnection{
         return items;
     }
 
+    async deleteItem(collection, id) {
+        await this.db.collection(collection).doc(id).delete();
+        return id;
+    }
+
     async updateItem(collection, id, partial) {
         await this.db.collection(collection).doc(id).update(partial);
-        return id;
+        // Obtener el documento actualizado
+        const updatedDoc = await this.db.collection(collection).doc(id).get();
+        return { id: updatedDoc.id, ...updatedDoc.data() };
     }
 }

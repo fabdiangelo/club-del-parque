@@ -19,6 +19,9 @@ import FormatoController from "./src/controllers/FormatoController.js";
 import CampeonatosController from "./src/controllers/CampeonatosController.js";
 import FormatoEtapaController from "./src/controllers/FormatoEtapaController.js";
 import CampeonatosFederadosController from "./src/controllers/CampeonatosFederadosController.js";
+import PartidoController from "./src/controllers/PartidoController.js";
+import CanchaController from "./src/controllers/CanchaController.js";
+import TemporadaController from "./src/controllers/TemporadaController.js";
 
 /* ---------------- Boot logs ---------------- */
 console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
@@ -165,20 +168,50 @@ app.get("/formatos/etapas", (req, res) => FormatoEtapaController.getFormatosEtap
 app.post("/formatos/etapas", (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
 app.put("/formatos/etapas/:id", (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
 
-// Campeonatos federados count
-app.get("/campeonatos/federados/count", (req, res) => CampeonatosFederadosController.contar(req, res));
-
 // Campeonatos
-app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
+app.get('/campeonatos', (req, res) => CampeonatosController.getAllCampeonatos(req, res));
+app.get('/campeonato/:id', (req, res) => CampeonatosController.getCampeonatoById(req, res));
+app.post('/campeonatos', (req, res) => CampeonatosController.crear(req, res));
+app.get('/campeonatos/federados/count', (req, res) => CampeonatosFederadosController.contar(req, res));
 
-/* ---------------- Errors ---------------- */
+// Mensajes por terceros
+app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
+app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
+
+// Chat
+app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
+app.post('/chats', (req, res) => ChatController.crearChat(req, res));
+app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
+app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
+app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
+app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
+app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
+
+// Partidos
+app.get('/partidos/:id', (req, res) => PartidoController.getPartidoById(req, res));
+app.put('/partidos/:id', (req, res) => PartidoController.editarPartido(req, res));
+app.post('/partidos', (req, res) => PartidoController.crearPartido(req, res));
+app.get('/partidos', (req, res) => PartidoController.getAllPartidos(req, res));
+app.get('/partidos/temporada/:temporadaID', (req, res) => PartidoController.getPartidosByTemporada(req, res));
+app.get('/partidos/jugador/:jugadorID', (req, res) => PartidoController.getPartidosByJugador(req, res));
+app.delete('/partidos/:id', (req, res) => PartidoController.eliminarPartido(req, res));
+
+// Temporada
+app.get('/temporadas/:id', (req, res) => TemporadaController.getTemporadaById(req, res));
+app.post('/temporadas', (req, res) => TemporadaController.createTemporada(req, res));
+app.delete('/temporadas/:id', (req, res) => TemporadaController.deleteTemporada(req, res));
+app.get('/temporadas', (req, res) => TemporadaController.getAllTemporadas(req, res));
+
+// Cancha
+app.get('/canchas/:id', (req, res) => CanchaController.getById(req, res));
+app.post('/canchas', (req, res) => CanchaController.crearCancha(req, res));
+app.delete('/canchas/:id', (req, res) => CanchaController.eliminarCancha(req, res));
+app.get('/canchas', (req, res) => CanchaController.getAll(req, res));
+
+
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-/* ---------------- v1 export with region + runtime ---------------- */
-export const api = functions
-  .region("us-central1")
-  .runWith({ memory: "512MB", timeoutSeconds: 180, maxInstances: 10 })
-  .https.onRequest(app);
+export const api = functions.https.onRequest(app);
