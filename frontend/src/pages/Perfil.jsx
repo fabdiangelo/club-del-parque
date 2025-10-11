@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 import Navbar from "../components/Navbar.jsx";
 import SinSesion from "../components/SinSesion.jsx";
+import { connectDatabaseEmulator } from "firebase/database";
 
 export default function Perfil() {
   const [loadingUser, setLoadingUser] = useState(true);
@@ -136,13 +137,13 @@ export default function Perfil() {
 
               <div className="flex flex-col items-end gap-2 inline">
                 <span className="badge badge-outline">
-                  {user.rol|| "user"}
+                  {user.rol || "usuario"}
                 </span>
-                <span className={`badge badge-outline ${ new Date(userData?.validoHasta) >= new Date() ? "badge-success" : "badge-error"}`}>
-                  {user.rol == "federado" && 
-                    new Date(userData?.validoHasta) >= new Date() ? "Activa" : "Vencida"
-                  }
-                </span>
+                {user.rol == "federado" && 
+                  <span className={`badge badge-outline ${ new Date(userData?.validoHasta) >= new Date() ? "badge-success" : "badge-error"}`}>
+                    {new Date(userData?.validoHasta) >= new Date() ? "Activa" : "Vencida"}
+                  </span>
+                }
                 <div className="btn-group">
                   <button
                     className="btn btn-sm btn-ghost"

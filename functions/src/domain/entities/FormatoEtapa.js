@@ -1,12 +1,10 @@
 export default class FormatoEtapa {
-    constructor(id, tipoEtapa, cantidadSets, juegosPorSet, cantidadPartidos, cantidadDeJugadoresIni, cantidadDeJugadoresFin){
+    constructor(id, tipoEtapa, cantidadSets, juegosPorSet, permitirEmpate){
         this.id = id;
         this.tipoEtapa = tipoEtapa;
         this.cantidadSets = cantidadSets;
         this.juegosPorSet = juegosPorSet;
-        this.cantidadPartidos = cantidadPartidos;
-        this.cantidadDeJugadoresIni = cantidadDeJugadoresIni;
-        this.cantidadDeJugadoresFin = cantidadDeJugadoresFin;
+        this.permitirEmpate = permitirEmpate;
     }
 
     toPlainObject() {
@@ -15,9 +13,7 @@ export default class FormatoEtapa {
             tipoEtapa: this.tipoEtapa,
             cantidadSets: this.cantidadSets,
             juegosPorSet: this.juegosPorSet,
-            cantidadPartidos: this.cantidadPartidos,
-            cantidadDeJugadoresIni: this.cantidadDeJugadoresIni,
-            cantidadDeJugadoresFin: this.cantidadDeJugadoresFin,
+            permitirEmpate: this.permitirEmpate,
         };
     }
 }
