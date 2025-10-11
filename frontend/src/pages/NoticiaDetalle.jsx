@@ -1,34 +1,22 @@
-// src/pages/NoticiaDetalle.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
+import { defaultSchema } from "hast-util-sanitize";
+import "react-quill-new/dist/quill.bubble.css";
+import RichTextEditor from "../components/RichTextEditor";
+/* API endpoint */
 const NOTICIAS_ENDPOINT =
   (typeof import.meta !== "undefined" &&
     import.meta.env &&
     import.meta.env.VITE_NOTICIAS_API) ||
   "/api/noticias";
 
-// Colors
+/* Theme */
 const PAGE_BG = "#242424";
 const CARD_BG = "#2f2f2f";
 const ACCENT = "#1f6b82";
 
-/* ---------------- utils ---------------- */
-function stripMarkdown(md = "") {
-  if (!md) return "";
-  let t = md;
-  t = t.replace(/```[\s\S]*?```/g, " ");
-  t = t.replace(/`[^`]*`/g, " ");
-  t = t.replace(/!\[[^\]]*\]\([^)]+\)/g, " ");
-  t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-  t = t.replace(/^\s{0,3}#{1,6}\s*/gm, "");
-  t = t.replace(/^\s{0,3}>\s?/gm, "");
-  t = t.replace(/^\s*[-*+]\s+/gm, "");
-  t = t.replace(/[*_~]/g, "");
-  t = t.replace(/\s+/g, " ");
-  return t.trim();
-}
+/* Utils */
 function fmtDate(iso) {
   try {
     return new Date(iso).toLocaleDateString();
@@ -37,12 +25,54 @@ function fmtDate(iso) {
   }
 }
 
-/* ---------------- tiny carousel ---------------- */
+const SANITIZE_SCHEMA = {
+  ...defaultSchema,
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "p", "div", "blockquote", "li", "table", "th", "td",
+    "u"
+  ],
+  attributes: {
+    ...defaultSchema.attributes,
+    p: [...(defaultSchema.attributes?.p || []), ["align"]],
+    h1: [...(defaultSchema.attributes?.h1 || []), ["align"]],
+    h2: [...(defaultSchema.attributes?.h2 || []), ["align"]],
+    h3: [...(defaultSchema.attributes?.h3 || []), ["align"]],
+    h4: [...(defaultSchema.attributes?.h4 || []), ["align"]],
+    h5: [...(defaultSchema.attributes?.h5 || []), ["align"]],
+    h6: [...(defaultSchema.attributes?.h6 || []), ["align"]],
+    blockquote: [...(defaultSchema.attributes?.blockquote || []), ["align"]],
+    li: [...(defaultSchema.attributes?.li || []), ["align"]],
+    div: [...(defaultSchema.attributes?.div || []), ["align"]],
+    a: [...(defaultSchema.attributes?.a || []), ["href"], ["target"], ["rel"], ["title"]],
+    img: [...(defaultSchema.attributes?.img || []), ["src"], ["alt"], ["title"], ["width"], ["height"]],
+    table: [...(defaultSchema.attributes?.table || []), ["align"]],
+    th: [...(defaultSchema.attributes?.th || []), ["align"]],
+    td: [...(defaultSchema.attributes?.td || []), ["align"]],
+  },
+};
+
+function repairMarkdownLinks(md = "") {
+  if (!md) return "";
+  md = md.replace(/\r\n?/g, "\n");
+  return md.replace(/\[([^\]]+)]\(([^)]+)\)/g, (m, text, destRaw) => {
+    const titleMatch = destRaw.match(/\s+"([^"]*)"(\s*)$/);
+    if (titleMatch) {
+      const urlPart = destRaw.slice(0, titleMatch.index).replace(/\s+/g, "");
+      const title = titleMatch[1].replace(/"/g, '\\"');
+      return `[${text}](${urlPart} "${title}")`;
+    }
+    const cleaned = destRaw.replace(/\s+/g, "");
+    return `[${text}](${cleaned})`;
+  });
+}
+
 function useSwipe(onLeft, onRight) {
-  const start = useRef({ x: 0, y: 0, t: 0 });
-  const threshold = 40; // px
+  const start = useRef({ x: 0, y: 0 });
+  const threshold = 40;
   function onStart(x, y) {
-    start.current = { x, y, t: Date.now() };
+    start.current = { x, y };
   }
   function onMoveEnd(x, y) {
     const dx = x - start.current.x;
@@ -66,15 +96,15 @@ function useSwipe(onLeft, onRight) {
   };
 }
 
+/* Tiny carousel */
 function Carousel({ images, title }) {
   const [idx, setIdx] = useState(0);
   const [fade, setFade] = useState(true);
 
   const go = (i) => {
-    if (!images.length) return;
+    if (!images?.length) return;
     const next = (i + images.length) % images.length;
     setFade(false);
-    // small trick to restart CSS transition
     requestAnimationFrame(() => {
       setIdx(next);
       setFade(true);
@@ -83,7 +113,6 @@ function Carousel({ images, title }) {
   const next = () => go(idx + 1);
   const prev = () => go(idx - 1);
 
-  // keyboard
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "ArrowRight") next();
@@ -91,12 +120,13 @@ function Carousel({ images, title }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [idx, images.length]);
+  }, [idx, images?.length]);
 
   const swipe = useSwipe(next, prev);
 
-  // prefetch neighbors for instant swap
+  // Preload neighbors
   useEffect(() => {
+    if (!images?.length) return;
     const left = images[(idx - 1 + images.length) % images.length]?.src;
     const right = images[(idx + 1) % images.length]?.src;
     [left, right].forEach((u) => {
@@ -106,7 +136,7 @@ function Carousel({ images, title }) {
     });
   }, [idx, images]);
 
-  if (!images.length) return null;
+  if (!images?.length) return null;
   const cur = images[idx];
 
   return (
@@ -117,18 +147,14 @@ function Carousel({ images, title }) {
         {...swipe}
       >
         <img
-          key={cur.src} // forces fade restart
+          key={cur.src}
           src={cur.src}
           alt={title || "Imagen"}
           className="h-full w-full object-cover"
-          style={{
-            opacity: fade ? 1 : 0,
-            transition: "opacity 400ms ease",
-          }}
+          style={{ opacity: fade ? 1 : 0, transition: "opacity 400ms ease" }}
           loading="eager"
         />
 
-        {/* arrows */}
         {images.length > 1 && (
           <>
             <button
@@ -150,7 +176,6 @@ function Carousel({ images, title }) {
           </>
         )}
 
-        {/* dots */}
         {images.length > 1 && (
           <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
             {images.map((_, i) => (
@@ -169,7 +194,6 @@ function Carousel({ images, title }) {
         )}
       </div>
 
-      {/* thumbs */}
       {images.length > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {images.map((im, i) => (
@@ -195,7 +219,7 @@ function Carousel({ images, title }) {
   );
 }
 
-/* ---------------- page ---------------- */
+/* Page */
 export default function NoticiaDetalle() {
   const { id } = useParams();
 
@@ -203,7 +227,6 @@ export default function NoticiaDetalle() {
   const [relacionadas, setRelacionadas] = useState([]);
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState("");
-
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -223,7 +246,6 @@ export default function NoticiaDetalle() {
           const d = await r.json();
           if (!cancelled) setNoticia(d || null);
         } else {
-          // fallback: list + find
           const rList = await fetch(NOTICIAS_ENDPOINT, { cache: "no-store" });
           if (!rList.ok) throw new Error(`HTTP ${rList.status}`);
           const list = await rList.json();
@@ -260,7 +282,9 @@ export default function NoticiaDetalle() {
         if (!rList.ok) return;
         const list = await rList.json();
         if (!cancelled && Array.isArray(list)) {
-          setRelacionadas(list.filter((n) => String(n?.id) !== String(noticia.id)).slice(0, 3));
+          setRelacionadas(
+            list.filter((n) => String(n?.id) !== String(noticia.id)).slice(0, 3)
+          );
         }
       } catch (e) {
         setFetchError(e?.message || "Error");
@@ -274,26 +298,28 @@ export default function NoticiaDetalle() {
 
   useEffect(() => {
     if (!noticia) return;
-    // when noticia loads, reveal content (no hero preloading needed because carousel handles it)
     setReady(true);
   }, [noticia]);
 
-  const bodyText = useMemo(() => stripMarkdown(noticia?.mdContent || ""), [noticia]);
-
-  // Build images for the carousel: prefer array; fallback to legacy imagenUrl
   const images = useMemo(() => {
     const arr = Array.isArray(noticia?.imagenes) ? noticia.imagenes : [];
     const list = arr
-      .map((it) => (it?.imageUrl ? { src: it.imageUrl, path: it.imagePath || null } : null))
+      .map((it) =>
+        it?.imageUrl ? { src: it.imageUrl, path: it.imagePath || null } : null
+      )
       .filter(Boolean);
-
     if (list.length === 0 && noticia?.imagenUrl) {
       list.push({ src: noticia.imagenUrl, path: noticia.imagenPath || null });
     }
     return list;
   }, [noticia]);
 
-  /* ---------- states ---------- */
+  // Repair old/bad links for rendering
+  const mdForView = useMemo(
+    () => repairMarkdownLinks(noticia?.mdContent || ""),
+    [noticia?.mdContent]
+  );
+
   if (fetching) {
     return (
       <div className="min-h-dvh w-full flex flex-col text-white" style={{ backgroundColor: PAGE_BG }}>
@@ -314,11 +340,7 @@ export default function NoticiaDetalle() {
             <h1 className="text-2xl font-semibold">Noticia no encontrada</h1>
             <p className="mt-2 text-white/70">La noticia que intentas ver no existe o fue movida.</p>
             {fetchError && <p className="mt-2 text-sm text-red-300">Error al cargar: {fetchError}</p>}
-            <Link
-              to="/noticias"
-              className="mt-6 inline-block rounded-full px-4 py-2"
-              style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-            >
+            <Link to="/noticias" className="mt-6 inline-block rounded-full px-4 py-2" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
               ← Volver a Noticias
             </Link>
           </div>
@@ -333,74 +355,67 @@ export default function NoticiaDetalle() {
 
       <section className="relative">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-          <Link
-            to="/noticias"
-            className="mb-6 inline-block rounded-full px-4 py-1.5 text-sm"
-            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-          >
+          <Link to="/noticias" className="mb-6 inline-block rounded-full px-4 py-1.5 text-sm" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
             ← Volver a Noticias
           </Link>
 
           <p className="text-xs uppercase tracking-wider text-white/60">{fmtDate(noticia.fechaCreacion)}</p>
-          <h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight">
-            {noticia.titulo || "Título"}
-          </h1>
+          <h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight">{noticia.titulo || "Título"}</h1>
 
-          {/* Carousel (uses array + fallback) */}
           <Carousel images={images} title={noticia?.titulo} />
 
           {/* Content + Sidebar */}
-          <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_320px] transition-opacity duration-700"
-               style={{ opacity: ready ? 1 : 0 }}>
+          <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_320px] transition-opacity duration-700" style={{ opacity: ready ? 1 : 0 }}>
             <article className="rounded-2xl p-6" style={{ backgroundColor: CARD_BG }}>
-              <p className="leading-relaxed whitespace-pre-line text-white/90">
-                {bodyText || "Sin contenido."}
-              </p>
+              <div
+                className="
+                  prose dark:prose-invert md:max-w-3xl max-w-none
+                  prose-headings:text-white
+                  prose-p:text-white/90
+                  prose-strong:text-white
+                  prose-blockquote:text-white/70
+                  prose-li:text-white/90
+                  prose-a:text-blue-400 hover:prose-a:text-blue-300
+                  prose-img:rounded-xl prose-img:mx-auto
+                  prose-code:text-white
+                  break-words
+                "
+                style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
+              >
+<RichTextEditor
+                 valueMarkdown={mdForView || "*Sin contenido*"}
+                 readOnly
+                hideToolbar
+                 transparent
+                 autoHeight
+                 className="!rounded-none !overflow-visible"
+               />
+              </div>
             </article>
 
             <aside className="space-y-4">
-              <div className="rounded-2xl p-5" style={{ backgroundColor: CARD_BG }}>
-                <h3 className="text-lg font-semibold">Compartir</h3>
-                <div className="mt-3 flex gap-2">
-                  {["X", "FB", "IG"].map((s) => (
-                    <button
-                      key={s}
-                      className="rounded-lg px-3 py-1.5 text-sm hover:bg-white/15 transition"
-                      style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="rounded-2xl p-5" style={{ backgroundColor: CARD_BG }}>
                 <h3 className="text-lg font-semibold">Relacionadas</h3>
                 {relacionadas.length === 0 ? (
                   <p className="mt-2 text-white/60">Sin noticias relacionadas.</p>
                 ) : (
                   <ul className="mt-3 space-y-3">
-                    {relacionadas.map((rel) => (
-                      <li key={rel.id} className="flex items-center gap-3">
-                        <div className="h-10 w-14 rounded overflow-hidden"
-                             style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
-                          {rel?.imagenUrl ? (
-                            <img
-                              src={rel.imagenUrl}
-                              alt={rel?.titulo || "Noticia"}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : null}
-                        </div>
-                        <div className="flex-1">
-                          <Link to={`/noticias/${rel.id}`} className="text-sm leading-tight hover:underline">
-                            {rel.titulo}
-                          </Link>
-                          <p className="text-xs text-white/60">{fmtDate(rel.fechaCreacion)}</p>
-                        </div>
-                      </li>
-                    ))}
+                    {relacionadas.map((rel) => {
+                      const relFirst = (Array.isArray(rel.imagenes) && rel.imagenes[0]?.imageUrl) || rel.imagenUrl || null;
+                      return (
+                        <li key={rel.id} className="flex items-center gap-3">
+                          <div className="h-10 w-14 rounded overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
+                            {relFirst ? <img src={relFirst} alt={rel?.titulo || "Noticia"} className="h-full w-full object-cover" loading="lazy" /> : null}
+                          </div>
+                          <div className="flex-1">
+                            <Link to={`/noticias/${rel.id}`} className="text-sm leading-tight hover:underline">
+                              {rel.titulo}
+                            </Link>
+                            <p className="text-xs text-white/60">{fmtDate(rel.fechaCreacion)}</p>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -412,10 +427,7 @@ export default function NoticiaDetalle() {
       <section className="py-10 mt-8" style={{ backgroundColor: ACCENT }}>
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-6">
           <p className="text-white/95">¿Te gustó esta noticia?</p>
-          <button
-            className="rounded-full px-6 py-2 font-medium hover:opacity-90 transition"
-            style={{ backgroundColor: "#fff", color: ACCENT }}
-          >
+          <button className="rounded-full px-6 py-2 font-medium hover:opacity-90 transition" style={{ backgroundColor: "#fff", color: ACCENT }}>
             Compartir
           </button>
         </div>

@@ -1,21 +1,31 @@
+/* eslint-env node */
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
+const PROJECT = 'club-del-parque-68530'
+const REGION  = 'us-central1'  
+const FUNC    = 'api'
+
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss()
-  ],
+  plugins: [react(), tailwindcss()],
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: `http://127.0.0.1:5001/${PROJECT}/${REGION}/${FUNC}`,
         changeOrigin: true,
         secure: false,
-        rewrite: (path) =>
-          path.replace(/^\/api/, '/club-del-parque-68530/us-central1/api'),
+        rewrite: (path) => path.replace(/^\/api/, ''), 
+      },
+    },
+  },
+  preview: {
+    proxy: {
+      '/api': {
+        target: `http://127.0.0.1:5001/${PROJECT}/${REGION}/${FUNC}`,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },

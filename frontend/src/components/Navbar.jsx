@@ -67,6 +67,14 @@ export default function Navbar({ transparent }) {
               Reportes
             </NavLink>
           </li>
+                    <li>
+            <NavLink
+              to="/temporadas"
+              className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
+            >
+              Temporadas
+            </NavLink>
+          </li>
           <li>
             <NavLink
               to="/ranking"

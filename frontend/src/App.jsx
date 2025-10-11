@@ -18,6 +18,7 @@ import CrearCampeonato from './pages/CrearCampeonato';
 import FixtureCampeonato from './pages/FixtureCampeonato'
 import ListaCampeonatos from './pages/ListaCampeonatos';
 import Rankings from './pages/Ranking';
+import TemporadasPage from './pages/Temporadas';
 
 function App() {
   return (
@@ -31,13 +32,13 @@ function App() {
       <Route path="/reportes" element={<SistemaReporte />} />
       <Route path="/campeonatos" element={<ListaCampeonatos />} />
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
-      
       <Route path="/ranking" element={<Rankings />} />
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/crear-campeonato" element={<CrearCampeonato />} />
+      <Route path="/temporadas" element={<TemporadasPage />} />
       <Route path="/administracion" element={<Administracion />} />
       <Route path="/administracion/reportes" element={<AdministracionReportes />} />
       <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />

@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 
-import Navbar from "../components/Navbar.jsx";
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 
 function CrearAdmin() {
@@ -13,12 +12,11 @@ function CrearAdmin() {
     apellido: "",
     estado: "",
     nacimiento: "",
-    genero: ""
+    genero: "",
   });
   const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const { register, error } = useAuth()
+  const { register, error } = useAuth();
 
   const navigate = useNavigate();
 
@@ -30,21 +28,28 @@ function CrearAdmin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // setError("");
     setSuccess("");
 
     console.log("Registrando usuario:", formData);
 
     try {
-      const ok = await register("api/administrador/register", formData)
-      if(!ok){
-        throw new Error(ok || "Error en el registro");
+      const ok = await register("api/administrador/register", formData);
+      if (!ok) {
+        throw new Error(error || "Error en el registro");
       }
       setSuccess("Usuario registrado con éxito ✅");
-      setFormData({ nombre: "", email: "", password: "" });
+      setFormData({
+        nombre: "",
+        email: "",
+        password: "",
+        apellido: "",
+        estado: "",
+        nacimiento: "",
+        genero: "",
+      });
       navigate("/");
     } catch (err) {
-      // setError(err.message);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -54,8 +59,18 @@ function CrearAdmin() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <NavbarBlanco />
       <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center" style={{'color': 'var(--neutro)'}}>Registro</h2>
-        <form style={{'color': 'var(--neutro)'}} onSubmit={handleSubmit} className="space-y-4">
+        <h2
+          className="text-2xl font-bold mb-6 text-center"
+          style={{ color: "var(--neutro)" }}
+        >
+          Registro
+        </h2>
+
+        <form
+          style={{ color: "var(--neutro)" }}
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
           <div>
             <label className="block mb-1 font-medium">Nombre</label>
             <input
@@ -67,6 +82,7 @@ function CrearAdmin() {
               required
             />
           </div>
+
           <div>
             <label className="block mb-1 font-medium">Email</label>
             <input
@@ -78,6 +94,7 @@ function CrearAdmin() {
               required
             />
           </div>
+
           <div>
             <label className="block mb-1 font-medium">Contraseña</label>
             <input
@@ -89,6 +106,7 @@ function CrearAdmin() {
               required
             />
           </div>
+
           <div>
             <label className="block mb-1 font-medium">Apellido</label>
             <input
@@ -100,6 +118,7 @@ function CrearAdmin() {
               required
             />
           </div>
+
           <div>
             <label className="block mb-1 font-medium">Estado</label>
             <input
@@ -111,6 +130,7 @@ function CrearAdmin() {
               required
             />
           </div>
+
           <div>
             <label className="block mb-1 font-medium">Nacimiento</label>
             <input
@@ -122,8 +142,9 @@ function CrearAdmin() {
               required
             />
           </div>
+
           <div>
-            <label className="block mb-1 font-medium">Genero</label>
+            <label className="block mb-1 font-medium">Género</label>
             <input
               type="text"
               name="genero"

@@ -1,5 +1,5 @@
-import { setGlobalOptions } from "firebase-functions";
-import * as functions from "firebase-functions";
+// functions/index.js  (ESM)
+import * as functions from "firebase-functions/v1"; // v1 compat API
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -23,17 +23,19 @@ import PartidoController from "./src/controllers/PartidoController.js";
 import CanchaController from "./src/controllers/CanchaController.js";
 import TemporadaController from "./src/controllers/TemporadaController.js";
 
-/* ---------------- Global fn settings ---------------- */
-setGlobalOptions({
-  maxInstances: 10,
-  timeoutSeconds: 180,
-  memory: "512MB",
-});
-
-/* ---------------- Boot logs (sanity) ---------------- */
-console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
-console.log("[boot] GCLOUD_STORAGE_BUCKET =", process.env.GCLOUD_STORAGE_BUCKET || "(unset)");
-console.log("[boot] STORAGE_EMULATOR_HOST =", process.env.STORAGE_EMULATOR_HOST || "(unset)");
+/* ---------------- Boot logs ---------------- */
+console.log(
+  "[boot] GCLOUD_PROJECT =",
+  process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT
+);
+console.log(
+  "[boot] GCLOUD_STORAGE_BUCKET =",
+  process.env.GCLOUD_STORAGE_BUCKET || "(unset)"
+);
+console.log(
+  "[boot] STORAGE_EMULATOR_HOST =",
+  process.env.STORAGE_EMULATOR_HOST || "(unset)"
+);
 
 /* ---------------- App + CORS ---------------- */
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -42,7 +44,7 @@ const app = express();
 app.use(
   cors({
     origin: FRONTEND_URL,
-    credentials: false,
+    credentials: false, // using Vite proxy → no browser cross-origin cookies here
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -56,33 +58,57 @@ app.use(cookieParser());
 /* ---------------- Routes ---------------- */
 // Auth
 app.post("/auth/register", (req, res) => AuthController.register(req, res));
-app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
-app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
+app.post("/auth/login", (req, res) =>
+  AuthController.loginWithPassword(req, res)
+);
+app.post("/auth/google", (req, res) =>
+  AuthController.loginWithGoogle(req, res)
+);
 app.get("/auth/me", (req, res) => AuthController.getActualUser(req, res));
 app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 
 // Administrador
-app.post("/administrador/register", (req, res) => AdministradorController.crearAdministrador(req, res));
+app.post("/administrador/register", (req, res) =>
+  AdministradorController.crearAdministrador(req, res)
+);
 
 // Usuario
 app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));
-app.put("/usuario/:id", (req, res) => UsuarioController.editarUsuario(req, res));
-app.put("/usuario/:id/bloqueo", (req, res) => UsuarioController.bloquearUsuario(req, res));
+app.put("/usuario/:id", (req, res) =>
+  UsuarioController.editarUsuario(req, res)
+);
+app.put("/usuario/:id/bloqueo", (req, res) =>
+  UsuarioController.bloquearUsuario(req, res)
+);
 app.get("/usuarios", (req, res) => UsuarioController.getAllUsuarios(req, res));
-app.get("/usuarios/cantidad", (req, res) => UsuarioController.cantUsuarios(req, res));
-app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));
-app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController.negarFederacion(req, res));
+app.get("/usuarios/cantidad", (req, res) =>
+  UsuarioController.cantUsuarios(req, res)
+);
+app.post("/usuarios/validar-federacion/:idReporte", (req, res) =>
+  UsuarioController.validarFederacion(req, res)
+);
+app.put("/usuarios/negar-federacion/:idReporte", (req, res) =>
+  UsuarioController.negarFederacion(req, res)
+);
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
-app.get("/reportes/sin-resolver", (req, res) => ReporteController.obtenerCantReportesSinResolver(req, res));
-app.post("/reporte/:id/solicitud-federacion", (req, res) => ReporteController.solicitarFederarUsuario(req, res));
-app.put("/reportes/marcar-resuelto/:id", (req, res) => ReporteController.marcarResuelto(req, res));
+app.get("/reportes/sin-resolver", (req, res) =>
+  ReporteController.obtenerCantReportesSinResolver(req, res)
+);
+app.post("/reporte/:id/solicitud-federacion", (req, res) =>
+  ReporteController.solicitarFederarUsuario(req, res)
+);
+app.put("/reportes/marcar-resuelto/:id", (req, res) =>
+  ReporteController.marcarResuelto(req, res)
+);
 
 // Noticias
 app.get("/noticias", (req, res) => NoticiaController.listar(req, res));
-app.get("/noticias/:id", (req, res) => NoticiaController.obtenerPorId(req, res));
+app.get("/noticias/:id", (req, res) =>
+  NoticiaController.obtenerPorId(req, res)
+);
 app.post("/noticias", (req, res) => NoticiaController.crear(req, res));
 app.put("/noticias/:id", (req, res) => NoticiaController.actualizar(req, res));
 app.delete("/noticias/:id", (req, res) => NoticiaController.eliminar(req, res));
@@ -92,12 +118,14 @@ app.delete("/noticias/:id/imagenes/:index?", async (req, res) => {
     let index = typeof idxParam !== "undefined" ? Number(idxParam) : undefined;
     const imagePath =
       req.query.imagePath ||
-      (req.body && typeof req.body.imagePath === "string" ? req.body.imagePath : undefined);
+      (req.body && typeof req.body.imagePath === "string"
+        ? req.body.imagePath
+        : undefined);
 
     if (typeof index === "number" && Number.isFinite(index)) {
-      
+      // ok
     } else if (imagePath) {
-      index = undefined; 
+      index = undefined;
     } else if (req.body && typeof req.body.index === "number") {
       index = req.body.index;
     } else {
@@ -105,7 +133,8 @@ app.delete("/noticias/:id/imagenes/:index?", async (req, res) => {
     }
     const ref = typeof index === "number" ? { index } : { imagePath };
     const out = await NoticiaController.eliminarImagenBy(id, ref);
-    if (!out?.ok) return res.status(404).json({ error: "Imagen no encontrada" });
+    if (!out?.ok)
+      return res.status(404).json({ error: "Imagen no encontrada" });
     res.json({ ok: true });
   } catch (e) {
     console.error("DEL imagen error:", e);
@@ -114,13 +143,14 @@ app.delete("/noticias/:id/imagenes/:index?", async (req, res) => {
 });
 app.post("/noticias/:id/imagenes-json", async (req, res) => {
   try {
-    try { req.setTimeout(0); } catch {}
+    try {
+      req.setTimeout(0);
+    } catch {}
     const { id } = req.params;
     const { images } = req.body || {};
     if (!Array.isArray(images) || images.length === 0) {
       return res.status(400).json({ error: "Faltan imágenes (images[])" });
     }
-
     const normalized = images.map((it, i) => {
       const fileName = it?.filename || `image-${i}.bin`;
       const contentType = it?.contentType || "application/octet-stream";
@@ -142,7 +172,8 @@ app.post("/noticias/:id/imagenes-json", async (req, res) => {
   } catch (err) {
     const msg = err?.message || String(err);
     console.error("imagenes-json ERROR:", msg);
-    if (/noticia not found/i.test(msg)) return res.status(404).json({ error: msg });
+    if (/noticia not found/i.test(msg))
+      return res.status(404).json({ error: msg });
     if (/too large|entity too large|payload too large/i.test(msg)) {
       return res.status(413).json({ error: "Payload demasiado grande" });
     }
@@ -150,81 +181,137 @@ app.post("/noticias/:id/imagenes-json", async (req, res) => {
   }
 });
 
-// Datos de la infraestructura
-app.get('/infraestructura/metricas', async (req, res) => InfraestructuraController.obtenerMetricas(req, res));
+// Infraestructura
+app.get("/infraestructura/metricas", (req, res) =>
+  InfraestructuraController.obtenerMetricas(req, res)
+);
 
 // Notificaciones
-app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
-app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
+app.post("/sendWhatsapp", (req, res) =>
+  SendWhatsappController.enviarMensaje(req, res)
+);
+app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));
 
 // Chat
-app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
-app.post('/chats', (req, res) => ChatController.crearChat(req, res));
-app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
-app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
-app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
-app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
-app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
+app.get("/chats/:idUser", (req, res) => ChatController.getChatByUser(req, res));
+app.post("/chats", (req, res) => ChatController.crearChat(req, res));
+app.get("/chats/:chatId", (req, res) => ChatController.getChatById(req, res));
+app.post("/chats/:id/mensajes", (req, res) =>
+  ChatController.enviarMensaje(req, res)
+);
+app.get("/chats/:id/mensajes", (req, res) =>
+  ChatController.getMensajes(req, res)
+);
+app.get("/chats/:id/escuchar", (req, res) =>
+  ChatController.escucharPorMensajes(req, res)
+);
+app.get("/chats/prueba", (req, res) => ChatController.prueba(req, res));
 
 // Planes
-app.post('/planes/precarga', (req, res) => PlanController.precargarPlanes(req, res));
-app.get('/planes', (req, res) => PlanController.getPlanes(req, res));
+app.post("/planes/precarga", (req, res) =>
+  PlanController.precargarPlanes(req, res)
+);
+app.get("/planes", (req, res) => PlanController.getPlanes(req, res));
 
 // Formatos de campeonatos
-app.post('/formatos/precarga', (req, res) => FormatoController.precargarFormatos(req, res));
-app.get('/formatos', (req, res) => FormatoController.getFormatos(req, res));
-app.post('/formatos', (req, res) => FormatoController.saveFormato(req, res));
-app.put('/formatos/:id', (req, res) => FormatoController.saveFormato(req, res));
+app.post("/formatos/precarga", (req, res) =>
+  FormatoController.precargarFormatos(req, res)
+);
+app.get("/formatos", (req, res) => FormatoController.getFormatos(req, res));
+app.post("/formatos", (req, res) => FormatoController.saveFormato(req, res));
+app.put("/formatos/:id", (req, res) => FormatoController.saveFormato(req, res));
 
 // Formatos de etapa
-app.get('/formatos/etapas', (req, res) => FormatoEtapaController.getFormatosEtapas(req, res));
-app.post('/formatos/etapas', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
-app.put('/formatos/etapas/:id', (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
+app.get("/formatos/etapas", (req, res) =>
+  FormatoEtapaController.getFormatosEtapas(req, res)
+);
+app.post("/formatos/etapas", (req, res) =>
+  FormatoEtapaController.saveFormatoEtapa(req, res)
+);
+app.put("/formatos/etapas/:id", (req, res) =>
+  FormatoEtapaController.saveFormatoEtapa(req, res)
+);
 
 // Campeonatos
-app.get('/campeonatos', (req, res) => CampeonatosController.getAllCampeonatos(req, res));
-app.get('/campeonato/:id', (req, res) => CampeonatosController.getCampeonatoById(req, res));
-app.post('/campeonatos', (req, res) => CampeonatosController.crear(req, res));
-app.get('/campeonatos/federados/count', (req, res) => CampeonatosFederadosController.contar(req, res));
+app.get("/campeonatos", (req, res) =>
+  CampeonatosController.getAllCampeonatos(req, res)
+);
+app.get("/campeonato/:id", (req, res) =>
+  CampeonatosController.getCampeonatoById(req, res)
+);
+app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
+app.get("/campeonatos/federados/count", (req, res) =>
+  CampeonatosFederadosController.contar(req, res)
+);
 
 // Mensajes por terceros
-app.post('/sendWhatsapp', (req, res) => SendWhatsappController.enviarMensaje(req, res)); 
-app.post('/sendEmail', (req, res) => EmailController.enviar(req, res));
+app.post("/sendWhatsapp", (req, res) =>
+  SendWhatsappController.enviarMensaje(req, res)
+);
+app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));
 
 // Chat
-app.get('/chats/:idUser', (req, res) => ChatController.getChatByUser(req, res));
-app.post('/chats', (req, res) => ChatController.crearChat(req, res));
-app.get('/chats/:chatId', (req, res) => ChatController.getChatById(req, res));
-app.post('/chats/:id/mensajes', (req, res) => ChatController.enviarMensaje(req, res));
-app.get('/chats/:id/mensajes', (req, res) => ChatController.getMensajes(req, res));
-app.get('/chats/:id/escuchar', (req, res) => ChatController.escucharPorMensajes(req, res));
-app.get('/chats/prueba', (req, res) => ChatController.prueba(req, res));
+app.get("/chats/:idUser", (req, res) => ChatController.getChatByUser(req, res));
+app.post("/chats", (req, res) => ChatController.crearChat(req, res));
+app.get("/chats/:chatId", (req, res) => ChatController.getChatById(req, res));
+app.post("/chats/:id/mensajes", (req, res) =>
+  ChatController.enviarMensaje(req, res)
+);
+app.get("/chats/:id/mensajes", (req, res) =>
+  ChatController.getMensajes(req, res)
+);
+app.get("/chats/:id/escuchar", (req, res) =>
+  ChatController.escucharPorMensajes(req, res)
+);
+app.get("/chats/prueba", (req, res) => ChatController.prueba(req, res));
 
 // Partidos
-app.get('/partidos/:id', (req, res) => PartidoController.getPartidoById(req, res));
-app.put('/partidos/:id', (req, res) => PartidoController.editarPartido(req, res));
-app.post('/partidos', (req, res) => PartidoController.crearPartido(req, res));
-app.get('/partidos', (req, res) => PartidoController.getAllPartidos(req, res));
-app.get('/partidos/temporada/:temporadaID', (req, res) => PartidoController.getPartidosByTemporada(req, res));
-app.get('/partidos/jugador/:jugadorID', (req, res) => PartidoController.getPartidosByJugador(req, res));
-app.delete('/partidos/:id', (req, res) => PartidoController.eliminarPartido(req, res));
+app.get("/partidos/:id", (req, res) =>
+  PartidoController.getPartidoById(req, res)
+);
+app.put("/partidos/:id", (req, res) =>
+  PartidoController.editarPartido(req, res)
+);
+app.post("/partidos", (req, res) => PartidoController.crearPartido(req, res));
+app.get("/partidos", (req, res) => PartidoController.getAllPartidos(req, res));
+app.get("/partidos/temporada/:temporadaID", (req, res) =>
+  PartidoController.getPartidosByTemporada(req, res)
+);
+app.get("/partidos/jugador/:jugadorID", (req, res) =>
+  PartidoController.getPartidosByJugador(req, res)
+);
+app.delete("/partidos/:id", (req, res) =>
+  PartidoController.eliminarPartido(req, res)
+);
 
 // Temporada
-app.get('/temporadas/:id', (req, res) => TemporadaController.getTemporadaById(req, res));
-app.post('/temporadas', (req, res) => TemporadaController.createTemporada(req, res));
-app.delete('/temporadas/:id', (req, res) => TemporadaController.deleteTemporada(req, res));
-app.get('/temporadas', (req, res) => TemporadaController.getAllTemporadas(req, res));
+app.get("/temporadas/:id", (req, res) =>
+  TemporadaController.getTemporadaById(req, res)
+);
+app.post("/temporadas", (req, res) =>
+  TemporadaController.createTemporada(req, res)
+);
+app.delete("/temporadas/:id", (req, res) =>
+  TemporadaController.deleteTemporada(req, res)
+);
+app.get("/temporadas", (req, res) =>
+  TemporadaController.getAllTemporadas(req, res)
+);
 
 // Cancha
-app.get('/canchas/:id', (req, res) => CanchaController.getById(req, res));
-app.post('/canchas', (req, res) => CanchaController.crearCancha(req, res));
-app.delete('/canchas/:id', (req, res) => CanchaController.eliminarCancha(req, res));
-app.get('/canchas', (req, res) => CanchaController.getAll(req, res));
-
+app.get("/canchas/:id", (req, res) => CanchaController.getById(req, res));
+app.post("/canchas", (req, res) => CanchaController.crearCancha(req, res));
+app.delete("/canchas/:id", (req, res) =>
+  CanchaController.eliminarCancha(req, res)
+);
+app.get("/canchas", (req, res) => CanchaController.getAll(req, res));
 
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-export const api = functions.https.onRequest(app);
+export const api = functions
+  .region("us-central1")
+  .runWith({ memory: "512MB", timeoutSeconds: 180, maxInstances: 10 })
+  .https.onRequest(app);
