@@ -44,7 +44,7 @@ function Registro() {
       setFormData({ nombre: "", email: "", password: "" });
       navigate("/");
     } catch (err) {
-      // setError(err.message);
+      console.log(err);// setError(err.message);
     } finally {
       setLoading(false);
     }
