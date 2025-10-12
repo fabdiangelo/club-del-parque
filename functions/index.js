@@ -222,6 +222,16 @@ app.delete('/canchas/:id', (req, res) => CanchaController.eliminarCancha(req, re
 app.get('/canchas', (req, res) => CanchaController.getAll(req, res));
 
 
+//Reservas
+
+app.get('/reservas', (req, res) => ReservaController.getAll(req, res));
+app.get('/reservas/:id', (req, res) => ReservaController.getReservaById(req, res));
+app.post('/reservas', (req, res) => ReservaController.crearReserva(req, res));
+app.delete('/reservas/:id', (req, res) => ReservaController.cancelarReserva(req, res));
+app.put('/reservas/:id/rechazar', (req, res) => ReservaController.rechazarReserva(req, res));
+app.put('/reservas/:id/confirmar', (req, res) => ReservaController.confirmarReserva(req, res));
+app.put('/reservas/:id', (req, res) => ReservaController.editarReserva(req, res));
+
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });

@@ -1,6 +1,6 @@
 
 
-export default class CancelarReserva {
+export class CancelarReserva {
     construtor(reservaRepository) {
         this.reservaRepository = reservaRepository;
     }

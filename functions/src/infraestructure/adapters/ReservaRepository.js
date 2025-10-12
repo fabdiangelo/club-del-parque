@@ -11,9 +11,39 @@ export class ReservaRepository {
         const {canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora} = reserva;
 
         if (!canchaId || !partidoId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora) {
-            throw new Error("Faltan campos obligatorios para crear la reserva");
+            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, partidoId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora");
         }
 
+        const cancha = await this.db.getItem("canchas", canchaId);
+        if (!cancha) {
+            throw new Error("La cancha asociada no existe");
+        }
+
+        const partido = await this.db.getItem("partidos", partidoId);
+        if (!partido) {
+            throw new Error("El partido asociado no existe");
+        }
+
+        for (const j of jugadoresIDS) {
+            const jugadorExists = await this.db.getItem("usuarios", j);
+            if (!jugadorExists) {
+                throw new Error(`El jugador con ID ${j} no existe`);
+            }
+        }
+
+        const quienPagaExists = await this.db.getItem("usuarios", quienPaga);
+        if (!quienPagaExists) {
+            throw new Error("El usuario que paga no existe");
+        }
+
+        const autorExists = await this.db.getItem("usuarios", autor);
+        if (!autorExists) {
+            throw new Error("El usuario autor no existe");
+        }
+
+        if(new Date(fechaHora) < new Date()) {
+            throw new Error("La fecha y hora de la reserva no puede ser en el pasado");
+        }
 
         const estado = reserva.estado || 'pendiente';
         const aceptadoPor = [];
@@ -26,6 +56,53 @@ export class ReservaRepository {
 
     async getById(reservaId) {
         return this.db.getItem("reservas", reservaId);
+    }
+
+    async update(reserva, reservaId) {
+        const existingReserva = await this.getById(reservaId);
+        if (!existingReserva) {
+            throw new Error("La reserva no existe");
+        }
+
+        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora } = reserva;
+
+        if (canchaId) {
+            const cancha = await this.db.getItem("canchas", canchaId);
+            if (!cancha) {
+                throw new Error("La cancha asociada no existe");
+            }
+        }
+
+        if (partidoId) {
+            const partido = await this.db.getItem("partidos", partidoId);
+            if (!partido) {
+                throw new Error("El partido asociado no existe");
+            }
+        }
+
+        for (const j of jugadoresIDS) {
+            const jugadorExists = await this.db.getItem("usuarios", j);
+            if (!jugadorExists) {
+                throw new Error(`El jugador con ID ${j} no existe`);
+            }
+        }
+
+        const quienPagaExists = await this.db.getItem("usuarios", quienPaga);
+        if (!quienPagaExists) {
+            throw new Error("El usuario que paga no existe");
+        }
+
+        const autorExists = await this.db.getItem("usuarios", autor);
+        if (!autorExists) {
+            throw new Error("El usuario autor no existe");
+        }
+
+        if (new Date(fechaHora) < new Date()) {
+            throw new Error("La fecha y hora de la reserva no puede ser en el pasado");
+        }
+
+        const doc = await this.db.updateItem("reservas", {...existingReserva, ...reserva}, reservaId);
+        return doc.id;
     }
 
     async getAll() {
