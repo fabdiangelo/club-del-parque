@@ -8,66 +8,49 @@ export class PartidoRepository {
     }
 
 
-    async save(partido) {
-        const {temporadaID } = partido;
+async save(partido) {
+  const { temporadaID } = partido;
 
-        console.log(partido);
-       
+  const temp = await this.db.getItem("temporadas", temporadaID);
+  const cancha = await this.db.getItem("canchas", partido.canchaID);
+  if (!temp)   throw new Error("La temporada asociada no existe");
+  if (!cancha) throw new Error("La cancha asociada no existe");
 
-        const temp = await this.db.getItem("temporadas", temporadaID);
-        const cancha = await this.db.getItem("canchas", partido.canchaID);
+  for (const j of partido.jugadores) {
+    const jugador = await this.db.getItem("usuarios", j);
+    if (!jugador) throw new Error(`El jugador con ID ${j} no existe`);
+  }
+  for (const j of partido.equipoLocal) {
+    const u = await this.db.getItem("usuarios", j);
+    if (!u) throw new Error(`El equipo local con ID ${j} no existe`);
+  }
+  for (const j of partido.equipoVisitante) {
+    const u = await this.db.getItem("usuarios", j);
+    if (!u) throw new Error(`El equipo visitante con ID ${j} no existe`);
+  }
 
+  let createdId;
+  if (partido.id) {
+    // put with provided id -> DBConnection.putItem returns void
+    await this.db.putItem("partidos", partido, partido.id);
+    createdId = partido.id;
+  } else {
+    // put without id -> DBConnection.putItem returns a DocumentReference
+    const ref = await this.db.putItem("partidos", partido);
+    createdId = ref.id;
+  }
 
-        if (!temp) {
-            throw new Error("La temporada asociada no existe");
-        }
+  // opcional: guarda el id dentro del doc para consistencia
+  try { await this.db.updateItem("partidos", createdId, { id: createdId }); } catch {}
 
-        if (!cancha) {
-            throw new Error("La cancha asociada no existe");
-        }
+  return createdId;
+}
 
-        const {jugadores, equipoVisitante, equipoLocal} = partido;
-        
-        for (const j of jugadores) {
-            const jugadorExists = await this.db.getItem("usuarios", j);
-            if (!jugadorExists) {
-                throw new Error(`El jugador con ID ${j} no existe`);
-            }
-        }
-
-        // Validar equipo local
-        for (const j of equipoLocal) {
-            const equipoExists = await this.db.getItem("usuarios", j);
-            if (!equipoExists) {
-                throw new Error(`El equipo local con ID ${j} no existe`);
-            }
-        }
-
-        // Validar equipo visitante
-        for (const j of equipoVisitante) {
-            const equipoExists = await this.db.getItem("usuarios", j);
-            if (!equipoExists) {
-                throw new Error(`El equipo visitante con ID ${j} no existe`);
-            }
-        }
-
-
-        
-
-        const doc = await this.db.putItem("partidos", partido, partido.id);
-
-        console.log("Se ha creado el partido con id: " + doc.id);
-        return doc.id;
-    }
-
-    async getById(partidoId) {
-        const snap = await this.db.getItem("partidos", partidoId);
-        if (!snap.exists) {
-            return null;
-        }
-        return snap.data();
-    }
-
+async getById(partidoId) {
+  const data = await this.db.getItem("partidos", partidoId); 
+  if (!data) return null;
+  return { id: partidoId, ...data };
+}
     async getAll() {
         return await this.db.getAllItems("partidos");
     }

@@ -5,7 +5,6 @@ export default class DBConnection{
         this.db = db;
     }
 
-    // Método necesario para FirestoreReporteRepository
     collection(collectionName) {
         return this.db.collection(collectionName);
     }
@@ -66,7 +65,6 @@ export default class DBConnection{
 
     async updateItem(collection, id, partial) {
         await this.db.collection(collection).doc(id).update(partial);
-        // Obtener el documento actualizado
         const updatedDoc = await this.db.collection(collection).doc(id).get();
         return { id: updatedDoc.id, ...updatedDoc.data() };
     }
