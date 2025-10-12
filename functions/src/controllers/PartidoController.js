@@ -78,9 +78,14 @@ class PartidoController {
 
     async getPartidoById(req, res) {
         const { id } = req.params;
+        console.log("Buscando partido con ID:", id);
+        
         try {
             const partido = await this.getPartidoByIdUseCase.execute(id);
+            console.log("Resultado de búsqueda:", partido);
+            
             if (!partido) {
+                console.log("Partido no encontrado en base de datos");
                 return res.status(404).json({ error: "Partido no encontrado" });
             }
             res.json(partido);

@@ -61,11 +61,15 @@ export class PartidoRepository {
     }
 
     async getById(partidoId) {
-        const snap = await this.db.getItem("partidos", partidoId);
-        if (!snap.exists) {
+        console.log("PartidoRepository.getById llamado con ID:", partidoId);
+        const data = await this.db.getItem("partidos", partidoId);
+        console.log("Datos obtenidos de la DB:", data);
+        
+        if (!data) {
+            console.log("No se encontraron datos para ID:", partidoId);
             return null;
         }
-        return snap.data();
+        return { id: partidoId, ...data };
     }
 
     async getAll() {

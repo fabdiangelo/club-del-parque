@@ -1,0 +1,97 @@
+/* Animaciones para los círculos */
+@keyframes slideFromLeft {
+  0% {
+    transform: translateX(-100vw);
+    opacity: 0;
+  }
+  80% {
+    transform: translateX(10px);
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFromRight {
+  0% {
+    transform: translateX(100vw);
+    opacity: 0;
+  }
+  80% {
+    transform: translateX(-10px);
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes vsAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Clases para aplicar las animaciones */
+.player-circle-left {
+  animation: slideFromLeft 2s ease-out forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+.player-circle-right {
+  animation: slideFromRight 2s ease-out forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+.vs-text {
+  animation: vsAppear 2.5s ease-out forwards;
+  opacity: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0D8ABC;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Efecto de rebote cuando se encuentran */
+.player-circle {
+  transition: transform 0.3s ease;
+}
+
+.player-circle:hover {
+  transform: scale(1.05);
+}
+
+/* Contenedor principal */
+.battle-container {
+  perspective: 1000px;
+}
+
+/* Animación de entrada del contenedor */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.player-info {
+  animation: fadeInUp 1s ease-out forwards;
+  animation-delay: 2.5s;
+  opacity: 0;
+}
