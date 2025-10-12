@@ -32,7 +32,19 @@ export class ReservaRepository {
         return this.db.getAllItems('reservas').then(docs => docs);
     }
 
-    async confirmarReserva(reservaId) {
+    async getReservasFuturo() {
+        const allReservas = await this.db.getAllItems('reservas');
+        const now = new Date();
+        return allReservas.filter(reserva => new Date(reserva.fechaHora) > now && (reserva.estado !== 'cancelada' && reserva.estado !== 'rechazada' && reserva.estado !== 'confirmada'));
+    }
+
+    async confirmarReserva(reservaId, usuarioId) {
+
+        const usuario = this.db.getItem("usuarios", usuarioId);
+        if (!usuario || usuario.rol !== 'administrador') {
+            throw new Error("Usuario no autorizado para confirmar la reserva");
+        }
+
         const reserva = await this.getById(reservaId);
         if (!reserva) {
             throw new Error("La reserva no existe");
@@ -42,6 +54,34 @@ export class ReservaRepository {
         return reservaId;
     }
 
+    async rechazarReserva(reservaId, usuarioId) {
 
+        const usuario = this.db.getItem("usuarios", usuarioId);
+        if (!usuario || usuario.rol !== 'administrador') {
+            throw new Error("Usuario no autorizado para rechazar la reserva");
+        }
+
+        const reserva = await this.getById(reservaId);
+        if (!reserva) {
+            throw new Error("La reserva no existe");
+        }
+        await this.db.updateItem("reservas", {estado: 'rechazada'}, reservaId);
+        return reservaId;
+    }
+
+    async cancelarReserva(reservaId, usuarioId) {
+
+        const usuario = this.db.getItem("usuarios", usuarioId);
+        if (!usuario || usuario.rol !== 'administrador') {
+            throw new Error("Usuario no autorizado para cancelar la reserva");
+        }
+
+        const reserva = await this.getById(reservaId);
+        if (!reserva) {
+            throw new Error("La reserva no existe");
+        }
+        await this.db.updateItem("reservas", {estado: 'cancelada'}, reservaId);
+        return reservaId;
+    }   
 
 }
