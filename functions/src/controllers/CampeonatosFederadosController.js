@@ -1,4 +1,6 @@
 import ContarFederadosPorRequisitos from "../usecases/Campeonatos/ContarFederadosPorRequisitos.js";
+import GetActualUser from "../usecases/Auth/GetActualUser.js";
+import InscribirFederado from "../usecases/FederadoCampeonato/InscribirFederado.js";
 
 class CampeonatosFederadosController {
   async contar(req, res) {
@@ -14,6 +16,27 @@ class CampeonatosFederadosController {
     } catch (err) {
       console.error('Error contando federados:', err);
       return res.status(500).json({ error: 'Error contando federados' });
+    }
+  }
+
+  async inscribirFederado(req, res) {
+    try{
+      const sessionCookie = req.cookies.session || "";
+      if (!sessionCookie) {
+        return res.status(401).json({ error: "No session cookie found" });
+      }
+      const uid = req.params.uid || '';
+      const user = GetActualUser.execute(sessionCookie)
+      if(user.rol !== "federado" || user.uid != uid){
+        return res.status(403).json({ error: "Acceso no autorizado" });
+      }
+
+      const campeonatoId = req.params.id || '';
+      const id = await InscribirFederado.execute(uid, campeonatoId);
+      return res.status(200).json({ id });
+    } catch (err) {
+      console.error('Error creando campeonato:', err);
+      return res.status(400).json({ error: err.message || String(err) });
     }
   }
 }

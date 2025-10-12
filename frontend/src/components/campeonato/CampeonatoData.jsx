@@ -2,10 +2,11 @@ import { Trophy, Calendar, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function CampeonatoData({id = '', nombre = '', descripcion = '', inicio = '01-01-2000', fin = '01-01-2000', requisitosParticipacion = {}, rol = '', onRefresh, conRedireccion = false}) {
+export default function CampeonatoData({id = '', nombre = '', descripcion = '', inicio = '01-01-2000', fin = '01-01-2000', requisitosParticipacion = {}, user = {}, participantes = [], onRefresh, conRedireccion = false}) {
   const [procesando, setProcesando] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalAdminOpen, setModalAdminOpen] = useState(false)
+  const [inscripto, setInscripto] = useState(false)
 
   const [form, setForm] = useState({
     nombre: nombre,
@@ -36,7 +37,6 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
     })
   }, [id, nombre, descripcion, inicio])
 
-  console.log(form)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -56,15 +56,17 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
   async function handleInscripcion() {
     try {
       setProcesando(true)
-      const res = await fetch(`/api/campeonato/${id}`, {
+      const res = await fetch(`/api/federado-campeonato/${id}/${user.uid}`, {
         method: 'POST',
         credentials: 'include'
       });
       if (res.ok) {
+        setInscripto(true);
         if(onRefresh){
           const data = await res.json();
           onRefresh(data);
         }
+
       } 
     } catch (e) {
       console.log(e);
@@ -143,8 +145,17 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
           <Calendar className="w-4 h-4" />
           <span>{new Date(display.inicio).toLocaleDateString()} - {new Date(display.fin).toLocaleDateString()}</span>
         </div>
-        {rol == 'federado' &&
+
+        {(user?.rol == 'federado' && (participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || inscripto)) &&
+          <div className='m-3'>
+            <span className="text-sm bg-success p-3 mt-8 rounded-md">Inscripto</span>
+            
+          </div>
+        }
+
+        {(user?.rol == 'federado' && new Date(display.inicio) >= new Date() && !(participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || inscripto)) &&
           <div>
+            <span className="text-sm opacity-90">{participantes.length} Usuarios Inscriptos</span> <br />
             <button className='btn btn-info w-full md:w-auto mt-4' onClick={handleInscripcion} disabled={procesando} >{procesando ? 'Inscribiendo...' : 'Inscribirme'}</button>
             <div className="flex items-center gap-2 mt-4">
               <span className="text-sm opacity-70">¿No estás seguro si puedes participar en este torneo?</span>
@@ -180,8 +191,14 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
           </div>
         }
 
+        {(user?.rol == 'federado' && new Date(display.inicio) < new Date()) &&
+          <div className="flex items-center gap-2 mt-4">
+            <span className="text-sm opacity-70">Periodo de inscripción finalizado</span>
+          </div>
+        }
 
-        {rol == 'administrador' &&
+
+        {user?.rol == 'administrador' &&
           <div>
             <button className='btn btn-info w-full md:w-auto mt-4' onClick={() => setModalAdminOpen(true)} disabled={procesando} >{procesando ? 'Editando...' : 'Editar'}</button>
             {modalAdminOpen && (
