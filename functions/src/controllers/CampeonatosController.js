@@ -2,6 +2,7 @@ import CrearCampeonato from "../usecases/Campeonatos/CrearCampeonato.js";
 import ObtenerCampeonato from "../usecases/Campeonatos/ObtenerCampeonato.js";
 import ObtenerAllCampeonatos from "../usecases/Campeonatos/ObtenerAllCampeonatos.js";
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
+import EditarCampeonato from "../usecases/Campeonatos/EditarCampeonato.js";
 
 class CampeonatosController {
   async crear(req, res) {
@@ -47,6 +48,23 @@ class CampeonatosController {
     } catch (error) {
       console.error("Error in /campeonatos: ", error);
       return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  async editarCampeonato(req, res) {
+    const { id } = req.params;
+    const data = req.body;
+    
+    if (!id || id.trim() === '') {
+      return res.status(400).json({ error: "ID del campeonato es requerido" });
+    }
+    
+    try {
+      await EditarCampeonato.execute(id, data);
+      res.json({res: 'Campeonato editado correctamente'});
+    } catch (error) {
+      console.error("Error al editar campeonato:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
     }
   }
 }

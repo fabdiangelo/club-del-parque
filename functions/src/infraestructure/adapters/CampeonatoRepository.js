@@ -19,6 +19,10 @@ class CampeonatoRepository {
   async getAll() {
     return await this.db.getAllItems('campeonatos');
   }
+
+  async update(campeonatoId, campeonato) {
+    return await this.db.updateItem("campeonatos", campeonatoId, campeonato);
+  }
 }
 
 export { CampeonatoRepository };

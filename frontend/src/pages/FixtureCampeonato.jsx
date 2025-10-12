@@ -44,8 +44,16 @@ export default function FixtureCampeonato() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8 mt-14">
       <Navbar />
       <div className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">{campeonato?.nombre}</h1>
-        <p className="text-gray-600">{campeonato?.descripcion}</p>
+        <CampeonatoData
+          id={id}
+          nombre={campeonato?.nombre}
+          descripcion={campeonato?.descripcion}
+          inicio={campeonato?.inicio}
+          fin={campeonato?.fin}
+          requisitosParticipacion={campeonato?.requisitosParticipacion}
+          rol={user?.rol}
+          onRefresh={load}
+        />
       </div>
 
       <div className="max-w-7xl mx-auto mb-6 flex items-center justify-center gap-4">
@@ -147,7 +155,7 @@ const FaseEliminacion = ({ rondas = [] }) => {
 
           return (
             <div key={rIdx} className="relative flex flex-col items-center flex-1">
-              <h3 style={{zIndex:'100', width: '100%', marginTop: '-4rem', position:'sticky', top:'-3rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
+              <h3 style={{zIndex:'30', width: '100%', marginTop: '-4rem', position:'sticky', top:'-3rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
                 {ronda.nombre}
               </h3>
               

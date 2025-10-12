@@ -58,57 +58,33 @@ app.use(cookieParser());
 /* ---------------- Routes ---------------- */
 // Auth
 app.post("/auth/register", (req, res) => AuthController.register(req, res));
-app.post("/auth/login", (req, res) =>
-  AuthController.loginWithPassword(req, res)
-);
-app.post("/auth/google", (req, res) =>
-  AuthController.loginWithGoogle(req, res)
-);
+app.post("/auth/login", (req, res) => AuthController.loginWithPassword(req, res));
+app.post("/auth/google", (req, res) => AuthController.loginWithGoogle(req, res));
 app.get("/auth/me", (req, res) => AuthController.getActualUser(req, res));
 app.post("/auth/logout", (req, res) => AuthController.logout(req, res));
 
 // Administrador
-app.post("/administrador/register", (req, res) =>
-  AdministradorController.crearAdministrador(req, res)
-);
+app.post("/administrador/register", (req, res) => AdministradorController.crearAdministrador(req, res));
 
 // Usuario
 app.get("/usuario/:id", (req, res) => UsuarioController.getUserData(req, res));
-app.put("/usuario/:id", (req, res) =>
-  UsuarioController.editarUsuario(req, res)
-);
-app.put("/usuario/:id/bloqueo", (req, res) =>
-  UsuarioController.bloquearUsuario(req, res)
-);
+app.put("/usuario/:id", (req, res) => UsuarioController.editarUsuario(req, res));
+app.put("/usuario/:id/bloqueo", (req, res) => UsuarioController.bloquearUsuario(req, res));
 app.get("/usuarios", (req, res) => UsuarioController.getAllUsuarios(req, res));
-app.get("/usuarios/cantidad", (req, res) =>
-  UsuarioController.cantUsuarios(req, res)
-);
-app.post("/usuarios/validar-federacion/:idReporte", (req, res) =>
-  UsuarioController.validarFederacion(req, res)
-);
-app.put("/usuarios/negar-federacion/:idReporte", (req, res) =>
-  UsuarioController.negarFederacion(req, res)
-);
+app.get("/usuarios/cantidad", (req, res) => UsuarioController.cantUsuarios(req, res));
+app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));
+app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController.negarFederacion(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
-app.get("/reportes/sin-resolver", (req, res) =>
-  ReporteController.obtenerCantReportesSinResolver(req, res)
-);
-app.post("/reporte/:id/solicitud-federacion", (req, res) =>
-  ReporteController.solicitarFederarUsuario(req, res)
-);
-app.put("/reportes/marcar-resuelto/:id", (req, res) =>
-  ReporteController.marcarResuelto(req, res)
-);
+app.get("/reportes/sin-resolver", (req, res) => ReporteController.obtenerCantReportesSinResolver(req, res));
+app.post("/reporte/:id/solicitud-federacion", (req, res) => ReporteController.solicitarFederarUsuario(req, res));
+app.put("/reportes/marcar-resuelto/:id", (req, res) => ReporteController.marcarResuelto(req, res));
 
 // Noticias
 app.get("/noticias", (req, res) => NoticiaController.listar(req, res));
-app.get("/noticias/:id", (req, res) =>
-  NoticiaController.obtenerPorId(req, res)
-);
+app.get("/noticias/:id", (req, res) => NoticiaController.obtenerPorId(req, res));
 app.post("/noticias", (req, res) => NoticiaController.crear(req, res));
 app.put("/noticias/:id", (req, res) => NoticiaController.actualizar(req, res));
 app.delete("/noticias/:id", (req, res) => NoticiaController.eliminar(req, res));
@@ -182,128 +158,75 @@ app.post("/noticias/:id/imagenes-json", async (req, res) => {
 });
 
 // Infraestructura
-app.get("/infraestructura/metricas", (req, res) =>
-  InfraestructuraController.obtenerMetricas(req, res)
-);
+app.get("/infraestructura/metricas", (req, res) => InfraestructuraController.obtenerMetricas(req, res));
 
 // Notificaciones
-app.post("/sendWhatsapp", (req, res) =>
-  SendWhatsappController.enviarMensaje(req, res)
-);
+app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));
 app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));
 
 // Chat
 app.get("/chats/:idUser", (req, res) => ChatController.getChatByUser(req, res));
 app.post("/chats", (req, res) => ChatController.crearChat(req, res));
 app.get("/chats/:chatId", (req, res) => ChatController.getChatById(req, res));
-app.post("/chats/:id/mensajes", (req, res) =>
-  ChatController.enviarMensaje(req, res)
-);
-app.get("/chats/:id/mensajes", (req, res) =>
-  ChatController.getMensajes(req, res)
-);
-app.get("/chats/:id/escuchar", (req, res) =>
-  ChatController.escucharPorMensajes(req, res)
-);
+app.post("/chats/:id/mensajes", (req, res) => ChatController.enviarMensaje(req, res));
+app.get("/chats/:id/mensajes", (req, res) => ChatController.getMensajes(req, res));
+app.get("/chats/:id/escuchar", (req, res) => ChatController.escucharPorMensajes(req, res));
 app.get("/chats/prueba", (req, res) => ChatController.prueba(req, res));
 
 // Planes
-app.post("/planes/precarga", (req, res) =>
-  PlanController.precargarPlanes(req, res)
-);
+app.post("/planes/precarga", (req, res) => PlanController.precargarPlanes(req, res));
 app.get("/planes", (req, res) => PlanController.getPlanes(req, res));
 
 // Formatos de campeonatos
-app.post("/formatos/precarga", (req, res) =>
-  FormatoController.precargarFormatos(req, res)
-);
+app.post("/formatos/precarga", (req, res) => FormatoController.precargarFormatos(req, res));
 app.get("/formatos", (req, res) => FormatoController.getFormatos(req, res));
 app.post("/formatos", (req, res) => FormatoController.saveFormato(req, res));
 app.put("/formatos/:id", (req, res) => FormatoController.saveFormato(req, res));
 
 // Formatos de etapa
-app.get("/formatos/etapas", (req, res) =>
-  FormatoEtapaController.getFormatosEtapas(req, res)
-);
-app.post("/formatos/etapas", (req, res) =>
-  FormatoEtapaController.saveFormatoEtapa(req, res)
-);
-app.put("/formatos/etapas/:id", (req, res) =>
-  FormatoEtapaController.saveFormatoEtapa(req, res)
-);
+app.get("/formatos/etapas", (req, res) => FormatoEtapaController.getFormatosEtapas(req, res));
+app.post("/formatos/etapas", (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
+app.put("/formatos/etapas/:id", (req, res) => FormatoEtapaController.saveFormatoEtapa(req, res));
 
 // Campeonatos
-app.get("/campeonatos", (req, res) =>
-  CampeonatosController.getAllCampeonatos(req, res)
-);
-app.get("/campeonato/:id", (req, res) =>
-  CampeonatosController.getCampeonatoById(req, res)
-);
+app.get("/campeonatos", (req, res) => CampeonatosController.getAllCampeonatos(req, res));
+app.get("/campeonato/:id", (req, res) => CampeonatosController.getCampeonatoById(req, res));
+app.put('/campeonato/:id', (req, res) => CampeonatosController.editarCampeonato(req, res));
 app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
-app.get("/campeonatos/federados/count", (req, res) =>
-  CampeonatosFederadosController.contar(req, res)
-);
+app.get("/campeonatos/federados/count", (req, res) => CampeonatosFederadosController.contar(req, res));
 
 // Mensajes por terceros
-app.post("/sendWhatsapp", (req, res) =>
-  SendWhatsappController.enviarMensaje(req, res)
-);
+app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));
 app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));
 
 // Chat
 app.get("/chats/:idUser", (req, res) => ChatController.getChatByUser(req, res));
 app.post("/chats", (req, res) => ChatController.crearChat(req, res));
 app.get("/chats/:chatId", (req, res) => ChatController.getChatById(req, res));
-app.post("/chats/:id/mensajes", (req, res) =>
-  ChatController.enviarMensaje(req, res)
-);
-app.get("/chats/:id/mensajes", (req, res) =>
-  ChatController.getMensajes(req, res)
-);
-app.get("/chats/:id/escuchar", (req, res) =>
-  ChatController.escucharPorMensajes(req, res)
-);
+app.post("/chats/:id/mensajes", (req, res) => ChatController.enviarMensaje(req, res));
+app.get("/chats/:id/mensajes", (req, res) => ChatController.getMensajes(req, res));
+app.get("/chats/:id/escuchar", (req, res) => ChatController.escucharPorMensajes(req, res));
 app.get("/chats/prueba", (req, res) => ChatController.prueba(req, res));
 
 // Partidos
-app.get("/partidos/:id", (req, res) =>
-  PartidoController.getPartidoById(req, res)
-);
-app.put("/partidos/:id", (req, res) =>
-  PartidoController.editarPartido(req, res)
-);
+app.get("/partidos/:id", (req, res) => PartidoController.getPartidoById(req, res));
+app.put("/partidos/:id", (req, res) => PartidoController.editarPartido(req, res));
 app.post("/partidos", (req, res) => PartidoController.crearPartido(req, res));
 app.get("/partidos", (req, res) => PartidoController.getAllPartidos(req, res));
-app.get("/partidos/temporada/:temporadaID", (req, res) =>
-  PartidoController.getPartidosByTemporada(req, res)
-);
-app.get("/partidos/jugador/:jugadorID", (req, res) =>
-  PartidoController.getPartidosByJugador(req, res)
-);
-app.delete("/partidos/:id", (req, res) =>
-  PartidoController.eliminarPartido(req, res)
-);
+app.get("/partidos/temporada/:temporadaID", (req, res) => PartidoController.getPartidosByTemporada(req, res));
+app.get("/partidos/jugador/:jugadorID", (req, res) => PartidoController.getPartidosByJugador(req, res));
+app.delete("/partidos/:id", (req, res) => PartidoController.eliminarPartido(req, res));
 
 // Temporada
-app.get("/temporadas/:id", (req, res) =>
-  TemporadaController.getTemporadaById(req, res)
-);
-app.post("/temporadas", (req, res) =>
-  TemporadaController.createTemporada(req, res)
-);
-app.delete("/temporadas/:id", (req, res) =>
-  TemporadaController.deleteTemporada(req, res)
-);
-app.get("/temporadas", (req, res) =>
-  TemporadaController.getAllTemporadas(req, res)
-);
+app.get("/temporadas/:id", (req, res) => TemporadaController.getTemporadaById(req, res));
+app.post("/temporadas", (req, res) => TemporadaController.createTemporada(req, res));
+app.delete("/temporadas/:id", (req, res) => TemporadaController.deleteTemporada(req, res));
+app.get("/temporadas", (req, res) => TemporadaController.getAllTemporadas(req, res));
 
 // Cancha
 app.get("/canchas/:id", (req, res) => CanchaController.getById(req, res));
 app.post("/canchas", (req, res) => CanchaController.crearCancha(req, res));
-app.delete("/canchas/:id", (req, res) =>
-  CanchaController.eliminarCancha(req, res)
-);
+app.delete("/canchas/:id", (req, res) => CanchaController.eliminarCancha(req, res));
 app.get("/canchas", (req, res) => CanchaController.getAll(req, res));
 
 app.use((err, req, res, _next) => {
