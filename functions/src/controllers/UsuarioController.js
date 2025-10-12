@@ -9,6 +9,7 @@ import FederarUsuario from "../usecases/Usuarios/FederarUsuario.js";
 import GetCantUsuarios from "../usecases/Usuarios/GetCantUsuarios.js";
 import BloquearUsuario from "../usecases/Usuarios/BloquearUsuario.js";
 import GetAllFederados from "../usecases/Usuarios/getAllFederados.js";
+import PrecargaFederados from "../usecases/Usuarios/PrecargaFederados.js";
 
 class UsuarioController {
   async getUserData(req, res) {
@@ -224,6 +225,11 @@ async getAllFederados(req, res) {
       console.error("Error in /usuarios/:idUsuario/bloqueo:", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
+  }
+
+  async precarga(req, res) {
+    PrecargaFederados.execute();
+    res.json({"res": "Usuarios precargados"});
   }
 }
 

@@ -51,7 +51,8 @@ export default function FixtureCampeonato() {
           inicio={campeonato?.inicio}
           fin={campeonato?.fin}
           requisitosParticipacion={campeonato?.requisitosParticipacion}
-          rol={user?.rol}
+          user={user}
+          participantes={campeonato?.federadosCampeonatoIDs}
           onRefresh={load}
         />
       </div>
@@ -106,28 +107,31 @@ const FaseGrupos = ({ grupos }) => {
               <span className="w-16 text-center">Puntos</span>
             </div>
             {grupo.jugadores?.map((jugador, jIdx) => (
-              <div
-                key={jIdx}
-                className="flex items-center bg-gray-700 rounded-lg px-3 py-3 mb-2 hover:bg-gray-600 transition-colors"
-              >
+              <>
                 {jugador.id ? (
-                  <>
+                  <div
+                    key={jIdx}
+                    className="flex items-center bg-gray-700 rounded-lg px-3 py-3 mb-2 hover:bg-gray-600 transition-colors"
+                  >
                     <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                       {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
                     </div>
                     <span className="flex-1 font-medium">{jugador.nombre}</span>
                     <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
                     <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div
+                    key={jIdx}
+                    className="flex items-center bg-gray-500 rounded-lg px-3 py-3 mb-2 hover:bg-gray-700 transition-colors"
+                  >
                     <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">?</div>
                     <span className="flex-1 font-medium"><em>Por definirse</em></span>
                     <span className="w-12 text-center text-sm"> | </span>
                     <span className="w-16 text-center font-bold text-cyan-400">-</span>
-                  </>
+                  </div>
                 )}
-              </div>
+                </>
             ))}
           </div>
         </div>

@@ -76,6 +76,7 @@ app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioControl
 app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController.negarFederacion(req, res));
 
 app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(req, res));
+app.post("/federados/precarga", (req, res) => UsuarioController.precarga(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
@@ -196,6 +197,9 @@ app.get("/campeonato/:id", (req, res) => CampeonatosController.getCampeonatoById
 app.put('/campeonato/:id', (req, res) => CampeonatosController.editarCampeonato(req, res));
 app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
 app.get("/campeonatos/federados/count", (req, res) => CampeonatosFederadosController.contar(req, res));
+
+// Campeonatos-Federados
+app.post("/federado-campeonato/:id/:uid", (req, res) => CampeonatosFederadosController.inscribirFederado(req, res));
 
 // Mensajes por terceros
 app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));

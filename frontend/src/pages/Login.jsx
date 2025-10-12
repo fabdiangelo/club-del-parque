@@ -117,6 +117,23 @@ function Login() {
     }
   };
 
+
+  const handlePrecarga = async () => {
+    setLoading(true); setMsg(null);
+    try {
+      const response = await fetch("/api/federados/precarga", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+    } catch (err) {
+      console.error(err);
+      setMsg(err.code?.replace(/-/g, ' ').replace('auth/', '') || JSON.parse(err.message).error)
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <NavbarBlanco />
@@ -141,6 +158,7 @@ function Login() {
         <div className="text-center">
           <em>No tienes una cuenta? <Link disabled={loading} to='/register' className="">Registrarse</Link></em>
         </div>
+        <button className="btn" onClick={handlePrecarga}>precarga federados</button>
         {msg && <p className="mt-4 text-sm text-center text-red-500">{msg}</p>}
       </div>
     </div>

@@ -2,11 +2,13 @@ import Campeonato from "../../domain/entities/Campeonato.js";
 import Etapa from "../../domain/entities/Etapa.js";
 import { CampeonatoRepository } from "../../infraestructure/adapters/CampeonatoRepository.js";
 import { EtapaRepository } from "../../infraestructure/adapters/EtapaRepository.js";
+import { PartidoRepository } from "../../infraestructure/adapters/PartidoRepository.js";
 
 class CrearCampeonato {
   constructor() {
     this.campeonatoRepository = new CampeonatoRepository();
     this.etapaRepository = new EtapaRepository();
+    this.partidoRepository = new PartidoRepository();
   }
 
   async execute(payload) {
@@ -91,6 +93,77 @@ class CrearCampeonato {
         estructuraEtapa.rondas || null
       );
       
+      // Persistir partidos generados en la estructura de la etapa
+      // Para grupos (roundRobin)
+      if (etapa.grupos && Array.isArray(etapa.grupos)) {
+        for (const grupo of etapa.grupos) {
+          if (Array.isArray(grupo.partidos)) {
+            for (const partido of grupo.partidos) {
+              // Crear objeto partido minimal para persistir
+              const partidoObj = {
+                id: `${etapaId}-${grupo.id || 'grupo'}-${partido.id}`,
+                timestamp: new Date().toISOString(),
+                estado: partido.estado || 'pendiente',
+                tipoPartido: 'grupo',
+                temporadaID: null,
+                canchaID: null,
+                etapa: etapaId,
+                jugadores: [],
+                equipoLocal: [],
+                equipoVisitante: [],
+                resultado: null,
+                // metadatos del partido para enlazar con la etapa
+                meta: {
+                  grupoID: grupo.id,
+                  jugador1Index: partido.jugador1Index,
+                  jugador2Index: partido.jugador2Index
+                }
+              };
+              try {
+                await this.partidoRepository.save(partidoObj);
+              } catch (e) {
+                // Si falla la persistencia de partido, continuar sin bloquear la creación del campeonato
+                console.warn('No se pudo persistir partido de grupo', partidoObj.id, e.message || e);
+              }
+            }
+          }
+        }
+      }
+
+      // Para rondas (eliminacion)
+      if (etapa.rondas && Array.isArray(etapa.rondas)) {
+        for (const ronda of etapa.rondas) {
+          if (Array.isArray(ronda.partidos)) {
+            for (const partido of ronda.partidos) {
+              const partidoObj = {
+                id: `${etapaId}-${ronda.id || 'ronda'}-${partido.id}`,
+                timestamp: new Date().toISOString(),
+                estado: partido.estado || 'pendiente',
+                tipoPartido: 'eliminacion',
+                temporadaID: null,
+                canchaID: null,
+                etapa: etapaId,
+                jugadores: [],
+                equipoLocal: [],
+                equipoVisitante: [],
+                resultado: null,
+                meta: {
+                  rondaID: ronda.id,
+                  numeroPartido: partido.numeroPartido,
+                  jugador1Origen: partido.jugador1Origen,
+                  jugador2Origen: partido.jugador2Origen
+                }
+              };
+              try {
+                await this.partidoRepository.save(partidoObj);
+              } catch (e) {
+                console.warn('No se pudo persistir partido de eliminacion', partidoObj.id, e.message || e);
+              }
+            }
+          }
+        }
+      }
+
       await this.etapaRepository.save(etapa.toPlainObject());
       c.etapasIDs.push(etapaId);
 
