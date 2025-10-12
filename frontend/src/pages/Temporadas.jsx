@@ -1,7 +1,8 @@
+// src/pages/TemporadasPage.jsx
 import { useMemo, useState } from "react";
 import useTemporadas from "../hooks/useTemporadas";
 import Navbar from "../components/Navbar";
-import { CalendarPlus, Check } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Check } from "lucide-react";
 import bgImg from "../assets/RankingsBackground.png";
 
 const NAVBAR_OFFSET_REM = 5;
@@ -23,6 +24,7 @@ export default function TemporadasPage() {
     fechaFin: sixMonthsLaterISO,
   });
   const [ok, setOk] = useState("");
+  const [ack, setAck] = useState(false); // the “I understand” checkbox
 
   const onChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -30,6 +32,7 @@ export default function TemporadasPage() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setOk("");
+
     if (!form.nombre.trim()) {
       alert("El nombre es obligatorio");
       return;
@@ -38,6 +41,11 @@ export default function TemporadasPage() {
       alert("Las fechas inicio/fin son obligatorias");
       return;
     }
+    if (!ack) {
+      alert("Debes confirmar que entiendes que las temporadas no se pueden eliminar.");
+      return;
+    }
+
     const success = await create(form);
     if (success) {
       setOk("Temporada creada");
@@ -46,6 +54,7 @@ export default function TemporadasPage() {
         fechaInicio: todayISO,
         fechaFin: sixMonthsLaterISO,
       });
+      setAck(false);
     }
   };
 
@@ -70,7 +79,6 @@ export default function TemporadasPage() {
               Temporadas
             </h1>
             <p className="mt-3 text-white/80">
-              Administrador de temporadas (solo creación).
             </p>
           </div>
         </header>
@@ -85,6 +93,32 @@ export default function TemporadasPage() {
               <h2 className="text-xl sm:text-2xl font-bold mb-4 flex items-center gap-2">
                 <CalendarPlus className="w-6 h-6" /> Crear nueva temporada
               </h2>
+
+              {/* ⚠️ Irreversible warning */}
+              <div className="mb-5 rounded-xl border border-yellow-400/40 bg-yellow-500/10 p-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-300 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-yellow-200">
+                      Atención: las temporadas no se pueden eliminar una vez creadas.
+                    </p>
+                    <p className="text-white/85 mt-1">
+                      Revisa cuidadosamente el <strong>nombre</strong> y las <strong>fechas de inicio y fin</strong> antes de confirmar.
+                    </p>
+                  </div>
+                </div>
+                <label className="mt-3 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-warning"
+                    checked={ack}
+                    onChange={(e) => setAck(e.target.checked)}
+                  />
+                  <span className="text-white/90">
+                    Entiendo que no podré eliminar esta temporada más adelante.
+                  </span>
+                </label>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-1">
@@ -126,10 +160,11 @@ export default function TemporadasPage() {
               <div className="mt-4 flex items-center gap-3 flex-wrap">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !ack}
                   className="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-cyan-700/90 hover:bg-cyan-700 disabled:opacity-60 active:scale-[.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80"
+                  title={!ack ? "Debes aceptar la advertencia" : undefined}
                 >
-                  {loading ? "Creando…" : (<> <CalendarPlus className="w-5 h-5" /> Crear </>)}
+                  {loading ? "Creando…" : (<><CalendarPlus className="w-5 h-5" /> Crear</>)}
                 </button>
 
                 {ok && (

@@ -1,3 +1,4 @@
+// functions/src/infraestructure/adapters/AdministradorRepository.js
 import DBConnection from "../ports/DBConnection.js";
 import AuthConnection from "../ports/AuthConnection.js";
 
@@ -5,59 +6,89 @@ export class AdministradorRepository {
   constructor() {
     this.db = new DBConnection();
     this.auth = new AuthConnection();
-    this.collectionName = 'administradores';
+    this.collectionName = "administradores";
   }
 
+  /* ---------------- helpers ---------------- */
+  /** Accepts a Firestore DocumentSnapshot OR a plain object and returns a plain {id, ...data} */
+  _asPlain(doc, fallbackId) {
+    if (!doc) return null;
+
+    // Firestore DocumentSnapshot?
+    if (typeof doc.data === "function") {
+      const data = doc.data() || {};
+      return { id: doc.id ?? fallbackId, ...data };
+    }
+
+    // Already a plain object
+    if (typeof doc === "object") {
+      const id =
+        doc.id ??
+        doc.uid ??            // sometimes you store uid instead of id
+        fallbackId ??
+        undefined;
+      // avoid duplicating id in the spread if it exists
+      const { id: _omit, ...rest } = doc;
+      return id ? { id, ...rest } : { ...rest };
+    }
+
+    return null;
+  }
+
+  /* ---------------- CRUD ---------------- */
   async save(administrador) {
-    const docRef = await this.db.putItem(this.collectionName, administrador, administrador.id);
-    return docRef.id;
+    const ref = await this.db.putItem(
+      this.collectionName,
+      administrador,
+      administrador.id
+    );
+    // Some DBConnection impls return {id}, others may return void
+    return ref?.id ?? administrador.id;
   }
 
   async create(email, password, displayName) {
     let userRecord;
     try {
-      // Intentar crear usuario en Firebase Auth
-      userRecord = await this.auth.createAdmin({
-        email,
-        password,
-        displayName,
-      });
+      userRecord = await this.auth.createAdmin({ email, password, displayName });
     } catch (err) {
-      // Si el error es que el email ya existe, obtener el usuario
-      if (err.code === 'auth/email-already-exists' || err.message?.includes('already exists')) {
+      if (
+        err.code === "auth/email-already-exists" ||
+        err.message?.includes("already exists")
+      ) {
         userRecord = await this.auth.getUserByEmail(email);
       } else {
         throw err;
       }
     }
-    return userRecord
+    return userRecord;
   }
 
   async findById(id) {
-    const administrador = await this.db.getItem(this.collectionName, id);
-    if (!administrador) {
-      return null;
-    }
-    return { id: administrador.id, ...administrador};
+    const raw = await this.db.getItem(this.collectionName, id);
+    if (!raw) return null;
+    return this._asPlain(raw, id);
   }
 
   async update(id, administrador) {
-    await this.db.updateItem("administradores", id, administrador)
+    await this.db.updateItem(this.collectionName, id, administrador);
 
+    // Mirror relevant changes into Firebase Auth if provided
     if (administrador.email) {
-        await this.auth.updateUser(id, { email: administrador.email });
+      await this.auth.updateUser(id, { email: administrador.email });
     }
     if (administrador.password) {
-        await this.auth.updateUser(id, { password: administrador.password });
+      await this.auth.updateUser(id, { password: administrador.password });
     }
   }
 
-  async getAll(){
-    const snapshot = await this.db.getAllItems(this.collectionName);
-    const users = [];
-    snapshot.forEach((doc) => {
-        users.push({ id: doc.id, ...doc.data() });
-    });
-    return users;
+  async getAll() {
+    const rows = await this.db.getAllItems(this.collectionName);
+    if (!rows) return [];
+    // rows can be an array of snapshots OR plain objects
+    return Array.from(rows).map((doc, i) => this._asPlain(doc, `admin-${i}`)).filter(Boolean);
+  }
+
+  async delete(id) {
+    return this.db.deleteItem(this.collectionName, id);
   }
 }

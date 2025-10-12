@@ -75,6 +75,8 @@ app.get("/usuarios/cantidad", (req, res) => UsuarioController.cantUsuarios(req, 
 app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));
 app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController.negarFederacion(req, res));
 
+app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(req, res));
+
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
