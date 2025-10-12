@@ -6,6 +6,8 @@ import { GetAllPArtidos } from '../usecases/Partidos/GetAllPartidos.js';
 import {GetPartidoPorId} from '../usecases/Partidos/GetPartidoPorId.js';
 import { GetPartidosByJugador } from '../usecases/Partidos/GetPartidosByJugador.js';
 import { GetPartidosPorTemporada } from '../usecases/Partidos/GetPartidosPorTemporada.js';
+import { SetGanadoresPartido } from '../usecases/Partidos/SetGanadoresPartido.js';
+
 
 class PartidoController {
     constructor() {
@@ -16,6 +18,8 @@ class PartidoController {
         this.getPartidosPorJugadorUseCase = new GetPartidosByJugador(new PartidoRepository());
         this.getAllPartidosUseCase = new GetAllPArtidos(new PartidoRepository());
         this.eliminarPartidoUseCase = new EliminarPartido(new PartidoRepository());
+            this.setGanadoresUseCase = new SetGanadoresPartido(new PartidoRepository());
+
     }
 
     async getAllPartidos(req, res) {
@@ -27,7 +31,22 @@ class PartidoController {
             res.status(500).json({ error: error });
         }
     }
+async setGanadores(req, res) {
+    const { id } = req.params;
+    const { ganadores = [], resultado = null } = req.body;
 
+    if (!Array.isArray(ganadores)) {
+      return res.status(400).json({ error: "ganadores debe ser un array" });
+    }
+
+    try {
+      const partido = await this.setGanadoresUseCase.execute(id, ganadores, resultado);
+      res.json(partido);
+    } catch (error) {
+      console.error("Error al setear ganadores:", error);
+      res.status(500).json({ error: "Error interno del servidor", mensaje: error.message });
+    }
+  }
     async eliminarPartido(req, res) {
         const { id } = req.params;
         try {

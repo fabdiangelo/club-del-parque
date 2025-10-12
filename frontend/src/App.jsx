@@ -19,6 +19,7 @@ import FixtureCampeonato from './pages/FixtureCampeonato'
 import ListaCampeonatos from './pages/ListaCampeonatos';
 import Rankings from './pages/Ranking';
 import TemporadasPage from './pages/Temporadas';
+import PartidosGestor from './pages/PartidosGestor';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />
+            <Route path="/gestor-partidos" element={<PartidosGestor />} />
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/crear-campeonato" element={<CrearCampeonato />} />
       <Route path="/temporadas" element={<TemporadasPage />} />

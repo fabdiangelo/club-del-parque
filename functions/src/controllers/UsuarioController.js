@@ -41,10 +41,7 @@ class UsuarioController {
   }
 async getAllFederados(req, res) {
     try {
-      const sessionCookie = req.cookies.session || "";
-      if (!sessionCookie) {
-        return res.status(401).json({ error: "No session cookie found" });
-      }
+
       const federados = await GetAllFederados.execute();
       return res.json(federados);
     } catch (error) {

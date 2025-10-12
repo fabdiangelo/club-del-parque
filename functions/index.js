@@ -218,6 +218,8 @@ app.get("/partidos", (req, res) => PartidoController.getAllPartidos(req, res));
 app.get("/partidos/temporada/:temporadaID", (req, res) => PartidoController.getPartidosByTemporada(req, res));
 app.get("/partidos/jugador/:jugadorID", (req, res) => PartidoController.getPartidosByJugador(req, res));
 app.delete("/partidos/:id", (req, res) => PartidoController.eliminarPartido(req, res));
+app.post("/partidos/:id/ganadores", (req, res) => PartidoController.setGanadores(req, res));
+
 
 // Temporada
 app.get("/temporadas/:id", (req, res) => TemporadaController.getTemporadaById(req, res));
