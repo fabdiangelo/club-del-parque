@@ -2,16 +2,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import NavbarBlanco from '../components/NavbarBlanco';
-import './Partido.css'; // Importar el archivo CSS
+import './Partido.css';
 
 const Partido = () => {
     const { id } = useParams();
     const [partido, setPartido] = useState(null);
+    const [cancha, setCancha] = useState(null);
 
     const [usuarios, setUsuarios] = useState([]);
 
     const [usuariosParticipantes, setUsuariosParticipantes] = useState([]);
     const [temporada, setTemporada] = useState(null);
+
+    const [modalReserva, setModalReserva] = useState(false);
 
     useEffect(() => {
         const fetchPartido = async () => {
@@ -27,6 +30,7 @@ const Partido = () => {
             setUsuarios(data);
             console.log("Usuarios obtenidos:", data);
         }
+
 
         fetchPartido();
         fetchUsuarios();
@@ -57,6 +61,23 @@ const Partido = () => {
             }
         }
 
+        if(!partido?.canchaID) return;
+        const fetchCancha = async() => {
+
+            console.log("Fetch cancha llamado para canchaID:", partido?.canchaID);
+            try {
+                const response = await fetch(`/api/canchas/${partido?.canchaID}`, { credentials: 'include' });
+
+                if(!response.ok) throw new Error("Error al obtener la cancha");
+
+                const data = await response.json();
+                console.log("Cancha obtenida:", data);
+                setCancha(data);
+            } catch(error) {
+                throw error;
+            }
+        }
+        fetchCancha();
         fetchTemporada();
     }, [usuarios, partido]);
 
@@ -89,6 +110,7 @@ const Partido = () => {
                     
 
                     <div>
+                        
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '15px' }}>
 
                             <div>
@@ -138,6 +160,14 @@ const Partido = () => {
                 
               
             </div>
+
+                    <div className="action-buttons">
+                        
+                        <button className="action-btn btn-success" onClick={() => alert('Comenzar partido')}>
+                            Reservar fecha y hora
+                        </button>
+                       
+                    </div>
 
                     <div style={{ display: 'flex', flexDirection: 'row', gap: '50px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
                         <div className="player-circle-left">
@@ -198,37 +228,108 @@ const Partido = () => {
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
 
+                    <p className="intro-text">
+                        El partido debe ser jugado en los próximos 7 días. Si no se juega en ese plazo, se considerará perdido por incomparecencia.
+                    </p>
 
-            {usuariosParticipantes.length > 0 && partido.jugadores && partido?.tipoPartido === 'singles' && (
-<div style={{ display: 'flex', flexDirection: 'row', gap: '15px', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', color: 'black', height: '100vh'}}>
+                   
 
-                <div>
-                    <p>Prueba1</p>
-                </div>
+                    {usuariosParticipantes.length >= 2 && (
+                        <div className="stats-panel">
 
-                
-                <div>
-                    <p>Prueba1</p>
-                </div>
-            </div>
-            )}
+ <div className='text-center'>
+                        <p style={{fontSize: '0.8rem', color: '#555'}}>Fecha y Hora: {partido.fechaHoraPartido ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span> : <span>No definido</span>}</p>
+                        <p style={{fontSize: '0.8rem', color: '#555'}}>Cancha: {cancha ? <span>{cancha.nombre}</span> : <span>No definido</span>}</p>
+                        <p style={{fontSize: '0.8rem', color: '#555'}}>Estado: {partido.estado}</p>
 
-
-            {usuariosParticipantes.length > 0 && partido.jugadores && partido?.tipoPartido === 'doubles' && (
-                <div className='container px-4' style={{ display: 'flex', flexDirection: 'row', gap: '15px', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', color: 'black', height: '100vh'}}>
-
-                    <div>
-                        <p>Prueba1</p>
                     </div>
+                            
+                            <h3 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.5rem', color: '#333' }}>
+                                Estadísticas de los Jugadores
+                            </h3>
+                            <div className="stats-container">
+                                {/* Estadísticas Jugador 1 */}
+                                <div className="player-stats blue">
+                                    <h4 style={{ textAlign: 'center', marginBottom: '20px', color: '#0D8ABC' }}>
+                                        {usuariosParticipantes[0]?.nombre}
+                                    </h4>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Ranking:</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.ranking || 'N/A'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Categoría:</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.categoria || 'N/A'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Partidos Ganados:</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.partidosOficialesGanados || '0'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Partidos Perdidos:</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.partidosOficialesPerdidos || '0'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Mejor Posición:</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.mejorPosicionTorneo || 'N/A'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Estado:</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.estado || 'N/A'}</span>
+                                    </div>
+                                </div>
 
-                    <div>
-                        <p>Prueba1</p>
-                    </div>
+                                {/* VS en el centro */}
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    fontSize: '2rem',
+                                    fontWeight: 'bold',
+                                    color: '#666',
+                                    minWidth: '60px'
+                                }}>
+                                    VS
+                                </div>
+
+                                {/* Estadísticas Jugador 2 */}
+                                <div className="player-stats red">
+                                    <h4 style={{ textAlign: 'center', marginBottom: '20px', color: '#e74c3c' }}>
+                                        {usuariosParticipantes[1]?.nombre}
+                                    </h4>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Ranking:</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.ranking || 'N/A'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Categoría:</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.categoria || 'N/A'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Partidos Ganados:</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.partidosOficialesGanados || '0'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Partidos Perdidos:</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.partidosOficialesPerdidos || '0'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Mejor Posición:</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.mejorPosicionTorneo || 'N/A'}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-label">Estado:</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.estado || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             )}
+
 
 
 

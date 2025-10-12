@@ -17,7 +17,8 @@ export class PartidoRepository {
         const temp = await this.db.getItem("temporadas", temporadaID);
         const cancha = await this.db.getItem("canchas", partido.canchaID);
 
-
+        console.log("Temporada encontrada:", temp);
+        console.log("Cancha encontrada:", cancha);
         if (!temp) {
             throw new Error("La temporada asociada no existe");
         }
@@ -43,7 +44,6 @@ export class PartidoRepository {
             }
         }
 
-        // Validar equipo visitante
         for (const j of equipoVisitante) {
             const equipoExists = await this.db.getItem("usuarios", j);
             if (!equipoExists) {
