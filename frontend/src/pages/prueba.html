@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Animación - Pelota de Tenis (CSS)</title>
+  <style>
+    :root{
+      --size: 120px;            /* tamaño de la pelota */
+      --duration: 1.2s;        /* duración del salto */
+      --spin-duration: 0.9s;   /* duración del giro */
+      --ball-color: #f6e84a;   /* color principal */
+      --seam-color: #2b8b2b;   /* color de las costuras */
+      --shadow-color: rgba(0,0,0,0.35);
+      --ground-height: 30px;
+    }
+
+    /* Layout simple para centrar */
+    html,body{height:100%;}
+    body{
+      margin:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg,#0b3b1f 0%, #092b18 100%);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      color: #fff;
+    }
+
+    .stage{
+      width: min(720px, 90%);
+      height: 300px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: visible;
+      padding-bottom: var(--ground-height);
+    }
+
+    /* La sombra en el suelo */
+    .shadow{
+      position: absolute;
+      bottom: calc(var(--ground-height) - 6px);
+      width: calc(var(--size) * 0.9);
+      height: calc(var(--size) * 0.25);
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.05) 60%);
+      filter: blur(4px);
+      border-radius: 50%;
+      transform-origin: center;
+      animation: shadow-scale var(--duration) ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Pelota */
+    .tennis-ball{
+      --s: var(--size);
+      width: var(--s);
+      height: var(--s);
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 25%, #ffffff60 0%, transparent 6%),
+                  radial-gradient(circle at 65% 70%, #ffffff25 0%, transparent 6%),
+                  linear-gradient(145deg, var(--ball-color) 0%, #e7de3a 60%, #e2d63a 100%);
+      box-shadow: inset -6px -6px 14px rgba(0,0,0,0.12), inset 6px 6px 18px rgba(255,255,255,0.06),
+                  0 10px 18px rgba(0,0,0,0.25);
+      position: relative;
+      transform-origin: center bottom;
+      animation: bounce var(--duration) cubic-bezier(.25,.85,.25,1) infinite;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* Costuras: dos arcos curvados opuestos */
+    .tennis-ball::before,
+    .tennis-ball::after{
+      content: '';
+      position: absolute;
+      width: 70%;
+      height: 70%;
+      border-radius: 50%;
+      box-sizing: border-box;
+      border: calc(var(--s) * 0.07) solid var(--seam-color);
+      border-left-color: transparent;
+      border-top-color: transparent;
+      transform-origin: center;
+      pointer-events: none;
+    }
+
+    .tennis-ball::before{
+      transform: translateX(-12%) rotate(-25deg) scale(1);
+    }
+
+    .tennis-ball::after{
+      transform: translateX(12%) rotate(155deg) scale(1);
+    }
+
+    /* Un pseudo-elemento para simular giro (líneas finas sobre las costuras) */
+    .tennis-ball .spin-lines{
+      position: absolute;
+      width: 110%;
+      height: 110%;
+      border-radius: 50%;
+      transform-origin: center;
+      animation: spin var(--spin-duration) linear infinite;
+      pointer-events: none;
+    }
+
+    .tennis-ball .spin-lines::before,
+    .tennis-ball .spin-lines::after{
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      width: 64%;
+      height: 16%;
+      border-radius: 50px;
+      background: transparent;
+      box-shadow:
+        0 -6px 0 0 var(--seam-color),
+        0 6px 0 0 var(--seam-color);
+      opacity: 0.95;
+      filter: blur(0.2px);
+    }
+
+    /* Bounce animation */
+    @keyframes bounce{
+      0%   { transform: translateY(0) rotate(0deg); }
+      20%  { transform: translateY(-18vh) rotate(120deg); }
+      40%  { transform: translateY(0) rotate(260deg); }
+      60%  { transform: translateY(-8vh) rotate(380deg); }
+      80%  { transform: translateY(0) rotate(540deg); }
+      100% { transform: translateY(0) rotate(540deg); }
+    }
+
+    /* Spin animation */
+    @keyframes spin{
+      from{ transform: rotate(0deg); }
+      to  { transform: rotate(360deg); }
+    }
+
+    @keyframes shadow-scale{
+      0%   { transform: scaleX(1); opacity:1; }
+      20%  { transform: scaleX(0.45); opacity:0.45; }
+      40%  { transform: scaleX(1); opacity:1; }
+      60%  { transform: scaleX(0.7); opacity:0.6; }
+      80%  { transform: scaleX(1); opacity:1; }
+      100% { transform: scaleX(1); opacity:1; }
+    }
+
+    @media (max-width:480px){
+      :root{ --size: 80px; --duration: 1.0s; --spin-duration: 0.7s; }
+      .stage{ height:220px; }
+    }
+
+    .caption{
+      position:absolute;
+      top:8px;
+      left:12px;
+      font-size:13px;
+      opacity:0.9;
+      user-select:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" aria-hidden="false">
+    <div class="caption">Pelota de tenis — CSS puro</div>
+    <div class="shadow" aria-hidden="true"></div>
+
+    <div class="tennis-ball" role="img" aria-label="Pelota de tenis animada">
+      <div class="spin-lines"></div>
+    </div>
+  </div>
+
+  <!-- Instrucciones: cambie variables CSS en :root para personalizar tamaño/velocidad/colores -->
+</body>
+</html>

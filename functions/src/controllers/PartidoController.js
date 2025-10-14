@@ -66,7 +66,7 @@ async setGanadores(req, res) {
         const {tipoPartido, temporadaID, canchaID, etapa, jugadores, equipoLocal, equipoVisitante} = req.body;
 
         if(!tipoPartido || !temporadaID || !canchaID || !etapa || !jugadores || !equipoLocal || !equipoVisitante) {
-            return res.status(400).json({ error: "Faltan campos obligatorios, recuerde que se deben colocar los siguientes campos: tipoPartido, temporadaID, canchaID, etapaID, jugadores, equipoLocal, equipoVisitante" });
+            return res.status(400).json({ error: "Faltan campos obligatorios, recuerde que se deben colocar los siguientes campos: tipoPartido, temporadaID, canchaID, etapa, jugadores, equipoLocal, equipoVisitante" });
         }
 
         if(tipoPartido !== 'singles' && tipoPartido !== 'dobles') {
@@ -97,9 +97,14 @@ async setGanadores(req, res) {
 
     async getPartidoById(req, res) {
         const { id } = req.params;
+        console.log("Buscando partido con ID:", id);
+        
         try {
             const partido = await this.getPartidoByIdUseCase.execute(id);
+            console.log("Resultado de búsqueda:", partido);
+            
             if (!partido) {
+                console.log("Partido no encontrado en base de datos");
                 return res.status(404).json({ error: "Partido no encontrado" });
             }
             res.json(partido);

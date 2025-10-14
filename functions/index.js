@@ -36,6 +36,18 @@ console.log(
   "[boot] STORAGE_EMULATOR_HOST =",
   process.env.STORAGE_EMULATOR_HOST || "(unset)"
 );
+import ReservaController from "./src/controllers/ReservaController.js";
+/* ---------------- Global fn settings ---------------- */
+setGlobalOptions({
+  maxInstances: 10,
+  timeoutSeconds: 180,
+  memory: "512MB",
+});
+
+/* ---------------- Boot logs (sanity) ---------------- */
+console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
+console.log("[boot] GCLOUD_STORAGE_BUCKET =", process.env.GCLOUD_STORAGE_BUCKET || "(unset)");
+console.log("[boot] STORAGE_EMULATOR_HOST =", process.env.STORAGE_EMULATOR_HOST || "(unset)");
 
 /* ---------------- App + CORS ---------------- */
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -236,6 +248,18 @@ app.get("/canchas/:id", (req, res) => CanchaController.getById(req, res));
 app.post("/canchas", (req, res) => CanchaController.crearCancha(req, res));
 app.delete("/canchas/:id", (req, res) => CanchaController.eliminarCancha(req, res));
 app.get("/canchas", (req, res) => CanchaController.getAll(req, res));
+
+//Reservas
+
+app.get('/reservas', (req, res) => ReservaController.getAll(req, res));
+app.get('/reservas/:id', (req, res) => ReservaController.getReservaById(req, res));
+app.post('/reservas', (req, res) => ReservaController.crearReserva(req, res));
+app.delete('/reservas/:id', (req, res) => ReservaController.cancelarReserva(req, res));
+app.put('/reservas/:id/rechazar', (req, res) => ReservaController.rechazarReserva(req, res));
+app.put('/reservas/:id/confirmar', (req, res) => ReservaController.confirmarReserva(req, res));
+app.put('/reservas/:id', (req, res) => ReservaController.editarReserva(req, res));
+app.put('/reservas/:reservaID/aceptar-invitacion', (req, res) => ReservaController.aceptarInvitacion(req, res));
+
 
 app.use((err, req, res, _next) => {
   console.error(err);
