@@ -6,6 +6,8 @@ import {RechazarReserva} from '../usecases/Reservas/RechazarReserva.js';
 import {GetReservaById} from '../usecases/Reservas/GetReservaById.js';
 import {GetReservasFuturo} from '../usecases/Reservas/GetReservasFuturo.js';
 import { EditarReserva } from '../usecases/Reservas/EditarReserva.js';
+import { ConfirmarReserva } from '../usecases/Reservas/ConfirmarReserva.js';
+import { AceptarInvitacion } from '../usecases/Reservas/AceptarInvitacion.js';
 
 
 
@@ -18,6 +20,23 @@ class ReservaController {
         this.cancelarReservaUseCase = new CancelarReserva(new ReservaRepository());
         this.crearReservaUseCase = new CrearReserva(new ReservaRepository());
         this.editarReservaUseCase = new EditarReserva(new ReservaRepository());
+        this.confirmarReservaUseCase = new ConfirmarReserva(new ReservaRepository());
+        this.aceptarInvitacionUseCase = new AceptarInvitacion(new ReservaRepository());
+    }
+
+    async aceptarInvitacion(req, res) {
+        const { reservaID, jugadorID } = req.body;
+
+        if (!reservaID || !jugadorID) {
+            return res.status(400).json({ error: "Faltan campos obligatorios: reservaID y jugadorID" });
+        }
+
+        try {
+            await this.aceptarInvitacionUseCase.execute(reservaID, jugadorID);
+            res.status(200).json({ message: `Invitación a la reserva ${reservaID} aceptada por el jugador ${jugadorID}.` });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
 
     async editarReserva(req, res) {

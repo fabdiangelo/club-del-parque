@@ -47,7 +47,7 @@ class PartidoController {
         const {tipoPartido, temporadaID, canchaID, etapa, jugadores, equipoLocal, equipoVisitante} = req.body;
 
         if(!tipoPartido || !temporadaID || !canchaID || !etapa || !jugadores || !equipoLocal || !equipoVisitante) {
-            return res.status(400).json({ error: "Faltan campos obligatorios, recuerde que se deben colocar los siguientes campos: tipoPartido, temporadaID, canchaID, etapaID, jugadores, equipoLocal, equipoVisitante" });
+            return res.status(400).json({ error: "Faltan campos obligatorios, recuerde que se deben colocar los siguientes campos: tipoPartido, temporadaID, canchaID, etapa, jugadores, equipoLocal, equipoVisitante" });
         }
 
         if(tipoPartido !== 'singles' && tipoPartido !== 'dobles') {

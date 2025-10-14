@@ -1,5 +1,5 @@
 
-export default class ConfirmarReserva {
+export class ConfirmarReserva {
     constructor(reservaRepository) {
         this.reservaRepository = reservaRepository
     }

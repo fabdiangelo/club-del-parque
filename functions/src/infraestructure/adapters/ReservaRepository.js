@@ -1,10 +1,22 @@
-import DBConnection from "../DBConnection";
+import DBConnection from "../ports/DBConnection.js";
 
 export class ReservaRepository {
     constructor() {
         this.db = new DBConnection();
     }
 
+
+    async aceptarInivitacion(reservaID, jugadorID) {
+        const reserva = await this.getById(reservaID);
+        
+        if (reserva.aceptadoPor.includes(jugadorID)) {
+            throw new Error("El jugador ya ha aceptado la invitación");
+        }
+
+        reserva.aceptadoPor.push(jugadorID);
+        await this.update(reserva, reservaID);
+        return reserva;
+    }
 
     // campos reserva: id, canchaId, fechaHora, duracion, esCampeonato, partidoId, jugadoresIDS, quienPaga, autor, estado
     async save(reserva) {

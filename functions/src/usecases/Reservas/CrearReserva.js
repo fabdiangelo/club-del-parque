@@ -6,6 +6,6 @@ export class CrearReserva {
     }
 
     async execute(reservaData) {
-        return await this.reservaRepository.create(reservaData);
+        return await this.reservaRepository.save(reservaData);
     }
 }   

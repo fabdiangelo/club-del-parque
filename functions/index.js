@@ -22,7 +22,7 @@ import CampeonatosFederadosController from "./src/controllers/CampeonatosFederad
 import PartidoController from "./src/controllers/PartidoController.js";
 import CanchaController from "./src/controllers/CanchaController.js";
 import TemporadaController from "./src/controllers/TemporadaController.js";
-
+import ReservaController from "./src/controllers/ReservaController.js";
 /* ---------------- Global fn settings ---------------- */
 setGlobalOptions({
   maxInstances: 10,
@@ -231,6 +231,8 @@ app.delete('/reservas/:id', (req, res) => ReservaController.cancelarReserva(req,
 app.put('/reservas/:id/rechazar', (req, res) => ReservaController.rechazarReserva(req, res));
 app.put('/reservas/:id/confirmar', (req, res) => ReservaController.confirmarReserva(req, res));
 app.put('/reservas/:id', (req, res) => ReservaController.editarReserva(req, res));
+app.put('/reservas/:reservaID/aceptar-invitacion', (req, res) => ReservaController.aceptarInvitacion(req, res));
+
 
 app.use((err, req, res, _next) => {
   console.error(err);
