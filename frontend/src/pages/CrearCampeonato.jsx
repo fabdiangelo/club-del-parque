@@ -35,12 +35,12 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 };
 
 // Componente para mostrar formatos en lista
-const FormatoItem = ({ formato, onEdit }) => (
+const FormatoItem = ({ formato, onEdit, dobles = false }) => (
   <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg hover:bg-base-300 transition-colors">
     <div className="flex-1">
       <div className="font-semibold text-lg">{formato.nombre}</div>
       <div className="text-sm opacity-70">
-        {formato.cantidadJugadores} jugadores
+        {formato.cantidadJugadores} {dobles ? 'equipos' : 'jugadores'}
         {formato.formatosEtapasIDs?.length > 0 && ` • ${formato.formatosEtapasIDs.join(', ')}`}
       </div>
     </div>
@@ -179,8 +179,9 @@ export default function CrearCampeonato() {
           return {
             id: id,
             nombre: meta.tipoEtapa || id,
+            tipoEtapa: meta.tipoEtapa || '',
             cantidadDeJugadoresFin: meta.cantidadDeJugadoresFin || '',
-            duracionDias: meta.duracionDias || 1,
+            duracionDias: meta.duracionDias || '',
           };
         });
         setEtapasConfig(cfg);
@@ -259,7 +260,12 @@ export default function CrearCampeonato() {
         if (cant < 0) msgs.push('La cantidad no puede ser menor que 0');
         if (idx === 0) {
           const initial = Number(initialPlayers) || 0;
-          if (!(initial > cant)) msgs.push(`Debe ser menor que jugadores iniciales (${initial})`);
+          if (!(initial > cant)) msgs.push(`Debe ser menor que ${form.dobles ? 'equipos' : 'jugadores'} iniciales (${initial})`);
+          // If this etapa is an elimination stage, the initial must be one of allowed sizes
+          if ((et.tipoEtapa === 'eliminacion' || et.nombre === 'eliminacion') && initial > 0) {
+            const allowed = [2,4,8,16,32,64];
+            if (!allowed.includes(initial)) msgs.push(`Para etapas de eliminación, los ${form.dobles ? 'equipos' : 'jugadores'} iniciales deben ser: ${allowed.join(', ')}`);
+          }
         } else {
           const prevRaw = cfg[idx - 1]?.cantidadDeJugadoresFin;
           const prev = prevRaw === '' || prevRaw == null ? NaN : Number(prevRaw);
@@ -267,6 +273,11 @@ export default function CrearCampeonato() {
             msgs.push('La etapa anterior no tiene cantidad válida');
           } else if (!(prev > cant)) {
             msgs.push(`Debe ser menor que la etapa anterior (${prev})`);
+          }
+          // If this etapa is elimination, the "previous" (initial for this etapa) must be allowed size
+          if ((et.tipoEtapa === 'eliminacion' || et.nombre === 'eliminacion') && !isNaN(prev)) {
+            const allowed = [2,4,8,16,32,64];
+            if (!allowed.includes(prev)) msgs.push(`Para etapas de eliminación, los ${form.dobles ? 'equipos' : 'jugadores'} iniciales deben ser: ${allowed.join(', ')}`);
           }
         }
       }
@@ -383,7 +394,7 @@ export default function CrearCampeonato() {
       });
       // Validate etapas and prepare payload
       const etapasToSend = etapasConfig.map((et, idx) => {
-        if (typeof et.cantidadDeJugadoresFin === 'undefined' || et.cantidadDeJugadoresFin === '') throw new Error(`Etapa ${idx+1}: cantidad de jugadores al finalizar es obligatoria`);
+        if (typeof et.cantidadDeJugadoresFin === 'undefined' || et.cantidadDeJugadoresFin === '') throw new Error(`Etapa ${idx+1}: cantidad de ${form.dobles ? 'equipos' : 'jugadores'} al finalizar es obligatoria`);
         if (typeof et.duracionDias === 'undefined' || et.duracionDias === '') throw new Error(`Etapa ${idx+1}: duración (días) es obligatoria`);
         const formatoEtapa = formatosEtapas.filter(el => el.id == et.id)[0];
         return {
@@ -641,7 +652,7 @@ export default function CrearCampeonato() {
                     <option value="">-- Seleccionar formato --</option>
                     {formatos.map(f => (
                       <option key={f.id} value={f.id}>
-                        {f.nombre} ({f.cantidadJugadores} jugadores)
+                        {f.nombre} ({f.cantidadJugadores} {form.dobles ? 'equipos' : 'jugadores'})
                       </option>
                     ))}
                   </select>
@@ -676,7 +687,7 @@ export default function CrearCampeonato() {
                 <div className="alert alert-info mt-4">
                   <div>
                     <div className="font-semibold">{formatoData.nombre}</div>
-                    <div className="text-sm">Jugadores: {formatoData.cantidadJugadores}</div>
+                    <div className="text-sm">{form.dobles ? 'Equipos' : 'Jugadores'}: {formatoData.cantidadJugadores}</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="">
@@ -711,7 +722,7 @@ export default function CrearCampeonato() {
                         <div className="text-sm">Etapas: {formatoData.formatosEtapasIDs.join(', ')}</div>
                         <div className="mt-3">
                           <div className="font-semibold">Configuración de Etapas</div>
-                          <div className="text-xs opacity-60 mb-2">Complete la cantidad de jugadores al finalizar cada etapa y la duración (días). Ambos campos son obligatorios.</div>
+                <div className="text-xs opacity-60 mb-2">Complete la cantidad de {form.dobles ? 'equipos' : 'jugadores'} al finalizar cada etapa y la duración (días). Ambos campos son obligatorios.</div>
                           
                           <div className="space-y-2">
                             {etapasConfig.map((et, idx) => {
@@ -729,7 +740,7 @@ export default function CrearCampeonato() {
                                     </div>
                                   ): <br />}
                                   <div>
-                                    <input type="number" min="1" className="input input-sm input-bordered w-full" placeholder="Jugadores al finalizar" value={et.cantidadDeJugadoresFin} onChange={e => handleEtapaChange(idx, 'cantidadDeJugadoresFin', e.target.value)} required />
+                                    <input type="number" min="1" className="input input-sm input-bordered w-full" placeholder={`${form.dobles ? 'Equipos' : 'Jugadores'} al finalizar`} value={et.cantidadDeJugadoresFin} onChange={e => handleEtapaChange(idx, 'cantidadDeJugadoresFin', e.target.value)} required />
                                   </div>
                                   <div>
                                     <input type="number" min="1" className="input input-sm input-bordered w-full" placeholder="Duración (días)" value={et.duracionDias} onChange={e => handleEtapaChange(idx, 'duracionDias', e.target.value)} required />
@@ -745,7 +756,7 @@ export default function CrearCampeonato() {
 
                           <div className="divider"></div>
                           <div className="flex items-center justify-between">
-                            <div className="text-sm">Jugadores iniciales: <strong>{form.cantidadParticipantes}</strong></div>
+                            <div className="text-sm">{form.dobles ? 'Equipos' : 'Jugadores'} iniciales: <strong>{form.cantidadParticipantes}</strong></div>
                             <div className="text-sm">Total días (sum): <strong>{etapasConfig.reduce((s, it) => s + (Number(it.duracionDias)||0), 0)}</strong></div>
                           </div>
                         </div>
@@ -794,7 +805,7 @@ export default function CrearCampeonato() {
               ) : (
                 <div className="space-y-3">
                   {formatos.map(f => (
-                    <FormatoItem key={f.id} formato={f} onEdit={openEditFormato} />
+                    <FormatoItem key={f.id} formato={f} onEdit={openEditFormato} dobles={form.dobles} />
                   ))}
                 </div>
               )}
@@ -851,7 +862,7 @@ export default function CrearCampeonato() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-semibold">Cantidad de Jugadores</span>
+                <span className="label-text font-semibold">Cantidad de {form.dobles ? 'Equipos' : 'Jugadores'}</span>
               </label>
               <input 
                 type="number" 

@@ -48,10 +48,10 @@ export default function Perfil() {
         const data = await res.json();
         setUserData(data);
         console.log(data)
-        setLoadingUser(false);
       } catch (err) {
         console.error("fetchUserData error:", err);
         setUserData(null);
+      } finally{
         setLoadingUser(false);
       }
     };
@@ -121,7 +121,7 @@ export default function Perfil() {
                 <div className="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
                   <img
                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      user.nombre || user.email || "U"
+                      user.nombre + ' ' + userData?.apellido || user.email || "U"
                     )}&background=0D8ABC&color=fff&size=128`}
                     alt="avatar"
                   />

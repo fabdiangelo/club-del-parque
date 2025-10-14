@@ -225,11 +225,13 @@ const FaseEliminacion = ({ rondas = [] }) => {
                       <div className="bg-cyan-400 bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10">
                         <div className="flex items-center justify-between p-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {console.log('partido')}
+                            {console.log({partido})}
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador1?.charAt(0) || '?'}
+                              {partido.jugador1Nombre?.charAt(0) || '?'}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador1 || 'Por Definirse'}
+                              {partido.jugador1Nombre || 'Por Definirse'}
                             </span>
                           </div>
                           {partido.puntaje1 !== undefined ? (
@@ -244,10 +246,10 @@ const FaseEliminacion = ({ rondas = [] }) => {
                         <div className="flex items-center justify-between p-3 border-t border-cyan-300 border-opacity-30">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador2?.charAt(0) || '?'}
+                              {partido.jugador2Nombre?.charAt(0) || '?'}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador2 || 'Por Definirse'}
+                              {partido.jugador2Nombre || 'Por Definirse'}
                             </span>
                           </div>
                           {partido.puntaje2 !== undefined && (

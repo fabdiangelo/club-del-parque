@@ -91,6 +91,7 @@ class InscribirFederado {
     // 7) Asociar al la primera etapa
     if (!Array.isArray(campeonato.etapasIDs) || campeonato.etapasIDs.length === 0) {
       // No hay etapas definidas, devolvemos el id de la inscripción
+      console.log("no hay etapas registradas")
       return fcId;
     }
 
@@ -166,6 +167,7 @@ class InscribirFederado {
           // Solo asignar en la primera ronda de inscripciones (la creación estableció jugadorXOrigen === 'inscripcion' para la ronda 0)
           if (partido.jugador1Origen === 'inscripcion' && !partido.jugador1Id) {
             partido.jugador1Id = uid;
+            partido.jugador1Nombre = `${federado.nombre || ''} ${federado.apellido || ''}`.trim();
             const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
             asignado = true;
@@ -173,6 +175,7 @@ class InscribirFederado {
           }
           if (partido.jugador2Origen === 'inscripcion' && !partido.jugador2Id) {
             partido.jugador2Id = uid;
+            partido.jugador2Nombre = `${federado.nombre || ''} ${federado.apellido || ''}`.trim();
             const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
             asignado = true;
