@@ -23,6 +23,7 @@ import CampeonatosFederadosController from "./src/controllers/CampeonatosFederad
 import PartidoController from "./src/controllers/PartidoController.js";
 import CanchaController from "./src/controllers/CanchaController.js";
 import TemporadaController from "./src/controllers/TemporadaController.js";
+import ReservaController from "./src/controllers/ReservaController.js";
 
 /* ---------------- Boot logs ---------------- */
 console.log(
@@ -37,13 +38,13 @@ console.log(
   "[boot] STORAGE_EMULATOR_HOST =",
   process.env.STORAGE_EMULATOR_HOST || "(unset)"
 );
-import ReservaController from "./src/controllers/ReservaController.js";
+
 /* ---------------- Global fn settings ---------------- */
-setGlobalOptions({
-  maxInstances: 10,
-  timeoutSeconds: 180,
-  memory: "512MB",
-});
+// setGlobalOptions({
+//   maxInstances: 10,
+//   timeoutSeconds: 180,
+//   memory: "512MB",
+// });
 
 /* ---------------- Boot logs (sanity) ---------------- */
 console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);

@@ -1,13 +1,17 @@
-import { ChevronLeft, ChevronRight, Trophy, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 import Navbar from "../components/Navbar";
 import CampeonatoData from '../components/campeonato/CampeonatoData';
 
+import { MessageSquare } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
 export default function FixtureCampeonato() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [campeonato, setCampeonato] = useState(null);
   const [etapa, setEtapa] = useState(null);
@@ -18,8 +22,33 @@ export default function FixtureCampeonato() {
       const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include'});
       if (res.ok) {
         const data = await res.json();
-        setCampeonato(data)
-        setEtapa(data.etapas[etapaActual])
+        // Calcular fechas de inicio y fin para cada etapa en cadena
+        const inicioCampeonato = data.inicio ? new Date(data.inicio) : new Date();
+        let cursor = new Date(inicioCampeonato);
+        const etapasConFechas = (data.etapas || []).map((et, idx) => {
+          const duracion = Number(et.duracionDias) || 0;
+          const inicio = new Date(cursor);
+          // La etapa finaliza al final del día de su duración
+          const fin = new Date(inicio);
+          fin.setDate(fin.getDate() + Math.max(0, duracion - 1));
+          // Preparar cursor para la siguiente etapa: día siguiente del fin
+          cursor = new Date(fin);
+          cursor.setDate(cursor.getDate() + 1);
+          return {
+            ...et,
+            inicio: inicio.toISOString(),
+            fin: fin.toISOString(),
+            duracionDias: duracion
+          };
+        });
+
+        const campeonatoConFechas = {
+          ...data,
+          etapas: etapasConFechas
+        };
+
+        setCampeonato(campeonatoConFechas);
+        setEtapa(campeonatoConFechas.etapas[etapaActual]);
         console.log(data)
       } 
     } catch (e) {
@@ -83,71 +112,102 @@ export default function FixtureCampeonato() {
 
       <div className="max-w-7xl mx-auto">
         {etapa?.tipoEtapa === 'roundRobin' ? (
-          <FaseGrupos grupos={etapa?.grupos} />
+          <FaseGrupos grupos={etapa?.grupos} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias}/>
         ) : (
-          <FaseEliminacion rondas={etapa?.rondas} />
+          <FaseEliminacion rondas={etapa?.rondas} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias} />
         )}
       </div>
     </div>
   );
 }
 
-const FaseGrupos = ({ grupos }) => {
+const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
+  const fechaFinEtapa = new Date(fechaInicio);
+  fechaFinEtapa.setDate(fechaFinEtapa.getDate() + duracion);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const userGrupo = grupos?.find(grupo => 
+    grupo.jugadores?.some(jugador => jugador.id === user?.uid)
+  );
+  
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {grupos?.map((grupo, idx) => (
-        <div key={idx} className="bg-gray-800 text-white rounded-xl shadow-xl overflow-hidden">
-          <div className="bg-gray-900 px-6 py-4">
-            <h3 className="text-xl font-bold">{grupo.nombre}</h3>
-          </div>
-          <div className="p-6">
-            <div className="flex text-sm font-semibold mb-3 px-3 text-cyan-300">
-              <span className="flex-1">Jugador</span>
-              <span className="w-12 text-center">G | P</span>
-              <span className="w-16 text-center">Puntos</span>
+    <>
+      <h3 style={{zIndex:'30', width: '100%', marginTop: '', position:'sticky', top:'3rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
+        Round Robin
+        <br />
+        <label className='label'>
+          {new Date(fechaInicio).toLocaleDateString()} - {fechaFinEtapa.toLocaleDateString()}
+        </label>
+      </h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {grupos?.map((grupo, idx) => (
+          <div key={idx} className="bg-gray-800 text-white rounded-xl shadow-xl overflow-hidden">
+            <div className="bg-gray-900 px-6 py-4">
+              <h3 className="text-xl font-bold">{grupo.nombre}</h3>
             </div>
-            {grupo.jugadores?.map((jugador, jIdx) => (
-              <>
-                {jugador.id ? (
-                  <div
-                    key={jIdx}
-                    className="flex items-center bg-gray-700 rounded-lg px-3 py-3 mb-2 hover:bg-gray-600 transition-colors"
-                  >
-                    <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                      {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
+            <div className="p-6">
+              <div className="flex text-sm font-semibold mb-3 px-3 text-cyan-300">
+                <span className="flex-1">Jugador</span>
+                <span className="w-12 text-center">G | P</span>
+                <span className="w-16 text-center">Puntos</span>
+              </div>
+              {grupo.jugadores?.map((jugador, jIdx) => (
+                <>
+                  {jugador.id ? (
+                      <div
+                      key={jIdx}
+                      className={(jugador.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
+                    >
+                      <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                        {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
+                      </div>
+                      <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
+                      {user && jugador.id !== user.uid && grupo.jugadores.filter(j => j.id == user.uid).length > 0 && (
+                        <button
+                          onClick={() => navigate(`/chats/${jugador.id}`)}
+                          className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
+                          title="Chatear con jugador"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      )}
+                      <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
+                      <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
                     </div>
-                    <span className="flex-1 font-medium">{jugador.nombre}</span>
-                    <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
-                    <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
-                  </div>
-                ) : (
-                  <div
+                  ) : new Date(fechaInicio) > new Date() ? (
+                    <div
                     key={jIdx}
-                    className="flex items-center bg-gray-500 rounded-lg px-3 py-3 mb-2 hover:bg-gray-700 transition-colors"
-                  >
-                    <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">?</div>
-                    <span className="flex-1 font-medium"><em>Por definirse</em></span>
-                    <span className="w-12 text-center text-sm"> | </span>
-                    <span className="w-16 text-center font-bold text-cyan-400">-</span>
-                  </div>
-                )}
-                </>
-            ))}
+                      className="flex items-center bg-gray-500 rounded-lg px-3 py-3 mb-2 hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">?</div>
+                      <span className="flex-1 font-medium"><em>Por definirse</em></span>
+                      <span className="w-12 text-center text-sm"> | </span>
+                      <span className="w-16 text-center font-bold text-cyan-400">-</span>
+                    </div>
+                  ): (<></>)}
+                  </>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 };
 
-const FaseEliminacion = ({ rondas = [] }) => {
+const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
   const partidoGanado = rondas[rondas.length - 1]?.partidos[0] || null;
   const ganador = partidoGanado?.ganador;
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Calcular la altura de cada partido basado en la ronda
   const calcularEspaciado = (rondaIdx) => {
     return Math.pow(2, rondaIdx) * 120; // Espaciado exponencial
   };
+
+  const diasPorRonda = Math.round(duracion / (rondas.length - 1))
 
   return (
     <div className="relative bg-white rounded-xl shadow-xl overflow-x-auto p-8">
@@ -157,15 +217,27 @@ const FaseEliminacion = ({ rondas = [] }) => {
           const offsetInicial = espaciado / 2;
           const margenEntrePartidos = 24; // Margen fijo entre partidos
 
+          const fechaFinRonda = new Date(fechaInicio);
+          fechaFinRonda.setDate(fechaFinRonda.getDate() + diasPorRonda * (rIdx + 1));
+          ronda.inicioDate = new Date(new Date(fechaInicio).getTime() + diasPorRonda * rIdx * 24 * 60 * 60 * 1000);
+          ronda.inicio = ronda.inicioDate.toLocaleDateString();
+          ronda.fin = fechaFinRonda.toLocaleDateString();
+
           return (
             <div key={rIdx} className="relative flex flex-col items-center flex-1">
-              <h3 style={{zIndex:'30', width: '100%', marginTop: '-4rem', position:'sticky', top:'-3rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
+              <h3 style={{zIndex:'30', width: '100%', marginTop: '-4rem', position:'sticky', top:'-2rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
                 {ronda.nombre}
+                <br />
+                <label className='label'>
+                  {ronda.inicio} - {ronda.fin}
+                </label>
               </h3>
               
               <div className="relative w-full" style={{ paddingTop: `${offsetInicial}px` }}>
                 {ronda.partidos.map((partido, pIdx) => {
                   const posicionY = pIdx * espaciado;
+                  const esParticipante = user && (partido.jugador1Id === user.uid || partido.jugador2Id === user.uid);
+                  const oponenteId = partido.jugador1Id === user?.uid ? partido.jugador2Id : partido.jugador1Id;
                   
                   return (
                     <div 
@@ -222,14 +294,15 @@ const FaseEliminacion = ({ rondas = [] }) => {
                         </svg>
                       )}
 
-                      <div className="bg-cyan-400 bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10">
+                      <div className={(esParticipante ? "bg-cyan-300 ": "bg-cyan-400 ") + "bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10"}>
                         <div className="flex items-center justify-between p-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador1?.charAt(0) || '?'}
+                              {partido.jugador1Nombre?.charAt(0) || (ronda.inicioDate < new Date() ? '-' : '?')}
+                            {console.log(typeof ronda.inicioDate)}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador1 || 'Por Definirse'}
+                              {partido.jugador1Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')}
                             </span>
                           </div>
                           {partido.puntaje1 !== undefined ? (
@@ -239,19 +312,38 @@ const FaseEliminacion = ({ rondas = [] }) => {
                           ) : (
                             <span className="text-sm text-black ml-2" style={{position: 'absolute', marginTop:'3.5rem', right: '1rem'}}>Sin agendar</span>
                           )}
+
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == partido.jugador1Id && (
+                            <button
+                              onClick={() => navigate(`/chats/${oponenteId}`)}
+                              className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
+                              title="Agendar partido"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                         
                         <div className="flex items-center justify-between p-3 border-t border-cyan-300 border-opacity-30">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador2?.charAt(0) || '?'}
+                              {partido.jugador2Nombre?.charAt(0) || (ronda.inicioDate < new Date() ? '-' : '?')}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador2 || 'Por Definirse'}
+                              {partido.jugador2Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')}
                             </span>
                           </div>
                           {partido.puntaje2 !== undefined && (
                             <span className="font-bold text-black text-lg ml-2">{partido.puntaje2}</span>
+                          )}
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == partido.jugador2Id && (
+                            <button
+                              onClick={() => navigate(`/chats/${oponenteId}`)}
+                              className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
+                              title="Agendar partido"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
                       </div>

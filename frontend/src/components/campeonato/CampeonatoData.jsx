@@ -63,8 +63,7 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
       if (res.ok) {
         setInscripto(true);
         if(onRefresh){
-          const data = await res.json();
-          onRefresh(data);
+          onRefresh();
         }
 
       } 
@@ -107,6 +106,9 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
         inicio: form.inicio,
         fin: dateFin,
       });
+      if(onRefresh){
+        onRefresh()
+      }
     } catch (err) {
       console.error("update error:", err);
     }  finally {

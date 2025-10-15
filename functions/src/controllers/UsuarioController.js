@@ -27,14 +27,16 @@ class UsuarioController {
       const user = GetActualUser.execute(sessionCookie)
       const { uid } = user;
 
-      if( userId !== uid && user.rol !== "administrador"){
-        return res.status(401).json({ error: "Acceso no autorizado" });
-      }
       console.log('user: ' + JSON.stringify(user))
-      const userData = await ObtenerDatosUsuario.execute(uid, user.rol);
+      console.log('userID: ' + JSON.stringify(userId))
+      
+      if( userId == uid || user.rol == "administrador"){
+        const userData = await ObtenerDatosUsuario.execute(userId);
+        return res.json(userData);
+      }
+      const userData = await ObtenerDatosUsuario.execute(userId);
 
-      console.log('user data: ' + userData)
-      return res.json(userData);
+      return res.json({id: userData.id, nombre: userData.nombre, email: userData.email});
     } catch (error) {
       console.error("Error in /me:", error);
       return res.status(401).json({ error: "Invalid or expired session" });
