@@ -88,7 +88,7 @@ class CrearCampeonato {
         et.permitirEmpate, 
         et.cantidadDeJugadoresIni || null, 
         et.cantidadDeJugadoresFin, 
-        fechaFin,
+        et.duracionDias,
         estructuraEtapa.grupos || null,
         estructuraEtapa.rondas || null
       );
