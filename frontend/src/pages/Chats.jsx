@@ -305,9 +305,25 @@ const Chats = () => {
       }
 
       // If not found, fetch user info to set participante2
-      // Prevent concurrent creations for same otherUserId
+      // Prevent concurrent creations for same otherUserId (in-memory)
       if (pendingCreationsRef.current.has(otherUserId)) {
         return;
+      }
+
+      // Also use a persistent lock in localStorage to survive StrictMode double-mounts
+      const lockKey = `creating_chat_${user.uid}_${otherUserId}`;
+      const lockTTL = 10000; // 10s
+      const existingLock = localStorage.getItem(lockKey);
+      if (existingLock) {
+        try {
+          const parsed = JSON.parse(existingLock);
+          if (Date.now() - parsed.ts < lockTTL) {
+            // another creation in progress recently
+            return;
+          }
+        } catch (e) {
+          // ignore parse
+        }
       }
 
       // Re-check chats once more right before creating to avoid race conditions
@@ -352,32 +368,50 @@ const Chats = () => {
       const participante2 = { uid: usuarioData.id, nombre: usuarioData.nombre, email: usuarioData.email };
 
       const chatsRef = ref(dbRT, 'chats/');
-      // mark pending to avoid duplicate creations
+      // mark pending to avoid duplicate creations (in-memory)
       pendingCreationsRef.current.add(otherUserId);
 
-      const nuevoChatRef = push(chatsRef);
+      // set persistent lock
+      localStorage.setItem(lockKey, JSON.stringify({ ts: Date.now() }));
+      let weSetLock = true;
+
+      // Use deterministic key based on sorted UIDs to avoid duplicate chats with different IDs
+      const chatKey = [user.uid, usuarioData.id].sort().join('__');
+      const chatRef = ref(dbRT, `chats/${chatKey}`);
+      const existingChatSnap = await get(chatRef);
       const obj = {
-        id: nuevoChatRef.key,
+        id: chatKey,
         participantes: [participante1, participante2],
         mensajes: [],
         ultimoMensaje: 'Todavía no hay mensajes'
       };
-      await set(nuevoChatRef, obj);
-      setChatSeleccionado(obj);
-      // subscribe to messages for the newly created chat
-      if (mensajesListenerRef.current) {
-        mensajesListenerRef.current();
-        mensajesListenerRef.current = null;
+      try {
+        if (existingChatSnap && existingChatSnap.exists()) {
+          const existing = existingChatSnap.val();
+          setChatSeleccionado(existing);
+        } else {
+          await set(chatRef, obj);
+          setChatSeleccionado(obj);
+
+          // subscribe to messages for the newly created chat
+          if (mensajesListenerRef.current) {
+            mensajesListenerRef.current();
+            mensajesListenerRef.current = null;
+          }
+          const mensajeRefNew = ref(dbRT, `chats/${obj.id}/mensajes`);
+          const unsubscribeNew = onValue(mensajeRefNew, (mensajeSnap) => {
+            const data = mensajeSnap.val() || {};
+            const mensajesArr = Object.entries(data).map(([id, msg]) => ({ id, ...msg }));
+            setMensajesChat(mensajesArr);
+          });
+          mensajesListenerRef.current = unsubscribeNew;
+        }
+      } finally {
+        // remove pending flags and locks
+        pendingCreationsRef.current.delete(otherUserId);
+        if (weSetLock) localStorage.removeItem(lockKey);
       }
-      const mensajeRefNew = ref(dbRT, `chats/${obj.id}/mensajes`);
-      const unsubscribeNew = onValue(mensajeRefNew, (mensajeSnap) => {
-        const data = mensajeSnap.val() || {};
-        const mensajesArr = Object.entries(data).map(([id, msg]) => ({ id, ...msg }));
-        setMensajesChat(mensajesArr);
-      });
-      mensajesListenerRef.current = unsubscribeNew;
-      // remove pending flag after creation
-      pendingCreationsRef.current.delete(otherUserId);
+      
 
     } catch (error) {
       console.error('Error al abrir o crear chat por userId', error);

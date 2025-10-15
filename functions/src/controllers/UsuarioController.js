@@ -28,12 +28,15 @@ class UsuarioController {
       const { uid } = user;
 
       console.log('user: ' + JSON.stringify(user))
-      const userData = await ObtenerDatosUsuario.execute(userId);
+      console.log('userID: ' + JSON.stringify(userId))
       
-      if( userId !== uid && user.rol !== "administrador"){
+      if( userId == uid || user.rol == "administrador"){
+        const userData = await ObtenerDatosUsuario.execute(userId);
         return res.json(userData);
       }
-      return {id: userData.id, nombre: userData.nombre, email: userData.email}
+      const userData = await ObtenerDatosUsuario.execute(userId);
+
+      return res.json({id: userData.id, nombre: userData.nombre, email: userData.email});
     } catch (error) {
       console.error("Error in /me:", error);
       return res.status(401).json({ error: "Invalid or expired session" });
