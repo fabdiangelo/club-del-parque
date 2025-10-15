@@ -21,6 +21,8 @@ import Rankings from './pages/Ranking';
 import TemporadasPage from './pages/Temporadas';
 import PartidosGestor from './pages/PartidosGestor';
 import AcuerdoResultado from './pages/AcuerdoResultado';
+import NotFound from './pages/NotFound';
+import Partido from './pages/Partido';
 
 function App() {
   return (
@@ -46,6 +48,10 @@ function App() {
       <Route path="/administracion" element={<Administracion />} />
       <Route path="/administracion/reportes" element={<AdministracionReportes />} />
       <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />
+      <Route path="/partido/:id" element={<Partido />} />
+      <Route path="*" element={<NotFound />} />
+
+
     </Routes>
   );
 }

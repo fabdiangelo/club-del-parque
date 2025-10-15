@@ -51,7 +51,8 @@ export default function FixtureCampeonato() {
           inicio={campeonato?.inicio}
           fin={campeonato?.fin}
           requisitosParticipacion={campeonato?.requisitosParticipacion}
-          rol={user?.rol}
+          user={user}
+          participantes={campeonato?.federadosCampeonatoIDs}
           onRefresh={load}
         />
       </div>
@@ -106,28 +107,31 @@ const FaseGrupos = ({ grupos }) => {
               <span className="w-16 text-center">Puntos</span>
             </div>
             {grupo.jugadores?.map((jugador, jIdx) => (
-              <div
-                key={jIdx}
-                className="flex items-center bg-gray-700 rounded-lg px-3 py-3 mb-2 hover:bg-gray-600 transition-colors"
-              >
+              <>
                 {jugador.id ? (
-                  <>
+                  <div
+                    key={jIdx}
+                    className="flex items-center bg-gray-700 rounded-lg px-3 py-3 mb-2 hover:bg-gray-600 transition-colors"
+                  >
                     <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                       {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
                     </div>
                     <span className="flex-1 font-medium">{jugador.nombre}</span>
                     <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
                     <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div
+                    key={jIdx}
+                    className="flex items-center bg-gray-500 rounded-lg px-3 py-3 mb-2 hover:bg-gray-700 transition-colors"
+                  >
                     <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">?</div>
                     <span className="flex-1 font-medium"><em>Por definirse</em></span>
                     <span className="w-12 text-center text-sm"> | </span>
                     <span className="w-16 text-center font-bold text-cyan-400">-</span>
-                  </>
+                  </div>
                 )}
-              </div>
+                </>
             ))}
           </div>
         </div>
@@ -221,11 +225,13 @@ const FaseEliminacion = ({ rondas = [] }) => {
                       <div className="bg-cyan-400 bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10">
                         <div className="flex items-center justify-between p-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {console.log('partido')}
+                            {console.log({partido})}
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador1?.charAt(0) || '?'}
+                              {partido.jugador1Nombre?.charAt(0) || '?'}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador1 || 'Por Definirse'}
+                              {partido.jugador1Nombre || 'Por Definirse'}
                             </span>
                           </div>
                           {partido.puntaje1 !== undefined ? (
@@ -240,10 +246,10 @@ const FaseEliminacion = ({ rondas = [] }) => {
                         <div className="flex items-center justify-between p-3 border-t border-cyan-300 border-opacity-30">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador2?.charAt(0) || '?'}
+                              {partido.jugador2Nombre?.charAt(0) || '?'}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador2 || 'Por Definirse'}
+                              {partido.jugador2Nombre || 'Por Definirse'}
                             </span>
                           </div>
                           {partido.puntaje2 !== undefined && (

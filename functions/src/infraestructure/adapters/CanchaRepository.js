@@ -11,7 +11,7 @@ export class CanchaRepository {
     }
 
     async getById(id) {
-        return this.db.getItem('canchas', id).then(doc => doc.data());
+        return this.db.getItem('canchas', id);
     }
 
     async save(cancha) {

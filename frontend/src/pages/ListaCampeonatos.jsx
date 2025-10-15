@@ -65,6 +65,7 @@ export default function ListaCampeonatos() {
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {console.log(campeonatos)}
               {campeonatos.map((campeonato) => (
                 <CampeonatoData
                   key={campeonato.id}
@@ -74,7 +75,8 @@ export default function ListaCampeonatos() {
                   inicio={campeonato.inicio}
                   fin={campeonato.fin}
                   requisitosParticipacion={campeonato.requisitosParticipacion}
-                  rol={user?.rol}
+                  user={user}
+                  participantes={campeonato.federadosCampeonatoIDs}
                   conRedireccion={true}
                 />
               ))}
