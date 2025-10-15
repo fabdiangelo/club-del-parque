@@ -22,6 +22,7 @@ import TemporadasPage from './pages/Temporadas';
 import PartidosGestor from './pages/PartidosGestor';
 import NotFound from './pages/NotFound';
 import Partido from './pages/Partido';
+import Reservas from './pages/Reservas';
 
 function App() {
   return (
@@ -59,6 +60,9 @@ function App() {
 
 
       <Route path="*" element={<NotFound />} />
+      <Route path="/reservas" element={<Reservas />}/>
+
+
     </Routes>
   );
 }

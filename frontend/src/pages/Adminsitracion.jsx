@@ -314,9 +314,7 @@ const Administracion = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-bold text-white">TICKETS ({reportes.length})</h2>
-              {/* {reportesNoLeidos > 0 && (
-                <span className="badge badge-error badge-lg">{reportesNoLeidos} sin leer</span>
-              )} */}
+              
             </div>
             
             <div className="overflow-x-auto flex flex-col justify-center">

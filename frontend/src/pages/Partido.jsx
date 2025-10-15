@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import NavbarBlanco from '../components/NavbarBlanco';
-import './Partido.css';
+import '../styles/Partido.css';
 
 const Partido = () => {
     const { id } = useParams();
