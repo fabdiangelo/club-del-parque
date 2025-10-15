@@ -104,74 +104,8 @@ app.get("/noticias/:id", (req, res) => NoticiaController.obtenerPorId(req, res))
 app.post("/noticias", (req, res) => NoticiaController.crear(req, res));
 app.put("/noticias/:id", (req, res) => NoticiaController.actualizar(req, res));
 app.delete("/noticias/:id", (req, res) => NoticiaController.eliminar(req, res));
-app.delete("/noticias/:id/imagenes/:index?", async (req, res) => {
-  try {
-    const { id, index: idxParam } = req.params;
-    let index = typeof idxParam !== "undefined" ? Number(idxParam) : undefined;
-    const imagePath =
-      req.query.imagePath ||
-      (req.body && typeof req.body.imagePath === "string"
-        ? req.body.imagePath
-        : undefined);
-
-    if (typeof index === "number" && Number.isFinite(index)) {
-      // ok
-    } else if (imagePath) {
-      index = undefined;
-    } else if (req.body && typeof req.body.index === "number") {
-      index = req.body.index;
-    } else {
-      return res.status(400).json({ error: "Provide imagePath or index" });
-    }
-    const ref = typeof index === "number" ? { index } : { imagePath };
-    const out = await NoticiaController.eliminarImagenBy(id, ref);
-    if (!out?.ok)
-      return res.status(404).json({ error: "Imagen no encontrada" });
-    res.json({ ok: true });
-  } catch (e) {
-    console.error("DEL imagen error:", e);
-    res.status(400).json({ error: e?.message || "Error eliminando imagen" });
-  }
-});
-app.post("/noticias/:id/imagenes-json", async (req, res) => {
-  try {
-    try {
-      req.setTimeout(0);
-    } catch {}
-    const { id } = req.params;
-    const { images } = req.body || {};
-    if (!Array.isArray(images) || images.length === 0) {
-      return res.status(400).json({ error: "Faltan imágenes (images[])" });
-    }
-    const normalized = images.map((it, i) => {
-      const fileName = it?.filename || `image-${i}.bin`;
-      const contentType = it?.contentType || "application/octet-stream";
-      const dataB64 = it?.dataBase64;
-      if (typeof dataB64 !== "string" || dataB64.length === 0) {
-        throw new Error(`Imagen #${i} inválida (dataBase64)`);
-      }
-      const buffer = Buffer.from(dataB64, "base64");
-      return {
-        buffer,
-        originalname: fileName,
-        mimetype: contentType,
-        size: buffer.length,
-      };
-    });
-    console.log(`[imagenes-json] ${id}: ${normalized.length} file(s)`);
-    const result = await NoticiaController.subirImagenes(id, normalized);
-    return res.json(result);
-  } catch (err) {
-    const msg = err?.message || String(err);
-    console.error("imagenes-json ERROR:", msg);
-    if (/noticia not found/i.test(msg))
-      return res.status(404).json({ error: msg });
-    if (/too large|entity too large|payload too large/i.test(msg)) {
-      return res.status(413).json({ error: "Payload demasiado grande" });
-    }
-    return res.status(400).json({ error: msg });
-  }
-});
+app.delete("/noticias/:id/imagenes/:index?", async (req, res) => NoticiaController.eliminarImagenID(req, res));
+app.post("/noticias/:id/imagenes-json", async (req, res) => NoticiaController.subirImagenesID(req, res));
 
 // Infraestructura
 app.get("/infraestructura/metricas", (req, res) => InfraestructuraController.obtenerMetricas(req, res));

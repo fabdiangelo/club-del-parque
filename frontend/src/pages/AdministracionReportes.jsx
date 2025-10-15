@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReporteFederacionModal from '../components/administracion-reportes/ReporteFederacionModal';
 import ReporteDefaultModal from '../components/administracion-reportes/ReporteDefaultModal';
 import SoloAdmin from '../components/SoloAdmin';
-import Navbar from '../components/Navbar';
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { useAuth } from '../contexts/AuthProvider';
 import { Users, AlertCircle, CheckCircle, Clock, Calendar  } from 'lucide-react';
 
@@ -185,7 +185,7 @@ const AdministracionReportes = () => {
           left: 0,
         }}
       ></div>
-      <Navbar />
+      <NavbarBlanco />
       <div className="max-w-7xl mx-auto relative" style={{ marginTop: '3rem', zIndex: 1 }}>
         {/* Header */}
         <div className="mb-8" style={{ marginTop: '4rem', zIndex: 1 }}>

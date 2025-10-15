@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SoloAdmin from '../components/SoloAdmin';
-import Navbar from '../components/Navbar';
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { useAuth } from '../contexts/AuthProvider';
 import { Users, User, AlertCircle, KeyRound, Clock, Pencil, Trash2, Award, CalendarFold, OctagonAlertIcon, RefreshCw } from 'lucide-react';
 import ConfirmActionModal from '../components/administracion-usuarios/ConfirmActionModal';
@@ -274,7 +274,7 @@ const AdministracionUsuarios = () => {
           left: 0,
         }}
       ></div>
-      <Navbar />
+      <NavbarBlanco />
       <div className="max-w-7xl mx-auto relative" style={{ marginTop: '3rem', zIndex: 1 }}>
         {/* Header */}
         <div className="mb-8" style={{ marginTop: '4rem', zIndex: 1 }}>

@@ -1,7 +1,7 @@
 // src/pages/TemporadasPage.jsx
 import { useMemo, useState } from "react";
 import useTemporadas from "../hooks/useTemporadas";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { AlertTriangle, CalendarPlus, Check } from "lucide-react";
 import bgImg from "../assets/RankingsBackground.png";
 
@@ -68,7 +68,7 @@ export default function TemporadasPage() {
       <div className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Navbar />
+        <NavbarBlanco />
 
         <header className="w-full">
           <div

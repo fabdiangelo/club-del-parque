@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
 
-import Navbar from "../components/Navbar.jsx";
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 
 function Registro() {

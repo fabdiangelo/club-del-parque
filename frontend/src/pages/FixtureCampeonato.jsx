@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import CampeonatoData from '../components/campeonato/CampeonatoData';
 
 import { MessageSquare } from 'lucide-react';
@@ -71,7 +71,7 @@ export default function FixtureCampeonato() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8 mt-14">
-      <Navbar />
+      <NavbarBlanco />
       <div className="max-w-7xl mx-auto mb-8">
         <CampeonatoData
           id={id}

@@ -1,7 +1,7 @@
 // src/pages/Homepage.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import logoUrl from "../assets/Logo.svg";
 import "../styles/Home.css";
 import RichTextEditor from "../components/RichTextEditor";
@@ -131,7 +131,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
       {/* NAVBAR */}
-      <Navbar transparent={!scrolled} />
+      <NavbarBlanco transparent={!scrolled} />
 
       {/* HERO */}
       <section

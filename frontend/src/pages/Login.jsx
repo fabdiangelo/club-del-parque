@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
-
-import Navbar from "../components/Navbar.jsx";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 
 import { 
   loginAndSendToBackend, 
   signInWithGoogle,
   linkGoogleToExistingAccount, 
 } from "../utils/LoginProviders.js";
-import NavbarBlanco from "../components/NavbarBlanco.jsx";
 
 function Login() {
   const [email, setEmail] = useState("");

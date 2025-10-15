@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
-import Navbar from "../components/Navbar.jsx";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 
 export default function EditarPerfil() {
   const { user, loading } = useAuth();
@@ -168,7 +168,7 @@ export default function EditarPerfil() {
 
   return (
     <div className="min-h-screen bg-base-200 py-12 px-4" style={{ paddingTop: "6rem" }}>
-      <Navbar />
+      <NavbarBlanco />
       <div className="max-w-4xl mx-auto">
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">

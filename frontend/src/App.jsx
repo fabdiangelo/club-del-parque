@@ -50,7 +50,7 @@ function App() {
       
       
       {/* Rutas Administradores */}
-      <Route path="/creadorNoticias" element={<CrearNoticia />} />
+      <Route path="/crear-noticia" element={<CrearNoticia />} />
       <Route path="/crear-campeonato" element={<CrearCampeonato />} />
       <Route path="/temporadas" element={<TemporadasPage />} />
       <Route path="/administracion" element={<Administracion />} />

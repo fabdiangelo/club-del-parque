@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { defaultSchema } from "hast-util-sanitize";
 import "react-quill-new/dist/quill.bubble.css";
 import RichTextEditor from "../components/RichTextEditor";
@@ -323,7 +323,7 @@ export default function NoticiaDetalle() {
   if (fetching) {
     return (
       <div className="min-h-dvh w-full flex flex-col text-white" style={{ backgroundColor: PAGE_BG }}>
-        <Navbar />
+        <NavbarBlanco />
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16 text-center">
           <p className="text-lg opacity-80">Cargando…</p>
         </div>
@@ -334,7 +334,7 @@ export default function NoticiaDetalle() {
   if (!noticia) {
     return (
       <div className="min-h-dvh w-full flex flex-col text-white" style={{ backgroundColor: PAGE_BG }}>
-        <Navbar />
+        <NavbarBlanco />
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
           <div className="rounded-2xl p-8" style={{ backgroundColor: CARD_BG }}>
             <h1 className="text-2xl font-semibold">Noticia no encontrada</h1>
@@ -351,7 +351,7 @@ export default function NoticiaDetalle() {
 
   return (
     <div className="min-h-dvh w-full flex flex-col text-white" style={{ backgroundColor: PAGE_BG }}>
-      <Navbar />
+      <NavbarBlanco />
 
       <section className="relative">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
