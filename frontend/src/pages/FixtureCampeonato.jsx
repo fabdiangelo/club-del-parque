@@ -5,9 +5,13 @@ import { useAuth } from "../contexts/AuthProvider";
 import Navbar from "../components/Navbar";
 import CampeonatoData from '../components/campeonato/CampeonatoData';
 
+import { MessageSquare } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
 export default function FixtureCampeonato() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [campeonato, setCampeonato] = useState(null);
   const [etapa, setEtapa] = useState(null);
@@ -120,6 +124,13 @@ export default function FixtureCampeonato() {
 const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
   const fechaFinEtapa = new Date(fechaInicio);
   fechaFinEtapa.setDate(fechaFinEtapa.getDate() + duracion);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const userGrupo = grupos?.find(grupo => 
+    grupo.jugadores?.some(jugador => jugador.id === user?.uid)
+  );
+  
   return (
     <>
       <h3 style={{zIndex:'30', width: '100%', marginTop: '', position:'sticky', top:'3rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
@@ -144,14 +155,23 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
               {grupo.jugadores?.map((jugador, jIdx) => (
                 <>
                   {jugador.id ? (
-                    <div
+                      <div
                       key={jIdx}
-                      className="flex items-center bg-gray-700 rounded-lg px-3 py-3 mb-2 hover:bg-gray-600 transition-colors"
+                      className={(jugador.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
                     >
                       <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                         {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
                       </div>
-                      <span className="flex-1 font-medium">{jugador.nombre}</span>
+                      <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
+                      {user && jugador.id !== user.uid && grupo.jugadores.filter(j => j.id == user.uid).length > 0 && (
+                        <button
+                          onClick={() => navigate(`/chats/${jugador.id}`)}
+                          className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
+                          title="Chatear con jugador"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      )}
                       <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
                       <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
                     </div>
@@ -179,6 +199,8 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
 const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
   const partidoGanado = rondas[rondas.length - 1]?.partidos[0] || null;
   const ganador = partidoGanado?.ganador;
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Calcular la altura de cada partido basado en la ronda
   const calcularEspaciado = (rondaIdx) => {
@@ -214,6 +236,8 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
               <div className="relative w-full" style={{ paddingTop: `${offsetInicial}px` }}>
                 {ronda.partidos.map((partido, pIdx) => {
                   const posicionY = pIdx * espaciado;
+                  const esParticipante = user && (partido.jugador1Id === user.uid || partido.jugador2Id === user.uid);
+                  const oponenteId = partido.jugador1Id === user?.uid ? partido.jugador2Id : partido.jugador1Id;
                   
                   return (
                     <div 
@@ -270,7 +294,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                         </svg>
                       )}
 
-                      <div className="bg-cyan-400 bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10">
+                      <div className={(esParticipante ? "bg-cyan-300 ": "bg-cyan-400 ") + "bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10"}>
                         <div className="flex items-center justify-between p-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
@@ -288,6 +312,16 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                           ) : (
                             <span className="text-sm text-black ml-2" style={{position: 'absolute', marginTop:'3.5rem', right: '1rem'}}>Sin agendar</span>
                           )}
+
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == partido.jugador1Id && (
+                            <button
+                              onClick={() => navigate(`/chats/${oponenteId}`)}
+                              className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
+                              title="Agendar partido"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                         
                         <div className="flex items-center justify-between p-3 border-t border-cyan-300 border-opacity-30">
@@ -301,6 +335,15 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                           </div>
                           {partido.puntaje2 !== undefined && (
                             <span className="font-bold text-black text-lg ml-2">{partido.puntaje2}</span>
+                          )}
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == partido.jugador2Id && (
+                            <button
+                              onClick={() => navigate(`/chats/${oponenteId}`)}
+                              className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
+                              title="Agendar partido"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
                       </div>

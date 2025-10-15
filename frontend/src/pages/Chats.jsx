@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import '../styles/Chats.css'
 import { dbRT } from '../utils/FirebaseService.js'
 import { ref, onValue, getDatabase, push, set, get, update } from 'firebase/database';
@@ -37,6 +37,8 @@ const Chats = () => {
   const [tipoMensajeReserva, setTipoMensajeReserva] = useState(null);
 
   const { user } = useAuth();
+  const { id: routeUserId } = useParams();
+  const pendingCreationsRef = useRef(new Set());
 
   const generarReservaPartido = async() => {
 
@@ -267,6 +269,121 @@ const Chats = () => {
 
   }
 
+  // Try to open or create a chat with a user id (route param)
+  const abrirOCrearChatPorUserId = async (otherUserId) => {
+    if (!otherUserId || !user?.uid) return;
+
+    try {
+      // First search existing chats for this user
+      const response = ref(dbRT, 'chats/');
+      const snap = await get(response);
+      if (snap.exists()) {
+        const data = snap.val();
+        const dataArr = Array.isArray(data) ? data : Object.values(data);
+        const encontrado = dataArr.find(c =>
+          c.participantes && (
+            (c.participantes[0]?.uid === user.uid && c.participantes[1]?.uid === otherUserId) ||
+            (c.participantes[1]?.uid === user.uid && c.participantes[0]?.uid === otherUserId)
+          )
+        );
+        if (encontrado) {
+          setChatSeleccionado(encontrado);
+          // subscribe to messages (clean previous listener first)
+          if (mensajesListenerRef.current) {
+            mensajesListenerRef.current();
+            mensajesListenerRef.current = null;
+          }
+          const mensajeRef = ref(dbRT, `chats/${encontrado.id}/mensajes`);
+          const unsubscribe = onValue(mensajeRef, (mensajeSnap) => {
+            const data = mensajeSnap.val() || {};
+            const mensajesArr = Object.entries(data).map(([id, msg]) => ({ id, ...msg }));
+            setMensajesChat(mensajesArr);
+          });
+          mensajesListenerRef.current = unsubscribe;
+          return;
+        }
+      }
+
+      // If not found, fetch user info to set participante2
+      // Prevent concurrent creations for same otherUserId
+      if (pendingCreationsRef.current.has(otherUserId)) {
+        return;
+      }
+
+      // Re-check chats once more right before creating to avoid race conditions
+      const snap2 = await get(response);
+      if (snap2.exists()) {
+        const data2 = snap2.val();
+        const dataArr2 = Array.isArray(data2) ? data2 : Object.values(data2);
+        const encontrado2 = dataArr2.find(c =>
+          c.participantes && (
+            (c.participantes[0]?.uid === user.uid && c.participantes[1]?.uid === otherUserId) ||
+            (c.participantes[1]?.uid === user.uid && c.participantes[0]?.uid === otherUserId)
+          )
+        );
+        if (encontrado2) {
+          setChatSeleccionado(encontrado2);
+          if (mensajesListenerRef.current) {
+            mensajesListenerRef.current();
+            mensajesListenerRef.current = null;
+          }
+          const mensajeRef = ref(dbRT, `chats/${encontrado2.id}/mensajes`);
+          const unsubscribe2 = onValue(mensajeRef, (mensajeSnap) => {
+            const data = mensajeSnap.val() || {};
+            const mensajesArr = Object.entries(data).map(([id, msg]) => ({ id, ...msg }));
+            setMensajesChat(mensajesArr);
+          });
+          mensajesListenerRef.current = unsubscribe2;
+          return;
+        }
+      }
+
+      const usuarioRes = await fetch(`/api/usuario/${otherUserId}`, { credentials: 'include' });
+      if (!usuarioRes.ok) {
+        console.warn('No se pudo obtener info del usuario', otherUserId);
+        return;
+      }
+      const usuarioData = await usuarioRes.json();
+      setUsuarioSeleccionado({ id: usuarioData.id, nombre: usuarioData.nombre, email: usuarioData.email });
+
+      // create chat and select it
+      // re-use crearChat but that expects usuarioSeleccionado state; ensure it's set
+      const participante1 = { uid: user.uid, nombre: user.nombre, email: user.email };
+      const participante2 = { uid: usuarioData.id, nombre: usuarioData.nombre, email: usuarioData.email };
+
+      const chatsRef = ref(dbRT, 'chats/');
+      // mark pending to avoid duplicate creations
+      pendingCreationsRef.current.add(otherUserId);
+
+      const nuevoChatRef = push(chatsRef);
+      const obj = {
+        id: nuevoChatRef.key,
+        participantes: [participante1, participante2],
+        mensajes: [],
+        ultimoMensaje: 'Todavía no hay mensajes'
+      };
+      await set(nuevoChatRef, obj);
+      setChatSeleccionado(obj);
+      // subscribe to messages for the newly created chat
+      if (mensajesListenerRef.current) {
+        mensajesListenerRef.current();
+        mensajesListenerRef.current = null;
+      }
+      const mensajeRefNew = ref(dbRT, `chats/${obj.id}/mensajes`);
+      const unsubscribeNew = onValue(mensajeRefNew, (mensajeSnap) => {
+        const data = mensajeSnap.val() || {};
+        const mensajesArr = Object.entries(data).map(([id, msg]) => ({ id, ...msg }));
+        setMensajesChat(mensajesArr);
+      });
+      mensajesListenerRef.current = unsubscribeNew;
+      // remove pending flag after creation
+      pendingCreationsRef.current.delete(otherUserId);
+
+    } catch (error) {
+      console.error('Error al abrir o crear chat por userId', error);
+    }
+  }
+
   const cargarUsuarios = async () => {
  
     try {
@@ -356,6 +473,16 @@ const Chats = () => {
     });
     return () => unsuscribe();
   }, [user]);
+
+
+  // When route param is present, try to open or create chat
+  useEffect(() => {
+    if (!routeUserId) return;
+    // If the route points to the same as the logged-in user, ignore
+    if (user?.uid && routeUserId === user.uid) return;
+
+    abrirOCrearChatPorUserId(routeUserId);
+  }, [routeUserId, user]);
 
 
 useEffect(() => {

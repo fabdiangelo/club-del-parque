@@ -42,6 +42,7 @@ function App() {
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />
+      <Route path="/chats/:id" element={<Chats />} />
 
       {/* Rutas Federados */}
       <Route path="/ranking" element={<Rankings />} />
