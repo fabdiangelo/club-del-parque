@@ -41,7 +41,7 @@ class PrecargaFederados {
         const isMale = i % 2 === 0; // alternar para diversidad
         const nombre = isMale ? maleNames[(i/2 - 1) % maleNames.length] : femaleNames[((i-1)/2) % femaleNames.length];
         const apellido = apellidos[(i-1) % apellidos.length];
-        const genero = isMale ? 'masculino' : 'femenino';
+        const genero = isMale ? 'Masculino' : 'Femenino';
         const nacimiento = randomDate(new Date(1980,0,1), new Date(2015,11,31)).toISOString();
         // Check if auth user exists
         let userRecord;
@@ -72,7 +72,7 @@ class PrecargaFederados {
         }
 
         // Create usuario record if not exists
-        const existsUsuario = await this.db.getItem("usuarios", userRecord.uid);
+        const existsUsuario = await this.db.getItem("federados", userRecord.uid);
         if(!existsUsuario){
           const usuario = new Registrado(
             userRecord.uid,
@@ -83,9 +83,10 @@ class PrecargaFederados {
             nacimiento,
             genero
           );
-          await this.db.putItem("usuarios", usuario.toPlainObject(), userRecord.uid);
+          await this.db.putItem("federados", usuario.toPlainObject(), userRecord.uid);
           console.log(`Usuario creado en Firestore para ${email}`);
         } else {
+          this.db.updateItem("federados", userRecord.uid, {genero: genero, nacimiento: nacimiento})
           console.log(`Usuario ya existe en Firestore para ${email}`);
         }
 

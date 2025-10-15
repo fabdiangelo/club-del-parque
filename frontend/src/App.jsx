@@ -26,6 +26,7 @@ import Partido from './pages/Partido';
 function App() {
   return (
     <Routes>
+      {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
@@ -35,21 +36,28 @@ function App() {
       <Route path="/reportes" element={<SistemaReporte />} />
       <Route path="/campeonatos" element={<ListaCampeonatos />} />
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
-      <Route path="/ranking" element={<Rankings />} />
+      <Route path="/partido/:id" element={<Partido />} />
+
+      {/* Rutas Usuarios */}
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />
-            <Route path="/gestor-partidos" element={<PartidosGestor />} />
+
+      {/* Rutas Federados */}
+      <Route path="/ranking" element={<Rankings />} />
+      <Route path="/gestor-partidos" element={<PartidosGestor />} />
+      
+      
+      {/* Rutas Administradores */}
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/crear-campeonato" element={<CrearCampeonato />} />
       <Route path="/temporadas" element={<TemporadasPage />} />
       <Route path="/administracion" element={<Administracion />} />
       <Route path="/administracion/reportes" element={<AdministracionReportes />} />
       <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />
-      <Route path="/partido/:id" element={<Partido />} />
+
+
       <Route path="*" element={<NotFound />} />
-
-
     </Routes>
   );
 }
