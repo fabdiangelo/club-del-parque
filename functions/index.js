@@ -1,5 +1,6 @@
 // functions/index.js  (ESM)
 import * as functions from "firebase-functions/v1"; // v1 compat API
+import { setGlobalOptions } from "firebase-functions/v2";
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";

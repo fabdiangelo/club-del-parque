@@ -18,22 +18,36 @@ export class ReservaRepository {
         return reserva;
     }
 
-    // campos reserva: id, canchaId, fechaHora, duracion, esCampeonato, partidoId, jugadoresIDS, quienPaga, autor, estado
+    // campos reserva: id, canchaId, fechaHora, duracion, esCampeonato, tipoPartido, partidoId, jugadoresIDS, quienPaga, autor, estado
     async save(reserva) {
-        const {canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora} = reserva;
-
-        if (!canchaId || !partidoId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora) {
-            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, partidoId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora");
+        const {canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, tipoPartido} = reserva;
+        
+        if (!canchaId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora) {
+            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora");
         }
 
-        const cancha = await this.db.getItem("canchas", canchaId);
+        // Validar tipoPartido
+        if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
+            throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
+        }
+
+        // Validar número de jugadores según tipo de partido
+        if (tipoPartido === 'singles' && jugadoresIDS.length !== 2) {
+            throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
+        }
+        if (tipoPartido === 'dobles' && jugadoresIDS.length !== 4) {
+            throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
+        }        const cancha = await this.db.getItem("canchas", canchaId);
         if (!cancha) {
             throw new Error("La cancha asociada no existe");
         }
 
-        const partido = await this.db.getItem("partidos", partidoId);
-        if (!partido) {
-            throw new Error("El partido asociado no existe");
+        // Solo validar partidoId si se proporciona
+        if (partidoId && partidoId.trim() !== '') {
+            const partido = await this.db.getItem("partidos", partidoId);
+            if (!partido) {
+                throw new Error("El partido asociado no existe");
+            }
         }
 
         for (const j of jugadoresIDS) {
@@ -59,8 +73,9 @@ export class ReservaRepository {
 
         const estado = reserva.estado || 'pendiente';
         const aceptadoPor = [];
+        const timestamp = Date.now();
 
-        const doc = await this.db.putItem("reservas", {...reserva, estado, aceptadoPor}, reserva.id);
+        const doc = await this.db.putItem("reservas", {...reserva, estado, aceptadoPor, timestamp}, reserva.id);
 
         console.log("Se ha creado la reserva con id: " + doc.id);
         return doc.id;
@@ -76,7 +91,20 @@ export class ReservaRepository {
             throw new Error("La reserva no existe");
         }
 
-        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora } = reserva;
+        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, tipoPartido } = reserva;
+
+        // Validar tipoPartido
+        if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
+            throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
+        }
+
+        // Validar número de jugadores según tipo de partido
+        if (tipoPartido === 'singles' && jugadoresIDS && jugadoresIDS.length !== 2) {
+            throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
+        }
+        if (tipoPartido === 'dobles' && jugadoresIDS && jugadoresIDS.length !== 4) {
+            throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
+        }
 
         if (canchaId) {
             const cancha = await this.db.getItem("canchas", canchaId);

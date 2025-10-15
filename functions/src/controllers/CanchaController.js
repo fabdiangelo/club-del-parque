@@ -51,11 +51,13 @@ class CanchaController {
         console.log("req.body completo:", req.body);
         console.log("req.headers:", req.headers);
         
-        const { nombre } = req.body;
+        const { nombre, deporte } = req.body;
         console.log("nombre extraído:", nombre);
-        
+        console.log("deporte extraído:", deporte);
+
         const obj = {
-            nombre
+            nombre,
+            deporte
         }
         try {
             const nuevaCancha = await this.crearCanchaUseCase.execute(obj);
