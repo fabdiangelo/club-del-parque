@@ -50,8 +50,6 @@ function App() {
       <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />
       <Route path="/partido/:id" element={<Partido />} />
       <Route path="*" element={<NotFound />} />
-
-
     </Routes>
   );
 }

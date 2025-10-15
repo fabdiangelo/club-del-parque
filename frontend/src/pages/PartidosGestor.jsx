@@ -253,6 +253,121 @@ const onSaveWinners = async (ids) => {
     setLoading(false);
   }
 };
+// --- Defaults de precarga ---
+const DEFAULT_CANCHAS = [
+  { nombre: "Cancha Central" },
+  { nombre: "Cancha 1" },
+  { nombre: "Cancha 2" },
+];
+
+const y = new Date().getFullYear();
+const toISO = (d) => new Date(d).toISOString();
+
+const DEFAULT_TEMPORADAS = [
+  {
+    nombre: `Temporada ${y} Apertura`,
+    fechaInicio: toISO(new Date(y, 0, 15)),   // 15/ene
+    fechaFin:    toISO(new Date(y, 5, 30)),   // 30/jun
+  },
+  {
+    nombre: `Temporada ${y} Clausura`,
+    fechaInicio: toISO(new Date(y, 6, 1)),    // 1/jul
+    fechaFin:    toISO(new Date(y, 11, 15)),  // 15/dic
+  },
+];
+
+// --- Reload helpers unitarios ---
+const reloadTemporadas = async () => {
+  const ts = await fetchJSON("/temporadas");
+  setTemporadas(ts || []);
+};
+const reloadCanchas = async () => {
+  const cs = await fetchJSON("/canchas");
+  setCanchas(cs || []);
+};
+
+// --- Precarga: crea varias entradas por defecto y recarga ---
+/*
+const precargarCanchas = async () => {
+  try {
+    setLoading(true);
+    setErr("");
+    await Promise.all(
+      DEFAULT_CANCHAS.map((c) =>
+        fetchJSON("/canchas", {
+          method: "POST",
+          body: JSON.stringify(c),
+        })
+      )
+    );
+    await reloadCanchas();
+    setToast("Canchas precargadas.");
+  } catch (e) {
+    setToast(normalizeError(e));
+  } finally {
+    setLoading(false);
+  }
+};
+
+const precargarTemporadas = async () => {
+  try {
+    setLoading(true);
+    setErr("");
+    await Promise.all(
+      DEFAULT_TEMPORADAS.map((t) =>
+        fetchJSON("/temporadas", {
+          method: "POST",
+          body: JSON.stringify(t),
+        })
+      )
+    );
+    await reloadTemporadas();
+    setToast("Temporadas precargadas.");
+  } catch (e) {
+    setToast(normalizeError(e));
+  } finally {
+    setLoading(false);
+  }
+};*/
+
+const precargarAmbos = async () => {
+  try {
+    setLoading(true);
+    setErr("");
+
+    // canchas
+    await Promise.all(
+      DEFAULT_CANCHAS.map((c) =>
+        fetchJSON("/canchas", {
+          method: "POST",
+          body: JSON.stringify(c),
+        })
+      )
+    );
+
+    // temporadas
+    await Promise.all(
+      DEFAULT_TEMPORADAS.map((t) =>
+        fetchJSON("/temporadas", {
+          method: "POST",
+          body: JSON.stringify({
+            nombre: t.nombre,
+            fechaInicio: t.fechaInicio,
+            fechaFin: t.fechaFin,
+          }),
+        })
+      )
+    );
+
+    // recargar datasets
+    await Promise.all([reloadCanchas(), reloadTemporadas()]);
+    setToast("Canchas y temporadas precargadas.");
+  } catch (e) {
+    setToast(normalizeError(e));
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* ----------------------------- Render ----------------------------- */
   const selectedCount = selected.size;
@@ -339,7 +454,13 @@ const onSaveWinners = async (ids) => {
                 Eliminar{selectedCount > 0 ? ` (${selectedCount})` : ""}
               </button>
             </div>
-
+<button
+  onClick={precargarAmbos}
+  className="h-11 px-4 rounded-xl border bg-emerald-700/90 text-white border-white shadow-sm hover:bg-emerald-600/90 active:scale-[.98]"
+  title="Precargar canchas y temporadas por defecto"
+>
+  Precargar
+</button>
             {/* Selection summary */}
             <div className="mt-2 text-sm text-white/70">
               {selectedCount > 0 ? (
