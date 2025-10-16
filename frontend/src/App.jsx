@@ -1,5 +1,4 @@
 import { Routes, Route } from 'react-router-dom';
-
 import Home from "./pages/Homepage";
 import Registro from "./pages/Registro";
 import Login from "./pages/Login";
@@ -23,8 +22,8 @@ import PartidosGestor from './pages/PartidosGestor';
 import AcuerdoResultado from './pages/AcuerdoResultado';
 import NotFound from './pages/NotFound';
 import Partido from './pages/Partido';
+import ResultadosPage from "./pages/ResultadosPage";
 import NotificationsPage from  './pages/NotificacionesPage';
-
 function App() {
   return (
     <Routes>
@@ -34,6 +33,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
+      <Route path="/resultados" element={<ResultadosPage />} />
       <Route path="/reportes" element={<SistemaReporte />} />
       <Route path="/campeonatos" element={<ListaCampeonatos />} />
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
@@ -55,5 +55,4 @@ function App() {
     </Routes>
   );
 }
-
 export default App;

@@ -1,6 +1,6 @@
 // src/pages/AcuerdoResultado.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../contexts/AuthProvider";
 
@@ -63,8 +63,6 @@ const formatDT = (iso) => {
 };
 
 /* ---------------- Helpers de notificaciones (campana) ---------------- */
-
-// Crea 1 notificación para un UID
 async function pushNotiFor(uid, payload) {
   const notiRef = push(ref(dbRT, `notificaciones/${uid}`));
   await set(notiRef, {
@@ -74,13 +72,6 @@ async function pushNotiFor(uid, payload) {
     ...payload, // { tipo, resumen, href, partidoId? }
   });
 }
-
-/**
- * Notifica a una lista de jugadores.
- * - tipo: "partido_acuerdo"
- * - resumen: texto visible en la campana
- * - href: link a /partidos/:id/acuerdo
- */
 async function notificarAcuerdoPartido(jugadoresUids = [], partidoId, resumen) {
   if (!Array.isArray(jugadoresUids) || jugadoresUids.length === 0) return;
   const payload = {
@@ -92,6 +83,117 @@ async function notificarAcuerdoPartido(jugadoresUids = [], partidoId, resumen) {
   await Promise.all(jugadoresUids.map((uid) => pushNotiFor(uid, payload)));
 }
 
+/* --------------------- UI helpers --------------------- */
+const avatarFor = (name, url) =>
+  url ||
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    name || "U"
+  )}&background=0D8ABC&color=fff&size=160`;
+
+function TeamCard({ title, players = [], selected, onSelect, disabled, highlight }) {
+  const names = players.map(
+    (p) => `${p?.nombre ?? ""} ${p?.apellido ?? ""}`.trim() || p?.email || p?.id || "—"
+  );
+  const photos = players.map((p) =>
+    avatarFor(`${p?.nombre ?? ""} ${p?.apellido ?? ""}`, p?.fotoURL || p?.photoURL)
+  );
+
+  return (
+    <div
+      className={`relative flex flex-col gap-4 rounded-3xl p-6 shadow-lg bg-base-100/90 border border-white/10 transition-all
+      ${selected ? "ring-2 ring-primary scale-[1.01]" : "hover:shadow-xl"}
+      ${disabled ? "opacity-70" : ""}`}
+    >
+      <div className="absolute -top-3 -left-3 flex items-center gap-2">
+        <span className="badge badge-primary badge-lg">{title}</span>
+        {highlight && <span className="badge badge-secondary">tú</span>}
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className={`avatar ${players.length > 1 ? "-space-x-4" : ""}`}>
+            {photos.map((src, idx) => (
+              <div
+                key={idx}
+                className="w-16 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
+              >
+                <img src={src} alt={names[idx]} />
+              </div>
+            ))}
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold">{names.join(" / ")}</h3>
+            <p className="text-xs opacity-70">
+              {players.length === 1 ? "Singles" : players.length === 2 ? "Doubles" : "Equipo"}
+            </p>
+          </div>
+        </div>
+
+        <label
+          className={`cursor-pointer flex items-center gap-2 ${
+            disabled ? "pointer-events-none opacity-60" : ""
+          }`}
+        >
+          <input
+            type="radio"
+            name="winner"
+            className="radio radio-primary"
+            checked={selected}
+            disabled={disabled}
+            onChange={() => onSelect?.()}
+          />
+          <span className="text-sm">Ganador</span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function SetRow({ idx, value, onChange, onRemove, disabled }) {
+  const [a, b] = value;
+  return (
+    <div className="grid grid-cols-12 gap-3 items-center">
+      <div className="col-span-2 text-sm opacity-70">Set {idx + 1}</div>
+      <div className="col-span-4">
+        <input
+          type="number"
+          min={0}
+          max={99}
+          value={a}
+          onChange={(e) => onChange([parseInt(e.target.value || "0", 10), b])}
+          className="input input-bordered w-full text-center"
+          placeholder="0"
+          disabled={disabled}
+        />
+      </div>
+      <div className="col-span-4">
+        <input
+          type="number"
+          min={0}
+          max={99}
+          value={b}
+          onChange={(e) => onChange([a, parseInt(e.target.value || "0", 10)])}
+          className="input input-bordered w-full text-center"
+          placeholder="0"
+          disabled={disabled}
+        />
+      </div>
+      <div className="col-span-2 flex justify-end">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={onRemove}
+          aria-label="Eliminar set"
+          disabled={disabled}
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* --------------------- Página --------------------- */
 export default function AcuerdoResultado() {
   const { id } = useParams();
   const { user, loading: authLoading } = useAuth();
@@ -102,10 +204,14 @@ export default function AcuerdoResultado() {
   const [partido, setPartido] = useState(null);
   const [federados, setFederados] = useState([]);
 
-  const [resultado, setResultado] = useState("");
-  const [ganadores, setGanadores] = useState([]);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerQuery, setPickerQuery] = useState("");
+  // resultado por sets (UI builder) + string
+  const [sets, setSets] = useState([[6, 4]]);
+  const resultadoString = useMemo(() => sets.map(([a, b]) => `${a}-${b}`).join(", "), [sets]);
+
+  // selección de ganador por equipo (A | B)
+  const [winnerSide, setWinnerSide] = useState("A");
+
+  // compat con tu flujo actual
   const [submitting, setSubmitting] = useState(false);
 
   const reload = useCallback(async () => {
@@ -118,14 +224,21 @@ export default function AcuerdoResultado() {
       setPartido(p);
       setFederados(Array.isArray(fs) ? fs : []);
 
-      const existingRes = p?.propuestaResultado?.resultado || p?.resultado || "";
-      const existingGan = Array.isArray(p?.propuestaResultado?.ganadores)
-        ? p.propuestaResultado.ganadores
-        : Array.isArray(p?.ganadores)
-          ? p.ganadores
-          : [];
-      setResultado(existingRes);
-      setGanadores(existingGan);
+      // prefill si hay propuesta/resultado previo
+      const existingRes =
+        p?.propuestaResultado?.resultado || p?.resultado || "";
+      if (existingRes) {
+        const parsed = existingRes
+          .split(/[, ]+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((s) => s.split("-").map((n) => parseInt(n, 10)))
+          .filter((ab) => Array.isArray(ab) && ab.length === 2 && ab.every(Number.isFinite));
+        if (parsed.length) setSets(parsed);
+      }
+      if (Array.isArray(p?.ganadores) && p.ganadores.length) {
+        // si ya hay ganador, side lo deducimos luego
+      }
     } catch (e) {
       setErr(normalizeError(e));
       setPartido(null);
@@ -138,11 +251,53 @@ export default function AcuerdoResultado() {
     if (!authLoading) reload();
   }, [authLoading, reload]);
 
+  // ---- Helpers de datos jugador/teams ----
   const jugadoresIds = useMemo(() => partido?.jugadores || [], [partido]);
+  const isAdmin = useMemo(() => {
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
+    return user?.rol === "administrador" || roles?.includes?.("admin") || roles?.includes?.("administrator");
+  }, [user]);
+
   const soyJugador = useMemo(
     () => !!user && jugadoresIds.includes(user?.uid || user?.id),
     [user, jugadoresIds]
   );
+
+  // federados map
+  const fedMap = useMemo(() => new Map(federados.map((f) => [f.id, f])), [federados]);
+
+  const resolvePlayer = (idOrObj) => {
+    if (idOrObj && typeof idOrObj === "object") return idOrObj;
+    const f = fedMap.get(idOrObj);
+    return f || { id: idOrObj, nombre: idOrObj };
+  };
+
+  // Detectamos equipos de forma robusta:
+  // 1) usar partido.equipoA / partido.equipoB (ids u objetos)
+  // 2) si no existen, fallback por orden: singles [0] vs [1], dobles [0,1] vs [2,3]
+  const equipoAIds = useMemo(() => {
+    const eA = partido?.equipoA || partido?.jugadoresA || partido?.equipo1;
+    if (Array.isArray(eA) && eA.length) return eA.map((x) => (typeof x === "object" ? x.id : x));
+    if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
+      return (partido?.tipoPartido === "dobles" ? jugadoresIds.slice(0, 2) : [jugadoresIds[0]]).filter(Boolean);
+    }
+    return [];
+  }, [partido, jugadoresIds]);
+
+  const equipoBIds = useMemo(() => {
+    const eB = partido?.equipoB || partido?.jugadoresB || partido?.equipo2;
+    if (Array.isArray(eB) && eB.length) return eB.map((x) => (typeof x === "object" ? x.id : x));
+    if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
+      return (partido?.tipoPartido === "dobles" ? jugadoresIds.slice(2, 4) : [jugadoresIds[1]]).filter(Boolean);
+    }
+    return [];
+  }, [partido, jugadoresIds]);
+
+  const equipoA = useMemo(() => equipoAIds.map(resolvePlayer), [equipoAIds, fedMap]);
+  const equipoB = useMemo(() => equipoBIds.map(resolvePlayer), [equipoBIds, fedMap]);
+
+  const isInA = useMemo(() => equipoAIds.includes(user?.uid || user?.id), [equipoAIds, user]);
+  const isInB = useMemo(() => equipoBIds.includes(user?.uid || user?.id), [equipoBIds, user]);
 
   const yaFinalizado =
     partido?.estado === "finalizado" ||
@@ -150,56 +305,57 @@ export default function AcuerdoResultado() {
 
   const propuesta = partido?.propuestaResultado || null;
   const propuestaPendiente = !!(propuesta && !yaFinalizado);
-
   const yoPropuse =
     propuestaPendiente && propuesta.propuestoPor === (user?.uid || user?.id);
-
   const puedoConfirmar = propuestaPendiente && !yoPropuse && soyJugador;
 
-  const maxWinners = partido?.tipoPartido === "dobles" ? 2 : 1;
+  const tipoPartido = partido?.tipoPartido || (equipoAIds.length === 2 ? "dobles" : "singles");
 
-  const jugadoresDetalle = useMemo(() => {
-    const map = new Map(federados.map((f) => [f.id, f]));
-    return jugadoresIds.map((id) => map.get(id) || { id, nombre: id });
-  }, [federados, jugadoresIds]);
+  // ganador auto por sets
+  const computedWinnerSide = useMemo(() => {
+    let a = 0,
+      b = 0;
+    sets.forEach(([x, y]) => {
+      if (x > y) a += 1;
+      else if (y > x) b += 1;
+    });
+    if (a === b) return null;
+    return a > b ? "A" : "B";
+  }, [sets]);
 
-  const ganadorLabels = (ids) => {
-    const map = new Map(
-      federados.map((f) => [
-        f.id,
-        `${f.nombre ?? ""} ${f.apellido ?? ""}`.trim() || f.email || f.id,
-      ])
-    );
-    return ids.map((i) => map.get(i) || i).join(", ");
+  // permisos
+  const canEdit = (isAdmin || soyJugador) && !yaFinalizado && partido?.estadoResultado !== "en_disputa";
+  const editLockedByProposal = yoPropuse && propuestaPendiente; // no editar luego de proponer
+
+  // UI handlers sets
+  const addSet = () => setSets((prev) => [...prev, [0, 0]]);
+  const updateSet = (i, val) => setSets((prev) => prev.map((s, idx) => (idx === i ? val : s)));
+  const removeSet = (i) => setSets((prev) => prev.filter((_, idx) => idx !== i));
+  const handleAutoWinner = () => {
+    if (computedWinnerSide) setWinnerSide(computedWinnerSide);
   };
 
+  // submit: usa tu flujo (PUT /partidos/:id con propuestaResultado) pero
+  // genera: resultadoString y ganadores = equipo ganador (UIDs)
   const onProponer = async () => {
-    if (!soyJugador || yaFinalizado) return;
+    if (!canEdit || editLockedByProposal) return;
 
-    if (!resultado.trim()) return alert("Ingresa el resultado, ej: 6-3 6-4");
+    if (!sets.length) return alert("Agrega al menos 1 set.");
+    const valid = sets.every(([a, b]) => Number.isFinite(a) && Number.isFinite(b));
+    if (!valid) return alert("Revisa los valores de cada set.");
 
-    if (
-      !Array.isArray(ganadores) ||
-      ganadores.length === 0 ||
-      ganadores.length > maxWinners
-    )
-      return alert(
-        `Selecciona ${maxWinners === 1 ? "1" : `hasta ${maxWinners}`} ganador(es).`
-      );
-
-    if (!ganadores.every((g) => jugadoresIds.includes(g)))
-      return alert("Los ganadores deben ser jugadores del partido.");
+    const winnerIds = winnerSide === "A" ? equipoAIds : equipoBIds;
+    if (!winnerIds?.length) return alert("No hay jugadores asignados al equipo ganador.");
 
     setSubmitting(true);
     setErr("");
     try {
-      // 1) Guardar propuesta
       await fetchJSON(`/partidos/${id}`, {
         method: "PUT",
         body: JSON.stringify({
           propuestaResultado: {
-            resultado,
-            ganadores,
+            resultado: resultadoString,
+            ganadores: winnerIds,
             propuestoPor: user?.uid || user?.id,
             fecha: new Date().toISOString(),
           },
@@ -207,14 +363,10 @@ export default function AcuerdoResultado() {
         }),
       });
 
-      // 2) Notificar al/los otros jugadores (campana)
+      // Notificar al/los otros jugadores
       const miUid = user?.uid || user?.id;
       const otros = jugadoresIds.filter((j) => j !== miUid);
-      await notificarAcuerdoPartido(
-        otros,
-        id,
-        "Un jugador propuso un resultado. Revisá y confirmá."
-      );
+      await notificarAcuerdoPartido(otros, id, "Un jugador propuso un resultado. Revisá y confirmá.");
 
       await reload();
       alert("Propuesta enviada. El otro jugador debe confirmarla.");
@@ -232,7 +384,6 @@ export default function AcuerdoResultado() {
     setErr("");
     try {
       if (acepta) {
-        // 1) Grabar ganadores y cerrar partido
         await fetchJSON(`/partidos/${id}/ganadores`, {
           method: "POST",
           body: JSON.stringify({ ganadores: propuesta.ganadores }),
@@ -248,15 +399,8 @@ export default function AcuerdoResultado() {
             fechaConfirmado: new Date().toISOString(),
           }),
         });
-
-        // 2) Notificar a TODOS los jugadores que se confirmó
-        await notificarAcuerdoPartido(
-          jugadoresIds,
-          id,
-          "El resultado del partido fue confirmado."
-        );
+        await notificarAcuerdoPartido(jugadoresIds, id, "El resultado del partido fue confirmado.");
       } else {
-        // 1) Crear reporte de disputa y marcar estado
         await fetchJSON(`/reportes`, {
           method: "POST",
           body: JSON.stringify({
@@ -274,21 +418,11 @@ export default function AcuerdoResultado() {
             disputaFecha: new Date().toISOString(),
           }),
         });
-
-        // 2) Notificar a TODOS los jugadores que hay disputa
-        await notificarAcuerdoPartido(
-          jugadoresIds,
-          id,
-          "Hay una disputa en el resultado del partido."
-        );
+        await notificarAcuerdoPartido(jugadoresIds, id, "Hay una disputa en el resultado del partido.");
       }
 
       await reload();
-      alert(
-        acepta
-          ? "Resultado confirmado. ¡Gracias!"
-          : "Se registró la disputa. Un administrador resolverá."
-      );
+      alert(acepta ? "Resultado confirmado. ¡Gracias!" : "Se registró la disputa. Un administrador resolverá.");
     } catch (e) {
       setErr(normalizeError(e));
     } finally {
@@ -296,54 +430,23 @@ export default function AcuerdoResultado() {
     }
   };
 
-  const abrirPicker = () => setPickerOpen(true);
-  const cerrarPicker = () => setPickerOpen(false);
-
-  const opcionesGanadores = useMemo(
-    () =>
-      jugadoresDetalle.filter((p) =>
-        `${p.nombre ?? ""} ${p.apellido ?? ""}`
-          .toLowerCase()
-          .includes(pickerQuery.toLowerCase())
-      ),
-    [jugadoresDetalle, pickerQuery]
-  );
-
-  const toggleWinner = (id) => {
-    setGanadores((curr) => {
-      const s = new Set(curr);
-      if (s.has(id)) s.delete(id);
-      else {
-        s.add(id);
-        if (s.size > maxWinners) {
-          const arr = Array.from(s);
-          const last = arr[arr.length - 1];
-          return [last];
-        }
-      }
-      return Array.from(s);
-    });
-  };
-
+  // carga / errores
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen grid place-items-center">
-        <div className="text-white/80">Cargando…</div>
+      <div className="min-h-screen grid place-items-center bg-base-200">
+        <div className="text-base-content/70">Cargando…</div>
       </div>
     );
   }
 
   if (!partido) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-base-200">
         <Navbar />
         <div className="max-w-xl mx-auto px-4" style={{ paddingTop: "6rem" }}>
-          <h1 className="text-2xl font-bold text-white">Acuerdo de resultado</h1>
-          <p className="mt-2 text-red-300">Error: {err || "Partido no encontrado"}</p>
-          <button
-            className="mt-4 px-4 py-2 rounded bg-neutral-800 text-white"
-            onClick={() => navigate(-1)}
-          >
+          <h1 className="text-2xl font-bold">Acuerdo de resultado</h1>
+          <p className="mt-2 text-error">Error: {err || "Partido no encontrado"}</p>
+          <button className="mt-4 btn" onClick={() => navigate(-1)}>
             Volver
           </button>
         </div>
@@ -351,8 +454,6 @@ export default function AcuerdoResultado() {
     );
   }
 
-  const readOnly =
-    !soyJugador || yaFinalizado || partido?.estadoResultado === "en_disputa";
   const tituloEstado = yaFinalizado
     ? "Finalizado"
     : partido?.estadoResultado === "en_disputa"
@@ -364,105 +465,147 @@ export default function AcuerdoResultado() {
     : "Pendiente de propuesta";
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-base-200">
       <Navbar />
-      <div
-        className="mx-auto max-w-3xl px-4"
-        style={{ paddingTop: "6rem", paddingBottom: "3rem" }}
-      >
-        <h1 className="text-3xl font-extrabold text-white">Acuerdo de resultado</h1>
-        <div className="mt-2 text-white/80 text-sm">
+      <main className="mx-auto max-w-6xl px-6 lg:px-8 w-full pt-24 pb-24">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-extrabold">Acuerdo de resultado</h1>
+          <Link to="/resultados" className="btn btn-outline btn-sm">Volver</Link>
+        </div>
+
+        <div className="mt-2 text-sm">
           <div>
-            Partido: <strong>{formatDT(partido.timestamp)}</strong> · {partido.tipoPartido} ·
-            Etapa: {partido.etapa || "—"}
+            Partido: <strong>{formatDT(partido.timestamp)}</strong> · {tipoPartido} · Etapa: {partido.etapa || "—"}
           </div>
           <div>
             Estado: <span className="font-semibold">{tituloEstado}</span>
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-white/15 bg-neutral-900/70 p-4">
-          <h2 className="text-lg font-semibold text-white">Jugadores</h2>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {jugadoresDetalle.map((j) => (
-              <span
-                key={j.id}
-                className="px-2 py-1 rounded-full text-xs border border-white/20 text-white/90 bg-white/10"
-              >
-                {`${j.nombre ?? ""} ${j.apellido ?? ""}`.trim() || j.email || j.id}
-              </span>
-            ))}
-          </div>
-        </div>
+        {/* Equipos 50/50 */}
+        <section className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TeamCard
+            title="Equipo A"
+            players={equipoA}
+            selected={winnerSide === "A"}
+            onSelect={() => setWinnerSide("A")}
+            disabled={!canEdit || editLockedByProposal}
+            highlight={isInA}
+          />
+          <TeamCard
+            title="Equipo B"
+            players={equipoB}
+            selected={winnerSide === "B"}
+            onSelect={() => setWinnerSide("B")}
+            disabled={!canEdit || editLockedByProposal}
+            highlight={isInB}
+          />
+        </section>
 
-        <div className="mt-6 grid md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-white/15 bg-neutral-900/70 p-4">
-            <label className="block text-sm text-white/80 mb-1">Resultado</label>
-            <input
-              disabled={readOnly || (yoPropuse && propuestaPendiente)} // no editar después de proponer
-              className="w-full rounded-lg border border-white/20 bg-neutral-800 px-3 py-2 text-white placeholder-white/40"
-              placeholder="ej: 6-3 6-4"
-              value={resultado}
-              onChange={(e) => setResultado(e.target.value)}
-              required
-            />
-            {!!partido.resultado && (
-              <div className="mt-2 text-xs text-white/60">
-                Resultado actual: {partido.resultado}
+        {/* Builder de sets + resumen */}
+        <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 rounded-3xl bg-base-100 p-6 shadow-lg border">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Creador de sets</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setSets([[6, 4]])}
+                  disabled={!canEdit || editLockedByProposal}
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={addSet}
+                  disabled={!canEdit || editLockedByProposal}
+                >
+                  Añadir set
+                </button>
               </div>
-            )}
+            </div>
+
+            <div className="grid grid-cols-12 gap-3 pb-2 border-b mb-3 text-sm opacity-70">
+              <div className="col-span-2">#</div>
+              <div className="col-span-4 text-center">Equipo A</div>
+              <div className="col-span-4 text-center">Equipo B</div>
+              <div className="col-span-2" />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {sets.map((s, i) => (
+                <SetRow
+                  key={i}
+                  idx={i}
+                  value={s}
+                  onChange={(val) => updateSet(i, val)}
+                  onRemove={() => removeSet(i)}
+                  disabled={!canEdit || editLockedByProposal}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="rounded-xl border border-white/15 bg-neutral-900/70 p-4">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm text-white/80">Ganador(es)</label>
+          <aside className="lg:col-span-1 rounded-3xl bg-base-100 p-6 shadow-lg border">
+            <h2 className="text-xl font-semibold mb-3">Resumen</h2>
+            <dl className="text-sm space-y-1">
+              <div className="flex justify-between">
+                <dt className="opacity-70">Tipo</dt>
+                <dd className="font-medium capitalize">{tipoPartido}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="opacity-70">Sets</dt>
+                <dd className="font-medium">{sets.length}</dd>
+              </div>
+            </dl>
+
+            <div className="divider my-4" />
+            <p className="text-sm opacity-70 mb-1">Resultado</p>
+            <div className="font-mono text-lg p-3 rounded-xl border bg-base-200">
+              {resultadoString || "—"}
+            </div>
+
+            <div className="mt-4 flex items-center gap-2">
               <button
-                disabled={readOnly || (yoPropuse && propuestaPendiente)}
-                onClick={abrirPicker}
-                className={`px-3 py-1.5 rounded-lg border ${
-                  readOnly
-                    ? "border-white/20 text-white/40"
-                    : "border-white/30 text-white hover:bg-white/10"
-                }`}
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={handleAutoWinner}
+                disabled={!computedWinnerSide || !canEdit || editLockedByProposal}
               >
-                Seleccionar
+                Auto (por sets)
               </button>
+              <span className="text-xs opacity-60">o elige manualmente arriba</span>
             </div>
-            <div className="mt-2 text-white/90 text-sm">
-              {ganadores.length ? (
-                ganadorLabels(ganadores)
-              ) : (
-                <span className="text-white/50">Ninguno</span>
-              )}
-            </div>
-            {!!partido.ganadores?.length && (
-              <div className="mt-2 text-xs text-white/60">
-                Ganadores actuales: {ganadorLabels(partido.ganadores)}
-              </div>
-            )}
-          </div>
-        </div>
+          </aside>
+        </section>
 
-        {/* Actions */}
-        {!soyJugador && (
-          <div className="mt-6 text-yellow-300 text-sm">
-            Solo los jugadores del partido pueden proponer o confirmar el resultado.
+        {/* Mensajes permisos/estados */}
+        {!soyJugador && !isAdmin && (
+          <div className="mt-6 alert alert-warning">
+            <span>Solo jugadores o administradores pueden proponer/confirmar el resultado.</span>
           </div>
         )}
-
         {partido?.estadoResultado === "en_disputa" && (
-          <div className="mt-6 text-red-300 text-sm">
-            Hay una disputa abierta. Un administrador fijará el resultado final.
+          <div className="mt-6 alert alert-error">
+            <span>Hay una disputa abierta. Un administrador fijará el resultado final.</span>
+          </div>
+        )}
+        {yaFinalizado && (
+          <div className="mt-6 alert alert-success">
+            <span>Partido finalizado. No se puede editar.</span>
           </div>
         )}
 
-        {!yaFinalizado && soyJugador && (
+        {/* Acciones */}
+        {!yaFinalizado && (soyJugador || isAdmin) && (
           <div className="mt-6 flex flex-wrap gap-3">
             {!propuestaPendiente && (
               <button
-                disabled={readOnly || submitting}
+                disabled={!canEdit || editLockedByProposal || submitting}
                 onClick={onProponer}
-                className="px-5 py-2 rounded-xl bg-cyan-700 text-white hover:bg-cyan-600 disabled:opacity-50"
+                className="btn btn-primary"
               >
                 Proponer resultado
               </button>
@@ -473,14 +616,14 @@ export default function AcuerdoResultado() {
                 <button
                   disabled={submitting}
                   onClick={() => onConfirmar(true)}
-                  className="px-5 py-2 rounded-xl bg-green-700 text-white hover:bg-green-600 disabled:opacity-50"
+                  className="btn btn-success"
                 >
                   Aceptar propuesta
                 </button>
                 <button
                   disabled={submitting}
                   onClick={() => onConfirmar(false)}
-                  className="px-5 py-2 rounded-xl bg-red-700 text-white hover:bg-red-600 disabled:opacity-50"
+                  className="btn btn-error"
                 >
                   Rechazar (escalar a admin)
                 </button>
@@ -489,89 +632,21 @@ export default function AcuerdoResultado() {
           </div>
         )}
 
-        {yaFinalizado && (
-          <div className="mt-6 text-green-400 text-sm">
-            Partido finalizado. No se puede editar.
-          </div>
-        )}
-
         {/* Error toast */}
         {err && (
-          <div className="mt-6 rounded-lg border border-red-400/30 bg-red-500/10 text-red-200 px-4 py-3">
+          <div className="mt-6 rounded-lg border border-red-400/30 bg-red-500/10 text-red-700 px-4 py-3">
             {err}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* Winner picker modal */}
-      {pickerOpen && (
-        <Modal onClose={cerrarPicker}>
-          <div className="p-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-white text-lg font-semibold">
-                Seleccionar ganador(es) (máx {maxWinners})
-              </h3>
-              <button
-                onClick={cerrarPicker}
-                className="px-3 py-1.5 rounded-lg border border-white/30 text-white hover:bg-white/10"
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="mt-3">
-              <input
-                className="w-full rounded-lg border border-white/20 bg-neutral-800 px-3 py-2 text-white placeholder-white/40"
-                placeholder="Buscar jugador…"
-                value={pickerQuery}
-                onChange={(e) => setPickerQuery(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {opcionesGanadores.map((j) => {
-                const id = j.id;
-                const label =
-                  `${j.nombre ?? ""} ${j.apellido ?? ""}`.trim() ||
-                  j.email ||
-                  id;
-                const active = ganadores.includes(id);
-                return (
-                  <button
-                    key={id}
-                    onClick={() => toggleWinner(id)}
-                    className={`px-3 py-1.5 rounded-full text-xs border ${
-                      active
-                        ? "bg-cyan-700 text-white border-cyan-500"
-                        : "bg-neutral-800 text-white/90 border-white/20 hover:bg-neutral-700"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-              {opcionesGanadores.length === 0 && (
-                <div className="text-white/60 text-sm">Sin resultados.</div>
-              )}
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                onClick={cerrarPicker}
-                className="px-4 py-2 rounded-xl bg-cyan-700 text-white hover:bg-cyan-600"
-              >
-                Listo
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      {/* Modal reutilizable futuro (si precisás picks por jugador) */}
+      {/* Conservé tu Modal base, pero no lo uso ahora porque la selección es por equipo */}
     </div>
   );
 }
 
-// -------------- Modal (simple) --------------
+/* Modal simple (lo dejo por si lo necesitás luego) */
 function Modal({ children, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose?.();
@@ -579,10 +654,7 @@ function Modal({ children, onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={onClose}>
       <div
         className="max-w-xl w-full rounded-2xl bg-neutral-900 text-white border border-white/20 shadow-xl"
         onClick={(e) => e.stopPropagation()}

@@ -95,7 +95,16 @@ export default function NavbarBlanco() {
             >
               Ranking
             </NavLink>
-          </li>
+          </li><li>
+  <NavLink
+    to="/resultados"
+    className={({ isActive }) =>
+      `${navItem} ${isActive ? activeItem : ""}`
+    }
+  >
+    Resultados
+  </NavLink>
+</li>
           <li>
             <NavLink
               to="/campeonatos"

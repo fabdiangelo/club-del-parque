@@ -106,6 +106,16 @@ export default function Navbar({ transparent }) {
               Campeonatos
             </NavLink>
           </li>
+          <li>
+  <NavLink
+    to="/resultados"
+    className={({ isActive }) =>
+      `${navItem} ${isActive ? activeItem : ""}`
+    }
+  >
+    Resultados
+  </NavLink>
+</li>
         </ul>
 
         <div className="flex items-center gap-3">

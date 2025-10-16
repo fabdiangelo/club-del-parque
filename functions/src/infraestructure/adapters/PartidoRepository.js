@@ -88,16 +88,25 @@ export class PartidoRepository {
         return await this.db.deleteItem("partidos", partidoId);
     }
 
-    async getPartidosPorJugador(federadoID) {
-        const allPartidos = await this.db.getAllItems("partidos");
-        const partidosList = [];
+async getPartidosPorJugador(jugadorID) {
+  const all = await this.db.getAllItems("partidos");
 
-        allPartidos.forEach((doc) => {
-            const data = doc.data();
-            if (data.federadosPartidoIDs && data.federadosPartidoIDs.includes(federadoID)) {
-                partidosList.push({ id: doc.id, ...data });
-            }
-        });
-        return partidosList;
-    }
+  // Normalize to plain objects with .id
+  const list = (Array.isArray(all) ? all : []).map((p) => {
+    const d = typeof p?.data === "function" ? p.data() : p;   // supports Firestore or plain
+    return d?.id ? d : { id: p?.id, ...(d || {}) };           // ensure we always have .id
+  });
+
+  // Some code uses `jugadores`, older code used `federadosPartidoIDs`.
+  return list.filter((partido) => {
+    const jugadores =
+      Array.isArray(partido.jugadores)
+        ? partido.jugadores
+        : Array.isArray(partido.federadosPartidoIDs)
+          ? partido.federadosPartidoIDs
+          : [];
+    return jugadores.includes(jugadorID);
+  });
+}
+
 }
