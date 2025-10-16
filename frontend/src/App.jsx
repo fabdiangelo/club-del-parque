@@ -23,6 +23,7 @@ import PartidosGestor from './pages/PartidosGestor';
 import AcuerdoResultado from './pages/AcuerdoResultado';
 import NotFound from './pages/NotFound';
 import Partido from './pages/Partido';
+import NotificationsPage from  './pages/NotificacionesPage';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
       <Route path="/administracion/reportes" element={<AdministracionReportes />} />
       <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />
       <Route path="/partido/:id" element={<Partido />} />
+      <Route path="/notificaciones" element={<NotificationsPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
