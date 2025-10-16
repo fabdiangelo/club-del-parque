@@ -10,6 +10,7 @@ import GetCantUsuarios from "../usecases/Usuarios/GetCantUsuarios.js";
 import BloquearUsuario from "../usecases/Usuarios/BloquearUsuario.js";
 import GetAllFederados from "../usecases/Usuarios/getAllFederados.js";
 import PrecargaFederados from "../usecases/Usuarios/PrecargaFederados.js";
+import getFederadoById from "../usecases/Usuarios/getFederadoById.js";
 
 class UsuarioController {
   async getUserData(req, res) {
@@ -42,6 +43,23 @@ class UsuarioController {
       return res.status(401).json({ error: "Invalid or expired session" });
     }
   }
+
+  async getFederadoById(req, res) {
+
+    const {id} = req.params;
+    try {
+      const federado = await getFederadoById.execute(id);
+      if(!federado){
+        return res.status(404).json({ error: "Federado no encontrado" });
+      }
+
+      return res.json(federado);
+    } catch(error) {
+      console.error("Error in /federados/:id:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
 async getAllFederados(req, res) {
     try {
 

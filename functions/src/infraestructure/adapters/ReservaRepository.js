@@ -98,22 +98,63 @@ export class ReservaRepository {
     }
 
     async deshabilitarReserva(reservaId) {
-        if (!reservaId || reservaId.trim() === '') {
-            throw new Error("ID de reserva es requerido");
-        }
-
-        console.log("Deshabilitando reserva con ID:", reservaId);
-
-        const reserva = await this.db.getItem("reservas", reservaId);
-        if (!reserva) {
-            throw new Error("La reserva no existe");
-        }
-
-        console.log("Reserva encontrada:", reserva);
-
-        await this.db.updateItem("reservas", {deshabilitar: true}, reservaId);
-        return reservaId;
+    console.log("llegand hasta aca", reservaId);
+    if (!reservaId || reservaId.trim() === '') {
+        throw new Error("ID de reserva es requerido");
     }
+
+
+    const reserva = await this.db.getItem("reservas", reservaId);
+    if (!reserva) {
+        throw new Error("La reserva no existe");
+    }
+
+    try {
+        
+        const reservaActualizada = {
+            ...reserva,
+            deshabilitar: true
+        };
+        
+        const result = await this.db.putItem("reservas", reservaActualizada, reservaId);
+        console.log("Actualización exitosa:", result); 
+        return reservaId;
+    } catch (error) {
+        console.error("Error en updateItem:", error); 
+        throw error;
+    }
+}
+
+async habilitarReserva(reservaId) {
+    console.log("llegand hasta aca", reservaId);
+    if (!reservaId || reservaId.trim() === '') {
+        throw new Error("ID de reserva es requerido");
+    }
+
+
+    const reserva = await this.db.getItem("reservas", reservaId);
+    if (!reserva) {
+        throw new Error("La reserva no existe");
+    }
+
+    try {
+        
+        const reservaActualizada = {
+            ...reserva,
+            deshabilitar: false
+        };
+        
+        const result = await this.db.putItem("reservas", reservaActualizada, reservaId);
+        console.log("Actualización exitosa:", result); 
+        return reservaId;
+    } catch (error) {
+        console.error("Error en updateItem:", error); 
+        throw error;
+    }
+}
+
+
+    
 
     async update(reserva, reservaId) {
         const existingReserva = await this.getById(reservaId);

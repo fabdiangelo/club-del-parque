@@ -9,6 +9,7 @@ import { EditarReserva } from '../usecases/Reservas/EditarReserva.js';
 import { ConfirmarReserva } from '../usecases/Reservas/ConfirmarReserva.js';
 import { AceptarInvitacion } from '../usecases/Reservas/AceptarInvitacion.js';
 import { DeshabilitarReserva } from '../usecases/Reservas/DeshabilitarReserva.js';
+import { habilitarReserva } from '../usecases/Reservas/habilitarReserva.js';
 
 
 
@@ -23,24 +24,36 @@ class ReservaController {
         this.editarReservaUseCase = new EditarReserva(new ReservaRepository());
         this.confirmarReservaUseCase = new ConfirmarReserva(new ReservaRepository());
         this.aceptarInvitacionUseCase = new AceptarInvitacion(new ReservaRepository());
-        this.deshabilitarReservaUseCase = new DeshabilitarReserva(new ReservaRepository())
+        this.deshabilitarReservaUseCase = new DeshabilitarReserva(new ReservaRepository());
+        this.habilitarReservaUseCase = new habilitarReserva(new ReservaRepository());
+    }
+
+    async habilitarReserva(req, res) {
+        const {id} = req.params;
+
+        if (!id) {
+            return res.status(400).json({ error: "Faltan campos obligatorios: id" });
+        }
+
+        try {
+            const result = await this.habilitarReservaUseCase.execute(id);
+            res.status(200).json({ message: `Reserva ${result} habilitada.` });
+        } catch(error) {
+            res.status(500).json({ error: error.message });
+        }
     }
     
     async deshabilitarReserva(req, res) {
-        const { reservaId } = req.body;
 
 
         const {id} = req.params;
 
-        console.log("usuarioId:", id);
-
-        console.log("reservaId:", reservaId);
-        if (!reservaId) {
-            return res.status(400).json({ error: "Faltan campos obligatorios: reservaId" });
+        if (!id) {
+            return res.status(400).json({ error: "Faltan campos obligatorios: id" });
         }
 
         try {
-            const result = await this.deshabilitarReservaUseCase.execute(reservaId);
+            const result = await this.deshabilitarReservaUseCase.execute(id);
             res.status(200).json({ message: `Reserva ${result} deshabilitada.` });
         } catch (error) {
             res.status(500).json({ error: error.message });

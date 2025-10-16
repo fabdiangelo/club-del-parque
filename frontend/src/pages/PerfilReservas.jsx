@@ -14,13 +14,86 @@ function PerfilReservas() {
     const [loading, setLoading] = useState(true);
     const [mensajeAlerta, setMensajeAlerta] = useState('');
     const [mostrarAlerta, setMostrarAlerta] = useState(false);
+    const [tipoAlerta, setTipoAlerta] = useState('');
+
+
+    const getJugadorById = async (idUsuario) => {
+        try {
+            const response = await fetch(`api/usuarios/${idUsuario}`);
+        
+            if(!response.ok) return;
+
+            const data = await response.json();
+
+            return data;
+
+        } catch(error) {
+            console.error(error);
+        }
+    }
+
+    const habilitarReserva = async () => {
+        try {
+            const response = await fetch(`/api/reservas/${id}/habilitar`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log(errorText)
+                activarAlerta(errorText || 'Error al habilitar la reserva');
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data);
+            activarAlerta('Reserva habilitada exitosamente', 'success');
+            await fetchReserva();
+
+        } catch(error) {
+            activarAlerta('Error al habilitar la reserva');
+        }
+    }
+
+    const deshabilitarReserva = async () => {
+        try {   
+            const response = await fetch(`/api/reservas/${id}/deshabilitar`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log(errorText)
+                activarAlerta(errorText || 'Error al deshabilitar la reserva');
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data);
+            activarAlerta('Reserva deshabilitada exitosamente', 'success');
+            await fetchReserva();
+        } catch(error) {
+            console.error(error);
+            activarAlerta('Error al deshabilitar la reserva');
+        }
+    }
 
     const activarAlerta = (mensaje, tipo = 'error') => {
         setMensajeAlerta(mensaje);
         setMostrarAlerta(true);
+        setTipoAlerta(tipo);
         setTimeout(() => {
             setMostrarAlerta(false);
             setMensajeAlerta('');
+            setTipoAlerta('');
         }, 3000);
     }
 
@@ -43,7 +116,7 @@ function PerfilReservas() {
                 const jugadoresData = await Promise.all(
                     data.jugadoresIDS.map(async (jugadorId) => {
                         try {
-                            const res = await fetch(`/api/usuarios/${jugadorId}`, {
+                            const res = await fetch(`/api/federados/${jugadorId}`, {
                                 credentials: 'include'
                             });
                             return res.ok ? await res.json() : null;
@@ -126,9 +199,28 @@ function PerfilReservas() {
                                 <h1 className="text-3xl font-bold text-gray-800 mb-2">
                                     Perfil de Reserva
                                 </h1>
-                                <p className="text-gray-600">ID: {reserva.id}</p>
+                                <p className="text-gray-600">ID: {id}</p>
+                                <p className={reserva.deshabilitar ? 'text-red-600' : 'text-green-700'}>{reserva.deshabilitar ? 'Deshabilitada' : 'Habilitada'}</p>
+                                
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex align-items-center gap-2">
+
+                                {
+                                    !reserva.deshabilitar ? (<button style={{backgroundColor: 'red', padding: '8px 22px', color: 'white', cursor: 'pointer', borderRadius: '5px'}} onClick={() => deshabilitarReserva()}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+</svg>
+
+                                </button>) : (
+
+                                    <button style={{backgroundColor: 'green', padding: '8px 22px', color: 'white', cursor: 'pointer', borderRadius: '5px'}} onClick={() => habilitarReserva()}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+</svg>
+</button>
+                                )
+                                }
+
+                                
                                 <button 
                                     className="btn btn-outline"
                                     onClick={() => navigate('/reservas')}
@@ -140,20 +232,20 @@ function PerfilReservas() {
 
                         {/* Estado y tipo */}
                         <div className="flex gap-4 mb-4">
-                            <div className="badge badge-lg">
-                                {reserva.estado === 'confirmada' && <span className="badge badge-success">Confirmada</span>}
-                                {reserva.estado === 'pendiente' && <span className="badge badge-warning">Pendiente</span>}
-                                {reserva.estado === 'rechazada' && <span className="badge badge-error">Rechazada</span>}
+                            <div style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: reserva.estado === 'confirmada' ? '#d1fae5' : reserva.estado === 'pendiente' ? '#fef3c7' : '#fee2e2', color: reserva.estado === 'confirmada' ? '#065f46' : reserva.estado === 'pendiente' ? '#92400e' : '#991b1b'}}>
+                                {reserva.estado === 'confirmada' && <span className="">Confirmada</span>}
+                                {reserva.estado === 'pendiente' && <span className="">Pendiente</span>}
+                                {reserva.estado === 'rechazada' && <span className="">Rechazada</span>}
                             </div>
-                            <div className="badge badge-lg">
+                            <div className="" style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: reserva.esCampeonato ? '#e0e7ff' : '#30c9d4ff', color: reserva.esCampeonato ? '#eeecffff' : '#065f46'}}>
                                 {reserva.esCampeonato ? (
-                                    <span className="badge badge-warning">🏆 Campeonato</span>
+                                    <span className="">🏆 Campeonato</span>
                                 ) : (
-                                    <span className="badge badge-info">👤 Recreativo</span>
+                                    <span className="">Recreativo</span>
                                 )}
                             </div>
-                            <div className="badge badge-lg">
-                                <span className="badge badge-outline">
+                            <div style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: '#e0e7ff', color: '#3730a3'}}>
+                                <span className="">
                                     {reserva.tipoPartido === 'singles' ? '1v1 Singles' : '2v2 Dobles'}
                                 </span>
                             </div>
@@ -281,14 +373,13 @@ function PerfilReservas() {
                     </div>
                 </div>
 
-                {/* Alertas */}
                 {mostrarAlerta && (
-                    <div className="toast toast-top toast-center">
-                        <div className="alert alert-error">
-                            <span>{mensajeAlerta}</span>
-                        </div>
-                    </div>
-                )}
+    <div className="toast toast-bottom toast-start">
+        <div className={`alert alert-${tipoAlerta}`}>
+            <span>{mensajeAlerta}</span>
+        </div>
+    </div>
+)}
             </div>
         </>
     );
