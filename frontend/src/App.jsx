@@ -1,5 +1,4 @@
 import { Routes, Route } from 'react-router-dom';
-
 import Home from "./pages/Homepage";
 import Registro from "./pages/Registro";
 import Login from "./pages/Login";
@@ -12,7 +11,9 @@ import CrearNoticia from './pages/CrearNoticia';
 import Administracion from './pages/Adminsitracion';
 import AdministracionReportes from './pages/AdministracionReportes';
 import AdministracionUsuarios from './pages/AdministracionUsuarios';
-import Chats from './pages/Chats';
+import Chats from './pages/Chats'; 
+import Reservas from "./pages/Reservas";
+import PerfilReservas from "./pages/PerfilReservas";
 import CrearAdmin from './pages/CrearAdmin';
 import CrearCampeonato from './pages/CrearCampeonato';
 import FixtureCampeonato from './pages/FixtureCampeonato'
@@ -20,11 +21,11 @@ import ListaCampeonatos from './pages/ListaCampeonatos';
 import Rankings from './pages/Ranking';
 import TemporadasPage from './pages/Temporadas';
 import PartidosGestor from './pages/PartidosGestor';
+import AcuerdoResultado from './pages/AcuerdoResultado';
 import NotFound from './pages/NotFound';
 import Partido from './pages/Partido';
-import Reservas from './pages/Reservas';
-import PerfilReservas from './pages/PerfilReservas';
-
+import ResultadosPage from "./pages/ResultadosPage";
+import NotificationsPage from  './pages/NotificacionesPage';
 function App() {
   return (
     <Routes>
@@ -35,6 +36,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
+      <Route path="/resultados" element={<ResultadosPage />} />
       <Route path="/reportes" element={<SistemaReporte />} />
       <Route path="/campeonatos" element={<ListaCampeonatos />} />
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
@@ -52,6 +54,8 @@ function App() {
       
       
       {/* Rutas Administradores */}
+      <Route path="/gestor-partidos" element={<PartidosGestor />} />
+      <Route path="/partidos/:id/acuerdo" element={<AcuerdoResultado/>}/>
       <Route path="/creadorNoticias" element={<CrearNoticia />} />
       <Route path="/crear-campeonato" element={<CrearCampeonato />} />
       <Route path="/temporadas" element={<TemporadasPage />} />
@@ -64,8 +68,10 @@ function App() {
       <Route path="/reservas" element={<Reservas />}/>
       <Route path="/reservas/:id" element={<PerfilReservas />}/>
 
+      <Route path="/partido/:id" element={<Partido />} />
+      <Route path="/notificaciones" element={<NotificationsPage />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
-
 export default App;
