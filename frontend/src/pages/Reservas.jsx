@@ -6,11 +6,12 @@ import { useEffect } from 'react';
 import { useState } from 'react'
 import NavbarBlanco from '../components/NavbarBlanco';
 import { useAuth } from '../contexts/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
 const Reservas = () => {
 
-
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     const [reservas, setReservas] = useState([]);
     const [mensajeAlerta, setMensajeAlerta] = useState('');
@@ -21,6 +22,11 @@ const Reservas = () => {
     const [searchJugadores, setSearchJugadores] = useState('');
     const [jugadoresFiltrados, setJugadoresFiltrados] = useState([]);
     const [jugadoresSeleccionados, setJugadoresSeleccionados] = useState([]);
+
+    const [reservasHabilitadas, setReservasHabilitadas] = useState([]);
+
+    const [reservasDeshabilitadas, setReservasDeshabilitadas] = useState([]);
+
     const [dataForm, setDataForm] = useState({
         canchaId: '',
         fechaHora: '',
@@ -34,6 +40,13 @@ const Reservas = () => {
         estado: 'pendiente'
     })
 
+    const verDetalles = (id) => {
+        console.log("Ver detalles de la reserva:", id);
+
+        // Navegar a la página de detalles
+        navigate('/reservas/' + id);
+    }
+
 
     const activarAlerta = (mensaje) => {
         setMensajeAlerta(mensaje);
@@ -43,6 +56,35 @@ const Reservas = () => {
             setMostrarAlerta(false);
             setMensajeAlerta('');
         }, (2500));
+    }
+
+
+    const deshabilitarReserva = async (id) => {
+        try {   
+            const response = await fetch(`/api/reservas/${id}/deshabilitar`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({reservaId: id})
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log(errorText)
+                activarAlerta(errorText || 'Error al deshabilitar la reserva');
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data);
+            activarAlerta('Reserva deshabilitada exitosamente', 'success');
+            await fetchReservas();
+        } catch(error) {
+            console.error(error);
+            activarAlerta('Error al deshabilitar la reserva');
+        }
     }
 
     const fetchReservas = async () => {
@@ -62,6 +104,14 @@ const Reservas = () => {
             const data = await response.json();
             setReservas(data);
             console.log(data);
+
+            data.map((d) => {
+                if(d.deshabilitar === true) {
+                    setReservasDeshabilitadas(oldArray => [...oldArray, d]);
+                } else {
+                    setReservasHabilitadas(oldArray => [...oldArray, d]);
+                }
+            })
 
         } catch (error) {
             activarAlerta(error);
@@ -739,7 +789,7 @@ const Reservas = () => {
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <div className='container mx-auto'>
 
-                        {reservas.length > 0 ? (
+                        {reservas.length > 0 && reservasHabilitadas.length > 0 ? (
                             <div className='overflow-x-auto shadow-lg rounded-lg bg-white'>
                                 <table className='table w-full'>
                                     <thead className='bg-gray-50'>
@@ -753,7 +803,7 @@ const Reservas = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reservas.map((reserva, index) => (
+                                        {reservasHabilitadas.map((reserva, index) => (
                                             <tr key={reserva.id || index} className='hover:bg-gray-50 transition-colors'>
                                                 <td>
                                                     <div className="flex items-center gap-3">
@@ -828,25 +878,35 @@ const Reservas = () => {
                                                                     className="btn btn-success btn-xs"
                                                                     onClick={() => confirmarReserva(reserva.id)}
                                                                 >
-                                                                    ✓ Confirmar
+                                                                    Confirmar
                                                                 </button>
                                                                 <button
                                                                     className="btn btn-error btn-xs"
                                                                     onClick={() => rechazarReserva(reserva.id)}
                                                                 >
-                                                                    ✗ Rechazar
+                                                                    Rechazar
                                                                 </button>
                                                             </>
                                                         )}
-                                                        {reserva.estado === 'confirmada' && (
-                                                            <button className="btn btn-ghost btn-xs">
+
+                                                        {reserva.deshabilitar == false && ( 
+<div className="" onClick={() => deshabilitarReserva(reserva.id)} style={{backgroundColor: 'white', border: 'none', padding: 0, cursor: 'pointer'}}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+</svg>
+
+                                                        </div>
+                                                        )}
+
+                                                        
+
+                                                        <button className="btn btn-ghost btn-xs" onClick={() => verDetalles(reserva.id)}>
                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
 </svg>
 
                                                             </button>
-                                                        )}
                                                         {reserva.estado === 'rechazada' && (
                                                             <span className="text-xs text-gray-400">Sin acciones</span>
                                                         )}
@@ -868,7 +928,7 @@ const Reservas = () => {
                                     </div>
                                     <h3 className="text-lg font-medium text-gray-900 mb-2">No hay reservas</h3>
                                     <p className="text-gray-500">Cuando se realicen reservas, aparecerán aquí.</p>
-                                    <button className="btn btn-primary mt-5" onClick={() => setModalFormulario(true)}>Crear Reserva</button>
+                                    
                                 </div>
                             )}
                     </div>

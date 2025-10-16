@@ -8,6 +8,7 @@ import {GetReservasFuturo} from '../usecases/Reservas/GetReservasFuturo.js';
 import { EditarReserva } from '../usecases/Reservas/EditarReserva.js';
 import { ConfirmarReserva } from '../usecases/Reservas/ConfirmarReserva.js';
 import { AceptarInvitacion } from '../usecases/Reservas/AceptarInvitacion.js';
+import { DeshabilitarReserva } from '../usecases/Reservas/DeshabilitarReserva.js';
 
 
 
@@ -22,6 +23,28 @@ class ReservaController {
         this.editarReservaUseCase = new EditarReserva(new ReservaRepository());
         this.confirmarReservaUseCase = new ConfirmarReserva(new ReservaRepository());
         this.aceptarInvitacionUseCase = new AceptarInvitacion(new ReservaRepository());
+        this.deshabilitarReservaUseCase = new DeshabilitarReserva(new ReservaRepository())
+    }
+    
+    async deshabilitarReserva(req, res) {
+        const { reservaId } = req.body;
+
+
+        const {id} = req.params;
+
+        console.log("usuarioId:", id);
+
+        console.log("reservaId:", reservaId);
+        if (!reservaId) {
+            return res.status(400).json({ error: "Faltan campos obligatorios: reservaId" });
+        }
+
+        try {
+            const result = await this.deshabilitarReservaUseCase.execute(reservaId);
+            res.status(200).json({ message: `Reserva ${result} deshabilitada.` });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
 
     async aceptarInvitacion(req, res) {

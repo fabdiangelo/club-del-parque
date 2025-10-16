@@ -261,7 +261,7 @@ app.put('/reservas/:id/rechazar', (req, res) => ReservaController.rechazarReserv
 app.put('/reservas/:id/confirmar', (req, res) => ReservaController.confirmarReserva(req, res));
 app.put('/reservas/:id', (req, res) => ReservaController.editarReserva(req, res));
 app.put('/reservas/:reservaID/aceptar-invitacion', (req, res) => ReservaController.aceptarInvitacion(req, res));
-
+app.put('/reservas/:id/deshabilitar', (req, res) => ReservaController.deshabilitarReserva(req, res));
 
 app.use((err, req, res, _next) => {
   console.error(err);

@@ -26,12 +26,10 @@ export class ReservaRepository {
             throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora");
         }
 
-        // Validar tipoPartido
         if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
             throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
         }
 
-        // Validar número de jugadores según tipo de partido
         if (tipoPartido === 'singles' && jugadoresIDS.length !== 2) {
             throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
         }
@@ -42,7 +40,6 @@ export class ReservaRepository {
             throw new Error("La cancha asociada no existe");
         }
 
-        // Solo validar partidoId si se proporciona
         if (partidoId && partidoId.trim() !== '') {
             const partido = await this.db.getItem("partidos", partidoId);
             if (!partido) {
@@ -50,16 +47,29 @@ export class ReservaRepository {
             }
         }
 
+        let noJugador = false;
+
         for (const j of jugadoresIDS) {
             const jugadorExists = await this.db.getItem("usuarios", j);
             if (!jugadorExists) {
-                throw new Error(`El jugador con ID ${j} no existe`);
+
+                noJugador = true;
+            }
+
+            const federado =  await this.db.getItem("federados", j);
+            if (!federado && !noJugador) {
+                throw new Error(`El jugador con ID ${j} no es un federado`);
             }
         }
 
+
         const quienPagaExists = await this.db.getItem("usuarios", quienPaga);
         if (!quienPagaExists) {
-            throw new Error("El usuario que paga no existe");
+            
+            const quienPagaExists2 = await this.db.getItem("federados", quienPaga);
+            if(!quienPagaExists2){
+                throw new Error("El usuario que paga no existe");
+            }
         }
 
         const autorExists = await this.db.getItem("usuarios", autor);
@@ -75,7 +85,9 @@ export class ReservaRepository {
         const aceptadoPor = [];
         const timestamp = Date.now();
 
-        const doc = await this.db.putItem("reservas", {...reserva, estado, aceptadoPor, timestamp}, reserva.id);
+        let deshabilitar = false;
+
+        const doc = await this.db.putItem("reservas", {...reserva, estado, aceptadoPor, timestamp, deshabilitar: false}, reserva.id);
 
         console.log("Se ha creado la reserva con id: " + doc.id);
         return doc.id;
@@ -83,6 +95,24 @@ export class ReservaRepository {
 
     async getById(reservaId) {
         return this.db.getItem("reservas", reservaId);
+    }
+
+    async deshabilitarReserva(reservaId) {
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
+        }
+
+        console.log("Deshabilitando reserva con ID:", reservaId);
+
+        const reserva = await this.db.getItem("reservas", reservaId);
+        if (!reserva) {
+            throw new Error("La reserva no existe");
+        }
+
+        console.log("Reserva encontrada:", reserva);
+
+        await this.db.updateItem("reservas", {deshabilitar: true}, reservaId);
+        return reservaId;
     }
 
     async update(reserva, reservaId) {
@@ -156,8 +186,15 @@ export class ReservaRepository {
     }
 
     async confirmarReserva(reservaId, usuarioId) {
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
+        }
 
-        const usuario = this.db.getItem("usuarios", usuarioId);
+        if (!usuarioId || usuarioId.trim() === '') {
+            throw new Error("ID de usuario es requerido");
+        }
+
+        const usuario = await this.db.getItem("usuarios", usuarioId);
         if (!usuario || usuario.rol !== 'administrador') {
             throw new Error("Usuario no autorizado para confirmar la reserva");
         }
@@ -172,8 +209,15 @@ export class ReservaRepository {
     }
 
     async rechazarReserva(reservaId, usuarioId) {
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
+        }
 
-        const usuario = this.db.getItem("usuarios", usuarioId);
+        if (!usuarioId || usuarioId.trim() === '') {
+            throw new Error("ID de usuario es requerido");
+        }
+
+        const usuario = await this.db.getItem("usuarios", usuarioId);
         if (!usuario || usuario.rol !== 'administrador') {
             throw new Error("Usuario no autorizado para rechazar la reserva");
         }
@@ -187,8 +231,15 @@ export class ReservaRepository {
     }
 
     async cancelarReserva(reservaId, usuarioId) {
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
+        }
 
-        const usuario = this.db.getItem("usuarios", usuarioId);
+        if (!usuarioId || usuarioId.trim() === '') {
+            throw new Error("ID de usuario es requerido");
+        }
+
+        const usuario = await this.db.getItem("usuarios", usuarioId);
         if (!usuario || usuario.rol !== 'administrador') {
             throw new Error("Usuario no autorizado para cancelar la reserva");
         }
