@@ -24,8 +24,9 @@ const Reservas = () => {
     const [jugadoresSeleccionados, setJugadoresSeleccionados] = useState([]);
 
     const [reservasHabilitadas, setReservasHabilitadas] = useState([]);
-
     const [reservasDeshabilitadas, setReservasDeshabilitadas] = useState([]);
+    const [filtroActivo, setFiltroActivo] = useState('habilitadas');
+    const [tipoAlerta, setTipoAlerta] = useState('');
 
     const [dataForm, setDataForm] = useState({
         canchaId: '',
@@ -48,13 +49,15 @@ const Reservas = () => {
     }
 
 
-    const activarAlerta = (mensaje) => {
+    const activarAlerta = (mensaje, tipo = 'error') => {
         setMensajeAlerta(mensaje);
+        setTipoAlerta(tipo);
         setMostrarAlerta(true);
 
         setTimeout(() => {
             setMostrarAlerta(false);
             setMensajeAlerta('');
+            setTipoAlerta('');
         }, (2500));
     }
 
@@ -89,6 +92,10 @@ const Reservas = () => {
 
     const fetchReservas = async () => {
         try {
+            // Limpiar arrays antes de llenarlos
+            setReservasHabilitadas([]);
+            setReservasDeshabilitadas([]);
+            
             const response = await fetch(`api/reservas`, {
                 credentials: 'include',
                 headers: {
@@ -105,16 +112,37 @@ const Reservas = () => {
             setReservas(data);
             console.log(data);
 
-            data.map((d) => {
+            // Separar reservas habilitadas y deshabilitadas
+            const habilitadas = [];
+            const deshabilitadas = [];
+            
+            data.forEach((d) => {
                 if(d.deshabilitar === true) {
-                    setReservasDeshabilitadas(oldArray => [...oldArray, d]);
+                    deshabilitadas.push(d);
                 } else {
-                    setReservasHabilitadas(oldArray => [...oldArray, d]);
+                    habilitadas.push(d);
                 }
-            })
+            });
+            
+            setReservasHabilitadas(habilitadas);
+            setReservasDeshabilitadas(deshabilitadas);
 
         } catch (error) {
             activarAlerta(error);
+        }
+    }
+
+    // Función para obtener las reservas a mostrar según el filtro
+    const getReservasAMostrar = () => {
+        switch(filtroActivo) {
+            case 'habilitadas':
+                return reservasHabilitadas;
+            case 'deshabilitadas':
+                return reservasDeshabilitadas;
+            case 'todas':
+                return reservas;
+            default:
+                return reservasHabilitadas;
         }
     }
 
@@ -122,7 +150,8 @@ const Reservas = () => {
     const crearReserva = async (nuevaReserva) => {
         try {
             if (!nuevaReserva.canchaId) {
-                activarAlerta("Debe seleccionar una cancha");
+                console.log("Debe seleccionar una cancha");
+                activarAlerta("Debe seleccionar una cancha", "error");
                 return;
             }
             if (!nuevaReserva.fechaHora) {
@@ -149,7 +178,6 @@ const Reservas = () => {
                 return;
             }
 
-            // Limpiar campos vacíos para evitar errores en el backend
             const reservaLimpia = {
                 canchaId: nuevaReserva.canchaId,
                 fechaHora: nuevaReserva.fechaHora,
@@ -191,11 +219,9 @@ const Reservas = () => {
             const data = await response.json();
             console.log("Respuesta del backend:", data);
             
-            // En lugar de agregar solo el nuevo elemento, refrescar toda la lista
-            // para asegurar que tenemos la estructura correcta
             await fetchReservas();
             
-            activarAlerta("Reserva creada exitosamente");
+            activarAlerta("Reserva creada exitosamente", "success");
         }
 
         catch (error) {
@@ -554,7 +580,6 @@ const Reservas = () => {
                                 </div>
                             </div>
 
-                            {/* Tipo de Partido */}
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium text-gray-700">
@@ -602,7 +627,6 @@ const Reservas = () => {
                                 </div>
                             </div>
 
-                            {/* Autor de la Reserva */}
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium text-gray-700">
@@ -633,7 +657,6 @@ const Reservas = () => {
                                 </div>
                             </div>
 
-                            {/* Jugadores */}
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium text-gray-700">
@@ -645,7 +668,6 @@ const Reservas = () => {
                                     </span>
                                 </label>
                                 
-                                {/* Indicador de progreso */}
                                 <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
                                     <div 
                                         className={`h-2 rounded-full ${
@@ -659,7 +681,6 @@ const Reservas = () => {
                                     ></div>
                                 </div>
                                 
-                                {/* Jugadores seleccionados */}
                                 {jugadoresSeleccionados.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mb-3">
                                         {jugadoresSeleccionados.map(jugador => (
@@ -704,8 +725,6 @@ const Reservas = () => {
                                     )}
                                 </div>
                             </div>
-
-                            {/* ID del Partido (opcional) */}
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text font-medium text-gray-700">
@@ -762,7 +781,6 @@ const Reservas = () => {
                                             limpiarFormulario();
                                             setModalFormulario(false);
                                         } catch (error) {
-                                            // El error ya se maneja en crearReserva
                                             console.log("Error en creación:", error);
                                         }
                                     }}
@@ -789,157 +807,222 @@ const Reservas = () => {
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <div className='container mx-auto'>
 
-                        {reservas.length > 0 && reservasHabilitadas.length > 0 ? (
-                            <div className='overflow-x-auto shadow-lg rounded-lg bg-white'>
-                                <table className='table w-full'>
-                                    <thead className='bg-gray-50'>
-                                        <tr>
-                                            <th className='font-semibold text-gray-700'></th>
-                                            <th className='font-semibold text-gray-700'>Cancha</th>
-                                            <th className='font-semibold text-gray-700'>Fecha & Hora</th>
-                                            <th className='font-semibold text-gray-700'>Duración</th>
-                                            <th className='font-semibold text-gray-700'>Estado</th>
-                                            <th className='font-semibold text-gray-700'>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reservasHabilitadas.map((reserva, index) => (
-                                            <tr key={reserva.id || index} className='hover:bg-gray-50 transition-colors'>
-                                                <td>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="avatar">
-                                                            <div className="mask mask-squircle h-12 w-12">
-                                                                {reserva.esCampeonato ? (
-                                                                    <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
-</svg>
-
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-</svg>
-
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            
-                                                            <div className="text-sm opacity-100 text-gray-600">
-                                                                {reserva.esCampeonato ? (
-                                                                    <span className="badge badge-warning badge-sm" style={{color: 'white'}}>Campeonato</span>
-                                                                ) : (
-                                                                    <span className="badge badge-info badge-sm" style={{color: 'white'}}>Recreativo</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span className="font-medium text-gray-900">Cancha {reserva.numeroCancha || 1}</span>
-                                                    <br />
-                                                    <span className="text-sm text-gray-500">{reserva.tipoCancha || 'Tenis'}</span>
-                                                </td>
-                                                <td>
-                                                    <div className="text-sm">
-                                                        <div className="font-medium text-gray-900">
-                                                            {reserva.fechaHora ? new Date(reserva.fechaHora).toLocaleDateString('es-ES') : 'No definida'}
-                                                        </div>
-                                                        <div className="text-gray-500">
-                                                            {reserva.fechaHora ? new Date(reserva.fechaHora).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : 'No definida'}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span className="badge badge-outline">{reserva.duracion || '90'} min</span>
-                                                </td>
-                                                <td>
-                                                    {reserva.estado === 'confirmada' && (
-                                                        <span className="badge badge-success">Confirmada</span>
-                                                    )}
-                                                    {reserva.estado === 'pendiente' && (
-                                                        <span className="badge badge-warning">Pendiente</span>
-                                                    )}
-                                                    {reserva.estado === 'rechazada' && (
-                                                        <span className="badge badge-error">Rechazada</span>
-                                                    )}
-                                                    {!reserva.estado && (
-                                                        <span className="badge badge-ghost">Sin estado</span>
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    <div className="flex gap-2">
-                                                        {reserva.estado === 'pendiente' && (
-                                                            <>
-                                                                <button
-                                                                    className="btn btn-success btn-xs"
-                                                                    onClick={() => confirmarReserva(reserva.id)}
-                                                                >
-                                                                    Confirmar
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-error btn-xs"
-                                                                    onClick={() => rechazarReserva(reserva.id)}
-                                                                >
-                                                                    Rechazar
-                                                                </button>
-                                                            </>
-                                                        )}
-
-                                                        {reserva.deshabilitar == false && ( 
-<div className="" onClick={() => deshabilitarReserva(reserva.id)} style={{backgroundColor: 'white', border: 'none', padding: 0, cursor: 'pointer'}}>
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-</svg>
-
-                                                        </div>
-                                                        )}
-
-                                                        
-
-                                                        <button className="btn btn-ghost btn-xs" onClick={() => verDetalles(reserva.id)}>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-</svg>
-
-                                                            </button>
-                                                        {reserva.estado === 'rechazada' && (
-                                                            <span className="text-xs text-gray-400">Sin acciones</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )
-                            :
-                            (
-                                <div className="text-center py-12">
-                                    <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 0v1m0-1h6m-6 1v3a1 1 0 001 1h4a1 1 0 001-1V8m-6 0H7a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1" />
-                                        </svg>
+                        {reservas.length > 0 ? (
+                            <div className='container mx-auto px-4'>
+                                <div className="mb-6 bg-white p-4 rounded-lg">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-xl font-semibold text-gray-800">Reservas</h2>
+                                        <div className="flex gap-2">
+                                            <span className="text-sm text-gray-500">
+                                                Total: {reservas.length} | 
+                                                Habilitadas: {reservasHabilitadas.length} | 
+                                                Deshabilitadas: {reservasDeshabilitadas.length}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No hay reservas</h3>
-                                    <p className="text-gray-500">Cuando se realicen reservas, aparecerán aquí.</p>
                                     
+                                    <div className="flex flex-wrap gap-3">
+                                        <button 
+                                            className={`btn btn-sm ${filtroActivo === 'habilitadas' ? 'btn-primary' : 'btn-outline'}`}
+                                            onClick={() => setFiltroActivo('habilitadas')}
+                                        >
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Habilitadas ({reservasHabilitadas.length})
+                                        </button>
+                                        
+                                        <button 
+                                            className={`btn btn-sm ${filtroActivo === 'deshabilitadas' ? 'btn-error' : 'btn-outline'}`}
+                                            onClick={() => setFiltroActivo('deshabilitadas')}
+                                        >
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Deshabilitadas ({reservasDeshabilitadas.length})
+                                        </button>
+                                        
+                                        <button 
+                                            className={`btn btn-sm ${filtroActivo === 'todas' ? 'btn-accent' : 'btn-outline'}`}
+                                            onClick={() => setFiltroActivo('todas')}
+                                        >
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                            </svg>
+                                            Todas ({reservas.length})
+                                        </button>
+                                    </div>
                                 </div>
-                            )}
+
+                                {getReservasAMostrar().length > 0 ? (
+                                    <div className='overflow-x-auto shadow-lg rounded-lg bg-white'>
+                                        <table className='table w-full'>
+                                            <thead className='bg-gray-50'>
+                                                <tr>
+                                                    <th className='font-semibold text-gray-700'></th>
+                                                    <th className='font-semibold text-gray-700'>Cancha</th>
+                                                    <th className='font-semibold text-gray-700'>Fecha & Hora</th>
+                                                    <th className='font-semibold text-gray-700'>Duración</th>
+                                                    <th className='font-semibold text-gray-700'>Estado</th>
+                                                    <th className='font-semibold text-gray-700'>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {getReservasAMostrar().map((reserva, index) => (
+                                                    <tr key={reserva.id || index} className={`hover:bg-gray-50 transition-colors ${reserva.deshabilitar ? 'opacity-60' : ''}`}>
+                                                        <td>
+                                                            <div className="flex items-center gap-3" style={{cursor: 'pointer'}} onClick={() => verDetalles(reserva.id)}>
+                                                                <div className="avatar">
+                                                                    <div className="mask mask-squircle h-12 w-12">
+                                                                        {reserva.esCampeonato ? (
+                                                                            <div className={`w-12 h-12 bg-white rounded-lg flex items-center justify-center`}>
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="black" className="size-6">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
+                                                                                </svg>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className={`w-12 h-12 bg-white rounded-lg flex items-center justify-center`}>
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="black" className="size-6">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                                                                                </svg>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-sm opacity-100 text-gray-600">
+                                                                        {reserva.esCampeonato ? (
+                                                                            <span className={`badge badge-sm ${reserva.deshabilitar ? 'badge-ghost' : 'badge-warning'}`} style={{color: 'white'}}>
+                                                                                Campeonato
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className={`badge badge-sm ${reserva.deshabilitar ? 'badge-ghost' : 'badge-info'}`} style={{color: 'white'}}>
+                                                                                Recreativo
+                                                                            </span>
+                                                                        )}
+                                                                        {reserva.deshabilitar && (
+                                                                            <span className="badge badge-error badge-sm ml-1">Deshabilitada</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span className={`font-medium ${reserva.deshabilitar ? 'text-gray-500' : 'text-gray-900'}`}>
+                                                                Cancha {reserva.numeroCancha || 1}
+                                                            </span>
+                                                            <br />
+                                                            <span className="text-sm text-gray-500">{reserva.tipoCancha || 'Tenis'}</span>
+                                                        </td>
+                                                        <td>
+                                                            <div className="text-sm">
+                                                                <div className={`font-medium ${reserva.deshabilitar ? 'text-gray-500' : 'text-gray-900'}`}>
+                                                                    {reserva.fechaHora ? new Date(reserva.fechaHora).toLocaleDateString('es-ES') : 'No definida'}
+                                                                </div>
+                                                                <div className="text-gray-500">
+                                                                    {reserva.fechaHora ? new Date(reserva.fechaHora).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : 'No definida'}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span className={`badge badge-outline ${reserva.deshabilitar ? 'opacity-50' : ''}`}>
+                                                                {reserva.duracion || '90'} min
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            {reserva.estado === 'confirmada' && (
+                                                                <span style={{ color: reserva.deshabilitar ? 'gray' : 'green' }}>Confirmada</span>
+                                                            )}
+                                                            {reserva.estado === 'pendiente' && (
+                                                                <span style={{ color: reserva.deshabilitar ? 'gray' : 'orange' }}>Pendiente</span>
+                                                            )}
+                                                            {reserva.estado === 'rechazada' && (
+                                                                <span style={{ color: reserva.deshabilitar ? 'gray' : 'red' }}>Rechazada</span>
+                                                            )}
+                                                            {!reserva.estado && (
+                                                                <span>Sin estado</span>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            <div className="flex gap-2">
+                                                                {reserva.estado === 'pendiente' && !reserva.deshabilitar && (
+                                                                    <>
+                                                                        <button
+                                                                            className="btn btn-success btn-xs"
+                                                                            onClick={() => confirmarReserva(reserva.id)}
+                                                                        >
+                                                                            Confirmar
+                                                                        </button>
+                                                                        <button
+                                                                            className="btn btn-error btn-xs"
+                                                                            onClick={() => rechazarReserva(reserva.id)}
+                                                                        >
+                                                                            Rechazar
+                                                                        </button>
+                                                                    </>
+                                                                )}
+
+                                                                {reserva.deshabilitar === false && ( 
+                                                                    <div 
+                                                                        style={{color: 'red', textAlign: 'center', cursor: 'pointer'}} 
+                                                                        onClick={() => deshabilitarReserva(reserva.id)} 
+                                                                        title="Deshabilitar reserva"
+                                                                    >
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                                        </svg>
+                                                                    </div>
+                                                                )}
+
+                                                                
+                                                                
+                                                                {reserva.estado === 'rechazada' && (
+                                                                    <span className="text-xs text-gray-400">Sin acciones</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+                                        <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 0v1m0-1h6m-6 1v3a1 1 0 001 1h4a1 1 0 001-1V8m-6 0H7a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                            No hay reservas {filtroActivo === 'habilitadas' ? 'habilitadas' : filtroActivo === 'deshabilitadas' ? 'deshabilitadas' : ''}
+                                        </h3>
+                                        <p className="text-gray-500">
+                                            {filtroActivo === 'habilitadas' && 'No se encontraron reservas habilitadas.'}
+                                            {filtroActivo === 'deshabilitadas' && 'No se encontraron reservas deshabilitadas.'}
+                                            {filtroActivo === 'todas' && 'Cuando se realicen reservas, aparecerán aquí.'}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 0v1m0-1h6m-6 1v3a1 1 0 001 1h4a1 1 0 001-1V8m-6 0H7a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay reservas</h3>
+                                <p className="text-gray-500">Cuando se realicen reservas, aparecerán aquí.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
 
 
-                {/* Alerta flotante */}
                 {mostrarAlerta && (
-                    <div className="toast toast-top toast-center">
-                        <div className="alert alert-error">
+                    <div className="toast toast-bottom toast-start">
+                        <div className={`alert ${tipoAlerta === 'success' ? 'alert-success' : tipoAlerta === 'warning' ? 'alert-warning' : 'alert-error'}`}>
                             <span>{mensajeAlerta}</span>
                         </div>
                     </div>

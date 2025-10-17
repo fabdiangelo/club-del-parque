@@ -91,6 +91,9 @@ app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController
 
 app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(req, res));
 app.post("/federados/precarga", (req, res) => UsuarioController.precarga(req, res));
+app.get("/federados/:id", (req, res) => UsuarioController.getFederadoById(req, res));
+
+
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
@@ -262,6 +265,8 @@ app.put('/reservas/:id/confirmar', (req, res) => ReservaController.confirmarRese
 app.put('/reservas/:id', (req, res) => ReservaController.editarReserva(req, res));
 app.put('/reservas/:reservaID/aceptar-invitacion', (req, res) => ReservaController.aceptarInvitacion(req, res));
 app.put('/reservas/:id/deshabilitar', (req, res) => ReservaController.deshabilitarReserva(req, res));
+app.put('/reservas/:id/habilitar', (req, res) => ReservaController.habilitarReserva(req, res));
+
 
 app.use((err, req, res, _next) => {
   console.error(err);

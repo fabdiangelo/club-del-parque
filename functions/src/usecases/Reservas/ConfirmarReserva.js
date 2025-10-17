@@ -4,7 +4,7 @@ export class ConfirmarReserva {
         this.reservaRepository = reservaRepository
     }
 
-    async execute(reservaID, usuarioId) {
-        return await this.reservaRepository.confirmarReserva(reservaID, usuarioId);
+    async execute(reservaID) {
+        return await this.reservaRepository.confirmarReserva(reservaID);
     }
 }
