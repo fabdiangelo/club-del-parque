@@ -1,5 +1,5 @@
 // src/pages/PartidosGestor.jsx
-import React, { useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import bgImg from "../assets/RankingsBackground.png";
 import { PlayerPickerModal } from "../components/PlayerPickerModal";
@@ -22,7 +22,6 @@ const normalizeError = (e) => {
     return String(e?.message || e);
   }
 };
-
 
 const formatDateTime = (iso) => {
   if (!iso) return "—";
@@ -65,7 +64,7 @@ export default function PartidosGestor() {
   const [canchas, setCanchas] = useState([]);
   const [federados, setFederados] = useState([]);
   const [partidos, setPartidos] = useState([]);
-const [toast, setToast] = useState(""); 
+  const [toast, setToast] = useState("");
   // Selección
   const [selected, setSelected] = useState(() => new Set());
 
@@ -98,10 +97,13 @@ const [toast, setToast] = useState("");
         if (cancelled) return;
         setTemporadas(ts || []);
         setCanchas(cs || []);
-        setFederados((fs || []).map((f) => ({
-   ...f,
-   id: normID(f.uid ?? f.userId ?? f.id),
- })));
+        setFederados(
+          (fs || []).map((f) => ({
+            ...f,
+            id: normID(f.id),
+            _uid: normID(f.uid ?? f.userId ?? ""),
+          }))
+        );
         setPartidos(Array.isArray(ps) ? ps : []);
       } catch (e) {
         if (!cancelled) setErr(normalizeError(e));
@@ -158,15 +160,21 @@ const [toast, setToast] = useState("");
   const onDeleteSelected = async () => {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
-    if (!window.confirm(`¿Eliminar ${ids.length} partido(s)? Esta acción no se puede deshacer.`))
+    if (
+      !window.confirm(
+        `¿Eliminar ${ids.length} partido(s)? Esta acción no se puede deshacer.`
+      )
+    )
       return;
     try {
       setLoading(true);
       setErr("");
-      await Promise.all(ids.map((id) => fetchJSON(`/partidos/${id}`, { method: "DELETE" })));
-await reloadPartidos();   
-setSelected(new Set());
-setToast("Partido(s) eliminado(s).");
+      await Promise.all(
+        ids.map((id) => fetchJSON(`/partidos/${id}`, { method: "DELETE" }))
+      );
+      await reloadPartidos();
+      setSelected(new Set());
+      setToast("Partido(s) eliminado(s).");
     } catch (e) {
       setErr(normalizeError(e));
     } finally {
@@ -174,119 +182,118 @@ setToast("Partido(s) eliminado(s).");
     }
   };
 
-const onSave = async (draft) => {
-  const errs = validatePartido(draft);
-  if (errs.length) { setToast(errs.join("\n")); return; }
+  const onSave = async (draft) => {
+    const errs = validatePartido(draft);
+    if (errs.length) {
+      setToast(errs.join("\n"));
+      return;
+    }
 
-  const known = new Set((federados || []).map((f) => normID(f.id)));
-const payload = sanitizePayload(draft, known);
-console.log("POST /partidos payload", payload); // <— agrega esto un momento
+    const known = new Set((federados || []).map((f) => normID(f.id)));
+    const payload = sanitizePayload(draft, known);
+    console.log("POST /partidos payload", payload); // <— agrega esto un momento
 
-  const isEdit = Boolean(draft.id);
+    const isEdit = Boolean(draft.id);
 
-  try {
-    setLoading(true);
-    setErr("");
-    if (isEdit) {
-      await fetchJSON(`/partidos/${draft.id}`, {
+    try {
+      setLoading(true);
+      setErr("");
+      if (isEdit) {
+        await fetchJSON(`/partidos/${draft.id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await fetchJSON(`/partidos`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+      await reloadPartidos(); // ← always reload list
+      setShowForm(false);
+      setEditing(null);
+      setToast(isEdit ? "Partido actualizado." : "Partido creado.");
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSaveWinners = async (ids) => {
+    const [only] = Array.from(selected);
+    const p = partidos.find((x) => x.id === only);
+    if (!p) return;
+
+    const jugSet = new Set((p.jugadores || []).map((x) => normID(x)));
+    const payload = {
+      ganadores: (ids || []).map(normID).filter((id) => jugSet.has(id)),
+    };
+
+    try {
+      setLoading(true);
+      setErr("");
+      await fetchJSON(`/partidos/${p.id}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
-    } else {
-      await fetchJSON(`/partidos`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      await reloadPartidos();
+      setShowWinners(false);
+      setToast("Ganadores actualizados.");
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
     }
-    await reloadPartidos();      // ← always reload list
-    setShowForm(false);
-    setEditing(null);
-    setToast(isEdit ? "Partido actualizado." : "Partido creado.");
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
-const onSaveWinners = async (ids) => {
-  const [only] = Array.from(selected);
-  const p = partidos.find((x) => x.id === only);
-  if (!p) return;
-
-const jugSet = new Set((p.jugadores || []).map((x) => normID(x)));
-const payload = {
-  ganadores: (ids || []).map(normID).filter((id) => jugSet.has(id)),
-};
-
-
-  try {
-    setLoading(true);
-    setErr("");
-    await fetchJSON(`/partidos/${p.id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-    await reloadPartidos();
-    setShowWinners(false);
-    setToast("Ganadores actualizados.");
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const reloadPartidos = async () => {
-  try {
-    setLoading(true);
-    setErr("");
-    const ps = await fetchJSON("/partidos");
-    setPartidos(Array.isArray(ps) ? ps : []);
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
-// --- Defaults de precarga ---
-const DEFAULT_CANCHAS = [
-  { nombre: "Cancha Central" },
-  { nombre: "Cancha 1" },
-  { nombre: "Cancha 2" },
-];
+    try {
+      setLoading(true);
+      setErr("");
+      const ps = await fetchJSON("/partidos");
+      setPartidos(Array.isArray(ps) ? ps : []);
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+  // --- Defaults de precarga ---
+  const DEFAULT_CANCHAS = [
+    { nombre: "Cancha Central" },
+    { nombre: "Cancha 1" },
+    { nombre: "Cancha 2" },
+  ];
 
-const y = new Date().getFullYear();
-const toISO = (d) => new Date(d).toISOString();
+  const y = new Date().getFullYear();
+  const toISO = (d) => new Date(d).toISOString();
 
-const DEFAULT_TEMPORADAS = [
-  {
-    nombre: `Temporada ${y} Apertura`,
-    fechaInicio: toISO(new Date(y, 0, 15)),   // 15/ene
-    fechaFin:    toISO(new Date(y, 5, 30)),   // 30/jun
-  },
-  {
-    nombre: `Temporada ${y} Clausura`,
-    fechaInicio: toISO(new Date(y, 6, 1)),    // 1/jul
-    fechaFin:    toISO(new Date(y, 11, 15)),  // 15/dic
-  },
-];
+  const DEFAULT_TEMPORADAS = [
+    {
+      nombre: `Temporada ${y} Apertura`,
+      fechaInicio: toISO(new Date(y, 0, 15)), // 15/ene
+      fechaFin: toISO(new Date(y, 5, 30)), // 30/jun
+    },
+    {
+      nombre: `Temporada ${y} Clausura`,
+      fechaInicio: toISO(new Date(y, 6, 1)), // 1/jul
+      fechaFin: toISO(new Date(y, 11, 15)), // 15/dic
+    },
+  ];
 
-// --- Reload helpers unitarios ---
-const reloadTemporadas = async () => {
-  const ts = await fetchJSON("/temporadas");
-  setTemporadas(ts || []);
-};
-const reloadCanchas = async () => {
-  const cs = await fetchJSON("/canchas");
-  setCanchas(cs || []);
-};
+  // --- Reload helpers unitarios ---
+  const reloadTemporadas = async () => {
+    const ts = await fetchJSON("/temporadas");
+    setTemporadas(ts || []);
+  };
+  const reloadCanchas = async () => {
+    const cs = await fetchJSON("/canchas");
+    setCanchas(cs || []);
+  };
 
-// --- Precarga: crea varias entradas por defecto y recarga ---
-/*
+  // --- Precarga: crea varias entradas por defecto y recarga ---
+  /*
 const precargarCanchas = async () => {
   try {
     setLoading(true);
@@ -329,44 +336,44 @@ const precargarTemporadas = async () => {
   }
 };*/
 
-const precargarAmbos = async () => {
-  try {
-    setLoading(true);
-    setErr("");
+  const precargarAmbos = async () => {
+    try {
+      setLoading(true);
+      setErr("");
 
-    // canchas
-    await Promise.all(
-      DEFAULT_CANCHAS.map((c) =>
-        fetchJSON("/canchas", {
-          method: "POST",
-          body: JSON.stringify(c),
-        })
-      )
-    );
+      // canchas
+      await Promise.all(
+        DEFAULT_CANCHAS.map((c) =>
+          fetchJSON("/canchas", {
+            method: "POST",
+            body: JSON.stringify(c),
+          })
+        )
+      );
 
-    // temporadas
-    await Promise.all(
-      DEFAULT_TEMPORADAS.map((t) =>
-        fetchJSON("/temporadas", {
-          method: "POST",
-          body: JSON.stringify({
-            nombre: t.nombre,
-            fechaInicio: t.fechaInicio,
-            fechaFin: t.fechaFin,
-          }),
-        })
-      )
-    );
+      // temporadas
+      await Promise.all(
+        DEFAULT_TEMPORADAS.map((t) =>
+          fetchJSON("/temporadas", {
+            method: "POST",
+            body: JSON.stringify({
+              nombre: t.nombre,
+              fechaInicio: t.fechaInicio,
+              fechaFin: t.fechaFin,
+            }),
+          })
+        )
+      );
 
-    // recargar datasets
-    await Promise.all([reloadCanchas(), reloadTemporadas()]);
-    setToast("Canchas y temporadas precargadas.");
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
+      // recargar datasets
+      await Promise.all([reloadCanchas(), reloadTemporadas()]);
+      setToast("Canchas y temporadas precargadas.");
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* ----------------------------- Render ----------------------------- */
   const selectedCount = selected.size;
@@ -453,13 +460,13 @@ const precargarAmbos = async () => {
                 Eliminar{selectedCount > 0 ? ` (${selectedCount})` : ""}
               </button>
             </div>
-<button
-  onClick={precargarAmbos}
-  className="h-11 px-4 rounded-xl border bg-emerald-700/90 text-white border-white shadow-sm hover:bg-emerald-600/90 active:scale-[.98]"
-  title="Precargar canchas y temporadas por defecto"
->
-  Precargar
-</button>
+            <button
+              onClick={precargarAmbos}
+              className="h-11 px-4 rounded-xl border bg-emerald-700/90 text-white border-white shadow-sm hover:bg-emerald-600/90 active:scale-[.98]"
+              title="Precargar canchas y temporadas por defecto"
+            >
+              Precargar
+            </button>
             {/* Selection summary */}
             <div className="mt-2 text-sm text-white/70">
               {selectedCount > 0 ? (
@@ -483,10 +490,11 @@ const precargarAmbos = async () => {
         <main className="flex-1">
           <div className="mx-auto max-w-screen-2xl px-6 lg:px-8 pb-20">
             <div className="rounded-2xl border border-white/20 bg-neutral-900/70 shadow-2xl backdrop-blur-sm overflow-hidden">
-{loading && (
-  <div className="px-6 pt-3 pb-2 text-sm text-white/80">Cargando…</div>
-)}
-
+              {loading && (
+                <div className="px-6 pt-3 pb-2 text-sm text-white/80">
+                  Cargando…
+                </div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-white whitespace-normal">
@@ -540,11 +548,16 @@ const precargarAmbos = async () => {
                           key={p.id}
                           className={`align-top transition-colors cursor-pointer ${
                             i % 2 === 0 ? "bg-neutral-900/40" : "bg-transparent"
-                          } ${isSel ? "outline outline-2 outline-cyan-600/60" : "hover:bg-neutral-800/60"}`}
+                          } ${
+                            isSel
+                              ? "outline outline-2 outline-cyan-600/60"
+                              : "hover:bg-neutral-800/60"
+                          }`}
                           title={`ID: ${p.id}`}
                           onClick={(e) => {
                             // avoid toggle when clicking the checkbox itself
-                            if (e.target.tagName.toLowerCase() === "input") return;
+                            if (e.target.tagName.toLowerCase() === "input")
+                              return;
                             const next = new Set(selected);
                             if (next.has(p.id)) next.delete(p.id);
                             else next.add(p.id);
@@ -618,11 +631,7 @@ const precargarAmbos = async () => {
       </div>
 
       {/* Form modal */}
-      {toast && (
-  <Toast onClose={() => setToast("")}>
-    {toast}
-  </Toast>
-)}
+      {toast && <Toast onClose={() => setToast("")}>{toast}</Toast>}
       {showForm && (
         <Modal
           onClose={() => {
@@ -679,9 +688,10 @@ function lookupName(list, id) {
 
 function getPersons(ids = [], people = []) {
   return ids.map((id) => {
-    const it =
-      people.find((o) => normID(o.id) === normID(id)) ||
-      { nombre: id, apellido: "" };
+    const it = people.find((o) => normID(o.id) === normID(id)) || {
+      nombre: id,
+      apellido: "",
+    };
     const label =
       [it.nombre, it.apellido].filter(Boolean).join(" ") || it.email || id;
     return { id, label };
@@ -759,8 +769,6 @@ function Toast({ children, onClose }) {
 
 /* ----------------------------- Formulario ----------------------------- */
 
-
-
 /* winners modal (global) */
 function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
   const maxWinners = partido?.tipoPartido === "singles" ? 1 : 2;
@@ -788,11 +796,18 @@ function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
       <div className="p-5 space-y-4">
         <div className="flex items-start justify-between">
           <h3 className="text-lg font-semibold">Elegir ganadores</h3>
-          <button onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-white/30 hover:bg-white/10">Cerrar</button>
+          <button
+            onClick={onCancel}
+            className="px-3 py-1.5 rounded-lg border border-white/30 hover:bg-white/10"
+          >
+            Cerrar
+          </button>
         </div>
         <div className="text-xs text-white/70">
-          Partido: <strong>{formatDateTime(partido?.timestamp)}</strong> · {lookupName([], partido?.id)}
-          <br />Máx {maxWinners} ganador(es). Deben ser jugadores del partido.
+          Partido: <strong>{formatDateTime(partido?.timestamp)}</strong> ·{" "}
+          {lookupName([], partido?.id)}
+          <br />
+          Máx {maxWinners} ganador(es). Deben ser jugadores del partido.
         </div>
         <div className="flex flex-wrap gap-2">
           {available.map((f) => (
@@ -805,7 +820,9 @@ function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
                   : "bg-neutral-800 text-white/90 border-white/20 hover:bg-neutral-700"
               }`}
             >
-              {[f.nombre, f.apellido].filter(Boolean).join(" ") || f.email || f.id}
+              {[f.nombre, f.apellido].filter(Boolean).join(" ") ||
+                f.email ||
+                f.id}
             </button>
           ))}
         </div>
@@ -821,7 +838,6 @@ function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
     </Modal>
   );
 }
-
 
 function MultiSelect({ label, value = [], onChange, options = [], getLabel }) {
   const toggle = (id) => {
@@ -866,7 +882,8 @@ function validatePartido(p) {
   if (!Array.isArray(p.jugadores) || p.jugadores.length !== (singles ? 2 : 4)) {
     errs.push(`jugadores debe tener exactamente ${singles ? 2 : 4}`);
   }
-  const inJugadores = (arr) => (arr || []).every((id) => p.jugadores.includes(id));
+  const inJugadores = (arr) =>
+    (arr || []).every((id) => p.jugadores.includes(id));
   if (!inJugadores(p.equipoLocal))
     errs.push("equipoLocal debe ser subconjunto de jugadores");
   if (!inJugadores(p.equipoVisitante))
@@ -880,9 +897,8 @@ function validatePartido(p) {
 
 function sanitizePayload(p, known) {
   const clean = (arr = []) =>
-  Array.from(new Set((arr || []).map((x) => normID(x))));
-  const keepKnown = (arr = []) =>
-    clean(arr).filter((id) => known.has(id));
+    Array.from(new Set((arr || []).map((x) => normID(x))));
+  const keepKnown = (arr = []) => clean(arr).filter((id) => known.has(id));
 
   const jug = keepKnown(p.jugadores);
 
@@ -895,11 +911,10 @@ function sanitizePayload(p, known) {
     etapa: p.etapa,
     jugadores: jug,
     equipoLocal: keepKnown(p.equipoLocal).filter((id) => jug.includes(id)),
-    equipoVisitante: keepKnown(p.equipoVisitante).filter((id) => jug.includes(id)),
+    equipoVisitante: keepKnown(p.equipoVisitante).filter((id) =>
+      jug.includes(id)
+    ),
     ganadores: keepKnown(p.ganadores).filter((id) => jug.includes(id)),
     resultado: p.resultado || null,
   };
 }
-
-
-

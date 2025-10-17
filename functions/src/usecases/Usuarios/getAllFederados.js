@@ -1,3 +1,4 @@
+// usecases/Usuarios/GetAllFederados.js
 import { FederadoRepository } from "../../infraestructure/adapters/FederadoRepository.js";
 
 class GetAllFederados {
