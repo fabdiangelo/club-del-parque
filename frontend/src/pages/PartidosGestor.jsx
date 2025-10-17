@@ -1,10 +1,12 @@
 // src/pages/PartidosGestor.jsx
-import React, { useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import bgImg from "../assets/RankingsBackground.png";
 import { PlayerPickerModal } from "../components/PlayerPickerModal";
+import PartidoForm from "../components/PartidosForm";
 
 /* ------------------------- Helpers ------------------------- */
+const normID = (v) => String(v).trim();
 const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
 
 const normalizeError = (e) => {
@@ -21,21 +23,6 @@ const normalizeError = (e) => {
   }
 };
 
-const pad = (n) => String(n).padStart(2, "0");
-const toLocalInputValue = (d) => {
-  const dt = d instanceof Date ? d : new Date(d || Date.now());
-  const y = dt.getFullYear();
-  const m = pad(dt.getMonth() + 1);
-  const day = pad(dt.getDate());
-  const hh = pad(dt.getHours());
-  const mm = pad(dt.getMinutes());
-  return `${y}-${m}-${day}T${hh}:${mm}`;
-};
-const toISOFromLocal = (localValue) => {
-  if (!localValue) return new Date().toISOString();
-  const d = new Date(localValue);
-  return d.toISOString();
-};
 const formatDateTime = (iso) => {
   if (!iso) return "—";
   try {
@@ -77,7 +64,7 @@ export default function PartidosGestor() {
   const [canchas, setCanchas] = useState([]);
   const [federados, setFederados] = useState([]);
   const [partidos, setPartidos] = useState([]);
-const [toast, setToast] = useState(""); 
+  const [toast, setToast] = useState("");
   // Selección
   const [selected, setSelected] = useState(() => new Set());
 
@@ -110,7 +97,13 @@ const [toast, setToast] = useState("");
         if (cancelled) return;
         setTemporadas(ts || []);
         setCanchas(cs || []);
-        setFederados(fs || []);
+        setFederados(
+          (fs || []).map((f) => ({
+            ...f,
+            id: normID(f.id),
+            _uid: normID(f.uid ?? f.userId ?? ""),
+          }))
+        );
         setPartidos(Array.isArray(ps) ? ps : []);
       } catch (e) {
         if (!cancelled) setErr(normalizeError(e));
@@ -167,15 +160,21 @@ const [toast, setToast] = useState("");
   const onDeleteSelected = async () => {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
-    if (!window.confirm(`¿Eliminar ${ids.length} partido(s)? Esta acción no se puede deshacer.`))
+    if (
+      !window.confirm(
+        `¿Eliminar ${ids.length} partido(s)? Esta acción no se puede deshacer.`
+      )
+    )
       return;
     try {
       setLoading(true);
       setErr("");
-      await Promise.all(ids.map((id) => fetchJSON(`/partidos/${id}`, { method: "DELETE" })));
-await reloadPartidos();   
-setSelected(new Set());
-setToast("Partido(s) eliminado(s).");
+      await Promise.all(
+        ids.map((id) => fetchJSON(`/partidos/${id}`, { method: "DELETE" }))
+      );
+      await reloadPartidos();
+      setSelected(new Set());
+      setToast("Partido(s) eliminado(s).");
     } catch (e) {
       setErr(normalizeError(e));
     } finally {
@@ -183,111 +182,118 @@ setToast("Partido(s) eliminado(s).");
     }
   };
 
-const onSave = async (draft) => {
-  const errs = validatePartido(draft);
-  if (errs.length) { setToast(errs.join("\n")); return; }
+  const onSave = async (draft) => {
+    const errs = validatePartido(draft);
+    if (errs.length) {
+      setToast(errs.join("\n"));
+      return;
+    }
 
-  const payload = sanitizePayload(draft);
-  const isEdit = Boolean(draft.id);
+    const known = new Set((federados || []).map((f) => normID(f.id)));
+    const payload = sanitizePayload(draft, known);
+    console.log("POST /partidos payload", payload); // <— agrega esto un momento
 
-  try {
-    setLoading(true);
-    setErr("");
-    if (isEdit) {
-      await fetchJSON(`/partidos/${draft.id}`, {
+    const isEdit = Boolean(draft.id);
+
+    try {
+      setLoading(true);
+      setErr("");
+      if (isEdit) {
+        await fetchJSON(`/partidos/${draft.id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await fetchJSON(`/partidos`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+      await reloadPartidos(); // ← always reload list
+      setShowForm(false);
+      setEditing(null);
+      setToast(isEdit ? "Partido actualizado." : "Partido creado.");
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSaveWinners = async (ids) => {
+    const [only] = Array.from(selected);
+    const p = partidos.find((x) => x.id === only);
+    if (!p) return;
+
+    const jugSet = new Set((p.jugadores || []).map((x) => normID(x)));
+    const payload = {
+      ganadores: (ids || []).map(normID).filter((id) => jugSet.has(id)),
+    };
+
+    try {
+      setLoading(true);
+      setErr("");
+      await fetchJSON(`/partidos/${p.id}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
-    } else {
-      await fetchJSON(`/partidos`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      await reloadPartidos();
+      setShowWinners(false);
+      setToast("Ganadores actualizados.");
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
     }
-    await reloadPartidos();      // ← always reload list
-    setShowForm(false);
-    setEditing(null);
-    setToast(isEdit ? "Partido actualizado." : "Partido creado.");
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
-const onSaveWinners = async (ids) => {
-  const [only] = Array.from(selected);
-  const p = partidos.find((x) => x.id === only);
-  if (!p) return;
-
-  const payload = { ganadores: ids.filter((id) => (p.jugadores || []).includes(id)) };
-
-  try {
-    setLoading(true);
-    setErr("");
-    await fetchJSON(`/partidos/${p.id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-    await reloadPartidos();   // ← just reload the list
-    setShowWinners(false);
-    setToast("Ganadores actualizados.");
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const reloadPartidos = async () => {
-  try {
-    setLoading(true);
-    setErr("");
-    const ps = await fetchJSON("/partidos");
-    setPartidos(Array.isArray(ps) ? ps : []);
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
-// --- Defaults de precarga ---
-const DEFAULT_CANCHAS = [
-  { nombre: "Cancha Central" },
-  { nombre: "Cancha 1" },
-  { nombre: "Cancha 2" },
-];
+    try {
+      setLoading(true);
+      setErr("");
+      const ps = await fetchJSON("/partidos");
+      setPartidos(Array.isArray(ps) ? ps : []);
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+  // --- Defaults de precarga ---
+  const DEFAULT_CANCHAS = [
+    { nombre: "Cancha Central" },
+    { nombre: "Cancha 1" },
+    { nombre: "Cancha 2" },
+  ];
 
-const y = new Date().getFullYear();
-const toISO = (d) => new Date(d).toISOString();
+  const y = new Date().getFullYear();
+  const toISO = (d) => new Date(d).toISOString();
 
-const DEFAULT_TEMPORADAS = [
-  {
-    nombre: `Temporada ${y} Apertura`,
-    fechaInicio: toISO(new Date(y, 0, 15)),   // 15/ene
-    fechaFin:    toISO(new Date(y, 5, 30)),   // 30/jun
-  },
-  {
-    nombre: `Temporada ${y} Clausura`,
-    fechaInicio: toISO(new Date(y, 6, 1)),    // 1/jul
-    fechaFin:    toISO(new Date(y, 11, 15)),  // 15/dic
-  },
-];
+  const DEFAULT_TEMPORADAS = [
+    {
+      nombre: `Temporada ${y} Apertura`,
+      fechaInicio: toISO(new Date(y, 0, 15)), // 15/ene
+      fechaFin: toISO(new Date(y, 5, 30)), // 30/jun
+    },
+    {
+      nombre: `Temporada ${y} Clausura`,
+      fechaInicio: toISO(new Date(y, 6, 1)), // 1/jul
+      fechaFin: toISO(new Date(y, 11, 15)), // 15/dic
+    },
+  ];
 
-// --- Reload helpers unitarios ---
-const reloadTemporadas = async () => {
-  const ts = await fetchJSON("/temporadas");
-  setTemporadas(ts || []);
-};
-const reloadCanchas = async () => {
-  const cs = await fetchJSON("/canchas");
-  setCanchas(cs || []);
-};
+  // --- Reload helpers unitarios ---
+  const reloadTemporadas = async () => {
+    const ts = await fetchJSON("/temporadas");
+    setTemporadas(ts || []);
+  };
+  const reloadCanchas = async () => {
+    const cs = await fetchJSON("/canchas");
+    setCanchas(cs || []);
+  };
 
-// --- Precarga: crea varias entradas por defecto y recarga ---
-/*
+  // --- Precarga: crea varias entradas por defecto y recarga ---
+  /*
 const precargarCanchas = async () => {
   try {
     setLoading(true);
@@ -330,44 +336,44 @@ const precargarTemporadas = async () => {
   }
 };*/
 
-const precargarAmbos = async () => {
-  try {
-    setLoading(true);
-    setErr("");
+  const precargarAmbos = async () => {
+    try {
+      setLoading(true);
+      setErr("");
 
-    // canchas
-    await Promise.all(
-      DEFAULT_CANCHAS.map((c) =>
-        fetchJSON("/canchas", {
-          method: "POST",
-          body: JSON.stringify(c),
-        })
-      )
-    );
+      // canchas
+      await Promise.all(
+        DEFAULT_CANCHAS.map((c) =>
+          fetchJSON("/canchas", {
+            method: "POST",
+            body: JSON.stringify(c),
+          })
+        )
+      );
 
-    // temporadas
-    await Promise.all(
-      DEFAULT_TEMPORADAS.map((t) =>
-        fetchJSON("/temporadas", {
-          method: "POST",
-          body: JSON.stringify({
-            nombre: t.nombre,
-            fechaInicio: t.fechaInicio,
-            fechaFin: t.fechaFin,
-          }),
-        })
-      )
-    );
+      // temporadas
+      await Promise.all(
+        DEFAULT_TEMPORADAS.map((t) =>
+          fetchJSON("/temporadas", {
+            method: "POST",
+            body: JSON.stringify({
+              nombre: t.nombre,
+              fechaInicio: t.fechaInicio,
+              fechaFin: t.fechaFin,
+            }),
+          })
+        )
+      );
 
-    // recargar datasets
-    await Promise.all([reloadCanchas(), reloadTemporadas()]);
-    setToast("Canchas y temporadas precargadas.");
-  } catch (e) {
-    setToast(normalizeError(e));
-  } finally {
-    setLoading(false);
-  }
-};
+      // recargar datasets
+      await Promise.all([reloadCanchas(), reloadTemporadas()]);
+      setToast("Canchas y temporadas precargadas.");
+    } catch (e) {
+      setToast(normalizeError(e));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* ----------------------------- Render ----------------------------- */
   const selectedCount = selected.size;
@@ -454,13 +460,13 @@ const precargarAmbos = async () => {
                 Eliminar{selectedCount > 0 ? ` (${selectedCount})` : ""}
               </button>
             </div>
-<button
-  onClick={precargarAmbos}
-  className="h-11 px-4 rounded-xl border bg-emerald-700/90 text-white border-white shadow-sm hover:bg-emerald-600/90 active:scale-[.98]"
-  title="Precargar canchas y temporadas por defecto"
->
-  Precargar
-</button>
+            <button
+              onClick={precargarAmbos}
+              className="h-11 px-4 rounded-xl border bg-emerald-700/90 text-white border-white shadow-sm hover:bg-emerald-600/90 active:scale-[.98]"
+              title="Precargar canchas y temporadas por defecto"
+            >
+              Precargar
+            </button>
             {/* Selection summary */}
             <div className="mt-2 text-sm text-white/70">
               {selectedCount > 0 ? (
@@ -484,10 +490,11 @@ const precargarAmbos = async () => {
         <main className="flex-1">
           <div className="mx-auto max-w-screen-2xl px-6 lg:px-8 pb-20">
             <div className="rounded-2xl border border-white/20 bg-neutral-900/70 shadow-2xl backdrop-blur-sm overflow-hidden">
-{loading && (
-  <div className="px-6 pt-3 pb-2 text-sm text-white/80">Cargando…</div>
-)}
-
+              {loading && (
+                <div className="px-6 pt-3 pb-2 text-sm text-white/80">
+                  Cargando…
+                </div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-white whitespace-normal">
@@ -541,11 +548,16 @@ const precargarAmbos = async () => {
                           key={p.id}
                           className={`align-top transition-colors cursor-pointer ${
                             i % 2 === 0 ? "bg-neutral-900/40" : "bg-transparent"
-                          } ${isSel ? "outline outline-2 outline-cyan-600/60" : "hover:bg-neutral-800/60"}`}
+                          } ${
+                            isSel
+                              ? "outline outline-2 outline-cyan-600/60"
+                              : "hover:bg-neutral-800/60"
+                          }`}
                           title={`ID: ${p.id}`}
                           onClick={(e) => {
                             // avoid toggle when clicking the checkbox itself
-                            if (e.target.tagName.toLowerCase() === "input") return;
+                            if (e.target.tagName.toLowerCase() === "input")
+                              return;
                             const next = new Set(selected);
                             if (next.has(p.id)) next.delete(p.id);
                             else next.add(p.id);
@@ -619,11 +631,7 @@ const precargarAmbos = async () => {
       </div>
 
       {/* Form modal */}
-      {toast && (
-  <Toast onClose={() => setToast("")}>
-    {toast}
-  </Toast>
-)}
+      {toast && <Toast onClose={() => setToast("")}>{toast}</Toast>}
       {showForm && (
         <Modal
           onClose={() => {
@@ -680,7 +688,10 @@ function lookupName(list, id) {
 
 function getPersons(ids = [], people = []) {
   return ids.map((id) => {
-    const it = people.find((o) => o.id === id) || { nombre: id, apellido: "" };
+    const it = people.find((o) => normID(o.id) === normID(id)) || {
+      nombre: id,
+      apellido: "",
+    };
     const label =
       [it.nombre, it.apellido].filter(Boolean).join(" ") || it.email || id;
     return { id, label };
@@ -757,390 +768,12 @@ function Toast({ children, onClose }) {
 }
 
 /* ----------------------------- Formulario ----------------------------- */
-export function PartidoForm({ value, onCancel, onSubmit, datasets }) {
-  const [draft, setDraft] = useState(() => ({ ...emptyPartido, ...value }));
-  const { temporadas, canchas, federados } = datasets;
-
-  const singles = draft.tipoPartido === "singles";
-  const requiredPlayers = singles ? 2 : 4;
-
-  // open/close for player picker
-  const [playerPickerOpen, setPlayerPickerOpen] = useState(false);
-
-  useEffect(() => {
-    setDraft((d) => {
-      const next = { ...d };
-      const isSingles = next.tipoPartido === "singles";
-      if (isSingles && next.jugadores.length > 2)
-        next.jugadores = next.jugadores.slice(0, 2);
-      if (!isSingles && next.jugadores.length > 4)
-        next.jugadores = next.jugadores.slice(0, 4);
-      const maxWinners = isSingles ? 1 : 2;
-      next.ganadores = (next.ganadores || [])
-        .filter((id) => next.jugadores.includes(id))
-        .slice(0, maxWinners);
-      next.equipoLocal = (next.equipoLocal || []).filter((id) =>
-        next.jugadores.includes(id)
-      );
-      next.equipoVisitante = (next.equipoVisitante || []).filter((id) =>
-        next.jugadores.includes(id)
-      );
-      return next;
-    });
-  }, [draft.tipoPartido]);
-
-  const setField = (k, v) => setDraft((d) => ({ ...d, [k]: v }));
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (formValid) onSubmit?.(draft);
-  };
-
-  const subset = (arr, sup) => (arr || []).every((id) => sup.includes(id));
-  const formValid =
-    !!draft.timestamp &&
-    !!draft.estado &&
-    !!draft.tipoPartido &&
-    !!draft.etapa &&
-    !!draft.temporadaID &&
-    !!draft.canchaID &&
-    Array.isArray(draft.jugadores) &&
-    draft.jugadores.length === requiredPlayers &&
-    subset(draft.equipoLocal, draft.jugadores) &&
-    subset(draft.equipoVisitante, draft.jugadores) &&
-    subset(draft.ganadores, draft.jugadores) &&
-    (draft.ganadores?.length || 0) <= (singles ? 1 : 2);
-
-  const selectedChips = (ids = []) =>
-    ids.map((id) => {
-      const u =
-        federados.find((f) => f.id === id) || { nombre: id, apellido: "" };
-      const label =
-        `${u.nombre ?? ""} ${u.apellido ?? ""}`.trim() || u.email || id;
-      return (
-        <span
-          key={id}
-          className="px-2 py-0.5 rounded-full text-xs border bg-white/10 text-white border-white/20"
-          title={id}
-        >
-          {label}
-        </span>
-      );
-    });
-
-  return (
-    <>
-      <form onSubmit={submit} className="p-6 space-y-6">
-        {/* Header actions */}
-        <div className="flex items-start justify-between">
-          <h2 className="text-xl font-semibold">
-            {draft.id ? "Editar partido" : "Nuevo partido"}
-          </h2>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 rounded-xl border border-white/30 hover:bg-white/10"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={!formValid}
-              className={`px-4 py-2 rounded-xl text-white ${
-                formValid
-                  ? "bg-cyan-700 hover:bg-cyan-600"
-                  : "bg-cyan-700/40 cursor-not-allowed"
-              }`}
-              title={formValid ? "Guardar" : "Complete los campos requeridos"}
-            >
-              Guardar
-            </button>
-          </div>
-        </div>
-
-        {/* Compact, balanced grid; long sections span full width */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="block text-sm">Fecha y hora</label>
-            <input
-              type="datetime-local"
-              required
-              className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2"
-              value={toLocalInputValue(draft.timestamp)}
-              onChange={(e) =>
-                setField("timestamp", toISOFromLocal(e.target.value))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm">Estado</label>
-            <select
-              required
-              className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2 capitalize"
-              value={draft.estado || "programado"}
-              onChange={(e) => setField("estado", e.target.value)}
-            >
-              <option value="programado">Programado</option>
-              <option value="en_juego">En juego</option>
-              <option value="finalizado">Finalizado</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm">Tipo de partido</label>
-            <select
-              required
-              className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2"
-              value={draft.tipoPartido}
-              onChange={(e) => setField("tipoPartido", e.target.value)}
-            >
-              <option value="singles">Singles</option>
-              <option value="dobles">Dobles</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm">Etapa</label>
-            <input
-              required
-              className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2"
-              value={draft.etapa}
-              onChange={(e) => setField("etapa", e.target.value)}
-              placeholder="ej: semifinal, final…"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm">Temporada</label>
-            <select
-              required
-              className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2"
-              value={draft.temporadaID}
-              onChange={(e) => setField("temporadaID", e.target.value)}
-            >
-              <option value="">Seleccione…</option>
-              {datasetsToOptions(temporadas)}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm">Cancha</label>
-            <select
-              required
-              className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2"
-              value={draft.canchaID}
-              onChange={(e) => setField("canchaID", e.target.value)}
-            >
-              <option value="">Seleccione…</option>
-              {datasetsToOptions(canchas)}
-            </select>
-          </div>
-
-          {/* Jugadores row spans full width to avoid empty space */}
-          <div className="md:col-span-2 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm">
-                Jugadores ({draft.jugadores.length}/{requiredPlayers})
-              </label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPlayerPickerOpen(true)}
-                  className="px-3 py-1.5 rounded-lg border border-white/30 hover:bg-white/10"
-                >
-                  Elegir jugadores…
-                </button>
-                {draft.jugadores.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setField("jugadores", [])}
-                    className="px-3 py-1.5 rounded-lg border border-white/30 hover:bg-white/10"
-                  >
-                    Limpiar
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 min-h-[36px]">
-              {draft.jugadores.length === 0 ? (
-                <span className="text-white/60 text-sm">
-                  Ningún jugador seleccionado.
-                </span>
-              ) : (
-                selectedChips(draft.jugadores)
-              )}
-            </div>
-            <div className="text-xs text-white/60">
-              Deben ser exactamente {requiredPlayers} jugadores.
-            </div>
-          </div>
-
-          {/* Equipos */}
-          <div className="space-y-2">
-            <label className="block text-sm">
-              Equipo Local ({draft.equipoLocal.length})
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {selectedChips(draft.equipoLocal)}
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {(draft.jugadores || []).map((id) => {
-                const on = draft.equipoLocal.includes(id);
-                const toggle = () =>
-                  setField(
-                    "equipoLocal",
-                    on
-                      ? draft.equipoLocal.filter((x) => x !== id)
-                      : [...draft.equipoLocal, id]
-                  );
-                const u =
-                  federados.find((f) => f.id === id) || { nombre: id, apellido: "" };
-                const label =
-                  `${u.nombre ?? ""} ${u.apellido ?? ""}`.trim() ||
-                  u.email ||
-                  id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={toggle}
-                    className={`px-2.5 py-1 rounded-full text-xs border ${
-                      on
-                        ? "bg-cyan-700 text-white border-cyan-500"
-                        : "bg-neutral-800 text-white/90 border-white/20 hover:bg-neutral-700"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm">
-              Equipo Visitante ({draft.equipoVisitante.length})
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {selectedChips(draft.equipoVisitante)}
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {(draft.jugadores || []).map((id) => {
-                const on = draft.equipoVisitante.includes(id);
-                const toggle = () =>
-                  setField(
-                    "equipoVisitante",
-                    on
-                      ? draft.equipoVisitante.filter((x) => x !== id)
-                      : [...draft.equipoVisitante, id]
-                  );
-                const u =
-                  federados.find((f) => f.id === id) || { nombre: id, apellido: "" };
-                const label =
-                  `${u.nombre ?? ""} ${u.apellido ?? ""}`.trim() ||
-                  u.email ||
-                  id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={toggle}
-                    className={`px-2.5 py-1 rounded-full text-xs border ${
-                      on
-                        ? "bg-cyan-700 text-white border-cyan-500"
-                        : "bg-neutral-800 text-white/90 border-white/20 hover:bg-neutral-700"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Ganadores (short) */}
-          <div className="space-y-2">
-            <label className="block text-sm">
-              Ganadores ({draft.ganadores?.length || 0}/{singles ? 1 : 2})
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {(draft.jugadores || []).map((id) => {
-                const on = draft.ganadores.includes(id);
-                const toggle = () =>
-                  setField(
-                    "ganadores",
-                    on
-                      ? draft.ganadores.filter((x) => x !== id)
-                      : [...draft.ganadores].slice(0, (singles ? 1 : 2) - 1).concat(id)
-                  );
-                const u =
-                  federados.find((f) => f.id === id) || { nombre: id, apellido: "" };
-                const label =
-                  `${u.nombre ?? ""} ${u.apellido ?? ""}`.trim() ||
-                  u.email ||
-                  id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    disabled={
-                      !on &&
-                      draft.ganadores.length >= (singles ? 1 : 2)
-                    }
-                    onClick={toggle}
-                    className={`px-2.5 py-1 rounded-full text-xs border ${
-                      on
-                        ? "bg-green-700 text-white border-green-500"
-                        : "bg-neutral-800 text-white/90 border-white/20 hover:bg-neutral-700 disabled:opacity-50"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="text-xs text-white/60">
-              Máx {singles ? 1 : 2} ganador(es).
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm">Resultado</label>
-            <input
-              className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2"
-              value={draft.resultado}
-              onChange={(e) => setField("resultado", e.target.value)}
-              placeholder="ej: 6-3 6-4"
-            />
-          </div>
-        </div>
-      </form>
-
-      {/* Player picker modal */}
-      {playerPickerOpen && (
-        <PlayerPickerModal
-          initialSelected={draft.jugadores}
-          players={federados}
-          maxCount={requiredPlayers}
-          onCancel={() => setPlayerPickerOpen(false)}
-          onSave={(ids) => {
-            setField("jugadores", limitPlayers(ids, requiredPlayers));
-            setPlayerPickerOpen(false);
-          }}
-          title="Elegir jugadores"
-        />
-      )}
-    </>
-  );
-}
-
 
 /* winners modal (global) */
 function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
   const maxWinners = partido?.tipoPartido === "singles" ? 1 : 2;
-  const available = federados.filter((f) => (partido?.jugadores || []).includes(f.id));
+  const jugSet = new Set((partido?.jugadores || []).map((x) => normID(x)));
+  const available = federados.filter((f) => jugSet.has(normID(f.id)));
   const [local, setLocal] = useState(partido?.ganadores || []);
 
   useEffect(() => {
@@ -1163,11 +796,18 @@ function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
       <div className="p-5 space-y-4">
         <div className="flex items-start justify-between">
           <h3 className="text-lg font-semibold">Elegir ganadores</h3>
-          <button onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-white/30 hover:bg-white/10">Cerrar</button>
+          <button
+            onClick={onCancel}
+            className="px-3 py-1.5 rounded-lg border border-white/30 hover:bg-white/10"
+          >
+            Cerrar
+          </button>
         </div>
         <div className="text-xs text-white/70">
-          Partido: <strong>{formatDateTime(partido?.timestamp)}</strong> · {lookupName([], partido?.id)}
-          <br />Máx {maxWinners} ganador(es). Deben ser jugadores del partido.
+          Partido: <strong>{formatDateTime(partido?.timestamp)}</strong> ·{" "}
+          {lookupName([], partido?.id)}
+          <br />
+          Máx {maxWinners} ganador(es). Deben ser jugadores del partido.
         </div>
         <div className="flex flex-wrap gap-2">
           {available.map((f) => (
@@ -1180,7 +820,9 @@ function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
                   : "bg-neutral-800 text-white/90 border-white/20 hover:bg-neutral-700"
               }`}
             >
-              {[f.nombre, f.apellido].filter(Boolean).join(" ") || f.email || f.id}
+              {[f.nombre, f.apellido].filter(Boolean).join(" ") ||
+                f.email ||
+                f.id}
             </button>
           ))}
         </div>
@@ -1195,15 +837,6 @@ function WinnersPickerModal({ partido, federados, onCancel, onSave }) {
       </div>
     </Modal>
   );
-}
-
-/* commons */
-function datasetsToOptions(list = []) {
-  return list.map((t) => (
-    <option key={t.id} value={t.id}>
-      {t.nombre || t.id}
-    </option>
-  ));
 }
 
 function MultiSelect({ label, value = [], onChange, options = [], getLabel }) {
@@ -1237,7 +870,6 @@ function MultiSelect({ label, value = [], onChange, options = [], getLabel }) {
   );
 }
 
-/* ----------------------------- Validaciones + payload ----------------------------- */
 function validatePartido(p) {
   const errs = [];
   const singles = p.tipoPartido === "singles";
@@ -1250,7 +882,8 @@ function validatePartido(p) {
   if (!Array.isArray(p.jugadores) || p.jugadores.length !== (singles ? 2 : 4)) {
     errs.push(`jugadores debe tener exactamente ${singles ? 2 : 4}`);
   }
-  const inJugadores = (arr) => (arr || []).every((id) => p.jugadores.includes(id));
+  const inJugadores = (arr) =>
+    (arr || []).every((id) => p.jugadores.includes(id));
   if (!inJugadores(p.equipoLocal))
     errs.push("equipoLocal debe ser subconjunto de jugadores");
   if (!inJugadores(p.equipoVisitante))
@@ -1262,7 +895,13 @@ function validatePartido(p) {
   return errs;
 }
 
-function sanitizePayload(p) {
+function sanitizePayload(p, known) {
+  const clean = (arr = []) =>
+    Array.from(new Set((arr || []).map((x) => normID(x))));
+  const keepKnown = (arr = []) => clean(arr).filter((id) => known.has(id));
+
+  const jug = keepKnown(p.jugadores);
+
   return {
     timestamp: p.timestamp,
     estado: p.estado,
@@ -1270,19 +909,12 @@ function sanitizePayload(p) {
     temporadaID: p.temporadaID,
     canchaID: p.canchaID,
     etapa: p.etapa,
-    jugadores: uniq(p.jugadores),
-    equipoLocal: uniq(p.equipoLocal).filter((id) => p.jugadores.includes(id)),
-    equipoVisitante: uniq(p.equipoVisitante).filter((id) =>
-      p.jugadores.includes(id)
+    jugadores: jug,
+    equipoLocal: keepKnown(p.equipoLocal).filter((id) => jug.includes(id)),
+    equipoVisitante: keepKnown(p.equipoVisitante).filter((id) =>
+      jug.includes(id)
     ),
-    ganadores: uniq(p.ganadores).filter((id) => p.jugadores.includes(id)),
+    ganadores: keepKnown(p.ganadores).filter((id) => jug.includes(id)),
     resultado: p.resultado || null,
   };
-}
-
-function uniq(arr = []) {
-  return Array.from(new Set(arr));
-}
-function limitPlayers(arr = [], n) {
-  return uniq(arr).slice(0, n);
 }

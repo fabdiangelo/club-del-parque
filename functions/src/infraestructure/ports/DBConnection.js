@@ -49,6 +49,20 @@ export default class DBConnection{
         return items;
     }
 
+    async getByField(collection, field, op, value) {
+  if (op !== "==") throw new Error("Only '==' supported by getByField alias");
+  return { items: await this.getItemsByField(collection, field, value) };
+}
+
+async getAllItemsList(collection) {
+  return this.getAllItems(collection);
+}
+
+async getItemObject(collection, id) {
+  const data = await this.getItem(collection, id);
+  return data ? { id, ...data } : null;
+}
+
     async getItemsWhereNotEqual(collection, field, value) {
         const snapshot = await this.db.collection(collection).where(field, '!=', value).get();
         const items = [];
