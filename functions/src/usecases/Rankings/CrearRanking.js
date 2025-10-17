@@ -1,27 +1,27 @@
-import Ranking from "../../domain/entities/Ranking.js";
-import { RankingRepository } from "../../infraestructure/adapters/RankingRepository.js";
+import { applyOnCreate } from "../../services/Rankings/RankingsFromPartido.js";
 
-const sanitize = (s) => String(s).toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
-
-class CrearRanking {
-  constructor() {
-    this.repo = new RankingRepository();
+export class CrearPartido {
+  constructor(partidoRepository) {
+    this.partidoRepository = partidoRepository;
   }
 
-  async execute({ id, temporadaID, usuarioID, tipoDePartido }) {
-    if (!temporadaID || !usuarioID) throw new Error("Faltan campos requeridos: temporadaID, usuarioID");
+  /**
+   * partidoData puede incluir opcionalmente puntosGanador y puntosPerdedor en el payload del controller.
+   * Para disparar el default 3/1/0, pasá undefined (no 0).
+   */
+  async execute(partidoData, { puntosGanador, puntosPerdedor } = {}) {
+    // Guardar partido
+    const newId = await this.partidoRepository.save(partidoData);
 
-    // Si hay tipoDePartido lo incluimos en el ID determinístico; si no, no.
-    const rankingId =
-      id ||
-      (tipoDePartido
-        ? `${sanitize(temporadaID)}-${sanitize(usuarioID)}-${sanitize(tipoDePartido)}`
-        : `${sanitize(temporadaID)}-${sanitize(usuarioID)}`);
+    // Si ya viene con ganadores definidos al crear, aplicar ranking
+    if (Array.isArray(partidoData.ganadores)) {
+      await applyOnCreate(
+        { ...partidoData, id: newId || partidoData.id },
+        puntosGanador,
+        puntosPerdedor
+      );
+    }
 
-    const model = new Ranking(rankingId, temporadaID, usuarioID, tipoDePartido);
-    await this.repo.save(model.toPlainObject());
-    return rankingId;
+    return newId;
   }
 }
-
-export default new CrearRanking();

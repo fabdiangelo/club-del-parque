@@ -12,4 +12,6 @@ class EditarRanking {
   }
 }
 
-export default new EditarRanking();
+const editarRanking = new EditarRanking();
+export { EditarRanking, editarRanking };
+export default editarRanking;

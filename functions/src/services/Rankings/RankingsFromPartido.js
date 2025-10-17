@@ -1,13 +1,14 @@
-// functions/src/services/Rankings/RankingsFromPartido.js
 import UpsertRankingPuntos from "../../usecases/Rankings/UpsertRankingPuntos.js";
 
 const DEFAULT_WIN = 3;
 
+// ← robusto si resultado es string u objeto (p.ej. { motivo: 'WO' })
 function loserDeltaFromResultado(resultado) {
-  const r = String(resultado || "").toLowerCase();
-  // 0 pts if WO / abandono / no presentado / ausente
-  if (/(wo|walkover|abandono|no\s*presentad[oa]|np|ausent[ea])/i.test(r)) return 0;
-  return 1; // otherwise, loss = 1
+  const text =
+    typeof resultado === "string"
+      ? resultado
+      : (resultado?.motivo || resultado?.razon || resultado?.detalle || "");
+  return /(wo|walkover|abandono|no\s*presentad[oa]|np|ausent[ea])/i.test(String(text)) ? 0 : 1;
 }
 
 // Split winners/losers (supports singles/dobles)
@@ -42,21 +43,18 @@ function eligible(p) {
 /**
  * Core: applies (sign * basePoints) per player (winners/losers).
  * If puntosGanador/perdedor are undefined, uses DEFAULT_WIN and loserDeltaFromResultado(p.resultado).
- * `deporte` is optional; UpsertRankingPuntos should ignore it if null/empty.
+ * `deporte` es opcional; Upsert ignora si es null.
  */
 async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sign = +1) {
   if (!partido || !Array.isArray(partido.jugadores)) return;
 
   const { temporadaID, tipoPartido } = partido;
-  if (!temporadaID || !tipoPartido) return; // validate before use
+  if (!temporadaID || !tipoPartido) return;
 
-  const deporte =
-    (String(partido.deporte || "").trim().toLowerCase()) || null; // OPTIONAL
+  const deporte = (String(partido.deporte || "").trim().toLowerCase()) || null;
 
   const win = Number.isFinite(puntosGanador) ? Number(puntosGanador) : DEFAULT_WIN;
-  const lose = Number.isFinite(puntosPerdedor)
-    ? Number(puntosPerdedor)
-    : loserDeltaFromResultado(partido.resultado);
+  const lose = Number.isFinite(puntosPerdedor) ? Number(puntosPerdedor) : loserDeltaFromResultado(partido.resultado);
 
   const { winners, losers } = splitWinnersLosers(partido);
 
@@ -67,9 +65,9 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
       UpsertRankingPuntos.execute({
         usuarioID: String(uid),
         temporadaID: String(temporadaID),
-        tipoDePartido: String(tipoPartido), // 'singles' | 'dobles'
+        tipoDePartido: String(tipoPartido),
         delta: sign * win,
-        deporte, // optional; Upsert must ignore if null
+        deporte,
       })
     );
   }
@@ -89,16 +87,13 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
   await Promise.all(ups);
 }
 
-/** On create: only if it's already finalizado + has ganadores */
+/** On create: solo si ya está finalizado + tiene ganadores */
 export async function applyOnCreate(newPartido, puntosGanador, puntosPerdedor) {
   if (!eligible(newPartido)) return;
   await applyPointsForPartido(newPartido, puntosGanador, puntosPerdedor, +1);
 }
 
-/**
- * On edit: revert old if it was eligible, apply new if eligible.
- * This prevents duplicates and handles changes to winners/jugadores/temporada/tipo/deporte.
- */
+/** On edit: revert old si era elegible y aplica el nuevo si es elegible */
 export async function applyOnEdit(oldPartido, newPartido, puntosGanador, puntosPerdedor) {
   const oldOk = eligible(oldPartido);
   const newOk = eligible(newPartido);

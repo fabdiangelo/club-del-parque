@@ -14,7 +14,6 @@ const uniq = (arr = []) => Array.from(new Set((arr || []).map(normID)));
 const subset = (arr = [], sup = []) => (arr || []).every((x) => sup.includes(x));
 const toIsoOr = (v, fallback = new Date().toISOString()) => {
   if (!v) return fallback;
-  // admitir timestamp numérico o string parseable
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? fallback : d.toISOString();
 };
@@ -49,8 +48,8 @@ class PartidoController {
     const {
       ganadores = [],
       resultado = null,
-      puntosGanador = 0,
-      puntosPerdedor = 0,
+      puntosGanador,
+      puntosPerdedor,
     } = req.body;
 
     if (!Array.isArray(ganadores)) {
@@ -59,13 +58,19 @@ class PartidoController {
 
     const cleanGanadores = uniq(ganadores);
 
+    // Importante: si no vienen en el body, quedar en undefined para usar 3/1/0
+    const hasPG = Object.prototype.hasOwnProperty.call(req.body, "puntosGanador");
+    const hasPP = Object.prototype.hasOwnProperty.call(req.body, "puntosPerdedor");
+    const optsPG = hasPG ? Number(puntosGanador) : undefined;
+    const optsPP = hasPP ? Number(puntosPerdedor) : undefined;
+
     try {
       const partido = await this.setGanadoresUseCase.execute(
         id,
         cleanGanadores,
         resultado,
-        Number(puntosGanador),
-        Number(puntosPerdedor),
+        optsPG,
+        optsPP,
       );
       return res.json(partido);
     } catch (error) {
@@ -158,10 +163,14 @@ class PartidoController {
       estado: partidoData.estado || 'programado', // programado | en_juego | finalizado
       timestamp: toIsoOr(partidoData.timestamp),
       resultado: partidoData.resultado ?? null,
+      // deporte es opcional; si viene pasa directo (lo tomará RankingsFromPartido)
     };
 
-    const puntosGanador = Number(req.body.puntosGanador || 0);
-    const puntosPerdedor = Number(req.body.puntosPerdedor || 0);
+    // Importante: no forzar 0 → si no vienen, quedan undefined para usar 3/1/0
+    const hasPG = Object.prototype.hasOwnProperty.call(req.body, "puntosGanador");
+    const hasPP = Object.prototype.hasOwnProperty.call(req.body, "puntosPerdedor");
+    const puntosGanador = hasPG ? Number(req.body.puntosGanador) : undefined;
+    const puntosPerdedor = hasPP ? Number(req.body.puntosPerdedor) : undefined;
 
     try {
       const nuevoPartido = await this.crearPartidoUseCase.execute(partidoData, { puntosGanador, puntosPerdedor });
@@ -219,8 +228,11 @@ class PartidoController {
       partidoData.timestamp = toIsoOr(partidoData.timestamp);
     }
 
-    const puntosGanador = Number(req.body.puntosGanador || 0);
-    const puntosPerdedor = Number(req.body.puntosPerdedor || 0);
+    // Importante: no forzar 0 → undefined dispara 3/1/0
+    const hasPG = Object.prototype.hasOwnProperty.call(req.body, "puntosGanador");
+    const hasPP = Object.prototype.hasOwnProperty.call(req.body, "puntosPerdedor");
+    const puntosGanador = hasPG ? Number(req.body.puntosGanador) : undefined;
+    const puntosPerdedor = hasPP ? Number(req.body.puntosPerdedor) : undefined;
 
     try {
       const partido = await this.editarPartidoUseCase.execute(id, partidoData, { puntosGanador, puntosPerdedor });

@@ -1,4 +1,3 @@
-// /functions/src/infraestructure/adapters/RankingRepository.js
 import DBConnection from "../ports/DBConnection.js";
 
 class RankingRepository {
@@ -53,21 +52,21 @@ class RankingRepository {
     return rows;
   }
 
+  // ← corregido para evitar falsos “no encontrado” y duplicados por deporte
   async getByUsuarioTemporadaTipo(usuarioID, temporadaID, tipoDePartido, deporte /* optional */) {
     const all = await this.getAll();
-    let row = all.find(
+    const L = (x) => String(x ?? "").toLowerCase();
+
+    const filtered = all.filter(
       r =>
-        String(r.usuarioID) === String(usuarioID) &&
-        String(r.temporadaID) === String(temporadaID) &&
-        String(r.tipoDePartido) === String(tipoDePartido)
+        L(r.usuarioID) === L(usuarioID) &&
+        L(r.temporadaID) === L(temporadaID) &&
+        L(r.tipoDePartido) === L(tipoDePartido) &&
+        (deporte ? L(r.deporte) === L(deporte) : true)
     );
-    if (row && deporte) {
-      // if a deporte is requested, ensure it matches; else treat as not found so we can create a sport-specific row
-      if ((row.deporte || "").toLowerCase() !== String(deporte).toLowerCase()) {
-        row = null;
-      }
-    }
-    return row || null;
+
+    // si no hay deporte pedido, preferí filas sin deporte; si no, la primera coincidencia
+    return (!deporte ? (filtered.find(r => !r.deporte) || filtered[0]) : filtered[0]) || null;
   }
 
   async getLeaderboard({ temporadaID, tipoDePartido, deporte /* optional */, limit = 50 } = {}) {
