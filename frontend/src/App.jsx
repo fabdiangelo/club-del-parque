@@ -26,11 +26,13 @@ import NotFound from './pages/NotFound';
 import Partido from './pages/Partido';
 import ResultadosPage from "./pages/ResultadosPage";
 import NotificationsPage from  './pages/NotificacionesPage';
+import CanchasGestor from "./pages/CanchasGestor";
 function App() {
   return (
     <Routes>
       {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
+      <Route path="/canchas" element={<CanchasGestor />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
