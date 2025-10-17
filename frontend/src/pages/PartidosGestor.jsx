@@ -41,6 +41,7 @@ const emptyPartido = {
   timestamp: new Date().toISOString(),
   estado: "programado", // programado | en_juego | finalizado
   tipoPartido: "singles", // singles | dobles
+  deporte: "tenis",
   temporadaID: "",
   canchaID: "",
   etapa: "",
@@ -123,6 +124,7 @@ export default function PartidosGestor() {
     return partidos.filter((p) =>
       [
         p.tipoPartido,
+        p.deporte,
         p.etapa,
         p.estado,
         p.resultado,
@@ -521,6 +523,7 @@ const precargarTemporadas = async () => {
                       <Th>Fecha</Th>
                       <Th>Estado</Th>
                       <Th>Tipo</Th>
+                      <Th>Deporte</Th>
                       <Th>Temporada</Th>
                       <Th>Cancha</Th>
                       <Th>Etapa</Th>
@@ -534,7 +537,7 @@ const precargarTemporadas = async () => {
                     {!loading && filtered.length === 0 && (
                       <tr>
                         <td
-                          colSpan={11}
+                          colSpan={12}
                           className="px-6 py-12 text-center border-t border-white/10 text-white/70"
                         >
                           Sin registros
@@ -583,6 +586,7 @@ const precargarTemporadas = async () => {
                             {(p.estado || "").replace(/_/g, " ") || "—"}
                           </Td>
                           <Td className="capitalize">{p.tipoPartido}</Td>
+                          <Td className="capitalize">{p.deporte || "—"}</Td>
                           <Td>{lookupName(temporadas, p.temporadaID)}</Td>
                           <Td>{lookupName(canchas, p.canchaID)}</Td>
                           <Td>{p.etapa}</Td>
@@ -906,6 +910,7 @@ function sanitizePayload(p, known) {
     timestamp: p.timestamp,
     estado: p.estado,
     tipoPartido: p.tipoPartido,
+    deporte: (p.deporte || "").toString().trim().toLowerCase() || null,
     temporadaID: p.temporadaID,
     canchaID: p.canchaID,
     etapa: p.etapa,

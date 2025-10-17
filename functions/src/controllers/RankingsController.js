@@ -1,4 +1,4 @@
-import CrearRanking from "../usecases/Rankings/CrearRanking.js";
+// /functions/src/controllers/RankingsController.js
 import ObtenerRanking from "../usecases/Rankings/ObtenerRanking.js";
 import ListarRankings from "../usecases/Rankings/ListarRankings.js";
 import EditarRanking from "../usecases/Rankings/EditarRanking.js";
@@ -15,18 +15,6 @@ function requireAdmin(req) {
 }
 
 class RankingsController {
-  async crear(req, res) {
-    try {
-      requireAdmin(req);
-      const id = await CrearRanking.execute(req.body || {});
-      res.json({ id });
-    } catch (e) {
-      res
-        .status(/autorizado|session/i.test(e?.message) ? 401 : 400)
-        .json({ error: e?.message || String(e) });
-    }
-  }
-
   async getById(req, res) {
     try {
       const { id } = req.params;
@@ -39,11 +27,12 @@ class RankingsController {
 
   async listar(req, res) {
     try {
-      const { temporadaID, usuarioID, tipoDePartido, leaderboard, limit } = req.query;
+      const { temporadaID, usuarioID, tipoDePartido, leaderboard, limit, deporte } = req.query;
       const out = await ListarRankings.execute({
         temporadaID: temporadaID || undefined,
         usuarioID: usuarioID || undefined,
         tipoDePartido: tipoDePartido || undefined,
+        deporte: (deporte || "").trim() || undefined,  // ← OPTIONAL
         leaderboard: leaderboard === "true",
         limit: limit ? Number(limit) : undefined,
       });
@@ -60,9 +49,7 @@ class RankingsController {
       await EditarRanking.execute(id, req.body || {});
       res.json({ ok: true });
     } catch (e) {
-      res
-        .status(/autorizado|session/i.test(e?.message) ? 401 : 400)
-        .json({ error: e?.message || String(e) });
+      res.status(/autorizado|session/i.test(e?.message) ? 401 : 400).json({ error: e?.message || String(e) });
     }
   }
 
@@ -74,9 +61,7 @@ class RankingsController {
       await AjustarPuntos.execute(id, Number(delta));
       res.json({ ok: true });
     } catch (e) {
-      res
-        .status(/autorizado|session/i.test(e?.message) ? 401 : 400)
-        .json({ error: e?.message || String(e) });
+      res.status(/autorizado|session/i.test(e?.message) ? 401 : 400).json({ error: e?.message || String(e) });
     }
   }
 
@@ -88,9 +73,7 @@ class RankingsController {
       await ResetPuntos.execute(id, Number(puntos));
       res.json({ ok: true });
     } catch (e) {
-      res
-        .status(/autorizado|session/i.test(e?.message) ? 401 : 400)
-        .json({ error: e?.message || String(e) });
+      res.status(/autorizado|session/i.test(e?.message) ? 401 : 400).json({ error: e?.message || String(e) });
     }
   }
 
@@ -101,9 +84,7 @@ class RankingsController {
       await EliminarRanking.execute(id);
       res.json({ ok: true });
     } catch (e) {
-      res
-        .status(/autorizado|session/i.test(e?.message) ? 401 : 400)
-        .json({ error: e?.message || String(e) });
+      res.status(/autorizado|session/i.test(e?.message) ? 401 : 400).json({ error: e?.message || String(e) });
     }
   }
 }

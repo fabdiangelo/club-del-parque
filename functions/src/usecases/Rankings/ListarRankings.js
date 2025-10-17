@@ -1,3 +1,4 @@
+// /functions/src/usecases/Rankings/ListarRankings.js
 import { RankingRepository } from "../../infraestructure/adapters/RankingRepository.js";
 
 class ListarRankings {
@@ -5,15 +6,19 @@ class ListarRankings {
     this.repo = new RankingRepository();
   }
 
-  async execute({ temporadaID, usuarioID, tipoDePartido, leaderboard = false, limit = 50 } = {}) {
+  async execute({ temporadaID, usuarioID, tipoDePartido, deporte, leaderboard = false, limit } = {}) {
     if (leaderboard) {
-      return await this.repo.getLeaderboard({ temporadaID, tipoDePartido, limit });
+      return this.repo.getLeaderboard({ temporadaID, tipoDePartido, deporte, limit });
     }
-    if (temporadaID && tipoDePartido) return await this.repo.getByTemporadaYTipo(temporadaID, tipoDePartido);
-    if (usuarioID && tipoDePartido) return await this.repo.getByUsuarioYTipo(usuarioID, tipoDePartido);
-    if (temporadaID) return await this.repo.getByTemporada(temporadaID);
-    if (usuarioID) return await this.repo.getByUsuario(usuarioID);
-    return await this.repo.getAll();
+    if (temporadaID && tipoDePartido) {
+      return this.repo.getByTemporadaYTipo(temporadaID, tipoDePartido, deporte);
+    }
+    if (usuarioID && tipoDePartido) {
+      return this.repo.getByUsuarioYTipo(usuarioID, tipoDePartido, deporte);
+    }
+    if (temporadaID) return this.repo.getByTemporada(temporadaID);
+    if (usuarioID) return this.repo.getByUsuario(usuarioID);
+    return this.repo.getAll();
   }
 }
 

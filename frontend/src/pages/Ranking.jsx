@@ -70,12 +70,9 @@ const parseTipo = (tipoRaw = "") => {
   return { category, gender };
 };
 // arma el string objetivo para query a partir de (category, gender)
-const buildTipoFromUI = (category, gender) => {
-  const base = category === "Singles" ? "single" : "double";
-  const g = normalizeStr(gender);
-  if (g.includes("mixto")) return `${base} mixed`;
-  if (g.includes("femenino")) return `${base} fem`;
-  return base;
+const buildTipoFromUI = (category /*, gender*/) => {
+  // El backend usa 'singles' | 'dobles' (sin género)
+ return category === "Singles" ? "singles" : "dobles";
 };
 
 const renderHighlightedName = (name, q) => {
@@ -219,6 +216,7 @@ export default function Rankings() {
       if (!temporadaID) return; // esperamos a tener temporada válida
 
       const tipoDePartido = buildTipoFromUI(category, gender); // ej: "single", "double fem", "double mixed"
+      
       setLoading(true);
       setErr("");
       try {
@@ -316,7 +314,7 @@ export default function Rankings() {
         const pB = parseTipo(targetTipo);
         return pA.category === pB.category && pA.gender === pB.gender;
       })
-      .filter((rk) => Number(rk.puntos) > 0) // si no jugó, no aparece
+      .filter((rk) => Number.isFinite(Number(rk.puntos)))
       .map((rk) => ({
         id: rk.id,
         name: userNameOf.get(rk.usuarioID) || rk.usuarioID,

@@ -1,8 +1,6 @@
-// src/components/PartidoForm.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { PlayerPickerModal } from "./PlayerPickerModal";
 
-/* ---------- helpers locales (solo lo que usa el form) ---------- */
 const pad = (n) => String(n).padStart(2, "0");
 const toLocalInputValue = (d) => {
   const dt = d instanceof Date ? d : new Date(d || Date.now());
@@ -19,8 +17,10 @@ const toISOFromLocal = (localValue) => {
   return d.toISOString();
 };
 const normID = (v) => String(v ?? "").trim();
-const knownIdSet = (feds = []) => new Set((feds || []).map((f) => normID(f.id)));
-const filterKnown = (arr = [], set) => (arr || []).map(normID).filter((id) => set.has(id));
+const knownIdSet = (feds = []) =>
+  new Set((feds || []).map((f) => normID(f.id)));
+const filterKnown = (arr = [], set) =>
+  (arr || []).map(normID).filter((id) => set.has(id));
 const uniq = (arr = []) => Array.from(new Set(arr));
 const limitPlayers = (arr = [], n) => uniq(arr).slice(0, n);
 const datasetsToOptions = (list = []) =>
@@ -37,6 +37,7 @@ const emptyPartido = {
   timestamp: new Date().toISOString(),
   estado: "programado",
   tipoPartido: "singles",
+  deporte: "tenis",
   temporadaID: "",
   canchaID: "",
   etapa: "",
@@ -59,9 +60,7 @@ const normalizeGender = (g) => {
 };
 const federadoById = (arr, id) => arr.find((f) => normID(f.id) === normID(id));
 const genderOf = (arr, id) =>
-  normalizeGender(
-    federadoById(arr, id)?.genero ?? federadoById(arr, id)?.sexo
-  );
+  normalizeGender(federadoById(arr, id)?.genero ?? federadoById(arr, id)?.sexo);
 
 /** Devuelve el “tipo” de equipo: 'male' | 'female' | 'mixed' | 'unknown' */
 function teamType(teamIds = [], federados = []) {
@@ -85,8 +84,11 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
     ...emptyPartido,
     ...(value || {}),
   }));
-  const { temporadas, canchas, federados } =
-    datasets || { temporadas: [], canchas: [], federados: [] };
+  const { temporadas, canchas, federados } = datasets || {
+    temporadas: [],
+    canchas: [],
+    federados: [],
+  };
 
   const singles = draft.tipoPartido === "singles";
   const requiredPlayers = singles ? 2 : 4;
@@ -137,8 +139,8 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
       next.equipoLocal = filterKnown(next.equipoLocal, kset).filter((id) =>
         next.jugadores.includes(id)
       );
-      next.equipoVisitante = filterKnown(next.equipoVisitante, kset).filter((id) =>
-        next.jugadores.includes(id)
+      next.equipoVisitante = filterKnown(next.equipoVisitante, kset).filter(
+        (id) => next.jugadores.includes(id)
       );
       // ganadores válidos y dentro de jugadores
       next.ganadores = filterKnown(next.ganadores, kset).filter((id) =>
@@ -270,7 +272,9 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
       const inLocal = d.equipoLocal.includes(nid);
       const inVisit = d.equipoVisitante.includes(nid);
       let equipoVisitante = [...d.equipoVisitante];
-      let equipoLocal = inLocal ? d.equipoLocal.filter((x) => x !== nid) : [...d.equipoLocal];
+      let equipoLocal = inLocal
+        ? d.equipoLocal.filter((x) => x !== nid)
+        : [...d.equipoLocal];
 
       if (inVisit) {
         equipoVisitante = equipoVisitante.filter((x) => x !== nid);
@@ -290,12 +294,16 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
     let resultado = draft.resultado || "";
     if (draft.abandono === "ambos") {
       if (!/abandono/i.test(resultado)) {
-        resultado = resultado ? `${resultado} · Doble abandono` : "Doble abandono";
+        resultado = resultado
+          ? `${resultado} · Doble abandono`
+          : "Doble abandono";
       }
     } else if (draft.abandono === "uno" && draft.abandonoJugador) {
       const lbl = playerLabel(draft.abandonoJugador);
       if (!/abandono/i.test(resultado)) {
-        resultado = resultado ? `${resultado} · Abandono: ${lbl}` : `Abandono: ${lbl}`;
+        resultado = resultado
+          ? `${resultado} · Abandono: ${lbl}`
+          : `Abandono: ${lbl}`;
       }
     }
 
@@ -350,7 +358,11 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
                     ? "bg-cyan-700 hover:bg-cyan-600"
                     : "bg-cyan-700/40 cursor-not-allowed"
                 }`}
-                title={formValid ? "Corregí los errores para guardar" : "Corregí los errores para guardar"}
+                title={
+                  formValid
+                    ? "Corregí los errores para guardar"
+                    : "Corregí los errores para guardar"
+                }
               >
                 Guardar
               </button>
@@ -418,7 +430,17 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
                 <option value="dobles">Dobles</option>
               </select>
             </div>
-
+            <div className="space-y-2">
+              <label className="block text-sm">Deporte</label>
+              <select
+                className="w-full border border-white/20 bg-neutral-900 rounded-xl px-3 py-2 capitalize"
+                value={draft.deporte || "tenis"}
+                onChange={(e) => setField("deporte", e.target.value)}
+              >
+                <option value="tenis">Tenis</option>
+                <option value="padel">Padel</option>
+              </select>
+            </div>
             <div className="space-y-2">
               <label className="block text-sm">Etapa</label>
               <input
@@ -582,7 +604,8 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
                       }
                       // determinar a qué equipo pertenece y setear ambos
                       let team = [];
-                      if (d.equipoLocal.includes(id)) team = uniq(d.equipoLocal);
+                      if (d.equipoLocal.includes(id))
+                        team = uniq(d.equipoLocal);
                       else if (d.equipoVisitante.includes(id))
                         team = uniq(d.equipoVisitante);
                       else return d; // no debería ocurrir
@@ -650,7 +673,9 @@ export default function PartidoForm({ value, onCancel, onSubmit, datasets }) {
                   <select
                     className="w-full sm:w-64 border border-white/20 bg-neutral-900 rounded-xl px-3 py-2"
                     value={draft.abandonoJugador}
-                    onChange={(e) => setField("abandonoJugador", e.target.value)}
+                    onChange={(e) =>
+                      setField("abandonoJugador", e.target.value)
+                    }
                   >
                     <option value="">Elegí el jugador…</option>
                     {(draft.jugadores || []).map((id) => (
