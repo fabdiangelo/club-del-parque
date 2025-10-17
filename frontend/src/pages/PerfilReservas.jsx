@@ -32,6 +32,60 @@ function PerfilReservas() {
         }
     }
 
+    const confirmarReserva = async () => {
+        try {
+            const response = await fetch(`/api/reservas/${id}/confirmar`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log(errorText)
+                activarAlerta(errorText || 'Error al aceptar la reserva');
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data);
+            activarAlerta('Reserva aceptada exitosamente', 'success');
+            await fetchReserva();
+
+        } catch(error) {
+            activarAlerta('Error al aceptar la reserva');
+        }
+    }
+
+    const rechazarReserva = async () => {
+        try {
+            const response = await fetch(`/api/reservas/${id}/rechazar`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log(errorText)
+                activarAlerta(errorText || 'Error al rechazar la reserva');
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data);
+            activarAlerta('Reserva rechazada exitosamente', 'success');
+            await fetchReserva();
+
+        } catch(error) {
+            activarAlerta('Error al rechazar la reserva');
+        }
+    }
+
     const habilitarReserva = async () => {
         try {
             const response = await fetch(`/api/reservas/${id}/habilitar`, {
@@ -230,21 +284,30 @@ function PerfilReservas() {
                             </div>
                         </div>
 
-                        {/* Estado y tipo */}
-                        <div className="flex gap-4 mb-4">
-                            <div style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: reserva.estado === 'confirmada' ? '#d1fae5' : reserva.estado === 'pendiente' ? '#fef3c7' : '#fee2e2', color: reserva.estado === 'confirmada' ? '#065f46' : reserva.estado === 'pendiente' ? '#92400e' : '#991b1b'}}>
+                        {!reserva.deshabilitar && reserva.estado === 'pendiente' && (
+                                <div style={{display: 'flex', gap: '10px', alignItems: 'center'}} className='py-5'>
+                                    <button style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: '#4caf50', color: 'white', cursor: 'pointer'}} onClick={() => confirmarReserva()}>Aceptar </button>
+                                    <button style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: '#f44336', color: 'white', cursor: 'pointer'}} onClick={() => rechazarReserva()}>Rechazar</button>
+                                </div>
+                            )}
+
+
+                        <div className="flex gap-4 mb-4" style={{fontSize: '11px'}}>
+                            
+                            
+                            <div style={{padding: '8px 16px', borderRadius: '50px', backgroundColor: reserva.estado === 'confirmada' ? '#d1fae5' : reserva.estado === 'pendiente' ? '#fef3c7' : '#fee2e2', color: reserva.estado === 'confirmada' ? '#065f46' : reserva.estado === 'pendiente' ? '#92400e' : '#991b1b'}}>
                                 {reserva.estado === 'confirmada' && <span className="">Confirmada</span>}
                                 {reserva.estado === 'pendiente' && <span className="">Pendiente</span>}
                                 {reserva.estado === 'rechazada' && <span className="">Rechazada</span>}
                             </div>
-                            <div className="" style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: reserva.esCampeonato ? '#e0e7ff' : '#30c9d4ff', color: reserva.esCampeonato ? '#eeecffff' : '#065f46'}}>
+                            <div className="" style={{padding: '8px 16px', borderRadius: '50px', backgroundColor: reserva.esCampeonato ? '#e0e7ff' : '#30c9d4ff', color: reserva.esCampeonato ? '#eeecffff' : '#065f46'}}>
                                 {reserva.esCampeonato ? (
                                     <span className="">🏆 Campeonato</span>
                                 ) : (
                                     <span className="">Recreativo</span>
                                 )}
                             </div>
-                            <div style={{padding: '8px 16px', borderRadius: '5px', backgroundColor: '#e0e7ff', color: '#3730a3'}}>
+                            <div style={{padding: '8px 16px', borderRadius: '50px', backgroundColor: '#e0e7ff', color: '#3730a3'}}>
                                 <span className="">
                                     {reserva.tipoPartido === 'singles' ? '1v1 Singles' : '2v2 Dobles'}
                                 </span>
@@ -258,8 +321,19 @@ function PerfilReservas() {
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">Información Básica</h2>
                             
-                            {/* Cancha */}
+
                             <div className="form-control mb-4">
+                                <label className="label">
+                                    <span className="label-text font-medium">Estado</span>
+                                </label>
+                                <p className="text-gray-800 p-3 bg-gray-50 rounded">
+                                    {reserva.estado}
+                                </p>
+                            </div> 
+
+                            <div className="form-control mb-4">
+
+                                
                                 <label className="label">
                                     <span className="label-text font-medium">Cancha</span>
                                 </label>
@@ -299,7 +373,6 @@ function PerfilReservas() {
                             </div>
                         </div>
 
-                        {/* Jugadores */}
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">
                                 Jugadores Participantes
@@ -308,7 +381,6 @@ function PerfilReservas() {
                                 </span>
                             </h2>
 
-                            {/* Lista de jugadores */}
                             <div className="space-y-3 mb-4">
                                 {jugadoresSeleccionados.map((jugador, index) => (
                                     <div key={jugador.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -326,7 +398,6 @@ function PerfilReservas() {
                             </div>
                         </div>
 
-                        {/* Información Adicional */}
                         <div className="bg-white rounded-lg shadow-lg p-6 lg:col-span-2">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">Información Adicional</h2>
                             

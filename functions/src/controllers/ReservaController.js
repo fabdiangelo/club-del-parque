@@ -121,6 +121,8 @@ class ReservaController {
     
     async cancelarReserva(req, res) {
         const { id } = req.params;
+
+        console.log(id);
         try {
             const result = await this.cancelarReservaUseCase.execute(id);
             res.status(200).json({ message: `Reserva ${result} cancelada.` });
@@ -131,6 +133,7 @@ class ReservaController {
 
     async rechazarReserva(req, res) {
         const { id } = req.params;
+        console.log(id);
         try {
             const result = await this.rechazarReservaUseCase.execute(id);
             res.status(200).json({ message: `Reserva ${result} rechazada.` });
