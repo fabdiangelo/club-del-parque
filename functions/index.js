@@ -24,6 +24,7 @@ import PartidoController from "./src/controllers/PartidoController.js";
 import CanchaController from "./src/controllers/CanchaController.js";
 import TemporadaController from "./src/controllers/TemporadaController.js";
 import ReservaController from "./src/controllers/ReservaController.js";
+import RankingsController from "./src/controllers/RankingsController.js";
 
 /* ---------------- Boot logs ---------------- */
 console.log(
@@ -98,7 +99,14 @@ app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
 app.get("/reportes/sin-resolver", (req, res) => ReporteController.obtenerCantReportesSinResolver(req, res));
 app.post("/reporte/:id/solicitud-federacion", (req, res) => ReporteController.solicitarFederarUsuario(req, res));
 app.put("/reportes/marcar-resuelto/:id", (req, res) => ReporteController.marcarResuelto(req, res));
-
+//RANKING
+app.post("/rankings", (req, res) => RankingsController.crear(req, res));
+app.get("/rankings", (req, res) => RankingsController.listar(req, res));
+app.get("/rankings/:id", (req, res) => RankingsController.getById(req, res));
+app.patch("/rankings/:id", (req, res) => RankingsController.editar(req, res));
+app.post("/rankings/:id/ajustar", (req, res) => RankingsController.ajustar(req, res));
+app.post("/rankings/:id/reset", (req, res) => RankingsController.reset(req, res));
+app.delete("/rankings/:id", (req, res) => RankingsController.eliminar(req, res));
 // Noticias
 app.get("/noticias", (req, res) => NoticiaController.listar(req, res));
 app.get("/noticias/:id", (req, res) => NoticiaController.obtenerPorId(req, res));
