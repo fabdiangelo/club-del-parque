@@ -1,3 +1,4 @@
+// src/controllers/PartidoController.js
 import { PartidoRepository } from '../infraestructure/adapters/PartidoRepository.js';
 import { CrearPartido } from '../usecases/Partidos/CrearPartido.js';
 import { EditarPartido } from '../usecases/Partidos/EditarPartido.js';
@@ -20,8 +21,8 @@ const toIsoOr = (v, fallback = new Date().toISOString()) => {
 };
 
 class PartidoController {
-<<<<<<< Updated upstream
   constructor() {
+    // Un solo repositorio compartido por todos los casos de uso
     const repo = new PartidoRepository();
     this.crearPartidoUseCase = new CrearPartido(repo);
     this.editarPartidoUseCase = new EditarPartido(repo);
@@ -31,38 +32,8 @@ class PartidoController {
     this.getAllPartidosUseCase = new GetAllPArtidos(repo);
     this.eliminarPartidoUseCase = new EliminarPartido(repo);
     this.setGanadoresUseCase = new SetGanadoresPartido(repo);
+    this.agregarDisponibilidadUseCase = new AgregarDisponibilidad(repo);
   }
-=======
-    constructor() {
-        this.crearPartidoUseCase = new CrearPartido(new PartidoRepository());
-        this.editarPartidoUseCase = new EditarPartido(new PartidoRepository());
-        this.getPartidoByIdUseCase = new GetPartidoPorId(new PartidoRepository());
-        this.getPartidosPorTemporadaUseCase = new GetPartidosPorTemporada(new PartidoRepository());
-        this.getPartidosPorJugadorUseCase = new GetPartidosByJugador(new PartidoRepository());
-        this.getAllPartidosUseCase = new GetAllPArtidos(new PartidoRepository());
-        this.eliminarPartidoUseCase = new EliminarPartido(new PartidoRepository());
-            this.setGanadoresUseCase = new SetGanadoresPartido(new PartidoRepository());
-        this.agregarDisponibilidadUseCase = new AgregarDisponibilidad(new PartidoRepository());
-
-    }
-
-    async getAllPartidos(req, res) {
-        try {
-            const partidos = await this.getAllPartidosUseCase.execute();
-            res.json(partidos);
-        } catch (error) {
-            console.error("Error al obtener partidos:", error);
-            res.status(500).json({ error: error });
-        }
-    }
-async setGanadores(req, res) {
-    const { id } = req.params;
-    const { ganadores = [], resultado = null } = req.body;
-
-    if (!Array.isArray(ganadores)) {
-      return res.status(400).json({ error: "ganadores debe ser un array" });
-    }
->>>>>>> Stashed changes
 
   // GET /partidos
   async getAllPartidos(req, res) {
@@ -89,31 +60,11 @@ async setGanadores(req, res) {
       return res.status(400).json({ error: 'ganadores debe ser un array' });
     }
 
-<<<<<<< Updated upstream
     const cleanGanadores = uniq(ganadores);
-=======
-    async agregarDisponibilidad(req, res) {
-        try {
-            const { id } = req.params;
 
-            console.log("entrando aca, id:", id);
-            const { disponibilidad = [], usuarioId = null } = req.body || {};
-            const result = await this.agregarDisponibilidadUseCase.execute(id, disponibilidad, usuarioId);
-            res.json({ ok: true, disponibilidades: result });
-        } catch (error) {
-            console.error("Error al agregar disponibilidad:", error);
-            res.status(400).json({ error: error.message || "Error interno del servidor" });
-        }
-    }
-
-    async crearPartido(req, res) {
-        console.log("PartidoController - crearPartido llamado");
-        let partidoData = req.body;
->>>>>>> Stashed changes
-
-    // Importante: si no vienen en el body, quedar en undefined para usar 3/1/0
-    const hasPG = Object.prototype.hasOwnProperty.call(req.body, "puntosGanador");
-    const hasPP = Object.prototype.hasOwnProperty.call(req.body, "puntosPerdedor");
+    // Importante: si no vienen en el body, dejar undefined para que aplique 3/1/0 (+WO según servicio)
+    const hasPG = Object.prototype.hasOwnProperty.call(req.body, 'puntosGanador');
+    const hasPP = Object.prototype.hasOwnProperty.call(req.body, 'puntosPerdedor');
     const optsPG = hasPG ? Number(puntosGanador) : undefined;
     const optsPP = hasPP ? Number(puntosPerdedor) : undefined;
 
@@ -133,6 +84,19 @@ async setGanadores(req, res) {
       }
       console.error('Error al setear ganadores:', error);
       return res.status(500).json({ error: 'Error interno del servidor', mensaje: msg });
+    }
+  }
+
+  // POST /partidos/:id/disponibilidades
+  async agregarDisponibilidad(req, res) {
+    try {
+      const { id } = req.params;
+      const { disponibilidad = [], usuarioId = null } = req.body || {};
+      const result = await this.agregarDisponibilidadUseCase.execute(id, disponibilidad, usuarioId);
+      return res.json({ ok: true, disponibilidades: result });
+    } catch (error) {
+      console.error('Error al agregar disponibilidad:', error);
+      return res.status(400).json({ error: error.message || 'Error interno del servidor' });
     }
   }
 
@@ -220,8 +184,8 @@ async setGanadores(req, res) {
     };
 
     // Importante: no forzar 0 → si no vienen, quedan undefined para usar 3/1/0
-    const hasPG = Object.prototype.hasOwnProperty.call(req.body, "puntosGanador");
-    const hasPP = Object.prototype.hasOwnProperty.call(req.body, "puntosPerdedor");
+    const hasPG = Object.prototype.hasOwnProperty.call(req.body, 'puntosGanador');
+    const hasPP = Object.prototype.hasOwnProperty.call(req.body, 'puntosPerdedor');
     const puntosGanador = hasPG ? Number(req.body.puntosGanador) : undefined;
     const puntosPerdedor = hasPP ? Number(req.body.puntosPerdedor) : undefined;
 
@@ -242,7 +206,6 @@ async setGanadores(req, res) {
   async getPartidoById(req, res) {
     const { id } = req.params;
     console.log('Buscando partido con ID:', id);
-
     try {
       const partido = await this.getPartidoByIdUseCase.execute(id);
       console.log('Resultado de búsqueda:', partido);
@@ -282,8 +245,8 @@ async setGanadores(req, res) {
     }
 
     // Importante: no forzar 0 → undefined dispara 3/1/0
-    const hasPG = Object.prototype.hasOwnProperty.call(req.body, "puntosGanador");
-    const hasPP = Object.prototype.hasOwnProperty.call(req.body, "puntosPerdedor");
+    const hasPG = Object.prototype.hasOwnProperty.call(req.body, 'puntosGanador');
+    const hasPP = Object.prototype.hasOwnProperty.call(req.body, 'puntosPerdedor');
     const puntosGanador = hasPG ? Number(req.body.puntosGanador) : undefined;
     const puntosPerdedor = hasPP ? Number(req.body.puntosPerdedor) : undefined;
 
