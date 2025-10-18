@@ -42,7 +42,16 @@ class ReservaController {
             res.status(500).json({ error: error.message });
         }
     }
-    
+
+    async getReservasFuturo(req, res) {
+        try {
+            const reservas = await this.getReservasFuturoUseCase.execute();
+            res.status(200).json(reservas);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     async deshabilitarReserva(req, res) {
 
 

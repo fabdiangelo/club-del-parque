@@ -248,6 +248,7 @@ app.get("/partidos/temporada/:temporadaID", (req, res) => PartidoController.getP
 app.get("/partidos/jugador/:jugadorID", (req, res) => PartidoController.getPartidosByJugador(req, res));
 app.delete("/partidos/:id", (req, res) => PartidoController.eliminarPartido(req, res));
 app.post("/partidos/:id/ganadores", (req, res) => PartidoController.setGanadores(req, res));
+app.post("/partidos/:id/disponibilidad", (req, res) => PartidoController.agregarDisponibilidad(req, res));
 
 
 // Temporada
@@ -274,7 +275,7 @@ app.put('/reservas/:id', (req, res) => ReservaController.editarReserva(req, res)
 app.put('/reservas/:reservaID/aceptar-invitacion', (req, res) => ReservaController.aceptarInvitacion(req, res));
 app.put('/reservas/:id/deshabilitar', (req, res) => ReservaController.deshabilitarReserva(req, res));
 app.put('/reservas/:id/habilitar', (req, res) => ReservaController.habilitarReserva(req, res));
-
+app.get('/reservas-futuro', (req, res) => ReservaController.getReservasFuturo(req, res));
 
 app.use((err, req, res, _next) => {
   console.error(err);

@@ -155,7 +155,6 @@ export class ReservaRepository {
 
 
 
-
     async update(reserva, reservaId) {
         const existingReserva = await this.getById(reservaId);
         if (!existingReserva) {
@@ -223,7 +222,7 @@ export class ReservaRepository {
     async getReservasFuturo() {
         const allReservas = await this.db.getAllItems('reservas');
         const now = new Date();
-        return allReservas.filter(reserva => new Date(reserva.fechaHora) > now && (reserva.estado !== 'cancelada' && reserva.estado !== 'rechazada' && reserva.estado !== 'confirmada'));
+        return allReservas.filter(reserva => new Date(reserva.fechaHora) > now && (reserva.estado !== 'cancelada' && reserva.estado !== 'rechazada' && reserva.estado !== 'confirmada' && reserva.deshabilitar !== true));
     }
 
     async confirmarReserva(reservaId) {

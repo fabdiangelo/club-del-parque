@@ -148,7 +148,7 @@ export default function NavbarBlanco() {
         padding: '1px 4px',
         fontSize: '0.7em',
         fontWeight: 700,
-        zIndex: 10,
+        zIndex: 2,
         minWidth: '10px',
         textAlign: 'center',
         boxShadow: '0 1px 4px rgba(0,0,0,0.12)'

@@ -7,6 +7,7 @@ import { GetPartidoPorId } from '../usecases/Partidos/GetPartidoPorId.js';
 import { GetPartidosByJugador } from '../usecases/Partidos/GetPartidosByJugador.js';
 import { GetPartidosPorTemporada } from '../usecases/Partidos/GetPartidosPorTemporada.js';
 import { SetGanadoresPartido } from '../usecases/Partidos/SetGanadoresPartido.js';
+import { AgregarDisponibilidad } from '../usecases/Partidos/AgregarDisponibilidad.js';
 
 // ─── Helpers locales ───────────────────────────────────────────────────────────
 const normID = (v) => String(v ?? '').trim();
@@ -20,6 +21,7 @@ const toIsoOr = (v, fallback = new Date().toISOString()) => {
 };
 
 class PartidoController {
+<<<<<<< Updated upstream
   constructor() {
     const repo = new PartidoRepository();
     this.crearPartidoUseCase = new CrearPartido(repo);
@@ -31,6 +33,37 @@ class PartidoController {
     this.eliminarPartidoUseCase = new EliminarPartido(repo);
     this.setGanadoresUseCase = new SetGanadoresPartido(repo);
   }
+=======
+    constructor() {
+        this.crearPartidoUseCase = new CrearPartido(new PartidoRepository());
+        this.editarPartidoUseCase = new EditarPartido(new PartidoRepository());
+        this.getPartidoByIdUseCase = new GetPartidoPorId(new PartidoRepository());
+        this.getPartidosPorTemporadaUseCase = new GetPartidosPorTemporada(new PartidoRepository());
+        this.getPartidosPorJugadorUseCase = new GetPartidosByJugador(new PartidoRepository());
+        this.getAllPartidosUseCase = new GetAllPArtidos(new PartidoRepository());
+        this.eliminarPartidoUseCase = new EliminarPartido(new PartidoRepository());
+            this.setGanadoresUseCase = new SetGanadoresPartido(new PartidoRepository());
+        this.agregarDisponibilidadUseCase = new AgregarDisponibilidad(new PartidoRepository());
+
+    }
+
+    async getAllPartidos(req, res) {
+        try {
+            const partidos = await this.getAllPartidosUseCase.execute();
+            res.json(partidos);
+        } catch (error) {
+            console.error("Error al obtener partidos:", error);
+            res.status(500).json({ error: error });
+        }
+    }
+async setGanadores(req, res) {
+    const { id } = req.params;
+    const { ganadores = [], resultado = null } = req.body;
+
+    if (!Array.isArray(ganadores)) {
+      return res.status(400).json({ error: "ganadores debe ser un array" });
+    }
+>>>>>>> Stashed changes
 
   // GET /partidos
   async getAllPartidos(req, res) {
@@ -57,7 +90,27 @@ class PartidoController {
       return res.status(400).json({ error: 'ganadores debe ser un array' });
     }
 
+<<<<<<< Updated upstream
     const cleanGanadores = uniq(ganadores);
+=======
+    async agregarDisponibilidad(req, res) {
+        try {
+            const { id } = req.params;
+
+            console.log("entrando aca, id:", id);
+            const { disponibilidad = [], usuarioId = null } = req.body || {};
+            const result = await this.agregarDisponibilidadUseCase.execute(id, disponibilidad, usuarioId);
+            res.json({ ok: true, disponibilidades: result });
+        } catch (error) {
+            console.error("Error al agregar disponibilidad:", error);
+            res.status(400).json({ error: error.message || "Error interno del servidor" });
+        }
+    }
+
+    async crearPartido(req, res) {
+        console.log("PartidoController - crearPartido llamado");
+        let partidoData = req.body;
+>>>>>>> Stashed changes
 
     try {
       const partido = await this.setGanadoresUseCase.execute(

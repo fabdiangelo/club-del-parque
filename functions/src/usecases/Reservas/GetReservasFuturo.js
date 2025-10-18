@@ -1,4 +1,5 @@
 
+
 export class GetReservasFuturo {
     constructor(reservaRepository) {
         this.reservaRepository = reservaRepository;

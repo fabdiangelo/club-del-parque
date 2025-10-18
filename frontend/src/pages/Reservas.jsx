@@ -447,362 +447,332 @@ const Reservas = () => {
 
 
             {modalFormulario && (
-                <dialog id="my_modal_3" className="modal modal-open">
-                    <div className="modal-box max-w-2xl" style={{backgroundColor: 'white'}}>
-                        <button 
-                            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" 
-                            onClick={() => setModalFormulario(false)}
+    <dialog id="my_modal_3" className="modal modal-open">
+        <div className="modal-box w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto " style={{backgroundColor: 'white'}}>
+            <button 
+                className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 z-10" 
+                onClick={() => setModalFormulario(false)}
+            >
+                ✕
+            </button>
+
+            {/* Header del modal - más compacto */}
+            <div className='text-center mb-4'>
+                <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 0v1m0-1h6m-6 1v3a1 1 0 001 1h4a1 1 0 001-1V8m-6 0H7a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1" />
+                    </svg>
+                </div>
+                <h3 className='text-xl font-bold text-gray-800 mb-1'>Nueva Reserva</h3>
+                <p className='text-sm text-gray-600'>Completa la información para crear tu reserva</p>
+            </div>  
+
+            <form className="space-y-4">
+                {/* Grid más compacto */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Selección de Cancha */}
+                    <div className="form-control">
+                        <label className="label py-1">
+                            <span className="label-text text-sm font-medium text-gray-700">Cancha</span>
+                        </label>
+                        <select 
+                            style={{backgroundColor: '#f0f0f0'}}
+                            className="select select-bordered select-sm w-full focus:select-primary"
+                            value={dataForm.canchaId}
+                            onChange={(e) => setDataForm({...dataForm, canchaId: e.target.value})}
                         >
-                            ✕
-                        </button>
-
-                        {/* Header del modal */}
-                        <div className='text-center mb-6'>
-                            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 0v1m0-1h6m-6 1v3a1 1 0 001 1h4a1 1 0 001-1V8m-6 0H7a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1" />
-                                </svg>
-                            </div>
-                            <h3 className='text-2xl font-bold text-gray-800 mb-2'>Nueva Reserva</h3>
-                            <p className='text-gray-600'>Completa la información para crear tu reserva</p>
-                        </div>  
-
-                        <form className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Selección de Cancha */}
-                                <div className="form-control">
-                                    <label className="label">
-                                        <span className="label-text font-medium text-gray-700">
-                                            
-                                            Cancha
-                                        </span>
-                                    </label>
-                                    <select 
-                                        style={{backgroundColor: '#f0f0f0'}}
-                                        className="select select-bordered w-full focus:select-primary"
-                                        value={dataForm.canchaId}
-                                        onChange={(e) => setDataForm({...dataForm, canchaId: e.target.value})}
-                                    >
-                                        <option value="">Seleccionar cancha</option>
-                                        {canchas.map(cancha => (
-                                            <option key={cancha.id} value={cancha.id}>
-                                                🎾 {cancha.nombre || `Cancha ${cancha.numero}`} - {cancha.tipo || 'Tenis'}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Duración */}
-                                <div className="form-control">
-                                    <label className="label">
-                                        <span className="label-text font-medium text-gray-700">
-                                            <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Duración
-                                        </span>
-                                    </label>
-                                    <select 
-                                        style={{backgroundColor: '#f0f0f0'}}
-                                        className="select select-bordered w-full focus:select-primary"
-                                        value={dataForm.duracion}
-                                        onChange={(e) => setDataForm({...dataForm, duracion: e.target.value})}
-                                    >
-                                        <option value="">Seleccionar duración</option>
-                                        <option value="1:00">1 hora</option>
-                                        <option value="1:30">1.5 horas</option>
-                                        <option value="2:00">2 horas</option>
-                                        <option value="2:30">2.5 horas</option>
-                                        <option value="3:00">3 horas</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Fecha y Hora - Campo completo */}
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">
-                                        <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 0v1m0-1h6m-6 1v3a1 1 0 001 1h4a1 1 0 001-1V8m-6 0H7a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1" />
-                                        </svg>
-                                        Fecha y Hora de la Reserva
-                                    </span>
-                                </label>
-                                <input 
-                                    type="datetime-local" 
-                                    className="input input-bordered w-full focus:input-primary"
-                                    style={{backgroundColor: '#f0f0f0'}}
-                                    value={dataForm.fechaHora}
-                                    onChange={(e) => setDataForm({...dataForm, fechaHora: e.target.value})}
-                                />
-                            </div>
-
-                            {/* Tipo de Reserva */}
-                            <div className="form-control" displa>
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">Tipo de Reserva</span>
-                                </label>
-                                <div className="flex gap-4" style={{border: '1px solid gray', borderRadius: '5px'}} >
-                                    <label className="label cursor-pointer bg-base-200 rounded-lg p-4 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
-                                        <div className="flex items-center gap-3" style={{backgroundColor: 'white'}}>
-                                            <input 
-                                                style={{backgroundColor: 'white'}}
-                                                type="radio" 
-                                                name="tipoReserva"
-                                                className="radio radio-primary"
-                                                checked={!dataForm.esCampeonato}
-                                                onChange={() => setDataForm({...dataForm, esCampeonato: false})}
-                                            />
-                                            <div>
-                                                
-                                                <div className="font-medium">Recreativo</div>
-                                                <div className="text-sm text-gray-500">Juego casual</div>
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <label className="label cursor-pointer bg-base-200 rounded-lg p-4 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                            style={{backgroundColor: 'white'}} 
-                                                type="radio" 
-                                                name="tipoReserva"
-                                                className="radio radio-warning"
-                                                checked={dataForm.esCampeonato}
-                                                onChange={() => setDataForm({...dataForm, esCampeonato: true})}
-                                            />
-                                            <div>
-                                                
-                                                <div className="font-medium">Campeonato</div>
-                                                <div className="text-sm text-gray-500">Juego oficial</div>
-                                            </div>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">
-                                        <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        Tipo de Partido
-                                    </span>
-                                </label>
-                                <div className="flex gap-4" style={{border: '1px solid gray', borderRadius: '5px'}}>
-                                    <label className="label cursor-pointer bg-base-200 rounded-lg p-4 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
-                                        <div className="flex items-center gap-3" style={{backgroundColor: 'white'}}>
-                                            <input 
-                                                style={{backgroundColor: 'white'}}
-                                                type="radio" 
-                                                name="tipoPartido"
-                                                className="radio radio-success"
-                                                checked={dataForm.tipoPartido === 'singles'}
-                                                onChange={() => cambiarTipoPartido('singles')}
-                                            />
-                                            <div>
-                                              
-                                                <div className="font-medium">Singles</div>
-                                                <div className="text-sm text-gray-500">1 vs 1</div>
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <label className="label cursor-pointer bg-base-200 rounded-lg p-4 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                                style={{backgroundColor: 'white'}} 
-                                                type="radio" 
-                                                name="tipoPartido"
-                                                className="radio radio-info"
-                                                checked={dataForm.tipoPartido === 'dobles'}
-                                                onChange={() => cambiarTipoPartido('dobles')}
-                                            />
-                                            <div>
-                                                
-                                                <div className="font-medium">Dobles</div>
-                                                <div className="text-sm text-gray-500">2 vs 2</div>
-                                            </div>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">
-                                        <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        Autor de la Reserva
-                                    </span>
-                                </label>
-                                <div className="relative">
-                                    <input 
-                                        type="text" 
-                                        className="input input-bordered w-full bg-gray-100 cursor-not-allowed" 
-                                        value={user?.nombre}
-                                        readOnly
-                                        disabled
-                                    />
-                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                        <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div className="label">
-                                    <span className="label-text-alt text-gray-500">
-                                        El autor es automáticamente el usuario actual y no se puede cambiar
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">
-                                       
-                                        Jugadores Participantes
-                                        <span className="ml-2 text-sm">
-                                            ({jugadoresSeleccionados.length}/{dataForm.tipoPartido === 'singles' ? '2' : '4'})
-                                        </span>
-                                    </span>
-                                </label>
-                                
-                                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                                    <div 
-                                        className={`h-2 rounded-full ${
-                                            jugadoresSeleccionados.length === (dataForm.tipoPartido === 'singles' ? 2 : 4) 
-                                                ? 'bg-green-500' 
-                                                : 'bg-blue-500'
-                                        }`}
-                                        style={{
-                                            width: `${(jugadoresSeleccionados.length / (dataForm.tipoPartido === 'singles' ? 2 : 4)) * 100}%`
-                                        }}
-                                    ></div>
-                                </div>
-                                
-                                {jugadoresSeleccionados.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                        {jugadoresSeleccionados.map(jugador => (
-                                            <div key={jugador.id} className="badge badge-primary gap-2">
-                                                {jugador.nombre || jugador.email}
-                                                <button 
-                                                    className="btn btn-ghost btn-xs"
-                                                    onClick={() => removerJugador(jugador.id)}
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                <div className="relative">
-                                    <input 
-                                        type="text" 
-                                        className="input input-bordered w-full focus:input-primary" 
-                                        style={{backgroundColor: '#f0f0f0'}}
-                                        placeholder="Buscar y agregar jugadores..."
-                                        value={searchJugadores}
-                                        onChange={(e) => {
-                                            setSearchJugadores(e.target.value);
-                                            buscarJugadores(e.target.value);
-                                        }}
-                                    />
-                                    {jugadoresFiltrados.length > 0 && (
-                                        <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                                            {jugadoresFiltrados.map(usuario => (
-                                                <div 
-                                                    key={usuario.id}
-                                                    className="p-3 hover:bg-gray-100 cursor-pointer border-b"
-                                                    onClick={() => agregarJugador(usuario)}
-                                                >
-                                                    <div className="font-medium">{usuario.nombre || 'Sin nombre'}</div>
-                                                    <div className="text-sm text-gray-500">{usuario.email}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">
-                                        <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        ID del Partido (opcional)
-                                    </span>
-                                </label>
-                                <input 
-                                    type="text" 
-                                    className="input input-bordered w-full focus:input-primary" 
-                                    style={{backgroundColor: '#f0f0f0'}}
-                                    placeholder="ID del partido asociado (opcional)"
-                                    value={dataForm.partidoId}
-                                    onChange={(e) => setDataForm({...dataForm, partidoId: e.target.value})}
-                                />
-                            </div>
-
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text font-medium text-gray-700">
-                                        <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        ID de Quien Paga
-                                    </span>
-                                </label>
-                                <select 
-                                    style={{backgroundColor: '#f0f0f0'}}
-                                    className="select select-bordered w-full focus:select-primary"
-                                    value={dataForm.quienPaga}
-                                    onChange={(e) => setDataForm({...dataForm, quienPaga: e.target.value})}
-                                >
-                                    <option value="">Seleccionar quien paga</option>
-                                    {dataForm.autor && (
-                                        <option value={dataForm.autor}>Autor de la reserva</option>
-                                    )}
-                                    {jugadoresSeleccionados.map(jugador => (
-                                        <option key={jugador.id} value={jugador.id}>
-                                            {jugador.nombre || jugador.email}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="modal-action justify-center pt-6">
-                                <button 
-                                    type="button"
-                                    className="btn btn-primary btn-wide"
-                                    onClick={async () => {
-                                        try {
-                                            await crearReserva(dataForm);
-                                            limpiarFormulario();
-                                            setModalFormulario(false);
-                                        } catch (error) {
-                                            console.log("Error en creación:", error);
-                                        }
-                                    }}
-                                >
-                                    Crear Reserva
-                                </button>
-                                <button 
-                                    type="button"
-                                    className="btn btn-outline"
-                                    onClick={() => setModalFormulario(false)}
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        </form>
+                            <option value="">Seleccionar cancha</option>
+                            {canchas.map(cancha => (
+                                <option key={cancha.id} value={cancha.id}>
+                                    🎾 {cancha.nombre || `Cancha ${cancha.numero}`} - {cancha.tipo || 'Tenis'}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                </dialog>
-            )}
+
+                    {/* Duración */}
+                    <div className="form-control">
+                        <label className="label py-1">
+                            <span className="label-text text-sm font-medium text-gray-700">Duración</span>
+                        </label>
+                        <select 
+                            style={{backgroundColor: '#f0f0f0'}}
+                            className="select select-bordered select-sm w-full focus:select-primary"
+                            value={dataForm.duracion}
+                            onChange={(e) => setDataForm({...dataForm, duracion: e.target.value})}
+                        >
+                            <option value="">Seleccionar duración</option>
+                            <option value="1:00">1 hora</option>
+                            <option value="1:30">1.5 horas</option>
+                            <option value="2:00">2 horas</option>
+                            <option value="2:30">2.5 horas</option>
+                            <option value="3:00">3 horas</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Fecha y Hora - Campo completo */}
+                <div className="form-control">
+                    <label className="label py-1">
+                        <span className="label-text text-sm font-medium text-gray-700">Fecha y Hora</span>
+                    </label>
+                    <input 
+                        type="datetime-local" 
+                        className="input input-bordered input-sm w-full focus:input-primary"
+                        style={{backgroundColor: '#f0f0f0'}}
+                        value={dataForm.fechaHora}
+                        onChange={(e) => setDataForm({...dataForm, fechaHora: e.target.value})}
+                    />
+                </div>
+
+                {/* Tipo de Reserva - más compacto */}
+                <div className="form-control">
+                    <label className="label py-1">
+                        <span className="label-text text-sm font-medium text-gray-700">Tipo de Reserva</span>
+                    </label>
+                    <div className="flex gap-2">
+                        <label className="label cursor-pointer bg-base-200 rounded-lg p-2 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="tipoReserva"
+                                    className="radio radio-primary radio-sm"
+                                    checked={!dataForm.esCampeonato}
+                                    onChange={() => setDataForm({...dataForm, esCampeonato: false})}
+                                />
+                                <div>
+                                    <div className="text-sm font-medium">Recreativo</div>
+                                    <div className="text-xs text-gray-500">Casual</div>
+                                </div>
+                            </div>
+                        </label>
+                        <label className="label cursor-pointer bg-base-200 rounded-lg p-2 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="tipoReserva"
+                                    className="radio radio-warning radio-sm"
+                                    checked={dataForm.esCampeonato}
+                                    onChange={() => setDataForm({...dataForm, esCampeonato: true})}
+                                />
+                                <div>
+                                    <div className="text-sm font-medium">Campeonato</div>
+                                    <div className="text-xs text-gray-500">Oficial</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {/* Tipo de Partido - más compacto */}
+                <div className="form-control">
+                    <label className="label py-1">
+                        <span className="label-text text-sm font-medium text-gray-700">Tipo de Partido</span>
+                    </label>
+                    <div className="flex gap-2">
+                        <label className="label cursor-pointer bg-base-200 rounded-lg p-2 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="tipoPartido"
+                                    className="radio radio-success radio-sm"
+                                    checked={dataForm.tipoPartido === 'singles'}
+                                    onChange={() => cambiarTipoPartido('singles')}
+                                />
+                                <div>
+                                    <div className="text-sm font-medium">Singles</div>
+                                    <div className="text-xs text-gray-500">1 vs 1</div>
+                                </div>
+                            </div>
+                        </label>
+                        <label className="label cursor-pointer bg-base-200 rounded-lg p-2 flex-1 hover:bg-base-300 transition-colors" style={{backgroundColor: 'white'}}>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="tipoPartido"
+                                    className="radio radio-info radio-sm"
+                                    checked={dataForm.tipoPartido === 'dobles'}
+                                    onChange={() => cambiarTipoPartido('dobles')}
+                                />
+                                <div>
+                                    <div className="text-sm font-medium">Dobles</div>
+                                    <div className="text-xs text-gray-500">2 vs 2</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {/* Autor - más compacto */}
+                <div className="form-control">
+                    <label className="label py-1">
+                        <span className="label-text text-sm font-medium text-gray-700">Autor</span>
+                    </label>
+                    <div className="relative">
+                        <input 
+                            type="text" 
+                            className="input input-bordered input-sm w-full bg-gray-100 cursor-not-allowed" 
+                            value={user?.nombre || user?.email || 'Usuario actual'}
+                            readOnly
+                            disabled
+                        />
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                            <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Jugadores - más compacto */}
+                <div className="form-control">
+                    <label className="label py-1">
+                        <span className="label-text text-sm font-medium text-gray-700">
+                            Jugadores ({jugadoresSeleccionados.length}/{dataForm.tipoPartido === 'singles' ? '2' : '4'})
+                        </span>
+                    </label>
+                    
+                    {/* Barra de progreso más pequeña */}
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                        <div 
+                            className={`h-1.5 rounded-full transition-all ${
+                                jugadoresSeleccionados.length === (dataForm.tipoPartido === 'singles' ? 2 : 4) 
+                                    ? 'bg-green-500' 
+                                    : 'bg-blue-500'
+                            }`}
+                            style={{
+                                width: `${(jugadoresSeleccionados.length / (dataForm.tipoPartido === 'singles' ? 2 : 4)) * 100}%`
+                            }}
+                        ></div>
+                    </div>
+                    
+                    {/* Jugadores seleccionados - más compactos */}
+                    {jugadoresSeleccionados.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                            {jugadoresSeleccionados.map(jugador => (
+                                <div key={jugador.id} className="badge badge-primary badge-sm gap-1">
+                                    <span className="text-xs">{jugador.nombre || jugador.email}</span>
+                                    <button 
+                                        className="btn btn-ghost btn-xs p-0 w-3 h-3"
+                                        onClick={() => removerJugador(jugador.id)}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Input de búsqueda */}
+                    <div className="relative">
+                        <input 
+                            type="text" 
+                            className="input input-bordered input-sm w-full focus:input-primary" 
+                            style={{backgroundColor: '#f0f0f0'}}
+                            placeholder="Buscar jugadores..."
+                            value={searchJugadores}
+                            onChange={(e) => {
+                                setSearchJugadores(e.target.value);
+                                buscarJugadores(e.target.value);
+                            }}
+                        />
+                        {jugadoresFiltrados.length > 0 && (
+                            <div className="absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-32 overflow-y-auto">
+                                {jugadoresFiltrados.map(usuario => (
+                                    <div 
+                                        key={usuario.id}
+                                        className="p-2 hover:bg-gray-100 cursor-pointer border-b text-sm"
+                                        onClick={() => agregarJugador(usuario)}
+                                    >
+                                        <div className="font-medium text-sm">{usuario.nombre || 'Sin nombre'}</div>
+                                        <div className="text-xs text-gray-500">{usuario.email}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Campos opcionales en accordion colapsable */}
+                <div className="collapse collapse-arrow bg-whie">
+                    <input type="checkbox" /> 
+                    <div className="collapse-title text-sm font-medium">
+                        Opciones adicionales (opcional)
+                    </div>
+                    <div className="collapse-content space-y-3">
+                        {/* ID del Partido */}
+                        <div className="form-control">
+                            <label className="label py-1">
+                                <span className="label-text text-sm font-medium text-gray-700">ID del Partido</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                className="input input-bordered input-sm w-full focus:input-primary" 
+                                style={{backgroundColor: '#f0f0f0'}}
+                                placeholder="ID del partido (opcional)"
+                                value={dataForm.partidoId}
+                                onChange={(e) => setDataForm({...dataForm, partidoId: e.target.value})}
+                            />
+                        </div>
+
+                        {/* Quien Paga */}
+                        <div className="form-control">
+                            <label className="label py-1">
+                                <span className="label-text text-sm font-medium text-gray-700">Quien Paga</span>
+                            </label>
+                            <select 
+                                style={{backgroundColor: '#f0f0f0'}}
+                                className="select select-bordered select-sm w-full focus:select-primary"
+                                value={dataForm.quienPaga}
+                                onChange={(e) => setDataForm({...dataForm, quienPaga: e.target.value})}
+                            >
+                                <option value="">Seleccionar quien paga</option>
+                                {dataForm.autor && (
+                                    <option value={dataForm.autor}>Autor de la reserva</option>
+                                )}
+                                {jugadoresSeleccionados.map(jugador => (
+                                    <option key={jugador.id} value={jugador.id}>
+                                        {jugador.nombre || jugador.email}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Botones más compactos */}
+                <div className="modal-action justify-center pt-4 gap-2">
+                    <button 
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={async () => {
+                            try {
+                                await crearReserva(dataForm);
+                                limpiarFormulario();
+                                setModalFormulario(false);
+                            } catch (error) {
+                                console.log("Error en creación:", error);
+                            }
+                        }}
+                    >
+                        Crear Reserva
+                    </button>
+                    <button 
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={() => setModalFormulario(false)}
+                    >
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+)}
 
 
             <NavbarBlanco />
-            <div style={{ height: '100vh', paddingTop: '0' }}>
+            <div style={{ paddingTop: '0' }}>
 
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <div className='container mx-auto'>

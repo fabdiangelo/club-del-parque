@@ -17,20 +17,7 @@ function PerfilReservas() {
     const [tipoAlerta, setTipoAlerta] = useState('');
 
 
-    const getJugadorById = async (idUsuario) => {
-        try {
-            const response = await fetch(`api/usuarios/${idUsuario}`);
-        
-            if(!response.ok) return;
-
-            const data = await response.json();
-
-            return data;
-
-        } catch(error) {
-            console.error(error);
-        }
-    }
+    
 
     const confirmarReserva = async () => {
         try {
@@ -189,6 +176,8 @@ function PerfilReservas() {
         }
     };
 
+    
+
     const fetchCanchas = async () => {
         try {
             const response = await fetch('/api/canchas', {
@@ -300,7 +289,7 @@ function PerfilReservas() {
                                 {reserva.estado === 'pendiente' && <span className="">Pendiente</span>}
                                 {reserva.estado === 'rechazada' && <span className="">Rechazada</span>}
                             </div>
-                            <div className="" style={{padding: '8px 16px', borderRadius: '50px', backgroundColor: reserva.esCampeonato ? '#e0e7ff' : '#30c9d4ff', color: reserva.esCampeonato ? '#eeecffff' : '#065f46'}}>
+                            <div className="" style={{padding: '8px 16px', borderRadius: '50px', backgroundColor: reserva.esCampeonato ? '#304485ff' : '#30c9d4ff', color: reserva.esCampeonato ? '#eeecffff' : '#065f46'}}>
                                 {reserva.esCampeonato ? (
                                     <span className="">🏆 Campeonato</span>
                                 ) : (
