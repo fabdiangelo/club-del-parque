@@ -125,8 +125,10 @@ async getPartidosPorJugador(jugadorID) {
   });
 }
 
-<<<<<<< Updated upstream
-=======
+async getPartidosPorJugador(federadoID) {
+        const allPartidos = await this.db.getAllItems("partidos");
+        const partidosList = [];
+
         allPartidos.forEach((doc) => {
             const data = doc.data();
             if (data.federadosPartidoIDs && data.federadosPartidoIDs.includes(federadoID)) {
@@ -135,18 +137,15 @@ async getPartidosPorJugador(jugadorID) {
         });
         return partidosList;
     }
-
     async addDisponibilidad(partidoId, disponibilidad = [], usuarioId = null) {
         if (!partidoId) throw new Error("partidoId requerido");
         if (!Array.isArray(disponibilidad)) throw new Error("disponibilidad debe ser un array");
         const actual = await this.db.getItem("partidos", partidoId);
         if (!actual) throw new Error("Partido no encontrado");
 
-        console.log("Disponibilidad actual:", actual.disponibilidades);
-        console.log("Nueva disponibilidad:", disponibilidad);
-
+        
         const prev = Array.isArray(actual.disponibilidades) ? actual.disponibilidades : [];
-        // Accept horaInicio, horaFin, fechaHoraInicio, fechaHoraFin, rango
+        
         const norm = disponibilidad.map((d) => ({
             id: d.id || Date.now() + Math.random(),
             fecha: d.fecha,
@@ -158,7 +157,8 @@ async getPartidosPorJugador(jugadorID) {
             usuarioId: d.usuarioId || usuarioId || null,
             submittedAt: Date.now(),
         })).filter(it => it.fecha && it.horaInicio && it.horaFin);
-        // Merge by user/date/range
+        
+
         const key = (it) => `${it.usuarioId || 'anon'}|${it.fecha}|${it.horaInicio}|${it.horaFin}`;
         const map = new Map();
         [...prev, ...norm].forEach(it => {
@@ -171,5 +171,4 @@ async getPartidosPorJugador(jugadorID) {
         await this.update(partidoId, updated);
         return merged;
     }
->>>>>>> Stashed changes
 }
