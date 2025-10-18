@@ -6,13 +6,13 @@ import bgImg from "../assets/RankingsBackground.png";
 
 const NAVBAR_OFFSET_REM = 5;
 
-// UI labels (se mantienen para el look & feel)
+// UI labels
 const SPORTS = ["Tenis", "Padel"];
 const CATEGORIES = ["Singles", "Dobles"];
 const GENDERS_SINGLES = ["Masculino", "Femenino"];
 const GENDERS_DOUBLES = ["Masculino", "Femenino", "Mixto"];
 
-/* ------------------------- Helpers (mismo estilo que PartidosGestor) ------------------------- */
+/* ------------------------- Helpers ------------------------- */
 const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
 const fetchJSON = async (path, opts = {}) => {
   const res = await fetch(toApi(path), {
@@ -41,6 +41,12 @@ const normalizeError = (e) => {
 const normalizeStr = (s = "") =>
   s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
+const uiSportToApi = (label = "") => {
+  const s = normalizeStr(label);
+  if (s.includes("padel")) return "padel";
+  return "tenis";
+};
+
 const seasonNameOf = (t) => {
   if (!t) return "";
   if (t.nombre && String(t.nombre).trim()) return String(t.nombre).trim();
@@ -53,15 +59,18 @@ const seasonNameOf = (t) => {
 const seasonStartISO = (t) =>
   (t?.fechaInicio || t?.inicio || "")?.slice(0, 10) || "";
 
-// parsea strings como: "singles", "single fem", "dobles", "double mixed", etc.
+// Robust tipo parser (detects "dobles" and variants)
 const parseTipo = (tipoRaw = "") => {
-  const t = normalizeStr(tipoRaw).trim();
+  const t = normalizeStr(String(tipoRaw)).trim();
+
   let category = null;
+  if (t.includes("singles") || t.includes("single")) category = "Singles";
+  if (t.includes("dobles") || t.includes("doble") || t.includes("double") || t.includes("doubles")) {
+    category = "Dobles";
+  }
+
+  // If gender is encoded in tipo, detect it; else fallback by category
   let gender = null;
-
-  if (t.includes("single")) category = "Singles";
-  if (t.includes("doble") || t.includes("double")) category = "Dobles";
-
   if (t.includes("mixed") || t.includes("mixto")) gender = "Mixto";
   else if (t.includes("fem")) gender = "Femenino";
   else if (category === "Singles") gender = "Masculino";
@@ -69,11 +78,10 @@ const parseTipo = (tipoRaw = "") => {
 
   return { category, gender };
 };
-// arma el string objetivo para query a partir de (category, gender)
-const buildTipoFromUI = (category /*, gender*/) => {
-  // El backend usa 'singles' | 'dobles' (sin género)
- return category === "Singles" ? "singles" : "dobles";
-};
+
+// Backend expects only 'singles' | 'dobles'
+const buildTipoFromUI = (category /*, gender*/) =>
+  category === "Singles" ? "singles" : "dobles";
 
 const renderHighlightedName = (name, q) => {
   if (!q) return name;
@@ -92,6 +100,32 @@ const renderHighlightedName = (name, q) => {
     </>
   );
 };
+
+/* ------------------------- Gender helpers (from federados) ------------------------- */
+const normalizeGender = (g) => {
+  const v = normalizeStr(g || "");
+  if (["m", "masc", "masculino", "male", "hombre"].some((x) => v.includes(x))) return "Masculino";
+  if (["f", "fem", "femenino", "female", "mujer"].some((x) => v.includes(x))) return "Femenino";
+  return "unknown";
+};
+
+function makeFederadoMaps(federados = []) {
+  const byId = new Map();
+  const genderById = new Map();
+  federados.forEach((u, i) => {
+    const id = u.id || u.uid || String(i);
+    const name =
+      [u.nombre, u.apellido].filter(Boolean).join(" ") ||
+      u.nombre ||
+      u.email ||
+      "Jugador";
+    byId.set(u.id || u.uid || u.email || id, name);
+    byId.set(id, name);
+    const g = normalizeGender(u.genero ?? u.sexo);
+    genderById.set(u.id || id, g);
+  });
+  return { nameById: byId, genderById };
+}
 
 function AnimatedTitle({ text, className, style }) {
   return (
@@ -125,27 +159,33 @@ function AnimatedTitle({ text, className, style }) {
 }
 
 export default function Rankings() {
-  // UI state (idéntico)
+  // UI state
   const [sport, setSport] = useState(SPORTS[0]);
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [gender, setGender] = useState(GENDERS_SINGLES[0]);
-  const [season, setSeason] = useState(""); // nombre mostrado
+  const [season, setSeason] = useState(""); // display name
   const [query, setQuery] = useState("");
 
   // Data
-  const [temporadas, setTemporadas] = useState([]);     // {id,...,_name,_startISO}
-  const [federados, setFederados] = useState([]);       // para mostrar nombres
-  const [rankingsRaw, setRankingsRaw] = useState([]);   // cache de rankings (puede venir por filtro o lote)
+  const [temporadas, setTemporadas] = useState([]);      // all seasons
+  const [federados, setFederados] = useState([]);        // players
+  const [rankingsRaw, setRankingsRaw] = useState([]);    // filtered fetch result
+  const [rankingsAllForSport, setRankingsAllForSport] = useState([]); // for availability/season list
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
-  // mantener el mismo UX de category/gender coherente
-    category === "Singles" ? GENDERS_SINGLES : GENDERS_DOUBLES;
+  // Singles can't be Mixto
   useEffect(() => {
     if (category === "Singles" && gender === "Mixto") setGender(GENDERS_SINGLES[0]);
   }, [category, gender]);
 
-  // carga base como en PartidosGestor (Promise.all + fetchJSON)
+  // When sport changes, reset sensible defaults
+  useEffect(() => {
+    setCategory("Singles");
+    setGender(GENDERS_SINGLES[0]);
+  }, [sport]);
+
+  // Base load
   useEffect(() => {
     let cancelled = false;
     async function loadBase() {
@@ -163,22 +203,19 @@ export default function Rankings() {
           _startISO: seasonStartISO(t),
         }));
 
-        // 1er intento: rankings "globales" (si tu backend lo permite)
-        // si 400, hacemos fallback luego por temporada/tipo cuando el usuario seleccione
-        let rk = [];
+        let rkGlobal = [];
         try {
-          rk = await fetchJSON("/rankings?leaderboard=true");
+          rkGlobal = await fetchJSON("/rankings?leaderboard=true");
         } catch {
-          rk = []; // seguimos con vacío; el primer fetch filtrado lo hará el efecto de abajo
+          rkGlobal = [];
         }
 
         if (!cancelled) {
           setTemporadas(normalizedTemps);
           setFederados(Array.isArray(fs) ? fs : []);
-          setRankingsRaw(Array.isArray(rk) ? rk : []);
 
-          // defaults: elegir una temporada que tenga ranking si es posible
-          const rankedTempIDs = new Set((rk || []).map((x) => x.temporadaID).filter(Boolean));
+          // defaults
+          const rankedTempIDs = new Set((rkGlobal || []).map((x) => x.temporadaID).filter(Boolean));
           const seasonsWithRank = normalizedTemps.filter((t) => rankedTempIDs.has(t.id));
           const activa = seasonsWithRank.find((t) => t.estado === "activa");
           const sorted = (seasonsWithRank.length ? seasonsWithRank : normalizedTemps).sort((a, b) =>
@@ -187,12 +224,15 @@ export default function Rankings() {
           const defaultSeason = (activa?._name || sorted[0]?._name || "");
           if (!season) setSeason(defaultSeason);
 
-          // setear categoría/género sugeridos según lo disponible
-          const tipos = new Set((rk || []).map((x) => x.tipoDePartido).filter(Boolean));
+          const tipos = new Set((rkGlobal || []).map((x) => x.tipoDePartido).filter(Boolean));
           const firstTipo = [...tipos][0] || "";
           const parsed = parseTipo(firstTipo);
           if (parsed.category) setCategory(parsed.category);
           if (parsed.gender) setGender(parsed.gender);
+
+          const deportes = new Set((rkGlobal || []).map((x) => (x.deporte || "").toLowerCase()).filter(Boolean));
+          if (deportes.has("padel")) setSport("Padel");
+          else if (deportes.has("tenis")) setSport("Tenis");
         }
       } catch (e) {
         if (!cancelled) setErr(normalizeError(e));
@@ -207,24 +247,46 @@ export default function Rankings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // cuando cambian filtros (temporada/categoría/género), pedimos rankings del backend con esa combinación
+  // Fetch ALL rankings for selected sport (no temporada filter)
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAllSeasonsForSport() {
+      const deporte = uiSportToApi(sport);
+      try {
+        const params = new URLSearchParams({ leaderboard: "true", deporte });
+        const rk = await fetchJSON(`/rankings?${params.toString()}`);
+        if (!cancelled) setRankingsAllForSport(Array.isArray(rk) ? rk : []);
+      } catch {
+        if (!cancelled) setRankingsAllForSport([]);
+      }
+    }
+    loadAllSeasonsForSport();
+    return () => {
+      cancelled = true;
+    };
+  }, [sport]);
+
+  // Fetch rankings for (temporada, tipo, deporte)
   useEffect(() => {
     let cancelled = false;
     async function loadRankingsForFilters() {
       const t = temporadas.find((tt) => tt._name === season);
       const temporadaID = t?.id;
-      if (!temporadaID) return; // esperamos a tener temporada válida
+      if (!temporadaID) return;
 
-      const tipoDePartido = buildTipoFromUI(category, gender); // ej: "single", "double fem", "double mixed"
-      
+      const tipoDePartido = buildTipoFromUI(category, gender);
+      const deporte = uiSportToApi(sport);
+
       setLoading(true);
       setErr("");
       try {
-        const rk = await fetchJSON(
-          `/rankings?temporadaID=${encodeURIComponent(temporadaID)}&tipoDePartido=${encodeURIComponent(
-            tipoDePartido
-          )}&leaderboard=true`
-        );
+        const params = new URLSearchParams({
+          temporadaID,
+          tipoDePartido,
+          deporte,
+          leaderboard: "true",
+        });
+        const rk = await fetchJSON(`/rankings?${params.toString()}`);
         if (!cancelled) setRankingsRaw(Array.isArray(rk) ? rk : []);
       } catch (e) {
         if (!cancelled) setErr(normalizeError(e));
@@ -232,40 +294,86 @@ export default function Rankings() {
         if (!cancelled) setLoading(false);
       }
     }
-    // sólo correr si ya cargamos temporadas
     if (temporadas.length > 0 && season) loadRankingsForFilters();
     return () => {
       cancelled = true;
     };
-  }, [temporadas, season, category, gender]);
+  }, [temporadas, season, category, gender, sport]);
 
-  // opciones de temporada: SOLO las que tienen ranking (si no tenemos datos globales, mostramos todas hasta que llegue la primera carga filtrada)
+  /* ------------------------- Maps from federados ------------------------- */
+  const { nameById, genderById } = useMemo(
+    () => makeFederadoMaps(federados),
+    [federados]
+  );
+
+  /* ------------------------- Season options ------------------------- */
   const seasonOptions = useMemo(() => {
-    const rankedIds = new Set(rankingsRaw.map((x) => x.temporadaID).filter(Boolean));
-    const list = temporadas.filter((t) => rankedIds.size ? rankedIds.has(t.id) : true);
-    return list.map((t) => t._name);
-  }, [rankingsRaw, temporadas]);
-
-  // construir disponibilidad real de tipos para habilitar/deshabilitar los botones (como PartidosGestor hace con datasets)
-  const tipoAvailability = useMemo(() => {
-    const t = temporadas.find((tt) => tt._name === season);
-    const temporadaID = t?.id;
-    const tipos = new Set(
-      rankingsRaw
-        .filter((rk) => !temporadaID || rk.temporadaID === temporadaID)
-        .map((rk) => rk.tipoDePartido)
+    const targetDeporte = uiSportToApi(sport);
+    const rankedIdsForSport = new Set(
+      (rankingsAllForSport || [])
+        .filter((x) => (x.deporte || "").toLowerCase() === targetDeporte)
+        .map((x) => x.temporadaID)
         .filter(Boolean)
     );
-    const parsed = [...tipos].map(parseTipo);
-    return {
-      hasSingles: parsed.some((p) => p.category === "Singles"),
-      hasDobles: parsed.some((p) => p.category === "Dobles"),
-      gendersSingles: new Set(parsed.filter((p) => p.category === "Singles").map((p) => p.gender).filter(Boolean)),
-      gendersDobles: new Set(parsed.filter((p) => p.category === "Dobles").map((p) => p.gender).filter(Boolean)),
-    };
-  }, [rankingsRaw, temporadas, season]);
+    const list = temporadas.filter((t) =>
+      rankedIdsForSport.size ? rankedIdsForSport.has(t.id) : true
+    );
+    const sorted = [...list].sort((a, b) =>
+      String(b._startISO).localeCompare(String(a._startISO))
+    );
+    return sorted.map((t) => t._name);
+  }, [rankingsAllForSport, temporadas, sport]);
 
-  // si la categoría actual no existe para la temporada, mover a la que sí exista
+  /* ------------------------- Availability (uses federados' gender) ------------------------- */
+  const tipoAvailability = useMemo(() => {
+    const selectedSeason = temporadas.find((tt) => tt._name === season);
+    const temporadaID = selectedSeason?.id;
+    const targetDeporte = uiSportToApi(sport);
+
+    // Universe: all ranking rows for this sport (+ temporada if chosen)
+    const universe = (rankingsAllForSport || [])
+      .filter((rk) => (rk.deporte || "").toLowerCase() === targetDeporte)
+      .filter((rk) => (!temporadaID || rk.temporadaID === temporadaID));
+
+    // Which tipos exist at all
+    const tipos = new Set(universe.map((rk) => rk.tipoDePartido).filter(Boolean));
+    const parsed = [...tipos].map(parseTipo);
+    const hasSingles = parsed.some((p) => p.category === "Singles");
+    const hasDobles  = parsed.some((p) => p.category === "Dobles");
+
+    // Gender availability based on federados:
+    // For Singles: enable Masculino/Femenino if there are ranked players with that gender
+    // For Dobles: Masculino if any men, Femenino if any women, Mixto if both genders exist
+    const singlesRows = universe.filter((rk) => {
+      const p = parseTipo(rk.tipoDePartido);
+      return p.category === "Singles";
+    });
+    const doublesRows = universe.filter((rk) => {
+      const p = parseTipo(rk.tipoDePartido);
+      return p.category === "Dobles";
+    });
+
+    const hasMaleSingles   = singlesRows.some((rk) => genderById.get(rk.usuarioID) === "Masculino");
+    const hasFemaleSingles = singlesRows.some((rk) => genderById.get(rk.usuarioID) === "Femenino");
+
+    const hasMaleDoubles   = doublesRows.some((rk) => genderById.get(rk.usuarioID) === "Masculino");
+    const hasFemaleDoubles = doublesRows.some((rk) => genderById.get(rk.usuarioID) === "Femenino");
+
+    const gendersSingles = new Set([
+      ...(hasMaleSingles ? ["Masculino"] : []),
+      ...(hasFemaleSingles ? ["Femenino"] : []),
+    ]);
+
+    const gendersDobles = new Set([
+      ...(hasMaleDoubles ? ["Masculino"] : []),
+      ...(hasFemaleDoubles ? ["Femenino"] : []),
+      ...((hasMaleDoubles && hasFemaleDoubles) ? ["Mixto"] : []),
+    ]);
+
+    return { hasSingles, hasDobles, gendersSingles, gendersDobles };
+  }, [rankingsAllForSport, temporadas, season, sport, genderById]);
+
+  // Adjust category if current one is unavailable
   useEffect(() => {
     if (category === "Singles" && !tipoAvailability.hasSingles && tipoAvailability.hasDobles) {
       setCategory("Dobles");
@@ -275,7 +383,7 @@ export default function Rankings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipoAvailability]);
 
-  // si el género no existe para esa categoría/temporada, ajustar al primero disponible
+  // Snap gender to first allowed if needed
   useEffect(() => {
     const allowed =
       category === "Singles"
@@ -285,56 +393,68 @@ export default function Rankings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, tipoAvailability]);
 
-  // mapa usuario -> nombre
-  const userNameOf = useMemo(() => {
-    const map = new Map();
-    federados.forEach((u, i) => {
-      const id = u.id || u.uid || String(i);
-      const name =
-        [u.nombre, u.apellido].filter(Boolean).join(" ") ||
-        u.nombre ||
-        u.email ||
-        "Jugador";
-      map.set(u.id || u.uid || u.email || id, name);
-      map.set(id, name);
-    });
-    return map;
-  }, [federados]);
-
-  // filas a mostrar: SOLO rankings de la combi (temporada + tipo) y con puntos > 0
+  /* ------------------------- Rows (filter by deporte, temporada, tipo, and GENERO) ------------------------- */
   const filteredRows = useMemo(() => {
     const t = temporadas.find((tt) => tt._name === season);
     const temporadaID = t?.id;
     const targetTipo = buildTipoFromUI(category, gender);
+    const targetDeporte = uiSportToApi(sport);
 
-    let rows = rankingsRaw
-      .filter((rk) => (!temporadaID || rk.temporadaID === temporadaID))
+    // Base filters: temporada + deporte + tipo (category match)
+    let rows = (rankingsRaw || [])
+      .filter(
+        (rk) =>
+          (!temporadaID || rk.temporadaID === temporadaID) &&
+          (rk.deporte || "").toLowerCase() === targetDeporte
+      )
       .filter((rk) => {
         const pA = parseTipo(rk.tipoDePartido);
         const pB = parseTipo(targetTipo);
-        return pA.category === pB.category && pA.gender === pB.gender;
-      })
+        return pA.category === pB.category; // compare category only here
+      });
+
+    // Apply GENDER from federados:
+    // Singles: include only the chosen gender
+    // Dobles: if Mixto -> include both genders; else only the chosen one
+    if (category === "Singles") {
+      rows = rows.filter((rk) => genderById.get(rk.usuarioID) === gender);
+    } else {
+      if (gender === "Masculino" || gender === "Femenino") {
+        rows = rows.filter((rk) => genderById.get(rk.usuarioID) === gender);
+      } else {
+        // Mixto: keep both M and F; drop unknowns
+        rows = rows.filter((rk) => {
+          const g = genderById.get(rk.usuarioID);
+          return g === "Masculino" || g === "Femenino";
+        });
+      }
+    }
+
+    // Map to UI
+    rows = rows
       .filter((rk) => Number.isFinite(Number(rk.puntos)))
       .map((rk) => ({
         id: rk.id,
-        name: userNameOf.get(rk.usuarioID) || rk.usuarioID,
-        wins: "—",
-        losses: "—",
+        name: nameById.get(rk.usuarioID) || rk.usuarioID,
+        wins: Number(rk.partidosGanados ?? 0),
+        losses: Number(rk.partidosPerdidos ?? 0),
         points: Number(rk.puntos) || 0,
       }));
 
+    // Search
     if (query) {
       const q = normalizeStr(query);
       rows = rows.filter((r) => normalizeStr(r.name).includes(q));
     }
 
+    // Sort
     rows.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
     });
 
     return rows.map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [rankingsRaw, temporadas, season, category, gender, query, userNameOf]);
+  }, [rankingsRaw, temporadas, season, category, gender, sport, query, nameById, genderById]);
 
   const strokeTitle = {
     color: "#ffffffff",
@@ -370,9 +490,9 @@ export default function Rankings() {
               <AnimatedTitle text="Ranking" />
             </h1>
 
-            {/* Controls (idéntico UI; lógica nueva debajo) */}
+            {/* Controls */}
             <div className="mt-8 flex flex-row flex-wrap items-center justify-center gap-3">
-              {/* Sport (visual) */}
+              {/* Sport */}
               <div className="relative">
                 <select
                   id="sport"
@@ -390,7 +510,7 @@ export default function Rankings() {
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/70">▾</span>
               </div>
 
-              {/* Season (sólo las que tienen ranking) */}
+              {/* Season */}
               <div className="relative">
                 <select
                   id="season"
@@ -412,7 +532,7 @@ export default function Rankings() {
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/70">▾</span>
               </div>
 
-              {/* Category (habilitada según disponibilidad real) */}
+              {/* Category */}
               <div className="flex flex-row flex-wrap items-center gap-3">
                 {CATEGORIES.map((c) => {
                   const isAvailable =
@@ -424,8 +544,9 @@ export default function Rankings() {
                       key={c}
                       onClick={() => isAvailable && setCategory(c)}
                       className={`h-12 px-6 text-lg rounded-xl border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 active:scale-[.98] shadow-sm ${
-                        active ? "bg-cyan-700/90 text-white border-white"
-                              : "bg-neutral-900/80 text-white border-white/40 hover:bg-neutral-800/80"
+                        active
+                          ? "bg-cyan-700/90 text-white border-white"
+                          : "bg-neutral-900/80 text-white border-white/40 hover:bg-neutral-800/80"
                       } ${!isAvailable ? "opacity-40 cursor-not-allowed" : ""}`}
                       aria-pressed={active}
                       disabled={!isAvailable}
@@ -437,10 +558,11 @@ export default function Rankings() {
                 })}
               </div>
 
-              {/* Gender (habilitado según disponibilidad real) */}
+              {/* Gender */}
               <div className="flex flex-row flex-wrap items-center gap-2 ml-2">
                 {(category === "Singles" ? GENDERS_SINGLES : GENDERS_DOUBLES).map((g) => {
-                  const allowedSet = category === "Singles" ? tipoAvailability.gendersSingles : tipoAvailability.gendersDobles;
+                  const allowedSet =
+                    category === "Singles" ? tipoAvailability.gendersSingles : tipoAvailability.gendersDobles;
                   const isAvailable = allowedSet?.has(g);
                   const active = gender === g;
                   return (
@@ -448,8 +570,9 @@ export default function Rankings() {
                       key={g}
                       onClick={() => isAvailable && setGender(g)}
                       className={`h-10 px-4 text-base rounded-lg border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80 active:scale-[.98] shadow-sm ${
-                        active ? "bg-cyan-600/90 text-white border-white"
-                              : "bg-neutral-900/80 text-white border-white/40 hover:bg-neutral-800/80"
+                        active
+                          ? "bg-cyan-600/90 text-white border-white"
+                          : "bg-neutral-900/80 text-white border-white/40 hover:bg-neutral-800/80"
                       } ${!isAvailable ? "opacity-40 cursor-not-allowed" : ""}`}
                       aria-pressed={active}
                       disabled={!isAvailable}
@@ -546,8 +669,8 @@ export default function Rankings() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 border-t border-white/10">—</td>
-                        <td className="px-6 py-4 border-t border-white/10">—</td>
+                        <td className="px-6 py-4 border-t border-white/10">{Number.isFinite(r.wins) ? r.wins : "—"}</td>
+                        <td className="px-6 py-4 border-t border-white/10">{Number.isFinite(r.losses) ? r.losses : "—"}</td>
                         <td className="px-6 py-4 border-t border-white/10 font-semibold">{r.points}</td>
                       </tr>
                     ))}
@@ -556,7 +679,7 @@ export default function Rankings() {
               </div>
 
               <div className="px-6 py-3 text-xs text-white/60 border-t border-white/10">
-                Nota: <strong>sólo</strong> se muestran jugadores con ranking en la temporada y tipo seleccionados.
+                Nota: el filtro de género usa el <em>genero/sexo</em> del jugador en "Federados".
               </div>
             </div>
           </div>

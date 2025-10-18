@@ -8,7 +8,7 @@ export class CrearPartido {
   /**
    * partidoData puede incluir opcionalmente puntosGanador y puntosPerdedor en el payload del controller.
    */
-  async execute(partidoData, { puntosGanador = 0, puntosPerdedor = 0 } = {}) {
+  async execute(partidoData, { puntosGanador, puntosPerdedor } = {}) {
     // Guardar partido
     const nuevoPartido = await this.partidoRepository.save(partidoData);
 

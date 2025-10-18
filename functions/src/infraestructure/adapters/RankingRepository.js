@@ -84,6 +84,29 @@ class RankingRepository {
     await this.db.updateItem(this.collection, id, { puntos });
     return id;
   }
+// /functions/src/infraestructure/adapters/RankingRepository.js
+async adjustCounter(id, field, delta = 1) {
+  const current = await this.db.getItemObject(this.collection, id) || {};
+  const next = Number(current?.[field] || 0) + Number(delta || 0);
+  await this.db.updateItem(this.collection, id, { [field]: next });
+  return id;
+}
+
+// Single roundtrip atomic-ish patch (read, compute, write once)
+async adjustMany(id, increments = {}) {
+  const current = await this.db.getItemObject(this.collection, id) || {};
+  const patch = {};
+  for (const [k, inc] of Object.entries(increments)) {
+    if (!Number.isFinite(inc) || inc === 0) continue;
+    patch[k] = Number(current?.[k] || 0) + Number(inc);
+  }
+  if (Object.keys(patch).length) {
+    await this.db.updateItem(this.collection, id, patch);
+  }
+  return id;
+}
+
+
 }
 
 export { RankingRepository };

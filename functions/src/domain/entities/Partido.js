@@ -12,7 +12,7 @@ export default class Partido {
     equipoVisitante,
     resultado,
     ganadores = [],
-    deporte = null // ← NUEVO y opcional
+    deporte = null
   ) {
     this.id = id;
     this.timestamp = timestamp;

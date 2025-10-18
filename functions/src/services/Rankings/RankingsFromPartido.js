@@ -2,16 +2,33 @@ import UpsertRankingPuntos from "../../usecases/Rankings/UpsertRankingPuntos.js"
 
 const DEFAULT_WIN = 3;
 
-// ← robusto si resultado es string u objeto (p.ej. { motivo: 'WO' })
-function loserDeltaFromResultado(resultado) {
+// ────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────────────────────────────────────
+const toStr = (v) => String(v ?? "").trim();
+const uniq = (arr = []) => Array.from(new Set((arr || []).map(toStr)));
+const L = (s) => String(s || "").toLowerCase();
+
+// WO / abandono flags genéricos
+const hasGenericAbandonoFlag = (resultado, estado) => {
   const text =
     typeof resultado === "string"
       ? resultado
       : (resultado?.motivo || resultado?.razon || resultado?.detalle || "");
-  return /(wo|walkover|abandono|no\s*presentad[oa]|np|ausent[ea])/i.test(String(text)) ? 0 : 1;
-}
+  return /(wo|walkover|abandono|no\s*presentad[oa]|np|ausent[ea])/i.test(String(text)) ||
+         /^(wo|walkover)$/i.test(String(estado || ""));
+};
 
-// Split winners/losers (supports singles/dobles)
+// Devuelve Set de jugadores que abandonaron si viene explícito (resultado.abandona / abandonoPor / walkoverPor)
+// Puede ser string o string[]
+const getAbandoners = (resultado) => {
+  const raw = resultado?.abandona ?? resultado?.abandonoPor ?? resultado?.walkoverPor ?? null;
+  if (!raw) return new Set();
+  if (Array.isArray(raw)) return new Set(uniq(raw));
+  return new Set([toStr(raw)]);
+};
+
+// Split winners/losers (apoya singles/dobles y valida equipo ganador en dobles)
 function splitWinnersLosers(partido) {
   const ids = (partido.jugadores || []).map(String);
   const winners = (partido.ganadores || []).map(String);
@@ -29,10 +46,12 @@ function splitWinnersLosers(partido) {
   return { winners: [...new Set(winners)], losers: [...new Set(losers)] };
 }
 
-function eligible(p) {
+// Elegibilidad:
+// - Create: si tiene ganadores + temporadaID + tipoPartido (no exige estado finalizado)
+// - Edit: exige finalizado + ganadores (conservamos tu criterio original para ediciones)
+function eligibleForCreate(p) {
   return (
     p &&
-    String(p.estado) === "finalizado" &&
     Array.isArray(p.ganadores) &&
     p.ganadores.length > 0 &&
     p.temporadaID &&
@@ -40,11 +59,17 @@ function eligible(p) {
   );
 }
 
-/**
- * Core: applies (sign * basePoints) per player (winners/losers).
- * If puntosGanador/perdedor are undefined, uses DEFAULT_WIN and loserDeltaFromResultado(p.resultado).
- * `deporte` es opcional; Upsert ignora si es null.
- */
+function eligibleForEdit(p) {
+  return p
+    && String(p.estado) === "finalizado"
+    && Array.isArray(p.ganadores) && p.ganadores.length > 0
+    && p.temporadaID && p.tipoPartido;
+}
+
+
+// ────────────────────────────────────────────────────────────────────────────
+// Core apply (con contadores y abandono por jugador)
+// ────────────────────────────────────────────────────────────────────────────
 async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sign = +1) {
   if (!partido || !Array.isArray(partido.jugadores)) return;
 
@@ -54,32 +79,53 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
   const deporte = (String(partido.deporte || "").trim().toLowerCase()) || null;
 
   const win = Number.isFinite(puntosGanador) ? Number(puntosGanador) : DEFAULT_WIN;
-  const lose = Number.isFinite(puntosPerdedor) ? Number(puntosPerdedor) : loserDeltaFromResultado(partido.resultado);
 
+  // Si puntosPerdedor es undefined, resolvemos 1 u 0 según WO/abandono.
+  // Priorizamos abandono individual (resultado.abandona) y, si no está, un flag genérico para todos los perdedores.
+  const resultado = partido.resultado;
+  const estado = partido.estado;
+  const abandoners = getAbandoners(resultado);              // p.ej. Set(['uidX', 'uidY'])
+  const genericWO = hasGenericAbandonoFlag(resultado, estado);
+
+  const loseFallback = Number.isFinite(puntosPerdedor) ? Number(puntosPerdedor) : 1; // default 1
   const { winners, losers } = splitWinnersLosers(partido);
 
   const ups = [];
 
+  // Ganadores → +3 y +1 ganado
   for (const uid of winners) {
     ups.push(
       UpsertRankingPuntos.execute({
         usuarioID: String(uid),
         temporadaID: String(temporadaID),
         tipoDePartido: String(tipoPartido),
-        delta: sign * win,
         deporte,
+        delta: sign * win,
+        deltaGanados: sign * 1,
       })
     );
   }
 
-  for (const uid of losers) {
+  // Perdedores → +1 o +0 si abandono; contadores perdidos/abandonados
+  for (const uidRaw of losers) {
+    const uid = String(uidRaw);
+    const abandonedThis = abandoners.has(uid);
+    // Si NO hay lista explícita pero hay flag genérico, tratamos a todos los perdedores como abandono
+    const isAbandono = abandonedThis || (!abandoners.size && genericWO);
+
+    const losePoints = Number.isFinite(puntosPerdedor)
+      ? Number(puntosPerdedor)                        // override explícito
+      : (isAbandono ? 0 : loseFallback);              // default 0 si abandono, 1 caso contrario
+
     ups.push(
       UpsertRankingPuntos.execute({
-        usuarioID: String(uid),
+        usuarioID: uid,
         temporadaID: String(temporadaID),
         tipoDePartido: String(tipoPartido),
-        delta: sign * lose,
         deporte,
+        delta: sign * losePoints,
+        deltaPerdidos: isAbandono ? 0 : sign * 1,
+        deltaAbandonados: isAbandono ? sign * 1 : 0,
       })
     );
   }
@@ -87,17 +133,21 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
   await Promise.all(ups);
 }
 
-/** On create: solo si ya está finalizado + tiene ganadores */
+// ────────────────────────────────────────────────────────────────────────────
+// API pública (respeta tu firma original)
+// ────────────────────────────────────────────────────────────────────────────
+
+/** CREATE: si ya está con ganadores, aplica 3/1/0 (o overrides), sin exigir estado finalizado */
 export async function applyOnCreate(newPartido, puntosGanador, puntosPerdedor) {
-  if (!eligible(newPartido)) return;
+  if (!eligibleForCreate(newPartido)) return;
   await applyPointsForPartido(newPartido, puntosGanador, puntosPerdedor, +1);
 }
 
-/** On edit: revert old si era elegible y aplica el nuevo si es elegible */
-export async function applyOnEdit(oldPartido, newPartido, puntosGanador, puntosPerdedor) {
-  const oldOk = eligible(oldPartido);
-  const newOk = eligible(newPartido);
 
+export async function applyOnEdit(oldPartido, newPartido, puntosGanador, puntosPerdedor) {
+  const oldOk = eligibleForEdit(oldPartido);
+  const newOk = eligibleForEdit(newPartido);
   if (oldOk) await applyPointsForPartido(oldPartido, puntosGanador, puntosPerdedor, -1);
   if (newOk) await applyPointsForPartido(newPartido, puntosGanador, puntosPerdedor, +1);
 }
+
