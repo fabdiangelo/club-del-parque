@@ -277,6 +277,18 @@ app.put('/reservas/:id/deshabilitar', (req, res) => ReservaController.deshabilit
 app.put('/reservas/:id/habilitar', (req, res) => ReservaController.habilitarReserva(req, res));
 app.get('/reservas-futuro', (req, res) => ReservaController.getReservasFuturo(req, res));
 
+
+app.get("/_health", (_req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get("/_routes", (_req, res) => {
+  const list = [];
+  app._router.stack.forEach((m) => {
+    if (m.route?.path) {
+      const methods = Object.keys(m.route.methods).map(m => m.toUpperCase());
+      list.push({ path: m.route.path, methods });
+    }
+  });
+  res.json({ base: "/us-central1/api", routes: list });
+});
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });

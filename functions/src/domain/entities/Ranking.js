@@ -7,6 +7,11 @@ export default class Ranking {
     this.tipoDePartido = typeof tipoDePartido === "string" ? tipoDePartido : null; // "singles" | "dobles"
     this.deporte = typeof deporte === "string" ? deporte.toLowerCase() : null;     // "tenis" | "padel" | null
     this.puntos = 0;
+
+    // nuevos contadores
+    this.partidosGanados = 0;
+    this.partidosPerdidos = 0;
+    this.partidosAbandonados = 0;
   }
 
   toPlainObject() {
@@ -17,6 +22,9 @@ export default class Ranking {
       tipoDePartido: this.tipoDePartido,
       deporte: this.deporte,
       puntos: this.puntos,
+      partidosGanados: this.partidosGanados,
+      partidosPerdidos: this.partidosPerdidos,
+      partidosAbandonados: this.partidosAbandonados,
     };
   }
 }
