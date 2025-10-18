@@ -10,7 +10,6 @@ import { GetPartidosPorTemporada } from '../usecases/Partidos/GetPartidosPorTemp
 import { SetGanadoresPartido } from '../usecases/Partidos/SetGanadoresPartido.js';
 import { AgregarDisponibilidad } from '../usecases/Partidos/AgregarDisponibilidad.js';
 
-// ─── Helpers locales ───────────────────────────────────────────────────────────
 const normID = (v) => String(v ?? '').trim();
 const uniq = (arr = []) => Array.from(new Set((arr || []).map(normID)));
 const subset = (arr = [], sup = []) => (arr || []).every((x) => sup.includes(x));
@@ -22,18 +21,28 @@ const toIsoOr = (v, fallback = new Date().toISOString()) => {
 
 class PartidoController {
   constructor() {
-    // Un solo repositorio compartido por todos los casos de uso
-    const repo = new PartidoRepository();
-    this.crearPartidoUseCase = new CrearPartido(repo);
-    this.editarPartidoUseCase = new EditarPartido(repo);
-    this.getPartidoByIdUseCase = new GetPartidoPorId(repo);
-    this.getPartidosPorTemporadaUseCase = new GetPartidosPorTemporada(repo);
-    this.getPartidosPorJugadorUseCase = new GetPartidosByJugador(repo);
-    this.getAllPartidosUseCase = new GetAllPArtidos(repo);
-    this.eliminarPartidoUseCase = new EliminarPartido(repo);
-    this.setGanadoresUseCase = new SetGanadoresPartido(repo);
-    this.agregarDisponibilidadUseCase = new AgregarDisponibilidad(repo);
+    this.crearPartidoUseCase = new CrearPartido(new PartidoRepository());
+    this.editarPartidoUseCase = new EditarPartido(new PartidoRepository());
+    this.getPartidoByIdUseCase = new GetPartidoPorId(new PartidoRepository());
+    this.getPartidosPorTemporadaUseCase = new GetPartidosPorTemporada(new PartidoRepository());
+    this.getPartidosPorJugadorUseCase = new GetPartidosByJugador(new PartidoRepository());
+    this.getAllPartidosUseCase = new GetAllPArtidos(new PartidoRepository());
+    this.eliminarPartidoUseCase = new EliminarPartido(new PartidoRepository());
+    this.setGanadoresUseCase = new SetGanadoresPartido(new PartidoRepository());
+    this.agregarDisponibilidadUseCase = new AgregarDisponibilidad(new PartidoRepository());
+
   }
+
+  async getAllPartidos(req, res) {
+    try {
+      const partidos = await this.getAllPartidosUseCase.execute();
+      res.json(partidos);
+    } catch (error) {
+      console.error("Error al obtener partidos:", error);
+      res.status(500).json({ error: error });
+    }
+  }
+
 
   // GET /partidos
   async getAllPartidos(req, res) {
@@ -86,6 +95,42 @@ class PartidoController {
       return res.status(500).json({ error: 'Error interno del servidor', mensaje: msg });
     }
   }
+  async agregarDisponibilidad(req, res) {
+    try {
+      const { id } = req.params;
+
+      console.log("entrando aca, id:", id);
+      const { disponibilidad = [], usuarioId = null } = req.body || {};
+      const result = await this.agregarDisponibilidadUseCase.execute(id, disponibilidad, usuarioId);
+      res.json({ ok: true, disponibilidades: result });
+    } catch (error) {
+      console.error("Error al agregar disponibilidad:", error);
+      res.status(400).json({ error: error.message || "Error interno del servidor" });
+    }
+  }
+
+  async crearPartido(req, res) {
+    console.log("PartidoController - crearPartido llamado");
+    let partidoData = req.body;
+
+    try {
+      const partido = await this.setGanadoresUseCase.execute(
+        id,
+        cleanGanadores,
+        resultado,
+        optsPG,
+        optsPP,
+      );
+      return res.json(partido);
+    } catch (error) {
+      const msg = String(error?.message || '');
+      if (/jugador/i.test(msg) && /no existe/i.test(msg)) {
+        return res.status(404).json({ error: 'Jugador inexistente', mensaje: msg });
+      }
+      console.error('Error al setear ganadores:', error);
+      return res.status(500).json({ error: 'Error interno del servidor', mensaje: msg });
+    }
+  }
 
   // POST /partidos/:id/disponibilidades
   async agregarDisponibilidad(req, res) {
@@ -112,12 +157,10 @@ class PartidoController {
     }
   }
 
-  // POST /partidos
   async crearPartido(req, res) {
     console.log('PartidoController - crearPartido llamado');
     let partidoData = { ...req.body };
 
-    // Requeridos
     const required = [
       'tipoPartido',
       'temporadaID',
@@ -133,12 +176,10 @@ class PartidoController {
       }
     }
 
-    // Tipo válido
     if (partidoData.tipoPartido !== 'singles' && partidoData.tipoPartido !== 'dobles') {
       return res.status(400).json({ error: "El tipo de partido debe ser 'singles' o 'dobles'." });
     }
 
-    // Normalización y reglas
     const jugadores = uniq(partidoData.jugadores);
     const equipoLocal = uniq(partidoData.equipoLocal);
     const equipoVisitante = uniq(partidoData.equipoVisitante);
@@ -170,7 +211,6 @@ class PartidoController {
       }
     }
 
-    // Defaults coherentes con el front (timestamp ISO)
     partidoData = {
       ...partidoData,
       jugadores,
@@ -202,7 +242,6 @@ class PartidoController {
     }
   }
 
-  // GET /partidos/:id
   async getPartidoById(req, res) {
     const { id } = req.params;
     console.log('Buscando partido con ID:', id);
@@ -221,7 +260,6 @@ class PartidoController {
     }
   }
 
-  // PUT /partidos/:id
   async editarPartido(req, res) {
     const { id } = req.params;
     let partidoData = { ...req.body };
@@ -233,13 +271,11 @@ class PartidoController {
       return res.status(400).json({ error: 'ID del partido es requerido' });
     }
 
-    // Normalizar arrays si vienen presentes
     if (Array.isArray(partidoData.jugadores)) partidoData.jugadores = uniq(partidoData.jugadores);
     if (Array.isArray(partidoData.equipoLocal)) partidoData.equipoLocal = uniq(partidoData.equipoLocal);
     if (Array.isArray(partidoData.equipoVisitante)) partidoData.equipoVisitante = uniq(partidoData.equipoVisitante);
     if (Array.isArray(partidoData.ganadores)) partidoData.ganadores = uniq(partidoData.ganadores);
 
-    // Si llega timestamp, convertirlo a ISO
     if (partidoData.timestamp) {
       partidoData.timestamp = toIsoOr(partidoData.timestamp);
     }
@@ -266,7 +302,6 @@ class PartidoController {
     }
   }
 
-  // GET /partidos/temporada/:temporadaID
   async getPartidosByTemporada(req, res) {
     const { temporadaID } = req.params;
     try {
@@ -278,7 +313,6 @@ class PartidoController {
     }
   }
 
-  // GET /partidos/jugador/:jugadorID
   async getPartidosByJugador(req, res) {
     const { jugadorID } = req.params;
     try {
