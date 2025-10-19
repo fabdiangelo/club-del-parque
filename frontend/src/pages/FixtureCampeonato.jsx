@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import CampeonatoData from '../components/campeonato/CampeonatoData';
 
 import { MessageSquare } from 'lucide-react';
@@ -71,7 +71,7 @@ export default function FixtureCampeonato() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8 mt-14">
-      <Navbar />
+      <NavbarBlanco />
       <div className="max-w-7xl mx-auto mb-8">
         <CampeonatoData
           id={id}
@@ -157,7 +157,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
                   {jugador.id ? (
                       <div
                       key={jIdx}
-                      className={(jugador.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
+                      className={(jugador?.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
                     >
                       <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                         {jugador.nombre ? jugador.nombre.charAt(0) : '?'}

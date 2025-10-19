@@ -1,7 +1,7 @@
-// src/pages/Noticias.jsx
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../contexts/AuthProvider";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import RichTextEditor from "../components/RichTextEditor";
 
 // Endpoint configurable por .env (VITE_NOTICIAS_API). Fallback: /api/noticias
@@ -45,6 +45,7 @@ function firstParagraph(md = "") {
 }
 
 export default function Noticias() {
+  const {user} = useAuth();
   const [noticias, setNoticias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -93,7 +94,7 @@ export default function Noticias() {
 
   return (
     <div className="min-h-dvh w-full bg-base-200 text-base-content flex flex-col">
-      <Navbar />
+      <NavbarBlanco />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -104,6 +105,11 @@ export default function Noticias() {
           <p className="mt-4 max-w-2xl opacity-80">
             Las novedades del club más recientes.
           </p>
+          {user?.rol == "administrador" && (
+            <Link to="/crear-noticia" className="btn btn-primary mt-4">
+              Crear Noticias
+            </Link>
+          )}
 
           <div className="mt-8 flex flex-wrap gap-3">
             {dataFilters.map((f) => (

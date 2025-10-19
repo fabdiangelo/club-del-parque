@@ -176,3 +176,29 @@ export function ProtectedRoute({ children, fallback = null }) {
   if (!user) return fallback;
   return children;
 }
+
+// Role-aware protected route
+// Props:
+// - children: node to render when allowed
+// - requiredRoles: string or array of strings with allowed roles (e.g. 'administrador' or ['federado', 'administrador'])
+// - fallback: element to render when not authenticated
+// - unauthorizedFallback: element to render when authenticated but lacking role
+export function RoleProtectedRoute({ children, requiredRoles, fallback = null, unauthorizedFallback = null }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+
+  // not authenticated
+  if (!user) return fallback;
+
+  if (!requiredRoles) return children;
+
+  const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+  const userRole = user?.rol || user?.role || null;
+
+  if (!userRole) return unauthorizedFallback;
+
+  // allow if user's role matches any required role
+  if (roles.includes(userRole)) return children;
+
+  return unauthorizedFallback;
+}

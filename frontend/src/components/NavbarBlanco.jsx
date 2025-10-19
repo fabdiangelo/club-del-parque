@@ -6,7 +6,7 @@ import { useNotification } from "../contexts/NotificacionContext";
 import BellDropdown from "./BellDropdown.jsx";
 
 
-export default function NavbarBlanco() {
+export default function NavbarBlanco({ transparent }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const {notiCount} = useNotification();
@@ -14,12 +14,12 @@ export default function NavbarBlanco() {
   console.log(user)
 
   const navItem =
-    "px-4 py-2 text-sm sm:text-base font-normal text-black/90 hover:text-black transition";
-  const activeItem = "text-black";
+    `px-4 py-2 text-sm sm:text-base font-normal transition ${transparent ? "text-white/90 hover:text-white" : "text-black/90 hover:text-black"}`;
+  const activeItem = transparent ? "text-white": "text-black";
 
   return (
     <header
-      className="w-full bg-white fixed top-0 z-[200] "
+      className={`w-full top-0 z-[200] fixed transition-colors duration-300 ${transparent ? "backdrop-blur text-white" : "bg-white"}`}
       role="banner"
       style={{'left': '0'}}
     >
@@ -115,6 +115,16 @@ export default function NavbarBlanco() {
               Campeonatos
             </NavLink>
           </li>
+          { user?.rol == "administrador" &&
+            <li>
+              <NavLink
+                to="/administracion"
+                className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
+              >
+                Administracion
+              </NavLink>
+            </li>
+          }
         </ul>
         <div className="flex items-center gap-3">
           {user ?

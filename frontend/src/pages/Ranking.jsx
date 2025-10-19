@@ -1,8 +1,10 @@
 // src/pages/Rankings.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { Crown, Search, X } from "lucide-react";
 import bgImg from "../assets/RankingsBackground.png";
+import { useAuth } from "../contexts/AuthProvider.jsx";
+import { Link } from "react-router-dom";
 
 const NAVBAR_OFFSET_REM = 5;
 
@@ -159,6 +161,8 @@ function AnimatedTitle({ text, className, style }) {
 }
 
 export default function Rankings() {
+  const {user} = useAuth();
+
   // UI state
   const [sport, setSport] = useState(SPORTS[0]);
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -478,7 +482,7 @@ export default function Rankings() {
       <div className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Navbar />
+        <NavbarBlanco />
 
         {/* Header */}
         <header className="w-full">
@@ -607,6 +611,11 @@ export default function Rankings() {
                   </button>
                 )}
               </div>
+              {user?.rol == "administrador" && (
+            <Link to="/temporadas" className="btn btn-primary mt-4">
+              Crear Temporadas
+            </Link>
+          )}
             </div>
           </div>
         </header>

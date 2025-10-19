@@ -58,16 +58,6 @@ export default function Navbar({ transparent }) {
           </li>
           <li>
             <NavLink
-              to="/creadorNoticias"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Crear Noticia
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
               to="/reportes"
               className={({ isActive }) =>
                 `${navItem} ${isActive ? activeItem : ""}`

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReporteFederacionModal from '../components/administracion-reportes/ReporteFederacionModal';
 import ReporteDefaultModal from '../components/administracion-reportes/ReporteDefaultModal';
 import SoloAdmin from '../components/SoloAdmin';
-import Navbar from '../components/Navbar';
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import GraficoGauge from '../components/GraficoGauge';
 import { useAuth } from '../contexts/AuthProvider';
 import { Flame, Server, Database, Users, AlertCircle, CheckCircle, Clock, Calendar } from 'lucide-react';

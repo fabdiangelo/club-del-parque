@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthProvider";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import CampeonatoData from "../components/campeonato/CampeonatoData";
 
 export default function ListaCampeonatos() {
@@ -30,7 +30,7 @@ export default function ListaCampeonatos() {
 
   return (
     <div className="min-h-dvh w-full bg-base-200 text-base-content flex flex-col">
-      <Navbar />
+      <NavbarBlanco />
 
       {/* Hero */}
       <section className="relative overflow-hidden">

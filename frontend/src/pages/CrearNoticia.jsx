@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 import SoloAdmin from "../components/SoloAdmin";
@@ -285,7 +285,7 @@ export default function CrearNoticia() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-neutral-900 text-white">
-      <Navbar />
+      <NavbarBlanco />
       <main className="max-w-7xl w-full mx-auto px-6 lg:px-8 py-24 space-y-12">
         {/* Header */}
         <header className="flex items-center justify-between gap-4">

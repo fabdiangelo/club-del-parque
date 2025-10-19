@@ -1,6 +1,5 @@
-// src/pages/PartidosGestor.jsx
-import React, { useEffect, useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
+import React, { useEffect, useMemo, useState} from "react";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import bgImg from "../assets/RankingsBackground.png";
 import { PlayerPickerModal } from "../components/PlayerPickerModal";
 import PartidoForm from "../components/PartidosForm";
@@ -392,7 +391,7 @@ const precargarTemporadas = async () => {
       <div className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Navbar />
+        <NavbarBlanco />
 
         <header className="w-full">
           <div

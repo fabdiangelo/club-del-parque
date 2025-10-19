@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import SoloAdmin from '../components/SoloAdmin';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -439,7 +439,7 @@ export default function CrearCampeonato() {
 
   return (
     <div className="min-h-screen bg-base-300 p-6 mt-12">
-      <Navbar />
+      <NavbarBlanco />
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -554,7 +554,9 @@ export default function CrearCampeonato() {
                     onChange={handleChange} 
                     className="select select-bordered w-full"
                   >
-                    <option value="ambos">Ambos</option>
+                    {form.dobles && 
+                      <option value="ambos">Ambos</option>
+                    }
                     <option value="masculino">Masculino</option>
                     <option value="femenino">Femenino</option>
                   </select>
@@ -999,19 +1001,6 @@ export default function CrearCampeonato() {
                 placeholder="Cuántos juegos se necesitan para ganar un set"
                 rows="3"
               />
-            </div>
-
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-4">
-                <input 
-                  type="checkbox" 
-                  name="empates" 
-                  checked={editingEtapa?.permitirEmpate} 
-                  onChange={e => setEditingEtapa(s => ({ ...s, permitirEmpate: e.target.checked }))} 
-                  className="checkbox checkbox-primary" 
-                />
-                <span className="label-text font-semibold">Aceptar empates?</span>
-              </label>
             </div>
 
             <div className="flex gap-2 justify-end pt-4">
