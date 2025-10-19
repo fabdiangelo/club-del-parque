@@ -1,5 +1,6 @@
 // functions/index.js  (ESM)
 import * as functions from "firebase-functions/v1"; // v1 compat API
+import { setGlobalOptions } from "firebase-functions/v2";
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -23,6 +24,8 @@ import PartidoController from "./src/controllers/PartidoController.js";
 import CanchaController from "./src/controllers/CanchaController.js";
 import TemporadaController from "./src/controllers/TemporadaController.js";
 import ReservaController from "./src/controllers/ReservaController.js";
+import RankingsController from "./src/controllers/RankingsController.js";
+
 
 /* ---------------- Boot logs ---------------- */
 console.log(
@@ -90,6 +93,9 @@ app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController
 
 app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(req, res));
 app.post("/federados/precarga", (req, res) => UsuarioController.precarga(req, res));
+app.get("/federados/:id", (req, res) => UsuarioController.getFederadoById(req, res));
+
+
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
@@ -97,7 +103,14 @@ app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
 app.get("/reportes/sin-resolver", (req, res) => ReporteController.obtenerCantReportesSinResolver(req, res));
 app.post("/reporte/:id/solicitud-federacion", (req, res) => ReporteController.solicitarFederarUsuario(req, res));
 app.put("/reportes/marcar-resuelto/:id", (req, res) => ReporteController.marcarResuelto(req, res));
-
+//RANKING
+app.post("/rankings", (req, res) => RankingsController.crear(req, res));
+app.get("/rankings", (req, res) => RankingsController.listar(req, res));
+app.get("/rankings/:id", (req, res) => RankingsController.getById(req, res));
+app.patch("/rankings/:id", (req, res) => RankingsController.editar(req, res));
+app.post("/rankings/:id/ajustar", (req, res) => RankingsController.ajustar(req, res));
+app.post("/rankings/:id/reset", (req, res) => RankingsController.reset(req, res));
+app.delete("/rankings/:id", (req, res) => RankingsController.eliminar(req, res));
 // Noticias
 app.get("/noticias", (req, res) => NoticiaController.listar(req, res));
 app.get("/noticias/:id", (req, res) => NoticiaController.obtenerPorId(req, res));
@@ -170,7 +183,8 @@ app.get("/partidos/temporada/:temporadaID", (req, res) => PartidoController.getP
 app.get("/partidos/jugador/:jugadorID", (req, res) => PartidoController.getPartidosByJugador(req, res));
 app.delete("/partidos/:id", (req, res) => PartidoController.eliminarPartido(req, res));
 app.post("/partidos/:id/ganadores", (req, res) => PartidoController.setGanadores(req, res));
-
+app.post("/partidos/:id/disponibilidad", (req, res) => PartidoController.agregarDisponibilidad(req, res));
+app.put("/partidos/:id/confirmar-horario", (req, res) => PartidoController.aceptarPropuesta(req, res));
 
 // Temporada
 app.get("/temporadas/:id", (req, res) => TemporadaController.getTemporadaById(req, res));
@@ -187,6 +201,7 @@ app.get("/canchas", (req, res) => CanchaController.getAll(req, res));
 //Reservas
 
 app.get('/reservas', (req, res) => ReservaController.getAll(req, res));
+app.get('/reservas/partido/:partidoId', (req, res) => ReservaController.getReservaByPartidoId(req, res));
 app.get('/reservas/:id', (req, res) => ReservaController.getReservaById(req, res));
 app.post('/reservas', (req, res) => ReservaController.crearReserva(req, res));
 app.delete('/reservas/:id', (req, res) => ReservaController.cancelarReserva(req, res));
@@ -194,8 +209,22 @@ app.put('/reservas/:id/rechazar', (req, res) => ReservaController.rechazarReserv
 app.put('/reservas/:id/confirmar', (req, res) => ReservaController.confirmarReserva(req, res));
 app.put('/reservas/:id', (req, res) => ReservaController.editarReserva(req, res));
 app.put('/reservas/:reservaID/aceptar-invitacion', (req, res) => ReservaController.aceptarInvitacion(req, res));
+app.put('/reservas/:id/deshabilitar', (req, res) => ReservaController.deshabilitarReserva(req, res));
+app.put('/reservas/:id/habilitar', (req, res) => ReservaController.habilitarReserva(req, res));
+app.get('/reservas-futuro', (req, res) => ReservaController.getReservasFuturo(req, res));
 
 
+app.get("/_health", (_req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get("/_routes", (_req, res) => {
+  const list = [];
+  app._router.stack.forEach((m) => {
+    if (m.route?.path) {
+      const methods = Object.keys(m.route.methods).map(m => m.toUpperCase());
+      list.push({ path: m.route.path, methods });
+    }
+  });
+  res.json({ base: "/us-central1/api", routes: list });
+});
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });

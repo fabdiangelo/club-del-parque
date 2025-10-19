@@ -5,7 +5,9 @@ import SoloAdmin from '../components/SoloAdmin';
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import GraficoGauge from '../components/GraficoGauge';
 import { useAuth } from '../contexts/AuthProvider';
-import { Flame, Server, Database, Users, AlertCircle, CheckCircle, Clock, Calendar  } from 'lucide-react';
+import { Flame, Server, Database, Users, AlertCircle, CheckCircle, Clock, Calendar } from 'lucide-react';
+import NavbarBlanco from '../components/NavbarBlanco';
+import Reservas from './Reservas';
 
 const Administracion = () => {
   const { user } = useAuth();
@@ -18,6 +20,9 @@ const Administracion = () => {
   const [error, setError] = useState(null);
   const [modalReporte, setModalReporte] = useState(null); // id del reporte abierto en modal
   const [isUnauthorized, setIsUnauthorized] = useState(false); // para error 401
+  const botones = [{ nombre: 'Administración', ventana: 'administracion' }, { nombre: 'Tickets', ventana: 'tickets' }, { nombre: 'Reservas', ventana: 'reservas' }];
+  const [ventana, setVentana] = useState('administracion');
+  const [botonActivo, setBotonActivo] = useState('administracion');
 
   useEffect(() => {
     fetchData();
@@ -44,7 +49,7 @@ const Administracion = () => {
       }
       const reportesData = await reportesRes.json();
       console.log("Reportes sin resolver: ", reportesData);
-      if(reportesData.length > 0){
+      if (reportesData.length > 0) {
         setReportes(reportesData);
       }
       // Obtener cantidad de usuarios
@@ -75,7 +80,7 @@ const Administracion = () => {
         setModalReporte(null);
         return;
       }
-      setReportes(reportes.map(reporte => 
+      setReportes(reportes.map(reporte =>
         reporte.id === idReporte ? { ...reporte, estado: 'resuelto' } : reporte
       ));
       setModalReporte(null);
@@ -114,7 +119,7 @@ const Administracion = () => {
         setModalReporte(null);
         return;
       }
-      setReportes(reportes.map(reporte => 
+      setReportes(reportes.map(reporte =>
         reporte.id === idReporte ? { ...reporte, estado: 'pendiente' } : reporte
       ));
       setModalReporte(null);
@@ -163,7 +168,7 @@ const Administracion = () => {
   }
   if (!user || user.rol !== 'administrador') {
     console.log(user)
-    return ( <SoloAdmin /> );
+    return (<SoloAdmin />);
   }
   if (loading) {
     return (
@@ -181,7 +186,7 @@ const Administracion = () => {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
           <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
           <p className="text-red-800 text-center">{error}</p>
-          <button 
+          <button
             onClick={fetchData}
             className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
           >
@@ -193,17 +198,21 @@ const Administracion = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-white p-8 relative overflow-hidden">
       <div className="overflow-hidden"
         style={{
           backgroundImage: "url('/FondoAdmin.svg')",
           width: '100vw',
-          height: (45 + reportes.length * 5) + 'rem',
+          height: '100vh',
+          position: 'fixed',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
           backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
           position: 'absolute',
           bottom: 0,
           left: 0,
+          zIndex: -1
         }}
       ></div>
       <NavbarBlanco />
@@ -211,114 +220,121 @@ const Administracion = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Panel de Administración
+            {ventana === 'administracion' ? 'Panel de Administración' : ventana === 'tickets' ? 'Tickets y Usuarios' : 'Reservas'}
           </h1>
           <p className="text-gray-600">
-            Monitoreo de consumo y reportes de Firebase
+            {ventana === 'administracion' ? 'Monitoreo de consumo y reportes de Firebase' : ventana === 'tickets' ? 'Gestión de tickets y usuarios del sistema.' : 'Gestión de reservas de canchas.'}
           </p>
         </div>
 
-        {/* Gasto Total */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 mb-8 text-white">
-          <h2 className="text-xl font-semibold mb-2">Gasto Total del Mes</h2>
-          <p className="text-4xl font-bold">${metricas?.gastoTotal.toFixed(2)}</p>
-          <p className="text-sm opacity-90 mt-2">
-            Período: {new Date(metricas?.periodo.inicio).toLocaleDateString()} - {new Date(metricas?.periodo.fin).toLocaleDateString()}
-          </p>
+
+        <div className="mb-8" style={{display: 'flex', gap: '1rem'}}>
+          {botones.map((b) => {
+            return (
+              <button key={b.nombre} className={`py-2 px-4 rounded-full ${botonActivo === b.ventana ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}  onClick={() => { setVentana(b.ventana); setBotonActivo(b.ventana); }}>{b.nombre}</button>
+
+            )
+          })}
         </div>
 
-        {/* Gauges de Uso */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <GraficoGauge
-            value={metricas?.cloudFunctions.usado}
-            max={metricas?.cloudFunctions.limite}
-            title="Servidor (invocaciones)"
-            icon={Flame}
-            color="#F59E0B"
-          />
-          
-          <GraficoGauge
-            value={metricas?.hosting.usado}
-            max={metricas?.hosting.limite}
-            title="Hosting (GB)"
-            icon={Server}
-            color="#8B5CF6"
-          />
-          
-          <GraficoGauge
-            value={metricas?.firestore.porcentajePromedio}
-            max={100}
-            title="Almacenamiento"
-            icon={Database}
-            color="#3B82F6"
-          />
-        </div>
-
-        {/* Detalles de Firestore */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Database className="w-6 h-6 text-blue-600" />
-            Detalles de Almacenamiento
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="border-l-4 border-blue-500 pl-4">
-              <p className="text-sm text-gray-600">Lecturas</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {metricas?.firestore.lecturas.porcentaje}%
-              </p>
-              <p className="text-xs text-gray-500">
-                {metricas?.firestore.lecturas.usado.toLocaleString()} / {metricas?.firestore.lecturas.limite.toLocaleString()}
+        {ventana === 'administracion' ? (
+          <>
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+              <h2 className="text-xl font-semibold mb-2">Gasto Total del Mes</h2>
+              <p className="text-4xl font-bold">${metricas?.gastoTotal.toFixed(2)}</p>
+              <p className="text-sm opacity-90 mt-2">
+                Período: {new Date(metricas?.periodo.inicio).toLocaleDateString()} - {new Date(metricas?.periodo.fin).toLocaleDateString()}
               </p>
             </div>
-            
-            <div className="border-l-4 border-green-500 pl-4">
-              <p className="text-sm text-gray-600">Escrituras</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {metricas?.firestore.escrituras.porcentaje}%
-              </p>
-              <p className="text-xs text-gray-500">
-                {metricas?.firestore.escrituras.usado.toLocaleString()} / {metricas?.firestore.escrituras.limite.toLocaleString()}
-              </p>
+
+            {/* Gauges de Uso */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <GraficoGauge
+                value={metricas?.cloudFunctions.usado}
+                max={metricas?.cloudFunctions.limite}
+                title="Servidor (invocaciones)"
+                icon={Flame}
+                color="#F59E0B"
+              />
+
+              <GraficoGauge
+                value={metricas?.hosting.usado}
+                max={metricas?.hosting.limite}
+                title="Hosting (GB)"
+                icon={Server}
+                color="#8B5CF6"
+              />
+
+              <GraficoGauge
+                value={metricas?.firestore.porcentajePromedio}
+                max={100}
+                title="Almacenamiento"
+                icon={Database}
+                color="#3B82F6"
+              />
             </div>
-            
-            <div className="border-l-4 border-red-500 pl-4">
-              <p className="text-sm text-gray-600">Eliminaciones</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {metricas?.firestore.eliminaciones.porcentaje}%
-              </p>
-              <p className="text-xs text-gray-500">
-                {metricas?.firestore.eliminaciones.usado.toLocaleString()} / {metricas?.firestore.eliminaciones.limite.toLocaleString()}
-              </p>
+
+            {/* Detalles de Firestore */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Database className="w-6 h-6 text-blue-600" />
+                Detalles de Almacenamiento
+              </h3>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="border-l-4 border-blue-500 pl-4">
+                  <p className="text-sm text-gray-600">Lecturas</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {metricas?.firestore.lecturas.porcentaje}%
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {metricas?.firestore.lecturas.usado.toLocaleString()} / {metricas?.firestore.lecturas.limite.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-green-500 pl-4">
+                  <p className="text-sm text-gray-600">Escrituras</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {metricas?.firestore.escrituras.porcentaje}%
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {metricas?.firestore.escrituras.usado.toLocaleString()} / {metricas?.firestore.escrituras.limite.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-red-500 pl-4">
+                  <p className="text-sm text-gray-600">Eliminaciones</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {metricas?.firestore.eliminaciones.porcentaje}%
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {metricas?.firestore.eliminaciones.usado.toLocaleString()} / {metricas?.firestore.eliminaciones.limite.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-purple-500 pl-4">
+                  <p className="text-sm text-gray-600">Almacenamiento</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {metricas?.firestore.almacenamiento.porcentaje}%
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {metricas?.firestore.almacenamiento.usado} GB / {metricas?.firestore.almacenamiento.limite} GB
+                  </p>
+                </div>
+              </div>
             </div>
-            
-            <div className="border-l-4 border-purple-500 pl-4">
-              <p className="text-sm text-gray-600">Almacenamiento</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {metricas?.firestore.almacenamiento.porcentaje}%
-              </p>
-              <p className="text-xs text-gray-500">
-                {metricas?.firestore.almacenamiento.usado} GB / {metricas?.firestore.almacenamiento.limite} GB
-              </p>
-            </div>
-          </div>
-        </div>
-      
+          </>
 
-      
-
-
-
-      <div className="bg-gray-800 rounded-lg shadow-lg p-8">
+        ) : ventana === 'tickets' ? (
+          <>
+            <div className="bg-gray-800 rounded-lg shadow-lg p-8">
           {/* Tickets/Reportes */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-bold text-white">TICKETS ({reportes.length})</h2>
-              {/* {reportesNoLeidos > 0 && (
-                <span className="badge badge-error badge-lg">{reportesNoLeidos} sin leer</span>
-              )} */}
+
             </div>
-            
+
             <div className="overflow-x-auto flex flex-col justify-center">
               <table className="table w-full">
                 <thead>
@@ -424,7 +440,7 @@ const Administracion = () => {
             <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-2">
               <Users className="w-6 h-6" style={{ color: '#4AC0E4' }} />
               USUARIOS
-            <span className="text-5xl font-bold ml-3" style={{ color: '#4AC0E4' }}>{cantidadUsuarios}</span>
+              <span className="text-5xl font-bold ml-3" style={{ color: '#4AC0E4' }}>{cantidadUsuarios}</span>
             </h2>
             <div className="flex items-center justify-between">
               <div>
@@ -432,7 +448,7 @@ const Administracion = () => {
                   Usuarios Federados: <span className="text-xl font-semibold" style={{ color: '#4AC0E4' }}>{cantidadFederados}</span>
                 </p>
               </div>
-              
+
               <button
                 onClick={() => window.location.href = '/administracion/usuarios'}
                 className="btn btn-lg"
@@ -443,6 +459,17 @@ const Administracion = () => {
             </div>
           </div>
         </div>
+
+          </>
+        ) : <Reservas />};
+
+
+
+
+
+
+
+        
       </div>
     </div>
   );

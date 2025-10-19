@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import SinSesion from "../components/SinSesion.jsx";
-import { connectDatabaseEmulator } from "firebase/database";
 
 export default function Perfil() {
   const [loadingUser, setLoadingUser] = useState(true);

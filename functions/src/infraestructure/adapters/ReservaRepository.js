@@ -8,7 +8,7 @@ export class ReservaRepository {
 
     async aceptarInivitacion(reservaID, jugadorID) {
         const reserva = await this.getById(reservaID);
-        
+
         if (reserva.aceptadoPor.includes(jugadorID)) {
             throw new Error("El jugador ya ha aceptado la invitación");
         }
@@ -18,34 +18,58 @@ export class ReservaRepository {
         return reserva;
     }
 
-    // campos reserva: id, canchaId, fechaHora, duracion, esCampeonato, partidoId, jugadoresIDS, quienPaga, autor, estado
+    // campos reserva: id, canchaId, fechaHora, duracion, esCampeonato, tipoPartido, partidoId, jugadoresIDS, quienPaga, autor, estado
     async save(reserva) {
-        const {canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora} = reserva;
+        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, tipoPartido } = reserva;
 
-        if (!canchaId || !partidoId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora) {
-            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, partidoId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora");
+        if (!canchaId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora) {
+            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora");
         }
 
-        const cancha = await this.db.getItem("canchas", canchaId);
+        if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
+            throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
+        }
+
+        if (tipoPartido === 'singles' && jugadoresIDS.length !== 2) {
+            throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
+        }
+        if (tipoPartido === 'dobles' && jugadoresIDS.length !== 4) {
+            throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
+        } const cancha = await this.db.getItem("canchas", canchaId);
         if (!cancha) {
             throw new Error("La cancha asociada no existe");
         }
 
-        const partido = await this.db.getItem("partidos", partidoId);
-        if (!partido) {
-            throw new Error("El partido asociado no existe");
+        if (partidoId && partidoId.trim() !== '') {
+            const partido = await this.db.getItem("partidos", partidoId);
+            if (!partido) {
+                throw new Error("El partido asociado no existe");
+            }
         }
+
+        let noJugador = false;
 
         for (const j of jugadoresIDS) {
             const jugadorExists = await this.db.getItem("usuarios", j);
             if (!jugadorExists) {
-                throw new Error(`El jugador con ID ${j} no existe`);
+
+                noJugador = true;
+            }
+
+            const federado = await this.db.getItem("federados", j);
+            if (!federado && !noJugador) {
+                throw new Error(`El jugador con ID ${j} no es un federado`);
             }
         }
 
+
         const quienPagaExists = await this.db.getItem("usuarios", quienPaga);
         if (!quienPagaExists) {
-            throw new Error("El usuario que paga no existe");
+
+            const quienPagaExists2 = await this.db.getItem("federados", quienPaga);
+            if (!quienPagaExists2) {
+                throw new Error("El usuario que paga no existe");
+            }
         }
 
         const autorExists = await this.db.getItem("usuarios", autor);
@@ -53,14 +77,17 @@ export class ReservaRepository {
             throw new Error("El usuario autor no existe");
         }
 
-        if(new Date(fechaHora) < new Date()) {
+        if (new Date(fechaHora) < new Date()) {
             throw new Error("La fecha y hora de la reserva no puede ser en el pasado");
         }
 
         const estado = reserva.estado || 'pendiente';
         const aceptadoPor = [];
+        const timestamp = Date.now();
 
-        const doc = await this.db.putItem("reservas", {...reserva, estado, aceptadoPor}, reserva.id);
+        let deshabilitar = false;
+
+        const doc = await this.db.putItem("reservas", { ...reserva, estado, aceptadoPor, timestamp, deshabilitar: false }, reserva.id);
 
         console.log("Se ha creado la reserva con id: " + doc.id);
         return doc.id;
@@ -70,13 +97,84 @@ export class ReservaRepository {
         return this.db.getItem("reservas", reservaId);
     }
 
+    async deshabilitarReserva(reservaId) {
+        console.log("llegand hasta aca", reservaId);
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
+        }
+
+
+        const reserva = await this.db.getItem("reservas", reservaId);
+        if (!reserva) {
+            throw new Error("La reserva no existe");
+        }
+
+        try {
+
+            const reservaActualizada = {
+                ...reserva,
+                deshabilitar: true
+            };
+
+            const result = await this.db.putItem("reservas", reservaActualizada, reservaId);
+            console.log("Actualización exitosa:", result);
+            return reservaId;
+        } catch (error) {
+            console.error("Error en updateItem:", error);
+            throw error;
+        }
+    }
+
+    async habilitarReserva(reservaId) {
+        console.log("llegand hasta aca", reservaId);
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
+        }
+
+
+        const reserva = await this.db.getItem("reservas", reservaId);
+        if (!reserva) {
+            throw new Error("La reserva no existe");
+        }
+
+        try {
+
+            const reservaActualizada = {
+                ...reserva,
+                deshabilitar: false
+            };
+
+            const result = await this.db.putItem("reservas", reservaActualizada, reservaId);
+            console.log("Actualización exitosa:", result);
+            return reservaId;
+        } catch (error) {
+            console.error("Error en updateItem:", error);
+            throw error;
+        }
+    }
+
+
+
     async update(reserva, reservaId) {
         const existingReserva = await this.getById(reservaId);
         if (!existingReserva) {
             throw new Error("La reserva no existe");
         }
 
-        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora } = reserva;
+        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, tipoPartido } = reserva;
+
+        // Validar tipoPartido
+        if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
+            throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
+        }
+
+        // Validar número de jugadores según tipo de partido
+        if (tipoPartido === 'singles' && jugadoresIDS && jugadoresIDS.length !== 2) {
+            throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
+        }
+        if (tipoPartido === 'dobles' && jugadoresIDS && jugadoresIDS.length !== 4) {
+            throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
+        }
 
         if (canchaId) {
             const cancha = await this.db.getItem("canchas", canchaId);
@@ -113,8 +211,13 @@ export class ReservaRepository {
             throw new Error("La fecha y hora de la reserva no puede ser en el pasado");
         }
 
-        const doc = await this.db.updateItem("reservas", {...existingReserva, ...reserva}, reservaId);
+        const doc = await this.db.updateItem("reservas", { ...existingReserva, ...reserva }, reservaId);
         return doc.id;
+    }
+
+    async getReservaByPartidoId(partidoId) {
+        const allReservas = await this.db.getAllItems('reservas');
+        return allReservas.find(reserva => reserva.partidoId === partidoId && !reserva.deshabilitar);
     }
 
     async getAll() {
@@ -124,43 +227,52 @@ export class ReservaRepository {
     async getReservasFuturo() {
         const allReservas = await this.db.getAllItems('reservas');
         const now = new Date();
-        return allReservas.filter(reserva => new Date(reserva.fechaHora) > now && (reserva.estado !== 'cancelada' && reserva.estado !== 'rechazada' && reserva.estado !== 'confirmada'));
+        return allReservas.filter(reserva => new Date(reserva.fechaHora) > now && (reserva.estado !== 'cancelada' && reserva.estado !== 'rechazada' && reserva.estado !== 'confirmada' && reserva.deshabilitar !== true));
     }
 
-    async confirmarReserva(reservaId, usuarioId) {
-
-        const usuario = this.db.getItem("usuarios", usuarioId);
-        if (!usuario || usuario.rol !== 'administrador') {
-            throw new Error("Usuario no autorizado para confirmar la reserva");
+    async confirmarReserva(reservaId) {
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
         }
+
+        console.log("Llegando hasta aca");
+
 
         const reserva = await this.getById(reservaId);
         if (!reserva) {
             throw new Error("La reserva no existe");
         }
 
-        await this.db.updateItem("reservas", {estado: 'confirmada'}, reservaId);
+        await this.db.updateItem("reservas", reservaId, { estado: 'confirmada' });
         return reservaId;
     }
 
-    async rechazarReserva(reservaId, usuarioId) {
-
-        const usuario = this.db.getItem("usuarios", usuarioId);
-        if (!usuario || usuario.rol !== 'administrador') {
-            throw new Error("Usuario no autorizado para rechazar la reserva");
+    async rechazarReserva(reservaId) {
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
         }
+
+        
+
 
         const reserva = await this.getById(reservaId);
         if (!reserva) {
             throw new Error("La reserva no existe");
         }
-        await this.db.updateItem("reservas", {estado: 'rechazada'}, reservaId);
+        await this.db.updateItem("reservas", reservaId, { estado: 'rechazada' });
         return reservaId;
     }
 
     async cancelarReserva(reservaId, usuarioId) {
+        if (!reservaId || reservaId.trim() === '') {
+            throw new Error("ID de reserva es requerido");
+        }
 
-        const usuario = this.db.getItem("usuarios", usuarioId);
+        if (!usuarioId || usuarioId.trim() === '') {
+            throw new Error("ID de usuario es requerido");
+        }
+
+        const usuario = await this.db.getItem("usuarios", usuarioId);
         if (!usuario || usuario.rol !== 'administrador') {
             throw new Error("Usuario no autorizado para cancelar la reserva");
         }
@@ -169,8 +281,8 @@ export class ReservaRepository {
         if (!reserva) {
             throw new Error("La reserva no existe");
         }
-        await this.db.updateItem("reservas", {estado: 'cancelada'}, reservaId);
+        await this.db.updateItem("reservas", { estado: 'cancelada' }, reservaId);
         return reservaId;
-    }   
+    }
 
 }

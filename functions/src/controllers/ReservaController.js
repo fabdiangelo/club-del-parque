@@ -8,6 +8,9 @@ import {GetReservasFuturo} from '../usecases/Reservas/GetReservasFuturo.js';
 import { EditarReserva } from '../usecases/Reservas/EditarReserva.js';
 import { ConfirmarReserva } from '../usecases/Reservas/ConfirmarReserva.js';
 import { AceptarInvitacion } from '../usecases/Reservas/AceptarInvitacion.js';
+import { DeshabilitarReserva } from '../usecases/Reservas/DeshabilitarReserva.js';
+import { habilitarReserva } from '../usecases/Reservas/habilitarReserva.js';
+import { GetReservaByPartido } from '../usecases/Reservas/GetReservaByPartidoId.js';
 
 
 
@@ -22,6 +25,63 @@ class ReservaController {
         this.editarReservaUseCase = new EditarReserva(new ReservaRepository());
         this.confirmarReservaUseCase = new ConfirmarReserva(new ReservaRepository());
         this.aceptarInvitacionUseCase = new AceptarInvitacion(new ReservaRepository());
+        this.deshabilitarReservaUseCase = new DeshabilitarReserva(new ReservaRepository());
+        this.habilitarReservaUseCase = new habilitarReserva(new ReservaRepository());
+        this.getReservaByPartidoIdUseCase = new GetReservaByPartido(new ReservaRepository());
+    }
+
+    async getReservaByPartidoId(req, res) {
+        const { partidoId } = req.params;
+        try {
+            const reserva = await this.getReservaByPartidoIdUseCase.execute(partidoId);
+            if (!reserva) {
+                return res.status(404).json({ error: "Reserva no encontrada para el partido especificado" });
+            }
+            res.status(200).json(reserva);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async habilitarReserva(req, res) {
+        const {id} = req.params;
+
+        if (!id) {
+            return res.status(400).json({ error: "Faltan campos obligatorios: id" });
+        }
+
+        try {
+            const result = await this.habilitarReservaUseCase.execute(id);
+            res.status(200).json({ message: `Reserva ${result} habilitada.` });
+        } catch(error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async getReservasFuturo(req, res) {
+        try {
+            const reservas = await this.getReservasFuturoUseCase.execute();
+            res.status(200).json(reservas);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async deshabilitarReserva(req, res) {
+
+
+        const {id} = req.params;
+
+        if (!id) {
+            return res.status(400).json({ error: "Faltan campos obligatorios: id" });
+        }
+
+        try {
+            const result = await this.deshabilitarReservaUseCase.execute(id);
+            res.status(200).json({ message: `Reserva ${result} deshabilitada.` });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
 
     async aceptarInvitacion(req, res) {
@@ -85,6 +145,8 @@ class ReservaController {
     
     async cancelarReserva(req, res) {
         const { id } = req.params;
+
+        console.log(id);
         try {
             const result = await this.cancelarReservaUseCase.execute(id);
             res.status(200).json({ message: `Reserva ${result} cancelada.` });
@@ -95,6 +157,7 @@ class ReservaController {
 
     async rechazarReserva(req, res) {
         const { id } = req.params;
+        console.log(id);
         try {
             const result = await this.rechazarReservaUseCase.execute(id);
             res.status(200).json({ message: `Reserva ${result} rechazada.` });

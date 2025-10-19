@@ -12,7 +12,9 @@ import CrearNoticia from './pages/CrearNoticia';
 import Administracion from './pages/Adminsitracion';
 import AdministracionReportes from './pages/AdministracionReportes';
 import AdministracionUsuarios from './pages/AdministracionUsuarios';
-import Chats from './pages/Chats';
+import Chats from './pages/Chats'; 
+import Reservas from "./pages/Reservas";
+import PerfilReservas from "./pages/PerfilReservas";
 import CrearAdmin from './pages/CrearAdmin';
 import CrearCampeonato from './pages/CrearCampeonato';
 import FixtureCampeonato from './pages/FixtureCampeonato'
@@ -20,8 +22,14 @@ import ListaCampeonatos from './pages/ListaCampeonatos';
 import Rankings from './pages/Ranking';
 import TemporadasPage from './pages/Temporadas';
 import PartidosGestor from './pages/PartidosGestor';
+import AcuerdoResultado from './pages/AcuerdoResultado';
 import NotFound from './pages/NotFound';
 import Partido from './pages/Partido';
+import ResultadosPage from "./pages/ResultadosPage";
+import NotificationsPage from  './pages/NotificacionesPage';
+import CanchasGestor from "./pages/CanchasGestor";
+
+
 import { RoleProtectedRoute } from './contexts/AuthProvider';
 import SinSesion from './components/SinSesion';
 import SoloAdmin from './components/SoloAdmin';
@@ -31,11 +39,13 @@ function App() {
     <Routes>
       {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
+      <Route path="/canchas" element={<CanchasGestor />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
+      <Route path="/resultados" element={<ResultadosPage />} />
       <Route path="/reportes" element={<SistemaReporte />} />
       <Route path="/campeonatos" element={<ListaCampeonatos />} />
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
@@ -74,6 +84,15 @@ function App() {
           </RoleProtectedRoute>
         }
       />
+      <Route
+        path="/notificaciones"
+        element={
+          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+            <NotificationsPage />
+          </RoleProtectedRoute>
+        }
+      />
+
 
       {/* Rutas Federados (federado o administrador) */}
       <Route
@@ -92,8 +111,40 @@ function App() {
           </RoleProtectedRoute>
         }
       />
+      <Route
+        path="/partidos/:id/acuerdo"
+        element={
+          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <AcuerdoResultado />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/reservas"
+        element={
+          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <Reservas />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/reservas/:id"
+        element={
+          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <PerfilReservas />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/partido/:id"
+        element={
+          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <Partido />
+          </RoleProtectedRoute>
+        }
+      />
       
-      
+     
       {/* Rutas Administradores (solo administrador) */}
       <Route
         path="/crear-noticia"
@@ -146,8 +197,9 @@ function App() {
 
 
       <Route path="*" element={<NotFound />} />
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
-
 export default App;

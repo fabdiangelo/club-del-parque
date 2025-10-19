@@ -5,7 +5,6 @@ export default class DBConnection{
         this.db = db;
     }
 
-    // Método necesario para FirestoreReporteRepository
     collection(collectionName) {
         return this.db.collection(collectionName);
     }
@@ -50,6 +49,20 @@ export default class DBConnection{
         return items;
     }
 
+    async getByField(collection, field, op, value) {
+  if (op !== "==") throw new Error("Only '==' supported by getByField alias");
+  return { items: await this.getItemsByField(collection, field, value) };
+}
+
+async getAllItemsList(collection) {
+  return this.getAllItems(collection);
+}
+
+async getItemObject(collection, id) {
+  const data = await this.getItem(collection, id);
+  return data ? { id, ...data } : null;
+}
+
     async getItemsWhereNotEqual(collection, field, value) {
         const snapshot = await this.db.collection(collection).where(field, '!=', value).get();
         const items = [];
@@ -66,7 +79,6 @@ export default class DBConnection{
 
     async updateItem(collection, id, partial) {
         await this.db.collection(collection).doc(id).update(partial);
-        // Obtener el documento actualizado
         const updatedDoc = await this.db.collection(collection).doc(id).get();
         return { id: updatedDoc.id, ...updatedDoc.data() };
     }
