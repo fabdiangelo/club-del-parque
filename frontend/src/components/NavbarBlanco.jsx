@@ -58,36 +58,6 @@ export default function NavbarBlanco({ transparent }) {
           </li>
           <li>
             <NavLink
-              to="/creadorNoticias"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Crear Noticia
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/reportes"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Reportes
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/temporadas"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Temporadas
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
               to="/ranking"
               className={({ isActive }) =>
                 `${navItem} ${isActive ? activeItem : ""}`

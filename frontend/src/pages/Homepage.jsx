@@ -312,6 +312,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <section className="m-5">
+
+        <label className="pr-5">Te has encontrado con algún problema? </label>
+        <Link to="/reportes" className="btn btn-outline">
+          Envíanos tu reporte!
+        </Link>
+      </section>
     </div>
   );
 }

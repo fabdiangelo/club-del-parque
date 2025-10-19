@@ -6,7 +6,6 @@ import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import GraficoGauge from '../components/GraficoGauge';
 import { useAuth } from '../contexts/AuthProvider';
 import { Flame, Server, Database, Users, AlertCircle, CheckCircle, Clock, Calendar } from 'lucide-react';
-import NavbarBlanco from '../components/NavbarBlanco';
 import Reservas from './Reservas';
 
 const Administracion = () => {
