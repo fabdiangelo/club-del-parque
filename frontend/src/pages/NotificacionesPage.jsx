@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { onValue, ref, update, get } from "firebase/database";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import { useAuth } from "../contexts/AuthProvider.jsx";
 import { dbRT } from "../utils/FirebaseService.js";
 
@@ -170,7 +170,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
-      <Navbar transparent={false} />
+      <NavbarBlanco transparent={false} />
 
       <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
         <div className="flex items-center justify-between mb-6">

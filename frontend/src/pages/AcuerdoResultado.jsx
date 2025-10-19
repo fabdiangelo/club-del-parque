@@ -1,7 +1,7 @@
 // src/pages/AcuerdoResultado.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import { useAuth } from "../contexts/AuthProvider";
 
 // 🔔 Realtime DB para notificaciones
@@ -442,7 +442,7 @@ export default function AcuerdoResultado() {
   if (!partido) {
     return (
       <div className="min-h-screen bg-base-200">
-        <Navbar />
+        <NavbarBlanco />
         <div className="max-w-xl mx-auto px-4" style={{ paddingTop: "6rem" }}>
           <h1 className="text-2xl font-bold">Acuerdo de resultado</h1>
           <p className="mt-2 text-error">Error: {err || "Partido no encontrado"}</p>
@@ -466,7 +466,7 @@ export default function AcuerdoResultado() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <Navbar />
+      <NavbarBlanco />
       <main className="mx-auto max-w-6xl px-6 lg:px-8 w-full pt-24 pb-24">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-extrabold">Acuerdo de resultado</h1>

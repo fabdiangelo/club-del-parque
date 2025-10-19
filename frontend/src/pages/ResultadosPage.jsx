@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import { useAuth } from "../contexts/AuthProvider";
 
 const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
@@ -41,7 +41,7 @@ export default function ResultadosPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
-      <Navbar transparent={false} />
+      <NavbarBlanco transparent={false} />
       <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
         <h1 className="text-3xl font-extrabold mb-6">Acuerdo de Resultados</h1>
 

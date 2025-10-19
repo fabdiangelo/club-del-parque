@@ -158,6 +158,9 @@ app.put('/campeonato/:id', (req, res) => CampeonatosController.editarCampeonato(
 app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
 app.get("/campeonatos/federados/count", (req, res) => CampeonatosFederadosController.contar(req, res));
 
+// Procesar inicio de campeonato (expirar invitaciones, combinar grupos, descalificar solitarios)
+app.post('/campeonato/:id/procesar-inicio', (req, res) => CampeonatosController.procesarInicio(req, res));
+
 // Campeonatos-Federados
 app.post("/federado-campeonato/:id/:uid", (req, res) => CampeonatosFederadosController.inscribirFederado(req, res));
 

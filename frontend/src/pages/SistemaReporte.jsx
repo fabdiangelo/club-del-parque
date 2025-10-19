@@ -1,5 +1,4 @@
 import React from "react";
-import Navbar from "../components/Navbar";
 import NavbarBlanco from "../components/NavbarBlanco";
 import { useState } from "react";
 

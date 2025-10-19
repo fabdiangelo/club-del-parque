@@ -6,7 +6,7 @@ import { useNotification } from "../contexts/NotificacionContext";
 import BellDropdown from "./BellDropdown.jsx";
 
 
-export default function NavbarBlanco({ transparent }) {
+export default function NavbarBlanco({ transparent = false }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const {notiCount} = useNotification();

@@ -31,8 +31,9 @@ class CampeonatosFederadosController {
         return res.status(403).json({ error: "Acceso no autorizado" });
       }
 
-      const campeonatoId = req.params.id || '';
-      const id = await InscribirFederado.execute(uid, campeonatoId);
+  const campeonatoId = req.params.id || '';
+  const inviteeUid = req.body?.inviteeUid || null;
+  const id = await InscribirFederado.execute(uid, campeonatoId, inviteeUid);
       return res.status(200).json({ id });
     } catch (err) {
       console.error('Error creando campeonato:', err);
