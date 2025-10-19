@@ -74,14 +74,16 @@ export default function NavbarBlanco({ transparent }) {
               Campeonatos
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/campeonatos"
-              className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
-            >
-              Campeonatos
-            </NavLink>
-          </li>
+          { user?.rol == "administrador" &&
+            <li>
+              <NavLink
+                to="/administracion"
+                className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
+              >
+                Administracion
+              </NavLink>
+            </li>
+          }
           
         </ul>
 

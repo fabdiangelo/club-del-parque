@@ -22,6 +22,9 @@ import TemporadasPage from './pages/Temporadas';
 import PartidosGestor from './pages/PartidosGestor';
 import NotFound from './pages/NotFound';
 import Partido from './pages/Partido';
+import { RoleProtectedRoute } from './contexts/AuthProvider';
+import SinSesion from './components/SinSesion';
+import SoloAdmin from './components/SoloAdmin';
 
 function App() {
   return (
@@ -38,24 +41,108 @@ function App() {
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
       <Route path="/partido/:id" element={<Partido />} />
 
-      {/* Rutas Usuarios */}
-      <Route path="/perfil" element={<Perfil />} />
-      <Route path="/perfil/editar" element={<EditarPerfil />} />
-      <Route path="/chats" element={<Chats />} />
-      <Route path="/chats/:id" element={<Chats />} />
+      {/* Rutas Usuarios (cualquier usuario autenticado) */}
+      <Route
+        path="/perfil"
+        element={
+          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+            <Perfil />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/perfil/editar"
+        element={
+          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+            <EditarPerfil />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/chats"
+        element={
+          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+            <Chats />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/chats/:id"
+        element={
+          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+            <Chats />
+          </RoleProtectedRoute>
+        }
+      />
 
-      {/* Rutas Federados */}
-      <Route path="/ranking" element={<Rankings />} />
-      <Route path="/gestor-partidos" element={<PartidosGestor />} />
+      {/* Rutas Federados (federado o administrador) */}
+      <Route
+        path="/ranking"
+        element={
+          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <Rankings />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/gestor-partidos"
+        element={
+          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <PartidosGestor />
+          </RoleProtectedRoute>
+        }
+      />
       
       
-      {/* Rutas Administradores */}
-      <Route path="/crear-noticia" element={<CrearNoticia />} />
-      <Route path="/crear-campeonato" element={<CrearCampeonato />} />
-      <Route path="/temporadas" element={<TemporadasPage />} />
-      <Route path="/administracion" element={<Administracion />} />
-      <Route path="/administracion/reportes" element={<AdministracionReportes />} />
-      <Route path="/administracion/usuarios" element={<AdministracionUsuarios />} />
+      {/* Rutas Administradores (solo administrador) */}
+      <Route
+        path="/crear-noticia"
+        element={
+          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <CrearNoticia />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/crear-campeonato"
+        element={
+          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <CrearCampeonato />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/temporadas"
+        element={
+          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <TemporadasPage />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/administracion"
+        element={
+          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <Administracion />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/administracion/reportes"
+        element={
+          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <AdministracionReportes />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/administracion/usuarios"
+        element={
+          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+            <AdministracionUsuarios />
+          </RoleProtectedRoute>
+        }
+      />
 
 
       <Route path="*" element={<NotFound />} />

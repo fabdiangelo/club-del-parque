@@ -301,8 +301,10 @@ export default function Home() {
                       <MatchRow key={i} score={score} />
                     ))}
                   </div>
-                  <div className="card-actions mt-6">
-                    <button className="btn btn-primary w-full">Ver torneos</button>
+                  <div className="">
+                    <Link to="/register" className="btn btn-primary w-full">
+                Ver torneos
+              </Link>
                   </div>
                 </div>
               </div>

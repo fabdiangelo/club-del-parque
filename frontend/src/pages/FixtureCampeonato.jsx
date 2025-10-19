@@ -157,7 +157,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
                   {jugador.id ? (
                       <div
                       key={jIdx}
-                      className={(jugador.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
+                      className={(jugador?.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
                     >
                       <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                         {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
