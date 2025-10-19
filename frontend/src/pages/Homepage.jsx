@@ -171,13 +171,13 @@ export default function Home() {
             >
               Club del Parque
             </h1>
-            <p className="opacity-80 font-medium italic">Tenis y pádel</p>
-            <p className="opacity-70 mt-2">San José de Mayo, Uruguay</p>
+            <p className="opacity-90 font-medium italic text-cyan-200">Tenis y pádel</p>
+            <p className="mt-2 text-cyan-300">San José de Mayo, Uruguay</p>
             <div className="mt-10 flex gap-4">
               <Link to="/campeonatos" className="btn btn-primary">
                 Ver Campeonatos
               </Link>
-              <Link to="/register" className="btn btn-outline">
+              <Link to="/register" className="btn btn-outline btn-accent">
                 Registrarse
               </Link>
             </div>
@@ -313,7 +313,6 @@ export default function Home() {
         </div>
       </section>
       <section className="m-5">
-
         <label className="pr-5">Te has encontrado con algún problema? </label>
         <Link to="/reportes" className="btn btn-outline">
           Envíanos tu reporte!

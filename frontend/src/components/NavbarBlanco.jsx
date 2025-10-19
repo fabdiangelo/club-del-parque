@@ -65,16 +65,17 @@ export default function NavbarBlanco({ transparent }) {
             >
               Ranking
             </NavLink>
-          </li><li>
-  <NavLink
-    to="/resultados"
-    className={({ isActive }) =>
-      `${navItem} ${isActive ? activeItem : ""}`
-    }
-  >
-    Resultados
-  </NavLink>
-</li>
+          </li>
+          <li>
+            <NavLink
+              to="/resultados"
+              className={({ isActive }) =>
+                `${navItem} ${isActive ? activeItem : ""}`
+              }
+            >
+              Resultados
+            </NavLink>
+          </li>
           <li>
             <NavLink
               to="/campeonatos"
@@ -99,45 +100,43 @@ export default function NavbarBlanco({ transparent }) {
         <div className="flex items-center gap-3">
           {user ?
             <>
-  
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <svg
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate('/chats')}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-6"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                </svg>
+                {notiCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '-6px',
+                      right: '-6px',
+                      background: '#0D8ABC',
+                      color: '#fff',
+                      borderRadius: '50%',
+                      padding: '1px 4px',
+                      fontSize: '0.7em',
+                      fontWeight: 700,
+                      zIndex: 2,
+                      minWidth: '10px',
+                      textAlign: 'center',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
+                    }}
+                  >
+                    {notiCount}
+                  </span>
+                )}
+              </div> 
 
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-  <svg
-    style={{ cursor: 'pointer' }}
-    onClick={() => navigate('/chats')}
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-    className="size-6"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
-  </svg>
-                     
-  
-  {notiCount > 0 && (
-    <span
-      style={{
-        position: 'absolute',
-        top: '-6px',
-        right: '-6px',
-        background: '#0D8ABC',
-        color: '#fff',
-        borderRadius: '50%',
-        padding: '1px 4px',
-        fontSize: '0.7em',
-        fontWeight: 700,
-        zIndex: 2,
-        minWidth: '10px',
-        textAlign: 'center',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
-      }}
-    >
-      {notiCount}
-    </span>
-  )}
-</div> <BellDropdown color="black" />
+              <BellDropdown color={transparent ? "white" : "black"}/>
 
               <button 
                 className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
