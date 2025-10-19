@@ -10,6 +10,7 @@ import { ConfirmarReserva } from '../usecases/Reservas/ConfirmarReserva.js';
 import { AceptarInvitacion } from '../usecases/Reservas/AceptarInvitacion.js';
 import { DeshabilitarReserva } from '../usecases/Reservas/DeshabilitarReserva.js';
 import { habilitarReserva } from '../usecases/Reservas/habilitarReserva.js';
+import { GetReservaByPartido } from '../usecases/Reservas/GetReservaByPartidoId.js';
 
 
 
@@ -26,6 +27,20 @@ class ReservaController {
         this.aceptarInvitacionUseCase = new AceptarInvitacion(new ReservaRepository());
         this.deshabilitarReservaUseCase = new DeshabilitarReserva(new ReservaRepository());
         this.habilitarReservaUseCase = new habilitarReserva(new ReservaRepository());
+        this.getReservaByPartidoIdUseCase = new GetReservaByPartido(new ReservaRepository());
+    }
+
+    async getReservaByPartidoId(req, res) {
+        const { partidoId } = req.params;
+        try {
+            const reserva = await this.getReservaByPartidoIdUseCase.execute(partidoId);
+            if (!reserva) {
+                return res.status(404).json({ error: "Reserva no encontrada para el partido especificado" });
+            }
+            res.status(200).json(reserva);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
 
     async habilitarReserva(req, res) {

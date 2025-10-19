@@ -26,6 +26,7 @@ import TemporadaController from "./src/controllers/TemporadaController.js";
 import ReservaController from "./src/controllers/ReservaController.js";
 import RankingsController from "./src/controllers/RankingsController.js";
 
+
 /* ---------------- Boot logs ---------------- */
 console.log(
   "[boot] GCLOUD_PROJECT =",
@@ -249,7 +250,7 @@ app.get("/partidos/jugador/:jugadorID", (req, res) => PartidoController.getParti
 app.delete("/partidos/:id", (req, res) => PartidoController.eliminarPartido(req, res));
 app.post("/partidos/:id/ganadores", (req, res) => PartidoController.setGanadores(req, res));
 app.post("/partidos/:id/disponibilidad", (req, res) => PartidoController.agregarDisponibilidad(req, res));
-
+app.put("/partidos/:id/confirmar-horario", (req, res) => PartidoController.aceptarPropuesta(req, res));
 
 // Temporada
 app.get("/temporadas/:id", (req, res) => TemporadaController.getTemporadaById(req, res));
@@ -266,6 +267,7 @@ app.get("/canchas", (req, res) => CanchaController.getAll(req, res));
 //Reservas
 
 app.get('/reservas', (req, res) => ReservaController.getAll(req, res));
+app.get('/reservas/partido/:partidoId', (req, res) => ReservaController.getReservaByPartidoId(req, res));
 app.get('/reservas/:id', (req, res) => ReservaController.getReservaById(req, res));
 app.post('/reservas', (req, res) => ReservaController.crearReserva(req, res));
 app.delete('/reservas/:id', (req, res) => ReservaController.cancelarReserva(req, res));

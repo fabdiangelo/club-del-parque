@@ -9,10 +9,10 @@ const Partido = () => {
     const [partido, setPartido] = useState(null);
     const [cancha, setCancha] = useState(null);
 
-    const {user} = useAuth();
+    const { user } = useAuth();
 
     const [usuarios, setUsuarios] = useState([]);
-
+    
     const [usuariosParticipantes, setUsuariosParticipantes] = useState([]);
     const [temporada, setTemporada] = useState(null);
 
@@ -26,12 +26,143 @@ const Partido = () => {
     const [mostrarAlerta, setMostrarAlerta] = useState(false);
     const [mensajeAlerta, setMensajeAlerta] = useState('');
     const [posicionUser, setPosicionUser] = useState('');
+    const [modalPropuestas, setModalPropuestas] = useState(false);
+
+    const [modalResponder, setModalResponder] = useState(false);
+
+    const [reserva, setReserva] = useState(null);
+    const [propuestaAceptada, setPropuestaAceptada] = useState(null);
+
+    const getUserById = (userId) => {
+        return usuarios.find(u => u.id === userId);
+    }
+
+    const fetchReserva = async () => {
+        try {
+            const response = await fetch(`/api/reservas/partido/${id}`, { credentials: 'include' });
+            if (!response.ok) {
+                throw new Error(`Error en la solicitud: ${response.statusText}`);
+            }
+            const data = await response.json();
+            setReserva(data);
+        } catch(error) {
+            console.error("Error al obtener la reserva:", error);
+        }
+    }
+
+    const aceptarPropuesta = async (propuestaId) => {
+        if (propuestaAceptada) {
+            alert("Ya hay una propuesta aceptada. No se pueden aceptar más.");
+            return;
+        }
+
+        if (!propuestaId) {
+            console.error("Error: propuestaId no proporcionado.");
+            return;
+        }
+
+        const idPartido = partido.id;
+        console.log("Aceptar propuesta", propuestaId);
+
+        try {
+            const response = await fetch(`/api/partidos/${idPartido}/confirmar-horario`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ propuestaId }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error en la solicitud: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log("Propuesta aceptada:", data);
+
+            // Actualizar el estado para reflejar la propuesta aceptada
+            setPropuestaAceptada(propuestaId);
+
+            // Iniciar el proceso de creación de una reserva
+            crearReserva(propuestaId);
+        } catch (error) {
+            console.error("Error al aceptar propuesta:", error);
+        }
+    };
+
+    const crearReserva = async (propuestaId) => {
+
+        const propuesta = partido.disponibilidades.propuestas.find(p => p.id === propuestaId);
+    const nuevaReserva = {
+        canchaId: partido.canchaID,
+        fechaHora: propuesta.fechaHoraInicio,
+        duracion: '2:00', 
+        esCampeonato: true,
+        tipoPartido: partido.tipoPartido,
+        partidoId: partido.id,
+        jugadoresIDS: partido.jugadores,
+        quienPaga: user?.uid,
+        autor: user?.uid,
+        estado: 'pendiente'
+    };
+
+    console.log("Datos enviados para crear reserva:", nuevaReserva);
+
+    try {
+        const response = await fetch(`/api/reservas`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(nuevaReserva),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error al crear reserva: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("Reserva creada:", data);
+        fetchReserva();
+
+        alert("Reserva creada exitosamente");
+    } catch (error) {
+        console.error("Error al crear reserva:", error);
+        alert("Error al crear la reserva");
+    }
+
+
+//     try {
+    
+//         const admins = usuarios.filter(u => u.rol === 'administrador');
+
+        
+
+//         for(const a in admins) {
+//             const datos = {
+//             mensaje: `Se ha creado una nueva reserva para el partido ${partido.id}`,
+//             telefono: admins.map(a => a.telefono).filter(t => t), 
+//         }
+
+// const response = await fetch('/api/reservas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(datos) });
+//         }
+
+        
+//     } catch(error) {
+//         console.error("Error al crear reserva:", error);
+//     }
+};
 
     const verPropuestas = () => {
         console.log(partido.disponibilidades.propuestas);
     }
 
     useEffect(() => {
+
+        fetchReserva();
+
         const fetchPartido = async () => {
             const response = await fetch(`/api/partidos/${id}`, { credentials: 'include' });
             const data = await response.json();
@@ -59,36 +190,36 @@ const Partido = () => {
         }
 
 
-        if(!partido?.temporadaID) return;
-        const fetchTemporada = async() => {
+        if (!partido?.temporadaID) return;
+        const fetchTemporada = async () => {
 
-            console.log("Fetch temporada llamado para temporadaID:", partido?.temporadaID); 
+            console.log("Fetch temporada llamado para temporadaID:", partido?.temporadaID);
             try {
                 const response = await fetch(`/api/temporadas/${partido?.temporadaID}`, { credentials: 'include' });
 
-                if(!response.ok) throw new Error("Error al obtener la temporada");
+                if (!response.ok) throw new Error("Error al obtener la temporada");
 
                 const data = await response.json();
                 console.log("Temporada obtenida:", data);
                 setTemporada(data);
-            } catch(error) {
+            } catch (error) {
                 throw error;
             }
         }
 
-        if(!partido?.canchaID) return;
-        const fetchCancha = async() => {
+        if (!partido?.canchaID) return;
+        const fetchCancha = async () => {
 
             console.log("Fetch cancha llamado para canchaID:", partido?.canchaID);
             try {
                 const response = await fetch(`/api/canchas/${partido?.canchaID}`, { credentials: 'include' });
 
-                if(!response.ok) throw new Error("Error al obtener la cancha");
+                if (!response.ok) throw new Error("Error al obtener la cancha");
 
                 const data = await response.json();
                 console.log("Cancha obtenida:", data);
                 setCancha(data);
-            } catch(error) {
+            } catch (error) {
                 throw error;
             }
         }
@@ -96,8 +227,13 @@ const Partido = () => {
         fetchTemporada();
     }, [usuarios, partido]);
 
+    // useEffect(() => {
+    //     if (!partido) return;
+    //     fetchReserva();
+    // }, [partido])
+
     useEffect(() => {
-        if(!partido || !user) return;
+        if (!partido || !user) return;
 
         console.log("SOS user", obtenerPosicionUsuario());
     }, [user])
@@ -243,51 +379,34 @@ const Partido = () => {
         <>
             <NavbarBlanco />
 
-            
 
+         
             {partido && partido?.tipoPartido == 'doubles' ? (
                 <div className="container mx-auto py-4 battle-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px' }}>
 
-                    <div style={{paddingTop: '80px', margin: "0 auto", textAlign: 'center'}}>
+                    <div style={{ paddingTop: '80px', margin: "0 auto", textAlign: 'center' }}>
 
                         {temporada && partido && (
-                            <div style={{paddingBottom: '50px'}}>
-                                <h3 style={{fontSize: '48px', textTransform: 'uppercase'}}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
-                                <div style={{textAlign: 'center', marginTop: '20px', width: '500px', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px'}}></div>
+                            <div style={{ paddingBottom: '50px' }}>
+                                <h3 style={{ fontSize: '48px', textTransform: 'uppercase' }}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
+                                <div style={{ textAlign: 'center', marginTop: '20px', width: '500px', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px' }}></div>
                             </div>
                         )}
                     </div>
 
-                    {/* Botones de acción */}
-                    <div className="action-buttons">
-                        <button className="action-btn btn-primary" onClick={() => alert('Ver historial de partidos')}>
-                            📊 Historial
-                        </button>
-                        <button className="action-btn btn-success" onClick={() => alert('Comenzar partido')}>
-                            ▶️ Iniciar
-                        </button>
-                        <button className="action-btn btn-secondary" onClick={() => alert('Editar partido')}>
-                            ✏️ Editar
-                        </button>
-                        <button className="action-btn btn-danger" onClick={() => alert('Cancelar partido')}>
-                            ❌ Cancelar
-                        </button>
-                        <button className="action-btn btn-success" onClick={() => setModalReserva(true)}>
-                            📅 Reservar fecha y hora
-                        </button>
-                    </div>
+
 
                     <div style={{ display: 'flex', flexDirection: 'row', gap: '50px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
                         {/* Equipo 1 - viene de la izquierda */}
                         <div className="player-circle-left">
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center'}}>
-                                <div 
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                                <div
                                     className="player-circle"
-                                    style={{ 
-                                        width: '300px', 
-                                        height: '300px', 
-                                        borderRadius: '50%', 
-                                        overflow: 'hidden', 
+                                    style={{
+                                        width: '300px',
+                                        height: '300px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
                                         border: '3px solid #0D8ABC',
                                         background: 'linear-gradient(135deg, #0D8ABC, #1e90ff)',
                                         boxShadow: '0 8px 25px rgba(13, 138, 188, 0.3)',
@@ -303,7 +422,7 @@ const Partido = () => {
                                     <div>{usuariosParticipantes[0]?.nombre || 'Jugador 1'}</div>
                                     <div>{usuariosParticipantes[1]?.nombre || 'Jugador 2'}</div>
                                 </div>
-                                <p className="player-info" style={{fontSize: '1.3rem', fontWeight: 'bold', color: '#333'}}>
+                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
                                     Equipo Azul
                                 </p>
                             </div>
@@ -311,14 +430,14 @@ const Partido = () => {
                         <div className="vs-text">VS</div>
 
                         <div className="player-circle-right">
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center'}}>
-                                <div 
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                                <div
                                     className="player-circle"
-                                    style={{ 
-                                        width: '300px', 
-                                        height: '300px', 
-                                        borderRadius: '50%', 
-                                        overflow: 'hidden', 
+                                    style={{
+                                        width: '300px',
+                                        height: '300px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
                                         border: '3px solid #e74c3c',
                                         background: 'linear-gradient(135deg, #e74c3c, #ff6b6b)',
                                         boxShadow: '0 8px 25px rgba(231, 76, 60, 0.3)',
@@ -334,7 +453,7 @@ const Partido = () => {
                                     <div>{usuariosParticipantes[2]?.nombre || 'Jugador 3'}</div>
                                     <div>{usuariosParticipantes[3]?.nombre || 'Jugador 4'}</div>
                                 </div>
-                                <p className="player-info" style={{fontSize: '1.3rem', fontWeight: 'bold', color: '#333'}}>
+                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
                                     Equipo Rojo
                                 </p>
                             </div>
@@ -371,9 +490,9 @@ const Partido = () => {
                                 </div>
 
                                 {/* VS en el centro */}
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'center',
                                     fontSize: '2rem',
                                     fontWeight: 'bold',
@@ -407,63 +526,46 @@ const Partido = () => {
                         </div>
                     )}
 
-                    <div className='text-center' style={{marginTop: '20px'}}>
-                        <p style={{fontSize: '0.8rem', color: '#555'}}>Fecha y Hora: {partido.fechaHoraPartido ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span> : <span>No definido</span>}</p>
-                        <p style={{fontSize: '0.8rem', color: '#555'}}>Cancha: {cancha ? <span>{cancha.nombre}</span> : <span>No definido</span>}</p>
-                        <p style={{fontSize: '0.8rem', color: '#555'}}>Estado: {partido.estado}</p>
+                    <div className='text-center' style={{ marginTop: '20px' }}>
+                        <p style={{ fontSize: '0.8rem', color: '#555' }}>Fecha y Hora: {partido.fechaHoraPartido ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span> : <span>No definido</span>}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#555' }}>Cancha: {cancha ? <span>{cancha.nombre}</span> : <span>No definido</span>}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#555' }}>Estado: {partido.estado}</p>
                     </div>
 
                 </div>
-                    ): (
+            ) : (
 
-                    <div className="container mx-auto py-4 battle-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px' }}>
+                <div className="container mx-auto py-4 battle-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px' }}>
 
-                        <div style={{paddingTop: '80px', margin: "0 auto", textAlign: 'center'}}>
+                    <div style={{ paddingTop: '80px', margin: "0 auto", textAlign: 'center' }}>
 
-                {temporada && partido && (
+                        {temporada && partido && (
 
-                    <div style={{paddingBottom: '50px'}}>
-                    <h3  style={{fontSize: '48px', textTransform: 'uppercase'}}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
-                   
-                      <div style={{textAlign: 'center', marginTop: '20px', width: '500px', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px'}}></div>
+                            <div style={{ paddingBottom: '50px' }}>
+                                <h3 style={{ fontSize: '48px', textTransform: 'uppercase' }}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
+
+                                <div style={{ textAlign: 'center', marginTop: '20px', width: '500px', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px' }}></div>
+                            </div>
+
+
+                        )}
+
+
+
                     </div>
 
-                    
-                )}
 
-                
-              
-            </div>
-
-                    { comprobarSiUserEsJugador() && partido?.disponibilidades?.length < 1 &&(<div className="action-buttons">
-                        
-                        <button className="action-btn btn-success" onClick={() => setModalReserva(true)}>
-                            Reservar fecha y hora
-                        </button>
-                       
-                    </div>)}
-
-                    {partido?.disponibilidades?.length > 0 && obtenerPosicionUsuario() == 'local' && (
-
-                        <div className='modal modal-open'>
-                            <p>Tu equipo ya ha enviado propuestas de disponibilidad, esperando la respuesta del otro equipo.</p>
-                            <div>
-                                <button onClick={verPropuestas}>Ver Propuestas</button>
-
-                            </div>
-                        </div>
-                    )}
 
                     <div style={{ display: 'flex', flexDirection: 'row', gap: '50px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
                         <div className="player-circle-left">
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center'}}>
-                                <div 
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                                <div
                                     className="player-circle"
-                                    style={{ 
-                                        width: '300px', 
-                                        height: '300px', 
-                                        borderRadius: '50%', 
-                                        overflow: 'hidden', 
+                                    style={{
+                                        width: '300px',
+                                        height: '300px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
                                         border: '3px solid #0D8ABC',
                                         background: 'linear-gradient(135deg, #0D8ABC, #1e90ff)',
                                         boxShadow: '0 8px 25px rgba(13, 138, 188, 0.3)',
@@ -477,7 +579,7 @@ const Partido = () => {
                                 >
                                     {usuariosParticipantes[0]?.nombre || 'Jugador 1'}
                                 </div>
-                                <p className="player-info" style={{fontSize: '1.3rem', fontWeight: 'bold', color: '#333'}}>
+                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
                                     {usuariosParticipantes[0]?.nombre}
                                 </p>
                             </div>
@@ -486,14 +588,14 @@ const Partido = () => {
                         <div className="vs-text">VS</div>
 
                         <div className="player-circle-right">
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center'}}>
-                                <div 
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                                <div
                                     className="player-circle"
-                                    style={{ 
-                                        width: '300px', 
-                                        height: '300px', 
-                                        borderRadius: '50%', 
-                                        overflow: 'hidden', 
+                                    style={{
+                                        width: '300px',
+                                        height: '300px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
                                         border: '3px solid #e74c3c',
                                         background: 'linear-gradient(135deg, #e74c3c, #ff6b6b)',
                                         boxShadow: '0 8px 25px rgba(231, 76, 60, 0.3)',
@@ -507,52 +609,139 @@ const Partido = () => {
                                 >
                                     {usuariosParticipantes[1]?.nombre || 'Jugador 2'}
                                 </div>
-                                <p className="player-info" style={{fontSize: '1.3rem', fontWeight: 'bold', color: '#333'}}>
+                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
                                     {usuariosParticipantes[1]?.nombre}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                   
-                    <div>
 
-                        {partido?.disponibilidades.length < 1 ? (
-                            <p className="intro-text">
-                            El partido debe ser jugado en los próximos 7 días. Si no se juega en ese plazo, se considerará perdido por incomparecencia.
-                        </p>
+
+                    {
+                        reserva ? ((
+
+                        <div className="reserva-confirmada-panel mt-8 p-6" style={{ width: '80%', maxWidth: '800px', border: '2px solid green', borderRadius: '8px', backgroundColor: '#e6ffe6' }}>
+                            <h3 className="text-lg font-semibold">Reserva Confirmada</h3>
+                            <p className="mt-4">La reserva para este partido ha sido confirmada.</p>
+                            <p className="mt-2">Fecha y Hora: {new Date(reserva.fechaHora).toLocaleString()}</p>
+                            <p className="mt-2">Cancha: {cancha ? cancha.nombre : 'No definida'}</p>
+
+                            <h3 className='mt-2'>Respuesta del administrador 
+                                
+                                <span style={{backgroundColor: reserva.estado == 'confirmada' ? 'green' : reserva.estado == 'rechazada' ? 'red' : 'orange', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '10px'}}>
+{
+                                !reserva.deshabilitar && reserva.estado == 'pendiente' ? 'pendiente de aprobación' : reserva.estado == 'confirmada' ? 'confirmada' : 'rechazada'
+                            }
+                                </span>
+                                </h3>
+
+                        </div>
+                    )) : (
+                            <div>
+
+                                {partido?.disponibilidades?.propuestas?.length > 0 ? (
+                        <div className="propuestas-panel mt-8 p-6" style={{ width: '100%', maxWidth: '800px' }}>
+                            <h3 className="text-lg font-semibold mb-4 text-center">
+                                {(() => {
+                                    const propuestasUsuario = partido.disponibilidades.propuestas.filter(
+                                        (propuesta) => propuesta.usuarioId === getUserId(user)
+                                    );
+                                    const propuestasEquipo = partido.disponibilidades.propuestas.filter(
+                                        (propuesta) =>
+                                            partido.equipoLocal.includes(propuesta.usuarioId) ===
+                                            partido.equipoLocal.includes(getUserId(user))
+                                    );
+
+                                    if (propuestasUsuario.length > 0) {
+                                        return "Has enviado una propuesta.";
+                                    } else if (propuestasEquipo.length > 0) {
+                                        return "Un miembro de tu equipo ha enviado una propuesta.";
+                                    } else {
+                                        return "El equipo contrario ha enviado propuestas.";
+                                    }
+                                })()}
+                            </h3>
+
+                            <div style={{display: 'flex', gap: '20px', width: '100'}}>
+{partido.disponibilidades.propuestas.map((propuesta) => {
+                                const esDelMismoEquipo = partido.equipoLocal.includes(propuesta.usuarioId) === partido.equipoLocal.includes(getUserId(user));
+                                const esElMismoUsuario = propuesta.usuarioId === getUserId(user);
+
+                                return (
+                                    <div key={propuesta.id} className="propuesta mt-4 p-4 border rounded shadow">
+                                        <div className="mt-2">
+                                            <p><strong>Fecha:</strong> {propuesta.fecha}</p>
+                                            <p><strong>Horario:</strong> {propuesta.horaInicio} - {propuesta.horaFin}</p>
+                                            <p><strong>Duración:</strong> {propuesta.duracion} minutos</p>
+                                            <p><strong>Propuesto por:</strong> {getUserById(partido.disponibilidades.propuestoPor)?.nombre}</p>
+                                        </div>
+
+                                        {/* Botón para aceptar la propuesta */}
+                                        {!esDelMismoEquipo && (
+                                            <button
+                                                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                onClick={() => aceptarPropuesta(propuesta.id)}
+                                            >
+                                                Aceptar Propuesta
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            </div>
+
+                            
+                        </div>
                     ) : (
-                        obtenerPosicionUsuario() === 'visitante' ? (
-                            <div className=''>
-                                <p className="intro-text">El equipo local ha enviado las siguientes propuestas de disponibilidad:</p>
-                                <button style={{backgroundColor: 'var(--primario)', padding: '10px 20px', borderRadius: '5px', color: 'white', border: 'none', cursor: 'pointer'}} onClick={verPropuestas}>Ver Propuestas</button>
-                            </div>
-                        ) : obtenerPosicionUsuario() === 'local' ? (
-                            <div className='text-center'>
-                                <p className="intro-text">Tu equipo ya ha enviado propuestas de disponibilidad, esperando la respuesta del otro equipo.</p>
-                                <button style={{backgroundColor: 'var(--primario)', padding: '10px 20px', borderRadius: '5px', color: 'white', border: 'none', cursor: 'pointer'}}
-                               onClick={verPropuestas}>Ver Propuestas</button>
-                            </div>
+                        comprobarSiUserEsJugador() ? (
+                            obtenerPosicionUsuario() === 'local' ? (
+                                <div className='text-center my-5'>
+                                    <p>Todavía no se ha generado ninguna propuesta.</p>
+                                    <button
+                                        style={{
+                                            cursor: 'pointer',
+                                            marginTop: '10px',
+                                            padding: '10px 20px',
+                                            backgroundColor: 'var(--primario)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '5px',
+                                        }}
+                                        onClick={() => setModalReserva(true)}
+                                    >
+                                        Generar Propuesta
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className='text-center'>
+                                    <p>Esperando a que el equipo local proponga fechas y horarios disponibles.</p>
+                                </div>
+                            )
+                        ) : user?.isAdmin ? (
+                            <p>No hay propuestas para este partido. Los administradores pueden ver todos los casos.</p>
                         ) : (
-                            <div className=''>
-                                <p className="intro-text">Ya existen propuestas de disponibilidad para este partido.</p>
-                            </div>
+                            <p>No tienes permisos para ver las propuestas de este partido.</p>
                         )
                     )}
+                            </div>
+                        )
+                    }
 
-                   
-</div>                
+                    
+
+
 
                     {usuariosParticipantes.length >= 2 && (
                         <div className="stats-panel">
 
- <div className='text-center'>
-                        <p style={{fontSize: '0.8rem', color: '#555'}}>Fecha y Hora: {partido.fechaHoraPartido ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span> : <span>No definido</span>}</p>
-                        <p style={{fontSize: '0.8rem', color: '#555'}}>Cancha: {cancha ? <span>{cancha.nombre}</span> : <span>No definido</span>}</p>
-                        <p style={{fontSize: '0.8rem', color: '#555'}}>Estado: {partido.estado}</p>
+                            <div className='text-center'>
+                                <p style={{ fontSize: '0.8rem', color: '#555' }}>Fecha y Hora: {partido.fechaHoraPartido ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span> : <span>No definido</span>}</p>
+                                <p style={{ fontSize: '0.8rem', color: '#555' }}>Cancha: {cancha ? <span>{cancha.nombre}</span> : <span>No definido</span>}</p>
+                                <p style={{ fontSize: '0.8rem', color: '#555' }}>Estado: {partido.estado}</p>
 
-                    </div>
-                            
+                            </div>
+
                             <h3 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.5rem', color: '#333' }}>
                                 Estadísticas de los Jugadores
                             </h3>
@@ -589,9 +778,9 @@ const Partido = () => {
                                 </div>
 
                                 {/* VS en el centro */}
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'center',
                                     fontSize: '2rem',
                                     fontWeight: 'bold',
@@ -740,10 +929,8 @@ const Partido = () => {
             )}
 
         </>
-    )
-
-
-}
+    );
+};
 
 
 export default Partido;

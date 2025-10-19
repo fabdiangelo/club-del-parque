@@ -215,6 +215,11 @@ export class ReservaRepository {
         return doc.id;
     }
 
+    async getReservaByPartidoId(partidoId) {
+        const allReservas = await this.db.getAllItems('reservas');
+        return allReservas.find(reserva => reserva.partidoId === partidoId && !reserva.deshabilitar);
+    }
+
     async getAll() {
         return this.db.getAllItems('reservas').then(docs => docs);
     }

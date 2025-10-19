@@ -119,6 +119,36 @@ export class PartidoRepository {
    * Estructura guardada:
    * disponibilidades: { propuestoPor: <usuarioId|null>, propuestas: Array<{...}> }
    */
+
+  async aceptarPropuesta(partidoId, propuestaId) {
+    if (!partidoId) throw new Error("partidoId requerido");
+    if (!propuestaId) throw new Error("propuestaId requerido");
+
+    const partido = await this.db.getItem("partidos", partidoId);
+
+    if (!partido) throw new Error("Partido no encontrado");
+
+    const disponibilidades = partido.disponibilidades || {};
+
+    const propuestas = Array.isArray(disponibilidades.propuestas) ? disponibilidades.propuestas : [];
+
+    propuestas.map((propuesta) => {
+      if (propuesta.id === propuestaId) {
+        propuesta.aceptada = true;
+      }
+    });
+
+    await this.update(partidoId, {
+      ...partido,
+      disponibilidades: {
+        ...disponibilidades,
+        propuestas
+      }
+    });
+
+    return { success: true, message: "Propuesta aceptada correctamente" };
+  }
+
   async addDisponibilidad(partidoId, disponibilidad = [], usuarioId = null) {
     if (!partidoId) throw new Error("partidoId requerido");
     if (!Array.isArray(disponibilidad)) throw new Error("disponibilidad debe ser un array");
@@ -180,6 +210,7 @@ export class PartidoRepository {
     await this.update(partidoId, updated);
     return merged;
   }
+  
 }
 
 

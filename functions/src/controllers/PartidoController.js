@@ -9,6 +9,7 @@ import { GetPartidosByJugador } from '../usecases/Partidos/GetPartidosByJugador.
 import { GetPartidosPorTemporada } from '../usecases/Partidos/GetPartidosPorTemporada.js';
 import { SetGanadoresPartido } from '../usecases/Partidos/SetGanadoresPartido.js';
 import { AgregarDisponibilidad } from '../usecases/Partidos/AgregarDisponibilidad.js';
+import { AceptarPropuesta } from '../usecases/Reservas/AceptarPropuesta.js';
 
 const normID = (v) => String(v ?? '').trim();
 const uniq = (arr = []) => Array.from(new Set((arr || []).map(normID)));
@@ -30,7 +31,27 @@ class PartidoController {
     this.eliminarPartidoUseCase = new EliminarPartido(new PartidoRepository());
     this.setGanadoresUseCase = new SetGanadoresPartido(new PartidoRepository());
     this.agregarDisponibilidadUseCase = new AgregarDisponibilidad(new PartidoRepository());
+    this.aceptarPropuestaUseCase = new AceptarPropuesta(new PartidoRepository());
+  }
 
+  async aceptarPropuesta(req, res) {
+    const { propuestaId } = req.body;
+    const { id } = req.params;
+
+    if (!propuestaId) {
+      return res.status(400).json({ error: 'El parámetro propuestaId es requerido.' });
+    }
+
+    console.log("PROPUESTA ID =:", propuestaId);
+    console.log("PARTIDO ID =:", id);
+
+    try {
+      const result = await this.aceptarPropuestaUseCase.execute(id, propuestaId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error al aceptar propuesta:", error);
+      res.status(500).json({ error: error.message });
+    }
   }
 
   async getAllPartidos(req, res) {
@@ -144,6 +165,8 @@ class PartidoController {
       return res.status(400).json({ error: error.message || 'Error interno del servidor' });
     }
   }
+
+
 
   // DELETE /partidos/:id
   async eliminarPartido(req, res) {
