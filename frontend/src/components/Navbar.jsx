@@ -45,6 +45,27 @@ export default function Navbar({ transparent }) {
             >
               Inicio
             </NavLink>
+          </li>          <li>
+            <NavLink
+              to="/canchas"
+              end
+              className={({ isActive }) =>
+                `${navItem} ${isActive ? activeItem : ""}`
+              }
+            >
+              Canchas
+            </NavLink>
+          </li>
+              <li>
+            <NavLink
+              to="/gestor-categorias"
+              end
+              className={({ isActive }) =>
+                `${navItem} ${isActive ? activeItem : ""}`
+              }
+            >
+              Categorias
+            </NavLink>
           </li>
           <li>
             <NavLink

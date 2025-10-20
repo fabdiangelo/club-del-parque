@@ -27,6 +27,7 @@ import Partido from './pages/Partido';
 import ResultadosPage from "./pages/ResultadosPage";
 import NotificationsPage from  './pages/NotificacionesPage';
 import CanchasGestor from "./pages/CanchasGestor";
+import CategoriasGestor from './pages/CategoriasGestor';
 function App() {
   return (
     <Routes>
@@ -43,7 +44,7 @@ function App() {
       <Route path="/campeonatos" element={<ListaCampeonatos />} />
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
       <Route path="/partido/:id" element={<Partido />} />
-
+      <Route path="/gestor-categorias" element={<CategoriasGestor />} />
       {/* Rutas Usuarios */}
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />

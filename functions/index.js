@@ -25,6 +25,7 @@ import CanchaController from "./src/controllers/CanchaController.js";
 import TemporadaController from "./src/controllers/TemporadaController.js";
 import ReservaController from "./src/controllers/ReservaController.js";
 import RankingsController from "./src/controllers/RankingsController.js";
+import CategoriaController from "./src/controllers/CategoriaController.js";
 
 
 /* ---------------- Boot logs ---------------- */
@@ -95,7 +96,13 @@ app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(r
 app.post("/federados/precarga", (req, res) => UsuarioController.precarga(req, res));
 app.get("/federados/:id", (req, res) => UsuarioController.getFederadoById(req, res));
 
-
+// Categorías
+app.patch("/categorias/orden", (req, res) => CategoriaController.setOrden(req, res));
+app.post("/categorias", (req, res) => CategoriaController.crearCategoria(req, res));
+app.get("/categorias", (req, res) => CategoriaController.getAllCategorias(req, res));
+app.get("/categorias/:id", (req, res) => CategoriaController.getById(req, res));
+app.patch("/categorias/:id", (req, res) => CategoriaController.actualizarCategoria(req, res));
+app.delete("/categorias/:id", (req, res) => CategoriaController.eliminarCategoria(req, res));
 
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
@@ -251,6 +258,7 @@ app.delete("/partidos/:id", (req, res) => PartidoController.eliminarPartido(req,
 app.post("/partidos/:id/ganadores", (req, res) => PartidoController.setGanadores(req, res));
 app.post("/partidos/:id/disponibilidad", (req, res) => PartidoController.agregarDisponibilidad(req, res));
 app.put("/partidos/:id/confirmar-horario", (req, res) => PartidoController.aceptarPropuesta(req, res));
+
 
 // Temporada
 app.get("/temporadas/:id", (req, res) => TemporadaController.getTemporadaById(req, res));
