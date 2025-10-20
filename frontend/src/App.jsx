@@ -28,11 +28,13 @@ import ResultadosPage from "./pages/ResultadosPage";
 import NotificationsPage from  './pages/NotificacionesPage';
 import CanchasGestor from "./pages/CanchasGestor";
 import CategoriasGestor from './pages/CategoriasGestor';
+import FiltrosGestor from './pages/FiltrosGestor';
 function App() {
   return (
     <Routes>
       {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
+      <Route path="/gestor-filtros" element={<FiltrosGestor />} />
       <Route path="/canchas" element={<CanchasGestor />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />

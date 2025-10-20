@@ -26,6 +26,10 @@ import TemporadaController from "./src/controllers/TemporadaController.js";
 import ReservaController from "./src/controllers/ReservaController.js";
 import RankingsController from "./src/controllers/RankingsController.js";
 import CategoriaController from "./src/controllers/CategoriaController.js";
+import ModalidadController from "./src/controllers/ModalidadController.js";
+import GeneroController from "./src/controllers/GeneroController.js";
+import DeporteController from "./src/controllers/DeporteController.js";
+import FiltrosController from "./src/controllers/FiltrosController.js";
 
 
 /* ---------------- Boot logs ---------------- */
@@ -104,6 +108,27 @@ app.get("/categorias/:id", (req, res) => CategoriaController.getById(req, res));
 app.patch("/categorias/:id", (req, res) => CategoriaController.actualizarCategoria(req, res));
 app.delete("/categorias/:id", (req, res) => CategoriaController.eliminarCategoria(req, res));
 
+/*FILTROS*/
+
+app.get("/deportes", (req, res) => DeporteController.getAll(req, res));
+app.get("/deportes/:id", (req, res) => DeporteController.getById(req, res));
+app.post("/deportes", (req, res) => DeporteController.create(req, res));
+app.patch("/deportes/:id", (req, res) => DeporteController.update(req, res));
+app.delete("/deportes/:id", (req, res) => DeporteController.delete(req, res));
+
+app.get("/modalidades", (req, res) => ModalidadController.getAll(req, res));
+app.post("/modalidades", (req, res) => ModalidadController.create(req, res));
+app.delete("/modalidades/:nombre", (req, res) => ModalidadController.delete(req, res));
+
+app.get("/generos", (req, res) => GeneroController.getAll(req, res));
+app.post("/generos", (req, res) => GeneroController.create(req, res));
+app.delete("/generos/:nombre", (req, res) => GeneroController.delete(req, res));
+
+app.get("/filtros", (req, res) => FiltrosController.getAll(req, res));
+app.get("/filtros/:id", (req, res) => FiltrosController.getById(req, res));
+app.post("/filtros", (req, res) => FiltrosController.create(req, res));
+app.patch("/filtros/:id", (req, res) => FiltrosController.update(req, res));
+app.delete("/filtros/:id", (req, res) => FiltrosController.delete(req, res));
 // Reportes
 app.post("/reportes", (req, res) => ReporteController.crearReporte(req, res));
 app.get("/reportes", (req, res) => ReporteController.obtenerReportes(req, res));
