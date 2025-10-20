@@ -168,6 +168,30 @@ export default function NotificationsPage() {
   const allSelected =
     paginated.length > 0 && paginated.every((row) => selected.has(row.id));
 
+  // Accept / Reject invitation handlers
+  async function acceptInvitation(noti) {
+    if (!user?.uid || !noti) return;
+    const campeonatoId = noti.campeonatoId || (noti.href && noti.href.split('/').pop());
+    try {
+      const res = await fetch(`/api/federado-campeonato/${campeonatoId}/invitacion/aceptar`, { method: 'PUT', credentials: 'include' });
+      if (res.ok) {
+        // mark backend notification as read
+        await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), { leido: true });
+      }
+    } catch (e) { console.error(e); }
+  }
+
+  async function rejectInvitation(noti) {
+    if (!user?.uid || !noti) return;
+    const campeonatoId = noti.campeonatoId || (noti.href && noti.href.split('/').pop());
+    try {
+      const res = await fetch(`/api/federado-campeonato/${campeonatoId}/invitacion/rechazar`, { method: 'PUT', credentials: 'include' });
+      if (res.ok) {
+        await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), { leido: true });
+      }
+    } catch (e) { console.error(e); }
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
       <NavbarBlanco transparent={false} />
@@ -306,7 +330,19 @@ export default function NotificationsPage() {
                                     Marcar leída
                                   </button>
                                 )}
-                                {row.href && (
+                                {row.tipo === 'invitacion_recibida' && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); acceptInvitation(row); }}
+                                      className="btn btn-success btn-sm"
+                                    >Aceptar</button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); rejectInvitation(row); }}
+                                      className="btn btn-error btn-sm"
+                                    >Rechazar</button>
+                                  </div>
+                                )}
+                                {row.href && row.tipo !== 'invitacion_recibida' && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();

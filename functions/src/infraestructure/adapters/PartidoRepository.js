@@ -24,7 +24,7 @@ export class PartidoRepository {
       throw new Error("La cancha asociada no existe");
     }
 
-    const { jugadores, equipoVisitante, equipoLocal } = partido;
+  const { jugadores, equipoVisitante, equipoLocal, jugador1, jugador2 } = partido;
 
     // Validar jugadores (plantel completo)
     for (const j of jugadores || []) {
@@ -37,8 +37,14 @@ export class PartidoRepository {
       }
     }
 
-    // Validar equipo local
-    for (const j of equipoLocal || []) {
+    // Prefer jugador1/jugador2 arrays when present (dobles). Fallback to equipoLocal/equipoVisitante for legacy data.
+    const localCandidates = Array.isArray(jugador1)
+      ? jugador1.map(p => p?.id).filter(Boolean)
+      : Array.isArray(equipoLocal)
+      ? equipoLocal
+      : [];
+
+    for (const j of localCandidates) {
       const equipoExists = await this.db.getItem("usuarios", j);
       if (!equipoExists) {
         const fedExists = await this.db.getItem("federados", j);
@@ -48,8 +54,13 @@ export class PartidoRepository {
       }
     }
 
-    // Validar equipo visitante
-    for (const j of equipoVisitante || []) {
+    const visitCandidates = Array.isArray(jugador2)
+      ? jugador2.map(p => p?.id).filter(Boolean)
+      : Array.isArray(equipoVisitante)
+      ? equipoVisitante
+      : [];
+
+    for (const j of visitCandidates) {
       const equipoExists = await this.db.getItem("usuarios", j);
       if (!equipoExists) {
         const fedExists = await this.db.getItem("federados", j);

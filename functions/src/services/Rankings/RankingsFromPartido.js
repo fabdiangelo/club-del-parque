@@ -35,8 +35,9 @@ function splitWinnersLosers(partido) {
   let losers = ids.filter((id) => !winners.includes(id));
 
   if (String(partido.tipoPartido) === "dobles") {
-    const loc = (partido.equipoLocal || []).map(String);
-    const vis = (partido.equipoVisitante || []).map(String);
+    // Prefer jugador1/jugador2 arrays when present (each item may be an object with id)
+    const loc = Array.isArray(partido.jugador1) ? partido.jugador1.map(p => String(p?.id)) : (partido.equipoLocal || []).map(String);
+    const vis = Array.isArray(partido.jugador2) ? partido.jugador2.map(p => String(p?.id)) : (partido.equipoVisitante || []).map(String);
     const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
 
     if (sameSet([...new Set(winners)], [...new Set(loc)])) losers = [...new Set(vis)];

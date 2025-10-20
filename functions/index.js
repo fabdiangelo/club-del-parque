@@ -164,6 +164,10 @@ app.post('/campeonato/:id/procesar-inicio', (req, res) => CampeonatosController.
 // Campeonatos-Federados
 app.post("/federado-campeonato/:id/:uid", (req, res) => CampeonatosFederadosController.inscribirFederado(req, res));
 
+// Invitaciones: aceptar / rechazar
+app.put('/federado-campeonato/:id/invitacion/aceptar', (req, res) => CampeonatosFederadosController.aceptarInvitacion(req, res));
+app.put('/federado-campeonato/:id/invitacion/rechazar', (req, res) => CampeonatosFederadosController.rechazarInvitacion(req, res));
+
 // Mensajes por terceros
 app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));
 app.post("/sendEmail", (req, res) => EmailController.enviar(req, res));

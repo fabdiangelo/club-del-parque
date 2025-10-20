@@ -5,6 +5,7 @@ import { FederadoRepository } from "../../infraestructure/adapters/FederadoRepos
 import { FederadoCampeonatoRepository } from "../../infraestructure/adapters/FederadoCampeonatoRepository.js";
 import { EtapaRepository } from "../../infraestructure/adapters/EtapaRepository.js";
 import { PartidoRepository } from "../../infraestructure/adapters/PartidoRepository.js";
+import NotiConnection from "../../infraestructure/ports/NotiConnection.js";
 
 class InscribirFederado {
   constructor() {
@@ -13,6 +14,7 @@ class InscribirFederado {
     this.federadoCampeonatoRepository = new FederadoCampeonatoRepository();
     this.etapaRepository = new EtapaRepository();
     this.partidoRepository = new PartidoRepository();
+    this.notiConnection = new NotiConnection();
   }
 
   /**
@@ -33,6 +35,8 @@ class InscribirFederado {
 
     const campeonato = await this.campeonatoRepository.findById(campeonatoId);
     if (!campeonato) throw new Error("Campeonato no encontrado");
+
+    console.log(federado)
 
     // 1) Validar validoHasta > inicio
     if (!federado.validoHasta) throw new Error("Federado no tiene licencia válida");
@@ -73,6 +77,13 @@ class InscribirFederado {
   // 3) Verificar cupos disponibles en el campeonato (cada inscripción corresponde a un federado)
   const inscritos = Array.isArray(campeonato.federadosCampeonatoIDs) ? campeonato.federadosCampeonatoIDs.length : 0;
   if (inscritos >= campeonato.cantidadJugadores) throw new Error('No hay cupos disponibles en el campeonato');
+
+    // If inviteeUid provided, prevent inviting someone already inscripto
+    if (inviteeUid && campeonato.dobles) {
+      const existingInvitee = await this.federadoCampeonatoRepository.db.getItemsByField(this.federadoCampeonatoRepository.collection, 'federadoID', inviteeUid);
+      const yaInscriptoInvitee = Array.isArray(existingInvitee) ? existingInvitee.find(x => x.campeonatoID === campeonatoId) : null;
+      if (yaInscriptoInvitee) throw new Error('No se puede invitar a un usuario que ya está inscripto');
+    }
 
     // 4) Crear registro federado-campeonato
     const fcId = `${campeonatoId}-federado-${uid}-${Date.now()}`;
@@ -126,15 +137,21 @@ class InscribirFederado {
         if (!Array.isArray(grupo.partidos)) return;
         for (const partido of grupo.partidos) {
           if (typeof partido.jugador1Index !== 'undefined' && partido.jugador1Index === si) {
-            // For doubles we store equipo arrays
-            if (grupo.jugadores[si].players) partido.equipoLocal = grupo.jugadores[si].players;
-            else partido.jugador1Id = grupo.jugadores[si].id;
+            // For doubles store team in jugador1 array; for singles use jugador1Id
+            if (grupo.jugadores[si].players) {
+              partido.jugador1 = grupo.jugadores[si].players;
+            } else {
+              partido.jugador1Id = grupo.jugadores[si].id;
+            }
             const partidoId = `${primeraEtapaId}-${grupo.id || 'grupo'}-${partido.id}`;
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e){ }
           }
           if (typeof partido.jugador2Index !== 'undefined' && partido.jugador2Index === si) {
-            if (grupo.jugadores[si].players) partido.equipoVisitante = grupo.jugadores[si].players;
-            else partido.jugador2Id = grupo.jugadores[si].id;
+            if (grupo.jugadores[si].players) {
+              partido.jugador2 = grupo.jugadores[si].players;
+            } else {
+              partido.jugador2Id = grupo.jugadores[si].id;
+            }
             const partidoId = `${primeraEtapaId}-${grupo.id || 'grupo'}-${partido.id}`;
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e){ }
           }
@@ -177,6 +194,16 @@ class InscribirFederado {
                 slot.invitation = { from: uid, to: inviteeUid, fechaEnvio: new Date().toISOString(), estado: 'pendiente' };
                 // actualizar partidos (team partially filled)
                 await actualizarPartidosParaSlot(grupo, si);
+                // notify invitee via RTDB
+                try {
+                  await this.notiConnection.pushNotificationTo(inviteeUid, {
+                    tipo: 'invitacion_recibida',
+                    resumen: `Has recibido una invitación de ${federado.nombre || ''} ${federado.apellido || ''}`.trim(),
+                    href: `/campeonato/${campeonatoId}`,
+                    campeonatoId: campeonatoId,
+                    from: uid
+                  });
+                } catch (e) { /* ignore */ }
                 colocado = true;
                 break;
               }
@@ -200,6 +227,8 @@ class InscribirFederado {
               if (emptyIndex !== -1) {
                 // if there is an invitation and it's still valid and the invite target is not this user, skip
                 if (slot.invitation && !isInviteExpired(slot.invitation) && slot.invitation.to && slot.invitation.to !== uid) continue;
+                // if the invitation explicitly targets this user but was rejected earlier, do NOT assign this team to them
+                if (slot.invitation && slot.invitation.to === uid && slot.invitation.estado === 'rechazada') continue;
                 // Fill first empty position
                 slot.players[emptyIndex] = { id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() };
                 // if invitation existed but expired, clear it
@@ -252,21 +281,62 @@ class InscribirFederado {
           const partido = ronda.partidos[pi];
           // For doubles, partido may be 'eliminacion-dobles' and we should fill equipo arrays
           if (campeonato.dobles) {
-            if (partido.jugador1Origen === 'inscripcion' && (!partido.equipoLocal || partido.equipoLocal.length === 0)) {
-              // Assign as first member of a team (or accept invitation if exists)
-              // If there is an invitation targeting this user in the campeonato first round, accept it
-              partido.equipoLocal = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
-              const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
-              try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
-              asignado = true;
-              break;
+            // jugador1 (team) origin: try to assign first empty slot, or fill the second spot if there's already one player
+            if (partido.jugador1Origen === 'inscripcion') {
+              // If no team yet, create team with this player
+              if (!partido.jugador1 || partido.jugador1.length === 0) {
+                partido.jugador1 = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
+                const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
+                asignado = true;
+                break;
+              }
+
+              // If there is a single player in the team, and there is no explicit pending invitation, allow the next registrant to fill the second spot
+              if (Array.isArray(partido.jugador1) && partido.jugador1.length === 1) {
+                // Detect common invitation markers (if present). If any pending invitation exists, skip auto-fill.
+                const jugador1HasPendingInvite = (partido.jugador1Invitation && partido.jugador1Invitation.estado === 'pendiente') ||
+                  (partido.jugador1Invite && partido.jugador1Invite.estado === 'pendiente') ||
+                  (partido.jugador1Invitacion && partido.jugador1Invitacion.estado === 'pendiente') ||
+                  (partido.invitation && partido.invitation.estado === 'pendiente') ||
+                  (partido.invitacion && partido.invitacion.estado === 'pendiente');
+
+                // Only add if the existing player isn't the same uid and there's no pending invite
+                if (!jugador1HasPendingInvite && partido.jugador1[0].id !== uid) {
+                  partido.jugador1.push({ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() });
+                  const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                  try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
+                  asignado = true;
+                  break;
+                }
+              }
             }
-            if (partido.jugador2Origen === 'inscripcion' && (!partido.equipoVisitante || partido.equipoVisitante.length === 0)) {
-              partido.equipoVisitante = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
-              const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
-              try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
-              asignado = true;
-              break;
+
+            // jugador2 (team) origin: same logic as jugador1
+            if (partido.jugador2Origen === 'inscripcion') {
+              if (!partido.jugador2 || partido.jugador2.length === 0) {
+                partido.jugador2 = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
+                const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
+                asignado = true;
+                break;
+              }
+
+              if (Array.isArray(partido.jugador2) && partido.jugador2.length === 1) {
+                const jugador2HasPendingInvite = (partido.jugador2Invitation && partido.jugador2Invitation.estado === 'pendiente') ||
+                  (partido.jugador2Invite && partido.jugador2Invite.estado === 'pendiente') ||
+                  (partido.jugador2Invitacion && partido.jugador2Invitacion.estado === 'pendiente') ||
+                  (partido.invitation && partido.invitation.estado === 'pendiente') ||
+                  (partido.invitacion && partido.invitacion.estado === 'pendiente');
+
+                if (!jugador2HasPendingInvite && partido.jugador2[0].id !== uid) {
+                  partido.jugador2.push({ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() });
+                  const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                  try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
+                  asignado = true;
+                  break;
+                }
+              }
             }
           } else {
             // Solo assign para singles (existing logic)

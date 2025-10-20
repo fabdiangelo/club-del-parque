@@ -10,7 +10,7 @@ class FederadoRepository {
     // ⚠️ Usamos la colección "usuarios" (no "federados")
     // porque PartidoController busca jugadores ahí:
     // DBConnection.getItem("usuarios", <id>)
-    this.collection = "usuarios";
+    this.collection = "federados";
   }
 
   /**

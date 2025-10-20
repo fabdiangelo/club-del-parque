@@ -382,7 +382,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                             </div>
                             <span className="font-medium text-black truncate">
                               {Array.isArray(partido.jugador1) ? (
-                                partido.jugador1.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}</span>)
+                                partido.jugador1.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}{!partido.jugador1[1]?.nombre && ' ~~~ '}</span>)
                               ) : (
                                 partido.jugador1Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
                               )}
@@ -415,7 +415,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                             </div>
                             <span className="font-medium text-black truncate">
                               {Array.isArray(partido.jugador2) ? (
-                                partido.jugador2.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}</span>)
+                                partido.jugador2.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}{!partido.jugador2[1]?.nombre && ' ~~~ '}</span>)
                               ) : (
                                 partido.jugador2Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
                               )}

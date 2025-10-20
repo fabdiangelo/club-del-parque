@@ -189,10 +189,15 @@ class PartidoController {
       'temporadaID',
       'canchaID',
       'etapa',
-      'jugadores',
-      'equipoLocal',
-      'equipoVisitante',
+      'jugadores'
     ];
+    // For dobles, prefer jugador1/jugador2 arrays
+    if (partidoData.tipoPartido === 'dobles') {
+      required.push('jugador1', 'jugador2');
+    } else {
+      // singles: ensure jugador1/jugador2 or equipoLocal/equipoVisitante may be present
+      // keep generic 'jugadores' sufficient
+    }
     for (const k of required) {
       if (partidoData[k] == null || (Array.isArray(partidoData[k]) && partidoData[k].length === 0)) {
         return res.status(400).json({ error: `Falta el campo obligatorio: ${k}` });
@@ -204,8 +209,9 @@ class PartidoController {
     }
 
     const jugadores = uniq(partidoData.jugadores);
-    const equipoLocal = uniq(partidoData.equipoLocal);
-    const equipoVisitante = uniq(partidoData.equipoVisitante);
+  // Prefer jugador1/jugador2 arrays; fallback to equipoLocal/equipoVisitante for legacy
+  const equipoLocal = Array.isArray(partidoData.jugador1) ? uniq(partidoData.jugador1.map(p => p?.id)) : uniq(partidoData.equipoLocal || []);
+  const equipoVisitante = Array.isArray(partidoData.jugador2) ? uniq(partidoData.jugador2.map(p => p?.id)) : uniq(partidoData.equipoVisitante || []);
     const ganadores = uniq(partidoData.ganadores || []);
 
     const reqPlayers = partidoData.tipoPartido === 'singles' ? 2 : 4;
@@ -239,6 +245,9 @@ class PartidoController {
       jugadores,
       equipoLocal,
       equipoVisitante,
+      // Also ensure jugador1/jugador2 body fields are kept (normalized) for dobles
+      jugador1: Array.isArray(partidoData.jugador1) ? partidoData.jugador1 : (Array.isArray(partidoData.equipoLocal) ? partidoData.equipoLocal.map(id => ({ id })) : []),
+      jugador2: Array.isArray(partidoData.jugador2) ? partidoData.jugador2 : (Array.isArray(partidoData.equipoVisitante) ? partidoData.equipoVisitante.map(id => ({ id })) : []),
       ganadores,
       estado: partidoData.estado || 'programado', // programado | en_juego | finalizado
       timestamp: toIsoOr(partidoData.timestamp),

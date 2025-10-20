@@ -10,6 +10,8 @@ export default class Partido {
     jugadores,
     equipoLocal,
     equipoVisitante,
+    jugador1,
+    jugador2,
     resultado,
     ganadores = [],
     deporte = null
@@ -25,6 +27,8 @@ export default class Partido {
     this.jugadores = jugadores;
     this.equipoLocal = equipoLocal;
     this.equipoVisitante = equipoVisitante;
+    this.jugador1 = jugador1;
+    this.jugador2 = jugador2;
     this.ganadores = ganadores;
     this.deporte = typeof deporte === "string" ? deporte.toLowerCase() : null;
   }
@@ -40,6 +44,8 @@ export default class Partido {
       etapa: this.etapa,
       jugadores: this.jugadores,
       equipoLocal: this.equipoLocal,
+  jugador1: this.jugador1,
+  jugador2: this.jugador2,
       equipoVisitante: this.equipoVisitante,
       resultado: this.resultado,
       ganadores: this.ganadores,

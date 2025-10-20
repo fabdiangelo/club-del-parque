@@ -164,7 +164,7 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
           </div>
         }
 
-        {(user?.rol == 'federado' && new Date(display.inicio) >= new Date() && !(participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || inscripto)) &&
+        {(user?.rol == 'federado' && new Date(display.inicio) >= new Date() && !(participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || participantes.includes(user.uid) || inscripto)) &&
           <div>
             <span className="text-sm opacity-90">{participantes.length} Usuarios Inscriptos</span> <br />
             { dobles && (

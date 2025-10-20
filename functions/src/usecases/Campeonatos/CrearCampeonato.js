@@ -127,8 +127,9 @@ class CrearCampeonato {
                 canchaID: null,
                 etapa: etapaId,
                 jugadores: [],
-                equipoLocal: [],
-                equipoVisitante: [],
+                // For singles keep legacy slots empty; for doubles store team arrays under jugador1/jugador2
+                jugador1: [],
+                jugador2: [],
                 resultado: null,
                 // metadatos del partido para enlazar con la etapa
                 meta: {
@@ -144,7 +145,7 @@ class CrearCampeonato {
                 // store team slot indexes in meta
                 partidoObj.meta.team1Index = partido.jugador1Index;
                 partidoObj.meta.team2Index = partido.jugador2Index;
-                // jugadores array will be empty until teams fill; equipoLocal/equipoVisitante can carry player arrays when known
+                // jugadores array will be empty until teams fill; use jugador1/jugador2 to carry player arrays when known
               }
 
               try {
@@ -172,8 +173,8 @@ class CrearCampeonato {
                 canchaID: null,
                 etapa: etapaId,
                 jugadores: [],
-                equipoLocal: [],
-                equipoVisitante: [],
+                jugador1: [],
+                jugador2: [],
                 resultado: null,
                 meta: {
                   rondaID: ronda.id,
