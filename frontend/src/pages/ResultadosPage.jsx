@@ -20,18 +20,20 @@ export default function ResultadosPage() {
       }
       setLoading(true);
       setErr("");
+
       try {
         const res = await fetch(toApi(`/partidos/jugador/${user.uid}`), {
           credentials: "include",
+          cache: "no-store",
         });
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-
-        // filtrar partidos sin ganadores
-        const pendientes = (data || []).filter(
+        
+        const sinGanadores = (data || []).filter(
           (p) => !Array.isArray(p.ganadores) || p.ganadores.length === 0
         );
-        setPartidos(pendientes);
+
+        setPartidos(sinGanadores);
       } catch (e) {
         console.error("Error cargando partidos:", e);
         setErr("No se pudieron cargar tus partidos");
@@ -71,28 +73,36 @@ export default function ResultadosPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {partidos.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
-                  >
-                    <td className="px-4 py-3 text-gray-800">
-                      {p.fecha ? new Date(p.fecha).toLocaleDateString() : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-800">{p.etapa || "—"}</td>
-                    <td className="px-4 py-3 text-gray-800">
-                      {p.tipoPartido || "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        to={`/partidos/${p.id}/acuerdo`}
-                        className="btn btn-primary btn-sm normal-case"
-                      >
-                        Proponer / Confirmar
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {partidos.map((p, idx) => {
+                  const key = String(p?.id || p?._id || p?.uid || idx);
+                  const fechaBase = p?.timestamp || p?.fecha || p?.createdAt;
+                  const fechaStr = fechaBase
+                    ? new Date(fechaBase).toLocaleDateString()
+                    : "—";
+
+                  return (
+                    <tr
+                      key={key}
+                      className="hover:bg-gray-50 transition-colors duration-150"
+                    >
+                      <td className="px-4 py-3 text-gray-800">{fechaStr}</td>
+                      <td className="px-4 py-3 text-gray-800">
+                        {p?.etapa || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-800">
+                        {p?.tipoPartido || "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          to={`/partidos/${p?.id || p?._id}/acuerdo`}
+                          className="btn btn-primary btn-sm normal-case"
+                        >
+                          Proponer / Confirmar
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

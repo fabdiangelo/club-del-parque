@@ -9,7 +9,6 @@ import FederarUsuarioModal from '../components/administracion-usuarios/FederarUs
 
 const AdministracionUsuarios = () => {
   const { user, loading: authLoading } = useAuth();
-
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,10 +21,9 @@ const AdministracionUsuarios = () => {
   const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [federadoFilter, setFederadoFilter] = useState('all'); // all | active | expired
+  const [federadoFilter, setFederadoFilter] = useState('all');
   const [federarModalOpen, setFederarModalOpen] = useState(false);
 
-  // Only fetch users after auth finished and we know the user is an admin
   useEffect(() => {
     if (authLoading) return;
     if (!user) return;

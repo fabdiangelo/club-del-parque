@@ -51,51 +51,68 @@ class ReporteController {
         }
     }
 
-    async crearReporte(req, res) {
-        try {
-            const { motivo, descripcion, fecha, estado, mailUsuario, leido, tipo } = req.body;
-            
-            // Validaciones básicas
-            if (!motivo || !descripcion) {
-                return res.status(400).json({ error: "Motivo y descripción son requeridos" });
-            }
+async crearReporte(req, res) {
+  try {
+    const {
+      motivo,
+      descripcion,
+      fecha,
+      estado,
+      mailUsuario,
+      leido,
+      tipo,
+      partidoId: partidoIdBody,
+      partidoID: partidoIDBody,
+    } = req.body;
 
-            const reporte = { 
-                motivo, 
-                descripcion, 
-                fecha: fecha || new Date().toISOString(), 
-                estado: estado || 'pendiente', 
-                mailUsuario, 
-                leido: leido || false,
-                tipo: tipo || 'reporte_bug' 
-            };
-            
-            const resultado = await this.crearReporteUseCase.execute(reporte);
-            res.status(201).json(resultado);
-
-
-            // obtener usuario por idUsuario
-            //const usuario = await this.usuarioRepository.obtenerPorId(idUsuario);
-            // temporalmente
-            const asunto = `Nuevo reporte creado: ${resultado}`;
-            const mensaje = `Motivo: ${motivo}\nDescripción: ${descripcion}`;
-
-            const telefono = process.env.TELEFONOTEMPORAL;
-            const destinatario = process.env.MAILTEMPORAL;
-
-            const mensajeWPP = `Nuevo reporte ha sido creado: ${resultado}\n${mensaje}\n\nUsuario: ${mailUsuario}`;
-
-            this.enviarWPPReporte(mensajeWPP, telefono);
-
-            this.enviarMailReporte(destinatario, asunto, mensaje);
-
-            
-
-        } catch (error) {
-            console.error("Error al crear reporte:", error);
-            res.status(500).json({ error: "Error al crear reporte" });
-        }
+    if (!motivo || !descripcion) {
+      return res.status(400).json({ error: "Motivo y descripción son requeridos" });
     }
+
+    // normalizamos nombre del campo
+    const partidoId = partidoIdBody ?? partidoIDBody ?? null;
+
+    // (opcional) validación leve si es disputa
+     if ((tipo === "disputa_resultado" || motivo === "disputa_resultado") && !partidoId) {
+       return res.status(400).json({ error: "partidoId es requerido para disputas de resultado" });
+     }
+
+    const reporte = {
+      motivo,
+      descripcion,
+      fecha: fecha || new Date().toISOString(),
+      estado: estado || "pendiente",
+      mailUsuario,
+      leido: leido || false,
+      tipo: tipo || "reporte_bug",
+      partidoId, // 👈 persistimos referencia al partido si vino
+    };
+
+    const resultado = await this.crearReporteUseCase.execute(reporte);
+    res.status(201).json(resultado);
+
+    // Notificaciones opcionales (con partidoId si existe)
+    const asunto = `Nuevo reporte creado: ${resultado}`;
+    const mensaje =
+      `Motivo: ${motivo}\n` +
+      `Descripción: ${descripcion}` +
+      (partidoId ? `\nPartido: ${partidoId}` : "");
+
+    const telefono = process.env.TELEFONOTEMPORAL;
+    const destinatario = process.env.MAILTEMPORAL;
+
+    const mensajeWPP =
+      `Nuevo reporte ha sido creado: ${resultado}\n` +
+      `${mensaje}\n\nUsuario: ${mailUsuario || "—"}`;
+
+    this.enviarWPPReporte(mensajeWPP, telefono);
+    this.enviarMailReporte(destinatario, asunto, mensaje);
+  } catch (error) {
+    console.error("Error al crear reporte:", error);
+    res.status(500).json({ error: "Error al crear reporte" });
+  }
+}
+
 
     async obtenerReportes(req, res) {
         try {
