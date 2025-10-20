@@ -34,11 +34,14 @@ import { RoleProtectedRoute } from './contexts/AuthProvider';
 import SinSesion from './components/SinSesion';
 import SoloAdmin from './components/SoloAdmin';
 
+import CategoriasGestor from './pages/CategoriasGestor';
+import FiltrosGestor from './pages/FiltrosGestor';
 function App() {
   return (
     <Routes>
       {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
+      <Route path="/gestor-filtros" element={<FiltrosGestor />} />
       <Route path="/canchas" element={<CanchasGestor />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
@@ -92,6 +95,12 @@ function App() {
           </RoleProtectedRoute>
         }
       />
+      <Route path="/gestor-categorias" element={<CategoriasGestor />} />
+      {/* Rutas Usuarios */}
+      <Route path="/perfil" element={<Perfil />} />
+      <Route path="/perfil/editar" element={<EditarPerfil />} />
+      <Route path="/chats" element={<Chats />} />
+      <Route path="/chats/:id" element={<Chats />} />
 
 
       {/* Rutas Federados (federado o administrador) */}

@@ -13,7 +13,11 @@ export default function ResultadosPage() {
 
   useEffect(() => {
     const fetchPartidos = async () => {
-      if (!user?.uid) return;
+      if (!user?.uid) {
+        setPartidos([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setErr("");
       try {
@@ -43,47 +47,48 @@ export default function ResultadosPage() {
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
       <NavbarBlanco transparent={false} />
       <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
-        <h1 className="text-3xl font-extrabold mb-6">Acuerdo de Resultados</h1>
+        <h1 className="text-3xl font-extrabold text-gray-800">
+          Acuerdo de Resultados
+        </h1>
 
         {loading ? (
-          <div className="text-center text-neutral-600">Cargando partidos…</div>
+          <div className="mt-6 text-gray-600">Cargando partidos…</div>
         ) : err ? (
-          <div className="text-red-500">{err}</div>
+          <div className="mt-6 text-red-600 font-semibold">{err}</div>
         ) : partidos.length === 0 ? (
-          <div className="card border border-neutral-200 bg-neutral-50 shadow">
-            <div className="card-body items-center justify-center min-h-[220px] text-neutral-900">
-              <p className="text-lg font-medium">
-                No tienes partidos pendientes de resultado 🎉
-              </p>
-            </div>
-          </div>
+          <p className="mt-8 text-2xl font-extrabold text-gray-700">
+            No tienes partidos pendientes de resultado
+          </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table w-full border border-neutral-200 rounded-xl">
-              <thead className="bg-neutral-100">
+          <div className="mt-6 overflow-x-auto">
+            <table className="table-auto w-full border border-gray-200 shadow-sm rounded-xl bg-white">
+              <thead className="bg-gray-100 text-gray-700">
                 <tr>
-                  <th className="px-4 py-2 text-left">Fecha</th>
-                  <th className="px-4 py-2 text-left">Etapa</th>
-                  <th className="px-4 py-2 text-left">Tipo</th>
-                  <th className="px-4 py-2 text-left">Acciones</th>
+                  <th className="px-4 py-3 text-left font-semibold">Fecha</th>
+                  <th className="px-4 py-3 text-left font-semibold">Etapa</th>
+                  <th className="px-4 py-3 text-left font-semibold">Tipo</th>
+                  <th className="px-4 py-3 text-left font-semibold">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-200">
                 {partidos.map((p) => (
-                  <tr key={p.id} className="hover:bg-neutral-50">
-                    <td className="px-4 py-2">
-                      {p.fecha
-                        ? new Date(p.fecha).toLocaleDateString()
-                        : "—"}
+                  <tr
+                    key={p.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    <td className="px-4 py-3 text-gray-800">
+                      {p.fecha ? new Date(p.fecha).toLocaleDateString() : "—"}
                     </td>
-                    <td className="px-4 py-2">{p.etapa || "—"}</td>
-                    <td className="px-4 py-2">{p.tipoPartido || "—"}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3 text-gray-800">{p.etapa || "—"}</td>
+                    <td className="px-4 py-3 text-gray-800">
+                      {p.tipoPartido || "—"}
+                    </td>
+                    <td className="px-4 py-3">
                       <Link
                         to={`/partidos/${p.id}/acuerdo`}
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-sm normal-case"
                       >
-                        Proponer/Confirmar resultado
+                        Proponer / Confirmar
                       </Link>
                     </td>
                   </tr>

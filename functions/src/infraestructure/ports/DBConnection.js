@@ -53,6 +53,15 @@ export default class DBConnection{
   if (op !== "==") throw new Error("Only '==' supported by getByField alias");
   return { items: await this.getItemsByField(collection, field, value) };
 }
+  async applyOrder(pairs) {
+    for (const { id, orden } of pairs) {
+      await this.updatePartial(id, { orden });
+    }
+    return true;
+  }
+    async findByNombre(nombre) {
+    return await this.db.getItemsByField(this.collection, "nombre", nombre);
+  }
 
 async getAllItemsList(collection) {
   return this.getAllItems(collection);
