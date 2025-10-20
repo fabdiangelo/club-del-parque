@@ -13,12 +13,14 @@ export default function FixtureCampeonato() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
+  const [loading, setLoading] = useState(true);
   const [campeonato, setCampeonato] = useState(null);
   const [etapa, setEtapa] = useState(null);
   const [etapaActual, setEtapaActual] = useState(0);
 
   async function load() {
     try {
+      setLoading(true);
       const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include'});
       if (res.ok) {
         const data = await res.json();
@@ -53,6 +55,8 @@ export default function FixtureCampeonato() {
       } 
     } catch (e) {
       console.log(e)
+    } finally{
+      setLoading(false);
     }
   }
   useEffect(() => {
@@ -69,6 +73,38 @@ export default function FixtureCampeonato() {
     }
   };
 
+  if(loading){
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando Campeonato...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if(!campeonato && !loading){
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-base-200 p-6">
+        <div className="card w-full max-w-md bg-base-100 shadow-md">
+          <div className="card-body text-center">
+            <h2 className="card-title">Campeonato no encontrado</h2>
+            <p>Lo sentimos, pero parece que el campeonato al que intentas acceder no existe.</p>
+            <div className="card-actions justify-center mt-4">
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/campeonatos")}
+              >
+                Volver a la lista de campeonatos
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8 mt-14">
       <NavbarBlanco />
@@ -82,18 +118,23 @@ export default function FixtureCampeonato() {
           requisitosParticipacion={campeonato?.requisitosParticipacion}
           user={user}
           participantes={campeonato?.federadosCampeonatoIDs}
+          dobles={campeonato?.dobles}
           onRefresh={load}
         />
       </div>
 
       <div className="max-w-7xl mx-auto mb-6 flex items-center justify-center gap-4">
-        <button
-          onClick={() => navegarEtapa('prev')}
-          disabled={etapaActual === 0}
-          className="p-2 rounded-lg bg-white shadow hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
+        {etapaActual !== 0 ? (
+          <button
+            onClick={() => navegarEtapa('prev')}
+            disabled={etapaActual === 0}
+            className="p-2 rounded-lg bg-white shadow hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+        ): (
+          <span className="w-6"></span>
+        )}
         
         <div className="bg-gray-800 text-white px-8 py-3 rounded-full shadow-lg">
           <h2 className="text-xl font-semibold text-center uppercase tracking-wide">
@@ -101,20 +142,24 @@ export default function FixtureCampeonato() {
           </h2>
         </div>
 
-        <button
-          onClick={() => navegarEtapa('next')}
-          disabled={etapaActual === campeonato?.etapas.length - 1}
-          className="p-2 rounded-lg bg-white shadow hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
+        {etapaActual !== campeonato?.etapas.length - 1 ? (
+          <button
+            onClick={() => navegarEtapa('next')}
+            disabled={etapaActual === campeonato?.etapas.length - 1}
+            className="p-2 rounded-lg bg-white shadow hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        ): (
+          <span className="w-6"></span>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto">
         {etapa?.tipoEtapa === 'roundRobin' ? (
-          <FaseGrupos grupos={etapa?.grupos} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias}/>
+          <FaseGrupos grupos={etapa?.grupos} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias} dobles={campeonato?.dobles} />
         ) : (
-          <FaseEliminacion rondas={etapa?.rondas} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias} />
+          <FaseEliminacion rondas={etapa?.rondas} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias} dobles={campeonato?.dobles} />
         )}
       </div>
     </div>
@@ -128,7 +173,12 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
   const navigate = useNavigate();
 
   const userGrupo = grupos?.find(grupo => 
-    grupo.jugadores?.some(jugador => jugador.id === user?.uid)
+    grupo.jugadores?.some(jugador => (
+      // Support dobles: jugador may be an equipo with players array
+      (jugador?.id && jugador.id === user?.uid) ||
+      (Array.isArray(jugador?.players) && jugador.players.some(p => p.id === user?.uid)) ||
+      jugador?.id === user?.uid
+    ))
   );
   
   return (
@@ -153,40 +203,69 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
                 <span className="w-16 text-center">Puntos</span>
               </div>
               {grupo.jugadores?.map((jugador, jIdx) => (
-                <>
-                  {jugador.id ? (
-                      <div
-                      key={jIdx}
-                      className={(jugador?.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
-                    >
-                      <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                        {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
+                <div key={jIdx}>
+                  {jugador ? (
+                    // If dobles, jugador may be an equipo with players array
+                    Array.isArray(jugador.players) ? (
+                      <div className={(jugador.players.some(p => p.id === user?.uid) ? "hover:bg-gray-500 bg-gray-600 " : "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}>
+                        <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                          { (jugador.players[0]?.nombre || jugador.players[1]?.nombre || '?').charAt(0) }
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-white truncate">
+                            {jugador.players.map((p, idx) => (
+                              <span key={idx}>{p?.nombre || 'Por definir'}{idx === 0 ? ' / ' : ''}</span>
+                            ))}
+                            {jugador.players.some(p => p.id === user?.uid) && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}
+                          </div>
+                        </div>
+                        {user && !jugador.players.some(p => p.id === user?.uid) && grupo.jugadores.some(j => Array.isArray(j.players) && j.players.some(p => p.id === user?.uid)) && (
+                          <button
+                            onClick={() => {
+                              const other = jugador.players.find(p => p.id && p.id !== user.uid);
+                              if (other) navigate(`/chats/${other.id}`);
+                            }}
+                            className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
+                            title="Chatear con equipo"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                          </button>
+                        )}
+                        <span className="w-12 text-center text-sm">{jugador.gj || ''} | {jugador.gp || ''}</span>
+                        <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos || ''}</span>
                       </div>
-                      <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
-                      {user && jugador.id !== user.uid && grupo.jugadores.filter(j => j.id == user.uid).length > 0 && (
-                        <button
-                          onClick={() => navigate(`/chats/${jugador.id}`)}
-                          className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
-                          title="Chatear con jugador"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                        </button>
-                      )}
-                      <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
-                      <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
-                    </div>
-                  ) : new Date(fechaInicio) > new Date() ? (
-                    <div
-                    key={jIdx}
-                      className="flex items-center bg-gray-500 rounded-lg px-3 py-3 mb-2 hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">?</div>
-                      <span className="flex-1 font-medium"><em>Por definirse</em></span>
-                      <span className="w-12 text-center text-sm"> | </span>
-                      <span className="w-16 text-center font-bold text-cyan-400">-</span>
-                    </div>
-                  ): (<></>)}
-                  </>
+                    ) : jugador.id ? (
+                      <div
+                        className={(jugador?.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
+                      >
+                        <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                          {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
+                        </div>
+                        <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
+                        {user && jugador.id !== user.uid && grupo.jugadores.filter(j => j.id == user.uid).length > 0 && (
+                          <button
+                            onClick={() => navigate(`/chats/${jugador.id}`)}
+                            className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
+                            title="Chatear con jugador"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                          </button>
+                        )}
+                        <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
+                        <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
+                      </div>
+                    ) : new Date(fechaInicio) > new Date() ? (
+                      <div
+                        className="flex items-center bg-gray-500 rounded-lg px-3 py-3 mb-2 hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">?</div>
+                        <span className="flex-1 font-medium"><em>Por definirse</em></span>
+                        <span className="w-12 text-center text-sm"> | </span>
+                        <span className="w-16 text-center font-bold text-cyan-400">-</span>
+                      </div>
+                    ) : (<></>)
+                  ) : (<></>)}
+                </div>
               ))}
             </div>
           </div>
@@ -295,14 +374,18 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                       )}
 
                       <div className={(esParticipante ? "bg-cyan-300 ": "bg-cyan-400 ") + "bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10"}>
+                        {/* Player/Team 1 */}
                         <div className="flex items-center justify-between p-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador1Nombre?.charAt(0) || (ronda.inicioDate < new Date() ? '-' : '?')}
-                            {console.log(typeof ronda.inicioDate)}
+                              {(Array.isArray(partido.jugador1) ? (partido.jugador1[0]?.nombre || partido.jugador1[1]?.nombre) : partido.jugador1Nombre || '?')?.charAt(0) || '-'}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador1Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')}
+                              {Array.isArray(partido.jugador1) ? (
+                                partido.jugador1.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}{!partido.jugador1[1]?.nombre && ' ~~~ '}</span>)
+                              ) : (
+                                partido.jugador1Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
+                              )}
                             </span>
                           </div>
                           {partido.puntaje1 !== undefined ? (
@@ -313,7 +396,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                             <span className="text-sm text-black ml-2" style={{position: 'absolute', marginTop:'3.5rem', right: '1rem'}}>Sin agendar</span>
                           )}
 
-                          {partido.estado === 'pendiente' && esParticipante && oponenteId == partido.jugador1Id && (
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador1) ? partido.jugador1.map(p => p.id).find(id => id !== user.uid) : partido.jugador1Id) && (
                             <button
                               onClick={() => navigate(`/chats/${oponenteId}`)}
                               className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
@@ -323,20 +406,25 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                             </button>
                           )}
                         </div>
-                        
+
+                        {/* Player/Team 2 */}
                         <div className="flex items-center justify-between p-3 border-t border-cyan-300 border-opacity-30">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {partido.jugador2Nombre?.charAt(0) || (ronda.inicioDate < new Date() ? '-' : '?')}
+                              {(Array.isArray(partido.jugador2) ? (partido.jugador2[0]?.nombre || partido.jugador2[1]?.nombre) : partido.jugador2Nombre || '?')?.charAt(0) || '-'}
                             </div>
                             <span className="font-medium text-black truncate">
-                              {partido.jugador2Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')}
+                              {Array.isArray(partido.jugador2) ? (
+                                partido.jugador2.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}{!partido.jugador2[1]?.nombre && ' ~~~ '}</span>)
+                              ) : (
+                                partido.jugador2Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
+                              )}
                             </span>
                           </div>
                           {partido.puntaje2 !== undefined && (
                             <span className="font-bold text-black text-lg ml-2">{partido.puntaje2}</span>
                           )}
-                          {partido.estado === 'pendiente' && esParticipante && oponenteId == partido.jugador2Id && (
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador2) ? partido.jugador2.map(p => p.id).find(id => id !== user.uid) : partido.jugador2Id) && (
                             <button
                               onClick={() => navigate(`/chats/${oponenteId}`)}
                               className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"

@@ -190,8 +190,15 @@ app.put('/campeonato/:id', (req, res) => CampeonatosController.editarCampeonato(
 app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
 app.get("/campeonatos/federados/count", (req, res) => CampeonatosFederadosController.contar(req, res));
 
+// Procesar inicio de campeonato (expirar invitaciones, combinar grupos, descalificar solitarios)
+app.post('/campeonato/:id/procesar-inicio', (req, res) => CampeonatosController.procesarInicio(req, res));
+
 // Campeonatos-Federados
 app.post("/federado-campeonato/:id/:uid", (req, res) => CampeonatosFederadosController.inscribirFederado(req, res));
+
+// Invitaciones: aceptar / rechazar
+app.put('/federado-campeonato/:id/invitacion/aceptar', (req, res) => CampeonatosFederadosController.aceptarInvitacion(req, res));
+app.put('/federado-campeonato/:id/invitacion/rechazar', (req, res) => CampeonatosFederadosController.rechazarInvitacion(req, res));
 
 // Mensajes por terceros
 app.post("/sendWhatsapp", (req, res) => SendWhatsappController.enviarMensaje(req, res));

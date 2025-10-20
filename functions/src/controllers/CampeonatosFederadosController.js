@@ -1,6 +1,7 @@
 import ContarFederadosPorRequisitos from "../usecases/Campeonatos/ContarFederadosPorRequisitos.js";
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 import InscribirFederado from "../usecases/FederadoCampeonato/InscribirFederado.js";
+import ResponderInvitacion from "../usecases/FederadoCampeonato/ResponderInvitacion.js";
 
 class CampeonatosFederadosController {
   async contar(req, res) {
@@ -31,11 +32,42 @@ class CampeonatosFederadosController {
         return res.status(403).json({ error: "Acceso no autorizado" });
       }
 
-      const campeonatoId = req.params.id || '';
-      const id = await InscribirFederado.execute(uid, campeonatoId);
+  const campeonatoId = req.params.id || '';
+  const inviteeUid = req.body?.inviteeUid || null;
+  const id = await InscribirFederado.execute(uid, campeonatoId, inviteeUid);
       return res.status(200).json({ id });
     } catch (err) {
       console.error('Error creando campeonato:', err);
+      return res.status(400).json({ error: err.message || String(err) });
+    }
+  }
+
+  async aceptarInvitacion(req, res) {
+    try {
+      const sessionCookie = req.cookies.session || "";
+      if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
+      const user = GetActualUser.execute(sessionCookie);
+      if (user.rol !== 'federado') return res.status(403).json({ error: 'Acceso no autorizado' });
+      const campeonatoId = req.params.id || '';
+      const result = await ResponderInvitacion.execute(user.uid, campeonatoId, 'aceptar');
+      return res.json(result);
+    } catch (err) {
+      console.error('aceptarInvitacion error', err);
+      return res.status(400).json({ error: err.message || String(err) });
+    }
+  }
+
+  async rechazarInvitacion(req, res) {
+    try {
+      const sessionCookie = req.cookies.session || "";
+      if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
+      const user = GetActualUser.execute(sessionCookie);
+      if (user.rol !== 'federado') return res.status(403).json({ error: 'Acceso no autorizado' });
+      const campeonatoId = req.params.id || '';
+      const result = await ResponderInvitacion.execute(user.uid, campeonatoId, 'rechazar');
+      return res.json(result);
+    } catch (err) {
+      console.error('rechazarInvitacion error', err);
       return res.status(400).json({ error: err.message || String(err) });
     }
   }

@@ -2,7 +2,7 @@ import { Trophy, Calendar, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function CampeonatoData({id = '', nombre = '', descripcion = '', inicio = '01-01-2000', fin = '01-01-2000', requisitosParticipacion = {}, user = {}, participantes = [], onRefresh, conRedireccion = false}) {
+export default function CampeonatoData({id = '', nombre = '', descripcion = '', inicio = '01-01-2000', fin = '01-01-2000', requisitosParticipacion = {}, user = {}, participantes = [], onRefresh, conRedireccion = false, dobles = false}) {
   const [procesando, setProcesando] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalAdminOpen, setModalAdminOpen] = useState(false)
@@ -13,6 +13,8 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
     descripcion: descripcion,
     inicio: inicio,
   });
+
+  const [inviteeUid, setInviteeUid] = useState('');
 
   const [display, setDisplay] = useState({
     nombre: nombre,
@@ -56,10 +58,17 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
   async function handleInscripcion() {
     try {
       setProcesando(true)
-      const res = await fetch(`/api/federado-campeonato/${id}/${user.uid}`, {
+      // If campeonato is doubles, optionally include inviteeUid in the POST body
+      let url = `/api/federado-campeonato/${id}/${user.uid}`;
+      const opts = {
         method: 'POST',
         credentials: 'include'
-      });
+      };
+      if (inviteeUid && inviteeUid.trim().length > 0) {
+        opts.headers = { 'Content-Type': 'application/json' };
+        opts.body = JSON.stringify({ inviteeUid: inviteeUid.trim() });
+      }
+      const res = await fetch(url, opts);
       if (res.ok) {
         setInscripto(true);
         if(onRefresh){
@@ -155,9 +164,15 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
           </div>
         }
 
-        {(user?.rol == 'federado' && new Date(display.inicio) >= new Date() && !(participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || inscripto)) &&
+        {(user?.rol == 'federado' && new Date(display.inicio) >= new Date() && !(participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || participantes.includes(user.uid) || inscripto)) &&
           <div>
             <span className="text-sm opacity-90">{participantes.length} Usuarios Inscriptos</span> <br />
+            { dobles && (
+            <div className="mt-3">
+              <label className="text-sm">Invitar a (UID) - opcional</label>
+              <input value={inviteeUid} onChange={(e) => setInviteeUid(e.target.value)} placeholder="uid del invitado" className="input input-bordered w-full mt-1" />
+            </div>
+            )}
             <button className='btn btn-info w-full md:w-auto mt-4' onClick={handleInscripcion} disabled={procesando} >{procesando ? 'Inscribiendo...' : 'Inscribirme'}</button>
             <div className="flex items-center gap-2 mt-4">
               <span className="text-sm opacity-70">¿No estás seguro si puedes participar en este torneo?</span>

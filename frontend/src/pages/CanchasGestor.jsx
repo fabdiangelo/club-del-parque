@@ -1,6 +1,6 @@
 // src/pages/CanchasGestor.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import { Plus, Search, X, Trash2, RefreshCw, Eye, Loader2 } from "lucide-react";
 import bgImg from "../assets/RankingsBackground.png"; // reutilizamos el mismo fondo para coherencia visual
 
@@ -168,7 +168,7 @@ export default function CanchasGestor() {
       <div className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Navbar />
+        <NavbarBlanco />
 
         {/* Header */}
         <header className="w-full">

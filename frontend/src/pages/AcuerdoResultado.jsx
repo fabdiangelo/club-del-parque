@@ -1,7 +1,7 @@
 // src/pages/AcuerdoResultado.jsx (white theme forced + tie-break support)
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import { useAuth } from "../contexts/AuthProvider";
 
 // 🔔 Realtime DB para notificaciones
@@ -609,8 +609,8 @@ const onConfirmar = async (acepta) => {
 
   if (!partido) {
     return (
-      <div className="min-h-screen bg-white text-neutral-900">
-        <Navbar />
+      <div className="min-h-screen bg-base-200">
+        <NavbarBlanco />
         <div className="max-w-xl mx-auto px-4" style={{ paddingTop: "6rem" }}>
           <h1 className="text-2xl font-bold">Acuerdo de resultado</h1>
           <p className="mt-2 text-red-600">
@@ -634,8 +634,13 @@ const onConfirmar = async (acepta) => {
       : "pendiente";
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <Navbar />
+    <div className="min-h-screen bg-base-200">
+      <NavbarBlanco />
+      <main className="mx-auto max-w-6xl px-6 lg:px-8 w-full pt-24 pb-24">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-extrabold">Acuerdo de resultado</h1>
+          <Link to="/resultados" className="btn btn-outline btn-sm">Volver</Link>
+        </div>
 
       {/* HERO / encabezado con imagen tenue como en Homepage */}
       <header
