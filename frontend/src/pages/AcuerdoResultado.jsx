@@ -641,6 +641,7 @@ const onConfirmar = async (acepta) => {
           <h1 className="text-3xl font-extrabold">Acuerdo de resultado</h1>
           <Link to="/resultados" className="btn btn-outline btn-sm">Volver</Link>
         </div>
+      </main>
 
       {/* HERO / encabezado con imagen tenue como en Homepage */}
       <header
