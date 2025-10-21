@@ -1,10 +1,8 @@
-// src/pages/AcuerdoResultado.jsx (white theme forced + tie-break support)
+// src/pages/AcuerdoResultado.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import NavbarBlanco from "../components/NavbarBlanco";
 import { useAuth } from "../contexts/AuthProvider";
-
-// 🔔 Realtime DB para notificaciones
 import { ref, push, set } from "firebase/database";
 import { dbRT } from "../utils/FirebaseService.js";
 
@@ -107,8 +105,12 @@ function SectionCard({ title, subtitle, children, right }) {
     <section className="rounded-3xl bg-white backdrop-blur shadow-lg border border-neutral-200 p-6">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <h2 className="text-xl font-semibold m-0 text-neutral-900">{title}</h2>
-          {subtitle && <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>}
+          <h2 className="text-xl font-semibold m-0 text-neutral-900">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>
+          )}
         </div>
         {right}
       </div>
@@ -117,12 +119,26 @@ function SectionCard({ title, subtitle, children, right }) {
   );
 }
 
-function TeamCard({ title, players = [], selected, onSelect, disabled, highlight }) {
+function TeamCard({
+  title,
+  players = [],
+  selected,
+  onSelect,
+  disabled,
+  highlight,
+}) {
   const names = players.map(
-    (p) => `${p?.nombre ?? ""} ${p?.apellido ?? ""}`.trim() || p?.email || p?.id || "—"
+    (p) =>
+      `${p?.nombre ?? ""} ${p?.apellido ?? ""}`.trim() ||
+      p?.email ||
+      p?.id ||
+      "—"
   );
   const photos = players.map((p) =>
-    avatarFor(`${p?.nombre ?? ""} ${p?.apellido ?? ""}`, p?.fotoURL || p?.photoURL)
+    avatarFor(
+      `${p?.nombre ?? ""} ${p?.apellido ?? ""}`,
+      p?.fotoURL || p?.photoURL
+    )
   );
 
   return (
@@ -149,9 +165,15 @@ function TeamCard({ title, players = [], selected, onSelect, disabled, highlight
             ))}
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-neutral-900">{names.join(" / ")}</h3>
+            <h3 className="text-xl font-semibold text-neutral-900">
+              {names.join(" / ")}
+            </h3>
             <p className="text-xs text-neutral-500">
-              {players.length === 1 ? "Singles" : players.length === 2 ? "Doubles" : "Equipo"}
+              {players.length === 1
+                ? "Singles"
+                : players.length === 2
+                ? "Doubles"
+                : "Equipo"}
             </p>
           </div>
         </div>
@@ -176,18 +198,46 @@ function TeamCard({ title, players = [], selected, onSelect, disabled, highlight
   );
 }
 
-/* ---- SetRow con tie-break opcional ---- */
+/* ---- SetRow con intercambio ⇄ y reglas de validación estrictas ---- */
 function SetRow({ idx, value, onChange, onRemove, disabled }) {
-  const { a, b, tba, tbb } = value;
-
-  // Un set requiere tiebreak si termina 7-6 o 6-7 (o, en general, >=6 y diferencia de 1)
-  const tbNeeded =
-    Number.isFinite(a) &&
-    Number.isFinite(b) &&
-    (a >= 6 || b >= 6) &&
-    Math.abs(a - b) === 1;
+  const clampInt = (n, lo, hi) =>
+    Math.max(lo, Math.min(hi, Number.isFinite(n) ? n : 0));
 
   const setVal = (patch) => onChange({ ...value, ...patch });
+
+  const a = clampInt(value?.a ?? 0, 0, 7);
+  const b = clampInt(value?.b ?? 0, 0, 7);
+  const tba = Number.isFinite(value?.tba) ? clampInt(value?.tba, 0, 99) : null;
+  const tbb = Number.isFinite(value?.tbb) ? clampInt(value?.tbb, 0, 99) : null;
+
+  // Mostrar TB solo cuando es 7-6 / 6-7
+  const is76 = (a === 7 && b === 6) || (a === 6 && b === 7);
+
+  // Intercambiar lados (incluye tiebreak cuando corresponde)
+  const swapSides = () => {
+    if (disabled) return;
+    setVal({ a: b, b: a, tba: is76 ? tbb : null, tbb: is76 ? tba : null });
+  };
+
+  // onChange de inputs: clamp inmediato
+  const setA = (val) => {
+    if (disabled) return;
+    const next = clampInt(parseInt(val || "0", 10), 0, 7);
+    setVal({ a: next, ...(is76 ? {} : { tba: null, tbb: null }) });
+  };
+  const setB = (val) => {
+    if (disabled) return;
+    const next = clampInt(parseInt(val || "0", 10), 0, 7);
+    setVal({ b: next, ...(is76 ? {} : { tba: null, tbb: null }) });
+  };
+  const setTBA = (val) => {
+    if (disabled) return;
+    setVal({ tba: clampInt(parseInt(val || "0", 10), 0, 99) });
+  };
+  const setTBB = (val) => {
+    if (disabled) return;
+    setVal({ tbb: clampInt(parseInt(val || "0", 10), 0, 99) });
+  };
 
   return (
     <div className="grid grid-cols-12 gap-3 items-start">
@@ -195,26 +245,39 @@ function SetRow({ idx, value, onChange, onRemove, disabled }) {
         Set {idx + 1}
       </div>
 
-      <div className="col-span-6 md:col-span-4">
+      <div className="col-span-5 md:col-span-4">
         <input
           type="number"
           min={0}
-          max={99}
+          max={7}
           value={Number.isFinite(a) ? a : ""}
-          onChange={(e) => setVal({ a: parseInt(e.target.value || "0", 10) })}
+          onChange={(e) => setA(e.target.value)}
           className="input input-bordered w-full text-center"
           placeholder="0"
           disabled={disabled}
         />
       </div>
 
-      <div className="col-span-6 md:col-span-4">
+      <div className="col-span-2 md:col-span-2 flex items-center justify-center">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={swapSides}
+          disabled={disabled}
+          title="Intercambiar marcadores"
+          aria-label="Intercambiar marcadores"
+        >
+          ⇄
+        </button>
+      </div>
+
+      <div className="col-span-5 md:col-span-4">
         <input
           type="number"
           min={0}
-          max={99}
+          max={7}
           value={Number.isFinite(b) ? b : ""}
-          onChange={(e) => setVal({ b: parseInt(e.target.value || "0", 10) })}
+          onChange={(e) => setB(e.target.value)}
           className="input input-bordered w-full text-center"
           placeholder="0"
           disabled={disabled}
@@ -233,7 +296,7 @@ function SetRow({ idx, value, onChange, onRemove, disabled }) {
         </button>
       </div>
 
-      {tbNeeded && (
+      {is76 && (
         <div className="col-span-12 grid grid-cols-12 gap-3 items-center -mt-1">
           <div className="col-span-12 md:col-span-2 text-xs text-neutral-500">
             Tie-break
@@ -244,7 +307,7 @@ function SetRow({ idx, value, onChange, onRemove, disabled }) {
               min={0}
               max={99}
               value={Number.isFinite(tba) ? tba : ""}
-              onChange={(e) => setVal({ tba: parseInt(e.target.value || "0", 10) })}
+              onChange={(e) => setTBA(e.target.value)}
               className="input input-bordered w-full text-center"
               placeholder="A"
               disabled={disabled}
@@ -256,7 +319,7 @@ function SetRow({ idx, value, onChange, onRemove, disabled }) {
               min={0}
               max={99}
               value={Number.isFinite(tbb) ? tbb : ""}
-              onChange={(e) => setVal({ tbb: parseInt(e.target.value || "0", 10) })}
+              onChange={(e) => setTBB(e.target.value)}
               className="input input-bordered w-full text-center"
               placeholder="B"
               disabled={disabled}
@@ -274,7 +337,7 @@ export default function AcuerdoResultado() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Forzar tema blanco (daisyUI) mientras este componente esté montado
+  // Forzar tema blanco (daisyUI)
   useEffect(() => {
     const prev = document.documentElement.getAttribute("data-theme");
     document.documentElement.setAttribute("data-theme", "light");
@@ -292,20 +355,15 @@ export default function AcuerdoResultado() {
   const [federados, setFederados] = useState([]);
 
   // resultado por sets (con tiebreak)
-  // Forma: { a: gamesA, b: gamesB, tba: tieA (opcional), tbb: tieB (opcional) }
   const [sets, setSets] = useState([{ a: 6, b: 4, tba: null, tbb: null }]);
 
-  // String del resultado, ej: "6-4, 7-6(7-4)"
+  // STR resultado estricta: tiebreak solo si 7-6 / 6-7 y ambos TB presentes
   const resultadoString = useMemo(() => {
     return sets
       .map(({ a, b, tba, tbb }) => {
-        const tbNeeded =
-          Number.isFinite(a) &&
-          Number.isFinite(b) &&
-          (a >= 6 || b >= 6) &&
-          Math.abs(a - b) === 1;
         const base = `${a ?? 0}-${b ?? 0}`;
-        if (tbNeeded && Number.isFinite(tba) && Number.isFinite(tbb)) {
+        const isTB = (a === 7 && b === 6) || (a === 6 && b === 7);
+        if (isTB && Number.isFinite(tba) && Number.isFinite(tbb)) {
           return `${base}(${tba}-${tbb})`;
         }
         return base;
@@ -313,16 +371,16 @@ export default function AcuerdoResultado() {
       .join(", ");
   }, [sets]);
 
-  // selección de ganador por equipo (A | B)
   const [winnerSide, setWinnerSide] = useState("A");
-
-  // compat con tu flujo actual
   const [submitting, setSubmitting] = useState(false);
 
   // Parsear resultados existentes, aceptando 7-6(7-4)
   const parseResultado = (txt) => {
     if (!txt || typeof txt !== "string") return null;
-    const parts = txt.split(",").map((s) => s.trim()).filter(Boolean);
+    const parts = txt
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const re = /^(\d+)[-–](\d+)(?:\((\d+)[-–](\d+)\))?$/;
     const out = [];
     for (const p of parts) {
@@ -347,8 +405,9 @@ export default function AcuerdoResultado() {
       setPartido(p);
       setFederados(Array.isArray(fs) ? fs : []);
 
-      // prefill si hay propuesta/resultado previo (admite tie-break)
-      const existingRes = p?.propuestaResultado?.resultado || p?.resultado || "";
+      // prefill sets desde propuesta/resultado (admite TB)
+      const existingRes =
+        p?.propuestaResultado?.resultado || p?.resultado || "";
       const parsed = parseResultado(existingRes);
       if (parsed && parsed.length) setSets(parsed);
     } catch (e) {
@@ -379,7 +438,7 @@ export default function AcuerdoResultado() {
     [user, jugadoresIds]
   );
 
-  // federados map
+  // federados map y helpers de nombre
   const fedMap = useMemo(
     () => new Map(federados.map((f) => [f.id, f])),
     [federados]
@@ -391,15 +450,25 @@ export default function AcuerdoResultado() {
     return f || { id: idOrObj, nombre: idOrObj };
   };
 
-  // Detectamos equipos de forma robusta
+  const displayNameById = (uid) => {
+    if (!uid) return "—";
+    const f = fedMap.get(uid);
+    if (f) {
+      const full = `${f?.nombre ?? ""} ${f?.apellido ?? ""}`.trim();
+      return full || f.email || uid;
+    }
+    return uid;
+  };
+
   const equipoAIds = useMemo(() => {
     const eA = partido?.equipoA || partido?.jugadoresA || partido?.equipo1;
     if (Array.isArray(eA) && eA.length)
       return eA.map((x) => (typeof x === "object" ? x.id : x));
     if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
-      return (partido?.tipoPartido === "dobles"
-        ? jugadoresIds.slice(0, 2)
-        : [jugadoresIds[0]]
+      return (
+        partido?.tipoPartido === "dobles"
+          ? jugadoresIds.slice(0, 2)
+          : [jugadoresIds[0]]
       ).filter(Boolean);
     }
     return [];
@@ -410,19 +479,32 @@ export default function AcuerdoResultado() {
     if (Array.isArray(eB) && eB.length)
       return eB.map((x) => (typeof x === "object" ? x.id : x));
     if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
-      return (partido?.tipoPartido === "dobles"
-        ? jugadoresIds.slice(2, 4)
-        : [jugadoresIds[1]]
+      return (
+        partido?.tipoPartido === "dobles"
+          ? jugadoresIds.slice(2, 4)
+          : [jugadoresIds[1]]
       ).filter(Boolean);
     }
     return [];
   }, [partido, jugadoresIds]);
 
-  const equipoA = useMemo(() => equipoAIds.map(resolvePlayer), [equipoAIds, fedMap]);
-  const equipoB = useMemo(() => equipoBIds.map(resolvePlayer), [equipoBIds, fedMap]);
+  const equipoA = useMemo(
+    () => equipoAIds.map(resolvePlayer),
+    [equipoAIds, fedMap]
+  );
+  const equipoB = useMemo(
+    () => equipoBIds.map(resolvePlayer),
+    [equipoBIds, fedMap]
+  );
 
-  const isInA = useMemo(() => equipoAIds.includes(user?.uid || user?.id), [equipoAIds, user]);
-  const isInB = useMemo(() => equipoBIds.includes(user?.uid || user?.id), [equipoBIds, user]);
+  const isInA = useMemo(
+    () => equipoAIds.includes(user?.uid || user?.id),
+    [equipoAIds, user]
+  );
+  const isInB = useMemo(
+    () => equipoBIds.includes(user?.uid || user?.id),
+    [equipoBIds, user]
+  );
 
   const yaFinalizado =
     partido?.estado === "finalizado" ||
@@ -430,12 +512,38 @@ export default function AcuerdoResultado() {
 
   const propuesta = partido?.propuestaResultado || null;
   const propuestaPendiente = !!(propuesta && !yaFinalizado);
-  const yoPropuse = propuestaPendiente && propuesta.propuestoPor === (user?.uid || user?.id);
-  const puedoConfirmar = propuestaPendiente && !yoPropuse && soyJugador;
+  const yoPropuse =
+    propuestaPendiente && propuesta.propuestoPor === (user?.uid || user?.id);
 
-  const tipoPartido = partido?.tipoPartido || (equipoAIds.length === 2 ? "dobles" : "singles");
+  // --- NUEVO: lado (A/B) del usuario y del proponente
+  const sideOf = useCallback(
+    (uid) => {
+      if (!uid) return null;
+      if (equipoAIds.includes(uid)) return "A";
+      if (equipoBIds.includes(uid)) return "B";
+      return null;
+    },
+    [equipoAIds, equipoBIds]
+  );
 
-  // ganador auto por sets (según games del set)
+  const myUid = user?.uid || user?.id;
+  const proponenteUid = propuesta?.propuestoPor || null;
+  const mySide = sideOf(myUid);
+  const proponenteSide = sideOf(proponenteUid);
+  const soyDelEquipoOpuesto =
+    Boolean(propuestaPendiente) &&
+    Boolean(mySide) &&
+    Boolean(proponenteSide) &&
+    mySide !== proponenteSide;
+
+  // Solo confirma un jugador del equipo contrario
+  const puedoConfirmar =
+    propuestaPendiente && soyJugador && soyDelEquipoOpuesto;
+
+  const tipoPartido =
+    partido?.tipoPartido || (equipoAIds.length === 2 ? "dobles" : "singles");
+
+  // ganador auto por sets
   const computedWinnerSide = useMemo(() => {
     let aw = 0,
       bw = 0;
@@ -447,42 +555,88 @@ export default function AcuerdoResultado() {
     return aw > bw ? "A" : "B";
   }, [sets]);
 
-  // permisos
-  const canEdit =
+  // ======== PERMISOS / READ-ONLY ========
+  const canEditBase =
     (isAdmin || soyJugador) &&
     !yaFinalizado &&
     partido?.estadoResultado !== "en_disputa";
-  const editLockedByProposal = yoPropuse && propuestaPendiente; // no editar luego de proponer
 
-  // UI handlers sets
-  const addSet = () => setSets((prev) => [...prev, { a: 0, b: 0, tba: null, tbb: null }]);
-  const updateSet = (i, patch) =>
-    setSets((prev) => prev.map((s, idx) => (idx === i ? patch : s)));
-  const removeSet = (i) =>
-    setSets((prev) => prev.filter((_, idx) => idx !== i));
-  const handleAutoWinner = () => {
-    if (computedWinnerSide) setWinnerSide(computedWinnerSide);
-  };
+  // Con propuesta pendiente, nadie edita (solo confirmar/rechazar si corresponde)
+  const editingEnabled = canEditBase && !propuestaPendiente;
 
-  // Validación de sets + tiebreak
+  // Al cargar, si hay propuesta y estoy en flujo de confirmación, setear ganador visual desde la propuesta
+  useEffect(() => {
+    if (propuestaPendiente && puedoConfirmar) {
+      const propWin = propuesta?.ganadores || [];
+      const winSide = propWin.some((id) => equipoAIds.includes(id)) ? "A" : "B";
+      setWinnerSide(winSide);
+      // sets ya se llenan desde propuesta.resultado en reload()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    propuestaPendiente,
+    puedoConfirmar,
+    JSON.stringify(propuesta?.ganadores),
+  ]);
+
+  // Validación estricta de sets
   const validateSets = (arr) => {
     if (!arr.length) return "Agrega al menos 1 set.";
     for (const { a, b, tba, tbb } of arr) {
       if (!Number.isFinite(a) || !Number.isFinite(b)) {
         return "Revisa los valores de cada set.";
       }
-      const tbNeeded =
-        (a >= 6 || b >= 6) && Math.abs(a - b) === 1; // 7-6 o 6-7 típicamente
-      if (tbNeeded && !(Number.isFinite(tba) && Number.isFinite(tbb))) {
-        return "Completa los puntos del tie-break en los sets 7-6 / 6-7.";
+      if (a < 0 || b < 0 || a > 7 || b > 7) {
+        return "Los games deben estar entre 0 y 7.";
+      }
+      if (a === b) {
+        return "Un set no puede terminar empatado.";
+      }
+
+      const w = Math.max(a, b);
+      const l = Math.min(a, b);
+
+      if (!(w === 6 || w === 7)) {
+        return "El ganador del set debe tener 6 o 7 games.";
+      }
+
+      if (w === 6) {
+        if (!(l >= 0 && l <= 4)) {
+          return "Si el ganador tiene 6, el perdedor debe tener entre 0 y 4.";
+        }
+        if (Number.isFinite(tba) || Number.isFinite(tbb)) {
+          return "El tiebreak solo corresponde en 7-6/6-7.";
+        }
+      }
+
+      if (w === 7) {
+        if (l !== 6) {
+          return "Si el ganador tiene 7, el perdedor debe tener 6 (7-6).";
+        }
+        if (!(Number.isFinite(tba) && Number.isFinite(tbb))) {
+          return "En 7-6 se requiere tiebreak (A y B).";
+        }
       }
     }
     return null;
   };
 
+  // UI handlers sets
+  const addSet = () =>
+    editingEnabled &&
+    setSets((prev) => [...prev, { a: 0, b: 0, tba: null, tbb: null }]);
+  const updateSet = (i, patch) =>
+    editingEnabled &&
+    setSets((prev) => prev.map((s, idx) => (idx === i ? patch : s)));
+  const removeSet = (i) =>
+    editingEnabled && setSets((prev) => prev.filter((_, idx) => idx !== i));
+  const handleAutoWinner = () => {
+    if (editingEnabled && computedWinnerSide) setWinnerSide(computedWinnerSide);
+  };
+
   // submit
   const onProponer = async () => {
-    if (!canEdit || editLockedByProposal) return;
+    if (!editingEnabled) return;
 
     const errSets = validateSets(sets);
     if (errSets) return alert(errSets);
@@ -507,7 +661,6 @@ export default function AcuerdoResultado() {
         }),
       });
 
-      // Notificar al/los otros jugadores
       const miUid = user?.uid || user?.id;
       const otros = jugadoresIds.filter((j) => j !== miUid);
       await notificarAcuerdoPartido(
@@ -525,78 +678,88 @@ export default function AcuerdoResultado() {
     }
   };
 
-const onConfirmar = async (acepta) => {
-  if (!puedoConfirmar) return;
+  const onConfirmar = async (acepta) => {
+    // Solo si soy del equipo contrario y NO está en disputa
+    if (!puedoConfirmar || partido?.estadoResultado === "en_disputa") return;
 
-  setSubmitting(true);
-  setErr("");
-  try {
-    if (acepta) {
-      await fetchJSON(`/partidos/${id}/ganadores`, {
-        method: "POST",
-        body: JSON.stringify({ ganadores: propuesta.ganadores }),
-      });
-      await fetchJSON(`/partidos/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          resultado: propuesta.resultado,
-          estado: "finalizado",
-          propuestaResultado: null,
-          estadoResultado: "confirmado",
-          confirmadoPor: user?.uid || user?.id,
-          fechaConfirmado: new Date().toISOString(),
-        }),
-      });
-      await notificarAcuerdoPartido(
-        jugadoresIds,
-        id,
-        "El resultado del partido fue confirmado."
+    setSubmitting(true);
+    setErr("");
+    try {
+      if (acepta) {
+        await fetchJSON(`/partidos/${id}/ganadores`, {
+          method: "POST",
+          body: JSON.stringify({ ganadores: propuesta.ganadores }),
+        });
+        await fetchJSON(`/partidos/${id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            resultado: propuesta.resultado,
+            estado: "finalizado",
+            propuestaResultado: null,
+            estadoResultado: "confirmado",
+            confirmadoPor: user?.uid || user?.id,
+            fechaConfirmado: new Date().toISOString(),
+          }),
+        });
+        await notificarAcuerdoPartido(
+          jugadoresIds,
+          id,
+          "El resultado del partido fue confirmado."
+        );
+      } else {
+        const mailDelUsuario =
+          user?.email ||
+          user?.correo ||
+          user?.mail ||
+          (() => {
+            const f = federados?.find?.(
+              (x) => x.id === (user?.uid || user?.id)
+            );
+            return f?.email || f?.mail || "@desconocido";
+          })();
+
+        await fetchJSON(`/reportes`, {
+          method: "POST",
+          body: JSON.stringify({
+            motivo: "disputa_resultado",
+            tipo: "disputa_resultado",
+            descripcion: `Discrepancia en resultado reportada por ${mailDelUsuario}`,
+            partidoId: id,
+            mailUsuario: mailDelUsuario,
+            fecha: new Date().toISOString(),
+            leido: false,
+            estado: "pendiente",
+          }),
+        });
+
+        await fetchJSON(`/partidos/${id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            estadoResultado: "en_disputa",
+            disputaCreada: true,
+            disputaFecha: new Date().toISOString(),
+          }),
+        });
+
+        await notificarAcuerdoPartido(
+          jugadoresIds,
+          id,
+          "Hay una disputa en el resultado del partido."
+        );
+      }
+
+      await reload();
+      alert(
+        acepta
+          ? "Resultado confirmado. ¡Gracias!"
+          : "Se registró la disputa. Un administrador resolverá."
       );
-    } else {
-      // Registrar un reporte de disputa
-      await fetchJSON(`/reportes`, {
-        method: "POST",
-        body: JSON.stringify({
-          motivo: "disputa_resultado",
-          descripcion: "Discrepancia en resultado reportada por jugador",
-          // extras opcionales
-          tipo: "disputa_resultado",
-          partidoID: id,
-          jugadores: jugadoresIds,
-          mailUsuario: user?.email ?? null,
-          fecha: new Date().toISOString(),
-          estado: "pendiente",
-          leido: false,
-        }),
-      });
-      await fetchJSON(`/partidos/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          estadoResultado: "en_disputa",
-          disputaCreada: true,
-          disputaFecha: new Date().toISOString(),
-        }),
-      });
-      await notificarAcuerdoPartido(
-        jugadoresIds,
-        id,
-        "Hay una disputa en el resultado del partido."
-      );
+    } catch (e) {
+      setErr(normalizeError(e));
+    } finally {
+      setSubmitting(false);
     }
-
-    await reload();
-    alert(
-      acepta
-        ? "Resultado confirmado. ¡Gracias!"
-        : "Se registró la disputa. Un administrador resolverá."
-    );
-  } catch (e) {
-    setErr(normalizeError(e));
-  } finally {
-    setSubmitting(false);
-  }
-};
-
+  };
 
   /* --------------------- Render --------------------- */
   if (authLoading || loading) {
@@ -624,14 +787,13 @@ const onConfirmar = async (acepta) => {
     );
   }
 
-  const statusKey =
-    yaFinalizado
-      ? "finalizado"
-      : partido?.estadoResultado === "en_disputa"
-      ? "disputa"
-      : propuestaPendiente
-      ? "por_confirmar"
-      : "pendiente";
+  const statusKey = yaFinalizado
+    ? "finalizado"
+    : partido?.estadoResultado === "en_disputa"
+    ? "disputa"
+    : propuestaPendiente
+    ? "por_confirmar"
+    : "pendiente";
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -643,7 +805,7 @@ const onConfirmar = async (acepta) => {
         </div>
       </main>
 
-      {/* HERO / encabezado con imagen tenue como en Homepage */}
+      {/* HERO */}
       <header
         className="relative w-full"
         style={{
@@ -679,22 +841,48 @@ const onConfirmar = async (acepta) => {
 
       {/* Contenido principal */}
       <main className="mx-auto max-w-7xl px-6 lg:px-8 w-full -mt-8 pb-24">
+        {/* Aviso de solo lectura cuando estoy confirmando/rechazando */}
+        {puedoConfirmar && (
+          <div className="mt-6 alert alert-info">
+            <span>
+              Estás revisando una <strong>propuesta de resultado</strong> hecha
+              por el equipo rival. Podés aceptarla o rechazarla.
+            </span>
+          </div>
+        )}
+        {partido?.estadoResultado === "en_disputa" && (
+          <div className="mt-6 alert alert-error">
+            <span>
+              Hay una disputa abierta. Un administrador fijará el resultado
+              final.
+            </span>
+          </div>
+        )}
+        {propuestaPendiente && !puedoConfirmar && (
+          <div className="mt-6 alert">
+            <span>
+              Hay una propuesta pendiente. Solo un jugador del{" "}
+              <strong>equipo contrario</strong> puede confirmarla o rechazarla.
+            </span>
+          </div>
+        )}
+
         {/* Teams */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TeamCard
             title="Equipo A"
             players={equipoA}
             selected={winnerSide === "A"}
-            onSelect={() => setWinnerSide("A")}
-            disabled={!canEdit || editLockedByProposal}
+            onSelect={() => editingEnabled && setWinnerSide("A")}
+            disabled={!editingEnabled}
             highlight={isInA}
           />
           <TeamCard
             title="Equipo B"
             players={equipoB}
             selected={winnerSide === "B"}
-            onSelect={() => setWinnerSide("B")}
-            disabled={!canEdit || editLockedByProposal}
+            onSelect={() => editingEnabled && setWinnerSide("B")}
+            disabled={!editingEnabled}
             highlight={isInB}
           />
         </div>
@@ -703,22 +891,35 @@ const onConfirmar = async (acepta) => {
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <SectionCard
             title="Creador de sets"
-            subtitle="Cargá los games de cada set"
+            subtitle={
+              editingEnabled
+                ? "Cargá los games de cada set"
+                : "Vista de la propuesta"
+            }
             right={
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={() => setSets([{ a: 6, b: 4, tba: null, tbb: null }])}
-                  disabled={!canEdit || editLockedByProposal}
+                  onClick={() =>
+                    editingEnabled &&
+                    setSets([{ a: 6, b: 4, tba: null, tbb: null }])
+                  }
+                  disabled={!editingEnabled}
                 >
                   Reset
                 </button>
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
-                  onClick={addSet}
-                  disabled={!canEdit || editLockedByProposal}
+                  onClick={() =>
+                    editingEnabled &&
+                    setSets((prev) => [
+                      ...prev,
+                      { a: 6, b: 4, tba: null, tbb: null },
+                    ])
+                  }
+                  disabled={!editingEnabled}
                 >
                   Añadir set
                 </button>
@@ -728,8 +929,8 @@ const onConfirmar = async (acepta) => {
             <div className="grid grid-cols-12 gap-3 pb-2 border-b border-neutral-200 mb-3 text-sm text-neutral-500">
               <div className="col-span-2">#</div>
               <div className="col-span-4 text-center">Equipo A</div>
-              <div className="col-span-4 text-center">Equipo B</div>
               <div className="col-span-2" />
+              <div className="col-span-4 text-center">Equipo B</div>
             </div>
             <div className="flex flex-col gap-3">
               {sets.map((s, i) => (
@@ -739,7 +940,7 @@ const onConfirmar = async (acepta) => {
                   value={s}
                   onChange={(val) => updateSet(i, val)}
                   onRemove={() => removeSet(i)}
-                  disabled={!canEdit || editLockedByProposal}
+                  disabled={!editingEnabled}
                 />
               ))}
             </div>
@@ -756,6 +957,22 @@ const onConfirmar = async (acepta) => {
                   <dt className="text-neutral-500">Sets</dt>
                   <dd className="font-medium">{sets.length}</dd>
                 </div>
+                {propuestaPendiente && (
+                  <>
+                    <div className="flex justify-between">
+                      <dt className="text-neutral-500">Propuesto por</dt>
+                      <dd className="font-medium">
+                        {displayNameById(propuesta?.propuestoPor)}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-neutral-500">Fecha propuesta</dt>
+                      <dd className="font-medium">
+                        {formatDT(propuesta?.fecha)}
+                      </dd>
+                    </div>
+                  </>
+                )}
               </dl>
 
               <div className="divider my-4" />
@@ -769,47 +986,27 @@ const onConfirmar = async (acepta) => {
                   type="button"
                   className="btn btn-outline btn-sm"
                   onClick={handleAutoWinner}
-                  disabled={!computedWinnerSide || !canEdit || editLockedByProposal}
+                  disabled={!computedWinnerSide || !editingEnabled}
                 >
                   Auto (por sets)
                 </button>
                 <span className="text-xs text-neutral-500">
-                  o elige manualmente arriba
+                  {editingEnabled
+                    ? "o elige manualmente arriba"
+                    : "Modo lectura"}
                 </span>
               </div>
             </SectionCard>
           </aside>
         </div>
 
-        {/* Mensajes de estado/permisos */}
-        {!soyJugador && !isAdmin && (
-          <div className="mt-6 alert alert-warning">
-            <span>
-              Solo jugadores o administradores pueden proponer/confirmar el
-              resultado.
-            </span>
-          </div>
-        )}
-        {partido?.estadoResultado === "en_disputa" && (
-          <div className="mt-6 alert alert-error">
-            <span>
-              Hay una disputa abierta. Un administrador fijará el resultado
-              final.
-            </span>
-          </div>
-        )}
-        {yaFinalizado && (
-          <div className="mt-6 alert alert-success">
-            <span>Partido finalizado. No se puede editar.</span>
-          </div>
-        )}
-
         {/* Acciones */}
         {!yaFinalizado && (soyJugador || isAdmin) && (
           <div className="mt-6 flex flex-wrap gap-3">
+            {/* Proponer solo si NO hay propuesta pendiente */}
             {!propuestaPendiente && (
               <button
-                disabled={!canEdit || editLockedByProposal || submitting}
+                disabled={!editingEnabled || submitting}
                 onClick={onProponer}
                 className="btn btn-primary"
               >
@@ -817,7 +1014,8 @@ const onConfirmar = async (acepta) => {
               </button>
             )}
 
-            {puedoConfirmar && (
+            {/* Confirmación / Rechazo: solo equipo contrario y NO en disputa */}
+            {puedoConfirmar && partido?.estadoResultado !== "en_disputa" && (
               <>
                 <button
                   disabled={submitting}

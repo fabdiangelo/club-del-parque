@@ -1,14 +1,9 @@
 import { ReporteRepository } from "../../infraestructure/adapters/ReportRepository.js";
-
 class ObtenerReportesSinResolver {
-  constructor() {
-    this.reporteRepository = new ReporteRepository();
-  }
-
+  constructor(repo = new ReporteRepository()) { this.repo = repo; }
   async execute() {
-    const reportes = await this.reporteRepository.getReportesSinResolver();
-    return reportes;
+
+    return await this.repo.getReportesSinResolver();
   }
 }
-
 export default new ObtenerReportesSinResolver();
