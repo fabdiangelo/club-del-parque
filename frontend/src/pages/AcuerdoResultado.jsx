@@ -514,7 +514,31 @@ export default function AcuerdoResultado() {
   const propuestaPendiente = !!(propuesta && !yaFinalizado);
   const yoPropuse =
     propuestaPendiente && propuesta.propuestoPor === (user?.uid || user?.id);
-  const puedoConfirmar = propuestaPendiente && !yoPropuse && soyJugador;
+
+  // --- NUEVO: lado (A/B) del usuario y del proponente
+  const sideOf = useCallback(
+    (uid) => {
+      if (!uid) return null;
+      if (equipoAIds.includes(uid)) return "A";
+      if (equipoBIds.includes(uid)) return "B";
+      return null;
+    },
+    [equipoAIds, equipoBIds]
+  );
+
+  const myUid = user?.uid || user?.id;
+  const proponenteUid = propuesta?.propuestoPor || null;
+  const mySide = sideOf(myUid);
+  const proponenteSide = sideOf(proponenteUid);
+  const soyDelEquipoOpuesto =
+    Boolean(propuestaPendiente) &&
+    Boolean(mySide) &&
+    Boolean(proponenteSide) &&
+    mySide !== proponenteSide;
+
+  // Solo confirma un jugador del equipo contrario
+  const puedoConfirmar =
+    propuestaPendiente && soyJugador && soyDelEquipoOpuesto;
 
   const tipoPartido =
     partido?.tipoPartido || (equipoAIds.length === 2 ? "dobles" : "singles");
@@ -537,28 +561,25 @@ export default function AcuerdoResultado() {
     !yaFinalizado &&
     partido?.estadoResultado !== "en_disputa";
 
-  const editLockedByProposal = yoPropuse && propuestaPendiente; // proponente no edita post-propuesta
-  const readOnlyConfirmFlow = puedoConfirmar; // confirmador ve solo lectura
-
-  const editingEnabled = canEditBase && !editLockedByProposal && !readOnlyConfirmFlow;
+  // Con propuesta pendiente, nadie edita (solo confirmar/rechazar si corresponde)
+  const editingEnabled = canEditBase && !propuestaPendiente;
 
   // Al cargar, si hay propuesta y estoy en flujo de confirmación, setear ganador visual desde la propuesta
   useEffect(() => {
     if (propuestaPendiente && puedoConfirmar) {
       const propWin = propuesta?.ganadores || [];
-      const winSide =
-        propWin.some((id) => equipoAIds.includes(id)) ? "A" : "B";
+      const winSide = propWin.some((id) => equipoAIds.includes(id)) ? "A" : "B";
       setWinnerSide(winSide);
       // sets ya se llenan desde propuesta.resultado en reload()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propuestaPendiente, puedoConfirmar, JSON.stringify(propuesta?.ganadores)]);
+  }, [
+    propuestaPendiente,
+    puedoConfirmar,
+    JSON.stringify(propuesta?.ganadores),
+  ]);
 
-  // Validación estricta de sets:
-  // - Ganador es 6 o 7 (nunca >7)
-  // - Si ganador 6 => perdedor 0..4 (no 5, no 6)
-  // - Si ganador 7 => perdedor 6 y requiere tiebreak (A y B definidos)
-  // - No se permite 7-5, 6-5, 5-5, etc.
+  // Validación estricta de sets
   const validateSets = (arr) => {
     if (!arr.length) return "Agrega al menos 1 set.";
     for (const { a, b, tba, tbb } of arr) {
@@ -583,7 +604,6 @@ export default function AcuerdoResultado() {
         if (!(l >= 0 && l <= 4)) {
           return "Si el ganador tiene 6, el perdedor debe tener entre 0 y 4.";
         }
-        // 6-x no requiere TB y no puede haber TB cargado
         if (Number.isFinite(tba) || Number.isFinite(tbb)) {
           return "El tiebreak solo corresponde en 7-6/6-7.";
         }
@@ -601,7 +621,7 @@ export default function AcuerdoResultado() {
     return null;
   };
 
-  // UI handlers sets (respetan editingEnabled, SetRow hace clamp; validación final acá)
+  // UI handlers sets
   const addSet = () =>
     editingEnabled &&
     setSets((prev) => [...prev, { a: 0, b: 0, tba: null, tbb: null }]);
@@ -659,7 +679,7 @@ export default function AcuerdoResultado() {
   };
 
   const onConfirmar = async (acepta) => {
-    // Solo si soy el que confirma y NO está en disputa
+    // Solo si soy del equipo contrario y NO está en disputa
     if (!puedoConfirmar || partido?.estadoResultado === "en_disputa") return;
 
     setSubmitting(true);
@@ -687,16 +707,31 @@ export default function AcuerdoResultado() {
           "El resultado del partido fue confirmado."
         );
       } else {
+        const mailDelUsuario =
+          user?.email ||
+          user?.correo ||
+          user?.mail ||
+          (() => {
+            const f = federados?.find?.(
+              (x) => x.id === (user?.uid || user?.id)
+            );
+            return f?.email || f?.mail || "@desconocido";
+          })();
+
         await fetchJSON(`/reportes`, {
           method: "POST",
           body: JSON.stringify({
+            motivo: "disputa_resultado",
             tipo: "disputa_resultado",
-            motivo: "Disputa de resultado",
-            descripcion:
-              "Un jugador rechaza la propuesta y solicita intervención.",
+            descripcion: `Discrepancia en resultado reportada por ${mailDelUsuario}`,
             partidoId: id,
+            mailUsuario: mailDelUsuario,
+            fecha: new Date().toISOString(),
+            leido: false,
+            estado: "pendiente",
           }),
         });
+
         await fetchJSON(`/partidos/${id}`, {
           method: "PUT",
           body: JSON.stringify({
@@ -805,8 +840,7 @@ export default function AcuerdoResultado() {
           <div className="mt-6 alert alert-info">
             <span>
               Estás revisando una <strong>propuesta de resultado</strong> hecha
-              por otro jugador. No podés editar los datos; solo aceptarla o
-              rechazarla.
+              por el equipo rival. Podés aceptarla o rechazarla.
             </span>
           </div>
         )}
@@ -815,6 +849,14 @@ export default function AcuerdoResultado() {
             <span>
               Hay una disputa abierta. Un administrador fijará el resultado
               final.
+            </span>
+          </div>
+        )}
+        {propuestaPendiente && !puedoConfirmar && (
+          <div className="mt-6 alert">
+            <span>
+              Hay una propuesta pendiente. Solo un jugador del{" "}
+              <strong>equipo contrario</strong> puede confirmarla o rechazarla.
             </span>
           </div>
         )}
@@ -966,7 +1008,7 @@ export default function AcuerdoResultado() {
               </button>
             )}
 
-            {/* Confirmación / Rechazo: NO mostrar si está en disputa */}
+            {/* Confirmación / Rechazo: solo equipo contrario y NO en disputa */}
             {puedoConfirmar && partido?.estadoResultado !== "en_disputa" && (
               <>
                 <button

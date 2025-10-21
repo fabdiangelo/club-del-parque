@@ -4,7 +4,7 @@ import ReporteDefaultModal from "../components/administracion-reportes/ReporteDe
 import SoloAdmin from "../components/SoloAdmin";
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 import GraficoGauge from "../components/GraficoGauge";
-import ReporteDisputaPartidoModal from '../components/administracion-reportes/ReporteDisputaPartidoModal';
+import ReporteDisputaPartidoModal from "../components/administracion-reportes/ReporteDisputaPartidoModal";
 
 import { useAuth } from "../contexts/AuthProvider";
 import {
@@ -66,7 +66,6 @@ const Administracion = () => {
         return;
       }
       const reportesData = await reportesRes.json();
-      console.log("Reportes sin resolver: ", reportesData);
       if (reportesData.length > 0) {
         setReportes(reportesData);
       }
@@ -100,16 +99,12 @@ const Administracion = () => {
         setModalReporte(null);
         return;
       }
-      setReportes(
-        reportes.map((reporte) =>
-          reporte.id === idReporte
-            ? { ...reporte, estado: "resuelto" }
-            : reporte
-        )
-      );
+
+      setReportes((prev) => prev.filter((r) => r.id !== idReporte));
+      await fetchData();
       setModalReporte(null);
     } catch (err) {
-      console.error("Error al marcar como resuleto:", err);
+      console.error("Error al marcar como resuelto:", err);
     }
   };
 
@@ -194,7 +189,7 @@ const Administracion = () => {
       case "reporte_bug":
         return AlertCircle;
       case "disputa_resultado":
-       return AlertCircle;
+        return AlertCircle;
       case "sugerencia":
         return Clock;
       case "soporte":
@@ -418,7 +413,7 @@ const Administracion = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {reportes?.map((reporte) => {
+                      {reportes?.filter(r => r.estado !== "resuelto").map((reporte) => {
                         const TipoIcon = getTipoIcon(reporte.tipo);
                         const reporteProps = {
                           ...reporte,

@@ -1,5 +1,4 @@
-// src/components/administracion-reportes/ReporteDisputaPartidoModal.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const toApi = (p) => (p?.startsWith("/api/") ? p : `/api${p}`);
 
@@ -24,31 +23,79 @@ function Field({ label, children }) {
   );
 }
 
+function NamesList({ ids = [], fedMap, inline = false }) {
+  const items = ids.map((id) => {
+    const f = fedMap.get(id);
+    if (f) {
+      const full = `${f?.nombre ?? ""} ${f?.apellido ?? ""}`.trim();
+      return full || f.email || id;
+    }
+    return String(id);
+  });
+  if (inline) return <span>{items.join(" / ") || "—"}</span>;
+  return (
+    <ul className="list-disc pl-5">
+      {items.length ? items.map((n, i) => <li key={i}>{n}</li>) : <li>—</li>}
+    </ul>
+  );
+}
+
 export default function ReporteDisputaPartidoModal({
-  reporte,        // { id, partidoID, motivo, descripcion, mailUsuario, fecha, tipo, ... }
+  reporte,        // { id, partidoID | partidoId | partido, motivo, descripcion, mailUsuario, fecha, tipo, ... }
   onResuelto,     // async (idReporte) => void
-  onClose,        // () => void   (NO cerrar hasta resolver)
+  onClose,        // () => void   (puede cerrar sin resolver)
 }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const [partido, setPartido] = useState(null);
-  const [resultado, setResultado] = useState("");
+  const [federados, setFederados] = useState([]);
   const [winner, setWinner] = useState("A"); // "A" | "B"
-  const [resueltoAqui, setResueltoAqui] = useState(false);
+  const [reportador, setReportador] = useState(null);
 
-  const partidoId = reporte?.partidoId || reporte?.partidoID || reporte?.partido || null;
+  // 🔑 texto editable del resultado
+  const [resultadoInput, setResultadoInput] = useState("");
+  const didPrefillRef = useRef(false);
+
+  useEffect(() => {
+    const fetchReportador = async () => {
+      if (!reporte?.mailUsuario) return;
+      try {
+        const u = await fetchJSON(
+          `/usuarios/byMail/${encodeURIComponent(reporte.mailUsuario)}`
+        );
+        setReportador(u);
+      } catch {
+        setReportador(null);
+      }
+    };
+    fetchReportador();
+  }, [reporte?.mailUsuario]);
+
+  const partidoId =
+    reporte?.partidoId || reporte?.partidoID || reporte?.partido || null;
 
   const reload = async () => {
     setLoading(true);
     setError("");
     try {
       if (!partidoId) throw new Error("Este reporte no tiene partidoID asociado.");
-      const p = await fetchJSON(`/partidos/${partidoId}`);
+
+      const [p, fs] = await Promise.all([
+        fetchJSON(`/partidos/${partidoId}`),
+        fetchJSON(`/usuarios/federados`),
+      ]);
+
       setPartido(p);
+      setFederados(Array.isArray(fs) ? fs : []);
+
       const existingRes = p?.resultado || p?.propuestaResultado?.resultado || "";
-      if (existingRes) setResultado(existingRes);
+      // 👉 Precargar SOLO una vez, luego el admin puede escribir libremente
+      if (!didPrefillRef.current) {
+        setResultadoInput(existingRes || "");
+        didPrefillRef.current = true;
+      }
     } catch (e) {
       try {
         const obj = JSON.parse(String(e?.message ?? e));
@@ -63,15 +110,22 @@ export default function ReporteDisputaPartidoModal({
   };
 
   useEffect(() => {
+    didPrefillRef.current = false; // nuevo partido => permitir un prefill
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partidoId]);
 
-  // Derivar ids de equipos de forma robusta
+  // === Map de federados (id -> objeto) para resolver nombres
+  const fedMap = useMemo(
+    () => new Map((federados || []).map((f) => [f.id, f])),
+    [federados]
+  );
+
+  // Ids de equipos de forma robusta
   const equipoAIds = useMemo(() => {
     const raw = partido?.equipoA || partido?.jugadoresA || partido?.equipo1 || [];
     if (Array.isArray(raw) && raw.length)
-      return raw.map((x) => (typeof x === "object" ? x.id : x));
+      return raw.map((x) => (typeof x === "object" ? x.id : x)).filter(Boolean);
     const all = Array.isArray(partido?.jugadores) ? partido.jugadores : [];
     return partido?.tipoPartido === "dobles" ? all.slice(0, 2) : all.slice(0, 1);
   }, [partido]);
@@ -79,86 +133,101 @@ export default function ReporteDisputaPartidoModal({
   const equipoBIds = useMemo(() => {
     const raw = partido?.equipoB || partido?.jugadoresB || partido?.equipo2 || [];
     if (Array.isArray(raw) && raw.length)
-      return raw.map((x) => (typeof x === "object" ? x.id : x));
+      return raw.map((x) => (typeof x === "object" ? x.id : x)).filter(Boolean);
     const all = Array.isArray(partido?.jugadores) ? partido.jugadores : [];
     return partido?.tipoPartido === "dobles" ? all.slice(2, 4) : all.slice(1, 2);
   }, [partido]);
 
-  const resolverConflicto = async () => {
-    if (!partidoId) return;
-    if (!resultado?.trim()) {
-      alert("Debés escribir el resultado final (por ej. 6-4, 7-6(7-4)).");
-      return;
-    }
-    const ganadores = winner === "A" ? equipoAIds : equipoBIds;
-    if (!ganadores?.length) {
-      alert("No se detectaron jugadores en el equipo ganador.");
-      return;
-    }
+  const equipoAText = useMemo(() => {
+    return equipoAIds
+      .map((id) => {
+        const f = fedMap.get(id);
+        if (f) {
+          const full = `${f?.nombre ?? ""} ${f?.apellido ?? ""}`.trim();
+          return full || f.email || id;
+        }
+        return String(id);
+      })
+      .join(" / ");
+  }, [equipoAIds, fedMap]);
 
-    setSaving(true);
-    setError("");
+  const equipoBText = useMemo(() => {
+    return equipoBIds
+      .map((id) => {
+        const f = fedMap.get(id);
+        if (f) {
+          const full = `${f?.nombre ?? ""} ${f?.apellido ?? ""}`.trim();
+          return full || f.email || id;
+        }
+        return String(id);
+      })
+      .join(" / ");
+  }, [equipoBIds, fedMap]);
+
+const resolverConflicto = async () => {
+  if (!partidoId) return;
+
+  const resultado = (resultadoInput || "").trim();
+  if (!resultado) {
+    alert("Debés escribir el resultado final (por ej. 6-4, 7-6(7-4)).");
+    return;
+  }
+
+  const ganadores = winner === "A" ? equipoAIds : equipoBIds;
+  if (!ganadores?.length) {
+    alert("No se detectaron jugadores en el equipo ganador.");
+    return;
+  }
+
+  setSaving(true);
+  setError("");
+  try {
+    // 1) fijar ganadores
+    await fetchJSON(`/partidos/${partidoId}/ganadores`, {
+      method: "POST",
+      body: JSON.stringify({ ganadores }),
+    });
+
+    // 2) cerrar disputa del partido y fijar resultado final
+    await fetchJSON(`/partidos/${partidoId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        resultado,
+        estado: "finalizado",
+        estadoResultado: "confirmado",
+        disputaResuelta: true,
+        disputaFechaResuelta: new Date().toISOString(),
+        propuestaResultado: null,
+      }),
+    });
+
+    await onResuelto?.(reporte.id);
+    alert("Disputa resuelta, resultado actualizado y reporte marcado como resuelto.");
+  } catch (e) {
     try {
-      // 1) fijar ganadores
-      await fetchJSON(`/partidos/${partidoId}/ganadores`, {
-        method: "POST",
-        body: JSON.stringify({ ganadores }),
-      });
-
-      // 2) cerrar disputa y finalizar
-      await fetchJSON(`/partidos/${partidoId}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          resultado: resultado.trim(),
-          estado: "finalizado",
-          estadoResultado: "confirmado",
-          disputaResuelta: true,
-          disputaFechaResuelta: new Date().toISOString(),
-          propuestaResultado: null,
-        }),
-      });
-
-      // 3) marcar reporte como resuelto
-      await onResuelto?.(reporte.id);
-      setResueltoAqui(true);
-      alert("Disputa resuelta y reporte marcado como resuelto.");
-    } catch (e) {
-      try {
-        const obj = JSON.parse(String(e?.message ?? e));
-        setError(obj?.mensaje || obj?.error || String(e));
-      } catch {
-        setError(String(e?.message ?? e));
-      }
-    } finally {
-      setSaving(false);
+      const obj = JSON.parse(String(e?.message ?? e));
+      setError(obj?.mensaje || obj?.error || String(e));
+    } catch {
+      setError(String(e?.message ?? e));
     }
-  };
+  } finally {
+    setSaving(false);
+  }
+};
 
-  const intentarCerrar = () => {
-    if (!resueltoAqui) {
-      alert("Para cerrar este modal primero resolvé la disputa.");
-      return;
-    }
-    onClose?.();
-  };
+
+
+  const handleClose = () => onClose?.();
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-      onClick={intentarCerrar}
-    >
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={handleClose}>
       <div
         className="max-w-3xl w-full rounded-2xl bg-white text-neutral-900 border border-neutral-200 shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
           <h3 className="text-lg font-semibold">Disputa de resultado</h3>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={intentarCerrar}
-            disabled={!resueltoAqui}
-            title={!resueltoAqui ? "Resolvé la disputa para cerrar" : "Cerrar"}
-          >
+          <button className="btn btn-ghost btn-sm" onClick={handleClose} title="Cerrar">
             Cerrar
           </button>
         </div>
@@ -177,19 +246,30 @@ export default function ReporteDisputaPartidoModal({
                   <div className="font-mono text-sm">{partidoId}</div>
                 </Field>
                 <Field label="Estado actual">
-                  <div className="badge badge-outline capitalize">
-                    {partido?.estado || "—"}
-                  </div>
+                  <div className="badge badge-outline capitalize">{partido?.estado || "—"}</div>
                 </Field>
                 <Field label="Motivo del reporte">
                   <div className="text-sm">{reporte?.motivo}</div>
                 </Field>
                 <Field label="Reportado por">
-                  <div className="text-sm">{reporte?.mailUsuario || "—"}</div>
+                  <div className="text-sm">
+                    {reportador
+                      ? `${reportador.nombre} ${reportador.apellido} (${reportador.email})`
+                      : reporte?.mailUsuario || "—"}
+                  </div>
                 </Field>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 mt-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <Field label="Equipo A (nombres)">
+                  <div className="text-sm font-medium">{equipoAText || "—"}</div>
+                </Field>
+                <Field label="Equipo B (nombres)">
+                  <div className="text-sm font-medium">{equipoBText || "—"}</div>
+                </Field>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 mt-3">
                 <a
                   className="btn btn-outline btn-sm"
                   href={`/partidos/${partidoId}/acuerdo`}
@@ -198,9 +278,6 @@ export default function ReporteDisputaPartidoModal({
                 >
                   Ir al acuerdo del partido
                 </a>
-                {resueltoAqui && (
-                  <span className="badge badge-success">Resuelto</span>
-                )}
               </div>
 
               <div className="divider" />
@@ -209,43 +286,38 @@ export default function ReporteDisputaPartidoModal({
                 <Field label="Equipo ganador">
                   <div className="join">
                     <button
-                      className={`btn join-item ${
-                        winner === "A" ? "btn-primary" : "btn-outline"
-                      }`}
+                      className={`btn join-item ${winner === "A" ? "btn-primary" : "btn-outline"}`}
                       onClick={() => setWinner("A")}
                     >
                       Equipo A
                     </button>
                     <button
-                      className={`btn join-item ${
-                        winner === "B" ? "btn-primary" : "btn-outline"
-                      }`}
+                      className={`btn join-item ${winner === "B" ? "btn-primary" : "btn-outline"}`}
                       onClick={() => setWinner("B")}
                     >
                       Equipo B
                     </button>
                   </div>
                   <p className="mt-2 text-xs text-neutral-500">
-                    A: {JSON.stringify(equipoAIds)} · B: {JSON.stringify(equipoBIds)}
+                    A: <NamesList ids={equipoAIds} fedMap={fedMap} inline /> · B:{" "}
+                    <NamesList ids={equipoBIds} fedMap={fedMap} inline />
                   </p>
                 </Field>
 
                 <Field label="Resultado final (ej: 6-4, 7-6(7-4))">
                   <input
+                    type="text"
+                    autoComplete="off"
                     className="input input-bordered w-full"
-                    value={resultado}
-                    onChange={(e) => setResultado(e.target.value)}
-                    placeholder="6-3, 3-6, 7-6(7-5)"
+                    value={resultadoInput ?? ""}
+                    onChange={(e) => setResultadoInput(e.target.value)}
+                    placeholder="6-4, 6-4"
                   />
                 </Field>
               </div>
 
               <div className="flex items-center justify-end gap-3 mt-2">
-                <button
-                  className="btn"
-                  onClick={intentarCerrar}
-                  disabled={!resueltoAqui}
-                >
+                <button className="btn" onClick={handleClose}>
                   Cerrar
                 </button>
                 <button

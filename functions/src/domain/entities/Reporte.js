@@ -1,4 +1,3 @@
-// src/domain/entities/Reporte.js
 export default class Reporte {
   constructor(id, motivo, descripcion, fecha, estado, mailUsuario, leido, tipo, partidoId = null) {
     this.id = id;
