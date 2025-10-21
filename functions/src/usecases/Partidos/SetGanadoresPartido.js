@@ -1,4 +1,5 @@
-import { applyOnEdit } from "../../services/Rankings/RankingsFromPartido.js";
+// 🔇 Rankings deshabilitados
+// import { applyOnEdit } from "../../services/Rankings/RankingsFromPartido.js";
 
 export class SetGanadoresPartido {
   constructor(partidoRepo) {
@@ -8,7 +9,7 @@ export class SetGanadoresPartido {
   /**
    * ganadores: string[] de usuarioIDs
    * resultado: string|obj (opcional)
-   * puntosGanador / puntosPerdedor: números (opcionales; si vienen undefined disparamos 3/1/0 + WO)
+   * puntosGanador / puntosPerdedor: ignorados (rankings deshabilitados)
    */
   async execute(partidoId, ganadores = [], resultado = null, puntosGanador, puntosPerdedor) {
     const partido = await this.partidoRepo.getById(partidoId);
@@ -25,8 +26,8 @@ export class SetGanadoresPartido {
 
     await this.partidoRepo.update(partidoId, updated);
 
-    // Usamos la misma lógica de rankings (3/1/0 + WO + deporte) que en editar
-    await applyOnEdit(partido, updated, puntosGanador, puntosPerdedor);
+    // 🔇 Antes: misma lógica de rankings applyOnEdit(...)
+    // await applyOnEdit(partido, updated, puntosGanador, puntosPerdedor);
 
     return updated;
   }

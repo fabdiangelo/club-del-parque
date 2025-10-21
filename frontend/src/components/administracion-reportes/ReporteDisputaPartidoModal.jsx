@@ -188,7 +188,6 @@ const resolverConflicto = async () => {
       body: JSON.stringify({ ganadores }),
     });
 
-    // 2) cerrar disputa del partido y fijar resultado final
     await fetchJSON(`/partidos/${partidoId}`, {
       method: "PUT",
       body: JSON.stringify({

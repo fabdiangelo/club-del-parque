@@ -1,4 +1,5 @@
-import { applyOnEdit } from "../../services/Rankings/RankingsFromPartido.js";
+// 🔇 Rankings deshabilitados
+// import { applyOnEdit } from "../../services/Rankings/RankingsFromPartido.js";
 
 class EditarPartido {
   constructor(partidoRepository) {
@@ -6,8 +7,8 @@ class EditarPartido {
   }
 
   /**
-   * Revertimos puntos del estado previo y aplicamos el nuevo estado.
-   * Para usar default 3/1/0, pasá undefined en puntosGanador/Perdedor.
+   * Revertíamos puntos y aplicábamos nuevo estado.
+   * Nota: puntosGanador / puntosPerdedor se ignoran porque rankings están deshabilitados.
    */
   async execute(id, partidoData, { puntosGanador, puntosPerdedor } = {}) {
     const oldPartido = await this.partidoRepository.getById(id);
@@ -16,13 +17,12 @@ class EditarPartido {
     // Actualizar
     const updated = await this.partidoRepository.update(id, partidoData);
 
-    // Transferencia de puntos (idempotente)
-    await applyOnEdit(oldPartido, { ...oldPartido, ...partidoData, id }, puntosGanador, puntosPerdedor);
+    // 🔇 Antes: transferencia de puntos con applyOnEdit
+    // await applyOnEdit(oldPartido, { ...oldPartido, ...partidoData, id }, puntosGanador, puntosPerdedor);
 
     return updated;
   }
 }
 
-// Export nombrado y default (para evitar problemas de import)
 export { EditarPartido };
 export default EditarPartido;
