@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 import { Crown, Search, X } from "lucide-react";
+import { useAuth } from "../contexts/AuthProvider";
+
 
 /* ------------------------------- utils ------------------------------- */
 const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
@@ -117,6 +119,8 @@ function AnimatedTitle({ text, className, style }) {
 /* ------------------------------- page ------------------------------- */
 export default function Rankings() {
   // dictionaries
+  const { user } = useAuth();
+  const isAdmin = user?.rol === "administrador";
   const [deportes, setDeportes] = useState([]);
   const [filtros, setFiltros] = useState([]);
   const [temporadas, setTemporadas] = useState([]);
@@ -669,30 +673,36 @@ export default function Rankings() {
                 )}
               </div>
 
-              <Link to="/temporadas" className="ml-2">
-                <button className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white shadow-sm">
-                  Crear Temporadas
-                </button>
-              </Link>
+             {isAdmin && (
+    <Link to="/temporadas" className="ml-2">
+      <button className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white shadow-sm">
+        Crear Temporadas
+      </button>
+    </Link>
+  )}
 
-              <button
-                onClick={openAddModal}
-                disabled={!scope.temporadaID || !scope.filtroId || !scope.tipoDePartido}
-                className="h-11 px-4 rounded-lg border border-neutral-300 bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-40 shadow-sm"
-                title="Agregar un federado al ranking (popup)"
-              >
-                Agregar al ranking
-              </button>
+  {isAdmin && (
+    <button
+      onClick={openAddModal}
+      disabled={!scope.temporadaID || !scope.filtroId || !scope.tipoDePartido}
+      className="h-11 px-4 rounded-lg border border-neutral-300 bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-40 shadow-sm"
+      title="Agregar un federado al ranking (popup)"
+    >
+      Agregar al ranking
+    </button>
+  )}
 
-              <button
-                onClick={() => setShowManager(true)}
-                disabled={!scope.temporadaID || !scope.filtroId || !scope.tipoDePartido}
-                className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white disabled:opacity-40 shadow-sm"
-                title="Crear y ordenar categorías (mejor→peor) del scope actual"
-              >
-                Gestionar categorías
-              </button>
-            </div>
+  {isAdmin && (
+    <button
+      onClick={() => setShowManager(true)}
+      disabled={!scope.temporadaID || !scope.filtroId || !scope.tipoDePartido}
+      className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white disabled:opacity-40 shadow-sm"
+      title="Crear y ordenar categorías (mejor→peor) del scope actual"
+    >
+      Gestionar categorías
+    </button>
+  )}
+</div>
 
             {/* Status */}
             <div className="mt-4 text-sm text-neutral-700">
