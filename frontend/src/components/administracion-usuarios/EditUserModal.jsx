@@ -11,13 +11,6 @@ export default function EditUserModal({ open, usuario, onCancel, onSave }) {
     genero: '',
     rol: 'usuario',
   });
-
-  // --- NUEVO: categorías federado ---
-  const [categorias, setCategorias] = useState([]);
-  const [categoriaId, setCategoriaId] = useState(null);
-  const [catsLoading, setCatsLoading] = useState(false);
-  const [catsError, setCatsError] = useState('');
-
   const [prefs, setPrefs] = useState({
     mail: true,
     whatsapp: false,
@@ -37,41 +30,8 @@ export default function EditUserModal({ open, usuario, onCancel, onSave }) {
       genero: usuario.genero || '',
       rol: usuario.rol || 'usuario',
     });
-    // inicializa categoría local si viene del backend
-    setCategoriaId(usuario?.categoriaId ?? null);
     setPrefs((p) => ({ ...p, ...(usuario.preferencias || {}) }));
   }, [usuario]);
-
-  // cargar categorías cuando se abre el modal y (a) hay usuario y (b) es federado (o cambia a federado)
-  useEffect(() => {
-    if (!open) return;
-    if (!usuario) return;
-
-    // si el usuario actual o el form marcan rol federado, cargo categorías
-    if (form.rol === 'federado') {
-      (async () => {
-        try {
-          setCatsLoading(true);
-          setCatsError('');
-          const res = await fetch('/api/categorias', {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            cache: 'no-store',
-          });
-          if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
-          const data = await res.json();
-          const sorted = (Array.isArray(data) ? data : [])
-            .map((c) => ({ ...c, orden: Number(c?.orden ?? 0) }))
-            .sort((a, b) => a.orden - b.orden || (a?.nombre || '').localeCompare(b?.nombre || ''));
-          setCategorias(sorted);
-        } catch (e) {
-          setCatsError(String(e?.message || e));
-        } finally {
-          setCatsLoading(false);
-        }
-      })();
-    }
-  }, [open, usuario, form.rol]);
 
   if (!open) return null;
 
@@ -84,30 +44,11 @@ export default function EditUserModal({ open, usuario, onCancel, onSave }) {
   const handleTipoToggle = (tipo) => setPrefs((prev) => ({ ...prev, tipos: { ...prev.tipos, [tipo]: !prev.tipos[tipo] } }));
   const handleTemaChange = (e) => setPrefs((prev) => ({ ...prev, tema: e.target.value }));
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
     const payload = { ...form, preferencias: prefs };
     if (!payload.password) delete payload.password;
-
-    // 1) guardar datos de usuario
-    await onSave(payload); // parent ya maneja loading/errores
-
-    // 2) si es federado, persistir categoría (puede ser null para quitar)
-    if (form.rol === 'federado' && usuario?.id) {
-      try {
-        await fetch(`/api/federados/${encodeURIComponent(usuario.id)}/categoria`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ categoriaId: categoriaId ?? null }),
-        });
-        // no hace falta hacer nada más aquí: el parent refresca lista al cerrar o puedes
-        // opcionalmente levantar un toast si usan uno.
-      } catch (err) {
-        console.error('Error guardando categoría federado:', err);
-      }
-    }
+    onSave(payload);
   };
 
   return (
@@ -148,51 +89,14 @@ export default function EditUserModal({ open, usuario, onCancel, onSave }) {
           </div>
           <div>
             <label className="block text-sm">Rol</label>
-            <select
-              name="rol"
-              value={form.rol}
-              onChange={(e) => {
-                const newRol = e.target.value;
-                setForm((prev) => ({ ...prev, rol: newRol }));
-                // si pasa a no-federado, limpia la categoría seleccionada
-                if (newRol !== 'federado') setCategoriaId(null);
-              }}
-              className="select select-bordered w-full"
-            >
+            <select name="rol" value={form.rol} onChange={handleChange} className="select select-bordered w-full">
               <option value="usuario">usuario</option>
               <option value="federado">federado</option>
               <option value="administrador">administrador</option>
             </select>
           </div>
 
-          {/* --- NUEVO: Categoría para federados --- */}
-          {form.rol === 'federado' && (
-            <div className="md:col-span-2">
-              <label className="block text-sm">Categoría (federado)</label>
-              <div className="flex gap-2 items-center">
-                <select
-                  className="select select-bordered w-full max-w-md"
-                  value={categoriaId ?? ''}
-                  onChange={(e) => setCategoriaId(e.target.value === '' ? null : e.target.value)}
-                  disabled={catsLoading}
-                >
-                  <option value="">— Sin categoría —</option>
-                  {categorias.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre}{typeof c.capacidad !== 'undefined' ? ` (cap: ${c.capacidad})` : ''}
-                    </option>
-                  ))}
-                </select>
-                {catsLoading && <span className="text-xs opacity-70">Cargando categorías…</span>}
-                {catsError && <span className="text-xs text-red-500">{catsError}</span>}
-              </div>
-              <p className="text-xs opacity-70 mt-1">
-                Tip: elegí “Sin categoría” para quitar la categoría del federado.
-              </p>
-            </div>
-          )}
-
-          {/* Preferencias */}
+          {/* Preferencias section */}
           <div className="md:col-span-2">
             <h4 className="font-medium">Preferencias</h4>
             <div className="flex items-center justify-between mt-2">
