@@ -1,41 +1,40 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Homepage";
 import Registro from "./pages/Registro";
 import Login from "./pages/Login";
-import Perfil from './pages/Perfil';
-import EditarPerfil from './pages/EditarPerfil';
-import Noticias from './pages/ListaNoticias';
-import NoticiaDetalle from './pages/NoticiaDetalle';
-import SistemaReporte from './pages/SistemaReporte';
-import CrearNoticia from './pages/CrearNoticia';
-import Administracion from './pages/Adminsitracion';
-import AdministracionReportes from './pages/AdministracionReportes';
-import AdministracionUsuarios from './pages/AdministracionUsuarios';
-import Chats from './pages/Chats'; 
+import Perfil from "./pages/Perfil";
+import EditarPerfil from "./pages/EditarPerfil";
+import Noticias from "./pages/ListaNoticias";
+import NoticiaDetalle from "./pages/NoticiaDetalle";
+import SistemaReporte from "./pages/SistemaReporte";
+import CrearNoticia from "./pages/CrearNoticia";
+import Administracion from "./pages/Adminsitracion";
+import AdministracionReportes from "./pages/AdministracionReportes";
+import AdministracionUsuarios from "./pages/AdministracionUsuarios";
+import Chats from "./pages/Chats";
 import Reservas from "./pages/Reservas";
 import PerfilReservas from "./pages/PerfilReservas";
-import CrearAdmin from './pages/CrearAdmin';
-import CrearCampeonato from './pages/CrearCampeonato';
-import FixtureCampeonato from './pages/FixtureCampeonato'
-import ListaCampeonatos from './pages/ListaCampeonatos';
-import Rankings from './pages/Ranking';
-import TemporadasPage from './pages/Temporadas';
-import PartidosGestor from './pages/PartidosGestor';
-import AcuerdoResultado from './pages/AcuerdoResultado';
-import NotFound from './pages/NotFound';
-import Partido from './pages/Partido';
+import CrearAdmin from "./pages/CrearAdmin";
+import CrearCampeonato from "./pages/CrearCampeonato";
+import FixtureCampeonato from "./pages/FixtureCampeonato";
+import ListaCampeonatos from "./pages/ListaCampeonatos";
+import Rankings from "./pages/Ranking";
+import TemporadasPage from "./pages/Temporadas";
+import PartidosGestor from "./pages/PartidosGestor";
+import AcuerdoResultado from "./pages/AcuerdoResultado";
+import NotFound from "./pages/NotFound";
+import Partido from "./pages/Partido";
 import ResultadosPage from "./pages/ResultadosPage";
-import NotificationsPage from  './pages/NotificacionesPage';
+import NotificationsPage from "./pages/NotificacionesPage";
 import CanchasGestor from "./pages/CanchasGestor";
+import { RoleProtectedRoute } from "./contexts/AuthProvider";
+import SinSesion from "./components/SinSesion";
+import SoloAdmin from "./components/SoloAdmin";
+import CategoriasGestor from "./pages/CategoriasGestor";
+import FiltrosGestor from "./pages/FiltrosGestor";
+import AsignarCategoriaFederado from "./pages/AsignarCategoriaFederado";
 
-
-import { RoleProtectedRoute } from './contexts/AuthProvider';
-import SinSesion from './components/SinSesion';
-import SoloAdmin from './components/SoloAdmin';
-
-import CategoriasGestor from './pages/CategoriasGestor';
-import FiltrosGestor from './pages/FiltrosGestor';
 function App() {
   return (
     <Routes>
@@ -58,7 +57,10 @@ function App() {
       <Route
         path="/perfil"
         element={
-          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+          <RoleProtectedRoute
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SinSesion />}
+          >
             <Perfil />
           </RoleProtectedRoute>
         }
@@ -66,7 +68,10 @@ function App() {
       <Route
         path="/perfil/editar"
         element={
-          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+          <RoleProtectedRoute
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SinSesion />}
+          >
             <EditarPerfil />
           </RoleProtectedRoute>
         }
@@ -74,7 +79,10 @@ function App() {
       <Route
         path="/chats"
         element={
-          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+          <RoleProtectedRoute
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SinSesion />}
+          >
             <Chats />
           </RoleProtectedRoute>
         }
@@ -82,7 +90,10 @@ function App() {
       <Route
         path="/chats/:id"
         element={
-          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+          <RoleProtectedRoute
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SinSesion />}
+          >
             <Chats />
           </RoleProtectedRoute>
         }
@@ -90,24 +101,32 @@ function App() {
       <Route
         path="/notificaciones"
         element={
-          <RoleProtectedRoute fallback={<SinSesion />} unauthorizedFallback={<SinSesion />}>
+          <RoleProtectedRoute
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SinSesion />}
+          >
             <NotificationsPage />
           </RoleProtectedRoute>
         }
       />
       <Route path="/gestor-categorias" element={<CategoriasGestor />} />
-      {/* Rutas Usuarios */}
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />
       <Route path="/chats/:id" element={<Chats />} />
+      <Route
+        path="/asignarcategoriafederado"
+        element={<AsignarCategoriaFederado />}
+      />
 
-
-      {/* Rutas Federados (federado o administrador) */}
       <Route
         path="/ranking"
         element={
-          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={["federado", "administrador"]}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <Rankings />
           </RoleProtectedRoute>
         }
@@ -115,7 +134,11 @@ function App() {
       <Route
         path="/gestor-partidos"
         element={
-          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={["federado", "administrador"]}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <PartidosGestor />
           </RoleProtectedRoute>
         }
@@ -123,7 +146,11 @@ function App() {
       <Route
         path="/partidos/:id/acuerdo"
         element={
-          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={["federado", "administrador"]}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <AcuerdoResultado />
           </RoleProtectedRoute>
         }
@@ -131,7 +158,11 @@ function App() {
       <Route
         path="/reservas"
         element={
-          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={["federado", "administrador"]}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <Reservas />
           </RoleProtectedRoute>
         }
@@ -139,7 +170,11 @@ function App() {
       <Route
         path="/reservas/:id"
         element={
-          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={["federado", "administrador"]}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <PerfilReservas />
           </RoleProtectedRoute>
         }
@@ -147,18 +182,25 @@ function App() {
       <Route
         path="/partido/:id"
         element={
-          <RoleProtectedRoute requiredRoles={["federado", "administrador"]} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={["federado", "administrador"]}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <Partido />
           </RoleProtectedRoute>
         }
       />
-      
-     
+
       {/* Rutas Administradores (solo administrador) */}
       <Route
         path="/crear-noticia"
         element={
-          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <CrearNoticia />
           </RoleProtectedRoute>
         }
@@ -166,7 +208,11 @@ function App() {
       <Route
         path="/crear-campeonato"
         element={
-          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <CrearCampeonato />
           </RoleProtectedRoute>
         }
@@ -174,7 +220,11 @@ function App() {
       <Route
         path="/temporadas"
         element={
-          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <TemporadasPage />
           </RoleProtectedRoute>
         }
@@ -182,7 +232,11 @@ function App() {
       <Route
         path="/administracion"
         element={
-          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <Administracion />
           </RoleProtectedRoute>
         }
@@ -190,7 +244,11 @@ function App() {
       <Route
         path="/administracion/reportes"
         element={
-          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <AdministracionReportes />
           </RoleProtectedRoute>
         }
@@ -198,12 +256,15 @@ function App() {
       <Route
         path="/administracion/usuarios"
         element={
-          <RoleProtectedRoute requiredRoles={"administrador"} fallback={<SinSesion />} unauthorizedFallback={<SoloAdmin />}>
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
             <AdministracionUsuarios />
           </RoleProtectedRoute>
         }
       />
-
 
       <Route path="*" element={<NotFound />} />
     </Routes>

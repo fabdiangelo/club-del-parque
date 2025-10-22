@@ -17,7 +17,7 @@ class RankingRepository {
   }
 
   async update(id, partial) {
-    await this.db.updateItem(this.collection, id, partial);
+    await this.db.updateItem(this.collection, id, { ...partial, updatedAt: new Date().toISOString() });
     return id;
   }
 
@@ -38,22 +38,28 @@ class RankingRepository {
     return await this.db.getItemsByField(this.collection, "usuarioID", usuarioID);
   }
 
-  async getByTemporadaYTipo(temporadaID, tipoDePartido, deporte /* optional */) {
+  async getByFiltroId(filtroId) {
+    return await this.db.getItemsByField(this.collection, "filtroId", String(filtroId));
+  }
+
+  async getByTemporadaYTipo(temporadaID, tipoDePartido, deporte /* optional */, filtroId /* optional */) {
     let rows = await this.getByTemporada(temporadaID);
     rows = rows.filter(r => String(r.tipoDePartido) === String(tipoDePartido));
     if (deporte) rows = rows.filter(r => (r.deporte || "").toLowerCase() === String(deporte).toLowerCase());
+    if (filtroId != null) rows = rows.filter(r => String(r.filtroId || "") === String(filtroId));
     return rows;
   }
 
-  async getByUsuarioYTipo(usuarioID, tipoDePartido, deporte /* optional */) {
+  async getByUsuarioYTipo(usuarioID, tipoDePartido, deporte /* optional */, filtroId /* optional */) {
     let rows = await this.getByUsuario(usuarioID);
     rows = rows.filter(r => String(r.tipoDePartido) === String(tipoDePartido));
     if (deporte) rows = rows.filter(r => (r.deporte || "").toLowerCase() === String(deporte).toLowerCase());
+    if (filtroId != null) rows = rows.filter(r => String(r.filtroId || "") === String(filtroId));
     return rows;
   }
 
-  // ← corregido para evitar falsos “no encontrado” y duplicados por deporte
-  async getByUsuarioTemporadaTipo(usuarioID, temporadaID, tipoDePartido, deporte /* optional */) {
+  // evita falsos “no encontrado” y dupes por deporte/filtro
+  async getByUsuarioTemporadaTipo(usuarioID, temporadaID, tipoDePartido, deporte /* optional */, filtroId /* optional */) {
     const all = await this.getAll();
     const L = (x) => String(x ?? "").toLowerCase();
 
@@ -62,51 +68,79 @@ class RankingRepository {
         L(r.usuarioID) === L(usuarioID) &&
         L(r.temporadaID) === L(temporadaID) &&
         L(r.tipoDePartido) === L(tipoDePartido) &&
-        (deporte ? L(r.deporte) === L(deporte) : true)
+        (deporte ? L(r.deporte) === L(deporte) : true) &&
+        (filtroId != null ? String(r.filtroId || "") === String(filtroId) : true)
     );
 
-    // si no hay deporte pedido, preferí filas sin deporte; si no, la primera coincidencia
-    return (!deporte ? (filtered.find(r => !r.deporte) || filtered[0]) : filtered[0]) || null;
+    // preferí filas sin deporte/filtro cuando no se pasen explícitamente
+    const prefer = filtered.find(r => (!deporte ? !r.deporte : true) && (filtroId == null ? !r.filtroId : true));
+    return (prefer || filtered[0]) || null;
   }
 
-  async getLeaderboard({ temporadaID, tipoDePartido, deporte /* optional */, limit = 50 } = {}) {
+  async getLeaderboard({ temporadaID, tipoDePartido, deporte /* opt */, filtroId /* opt */, filtros /* opt: objeto */ , limit = 50 } = {}) {
     let items = await this.getAll();
-    if (temporadaID) items = items.filter(i => String(i.temporadaID) === String(temporadaID));
-    if (tipoDePartido) items = items.filter(i => String(i.tipoDePartido) === String(tipoDePartido));
-    if (deporte) items = items.filter(i => (i.deporte || "").toLowerCase() === String(deporte).toLowerCase());
+    const s = (v) => (v == null ? "" : String(v));
+    if (temporadaID) items = items.filter(i => s(i.temporadaID) === s(temporadaID));
+    if (tipoDePartido) items = items.filter(i => s(i.tipoDePartido) === s(tipoDePartido));
+    if (deporte) items = items.filter(i => (i.deporte || "").toLowerCase() === s(deporte).toLowerCase());
+    if (filtroId != null) items = items.filter(i => s(i.filtroId) === s(filtroId));
+    if (filtros && Object.keys(filtros).length) items = items.filter(i => this.matchByFiltros(i, filtros));
+
     items.sort((a, b) => Number(b.puntos || 0) - Number(a.puntos || 0));
     return items.slice(0, limit);
+  }
+
+  matchByFiltros(item, filtros) {
+    // compara contra snapshot si existe, si no, ignora
+    const snap = item?.filtrosSnapshot || null;
+    if (!snap) return false; // si pediste filtros, exigimos snapshot
+    const S = (x) => String(x ?? "").toLowerCase();
+
+    if (filtros.modalidad?.nombre && S(snap.modalidad?.nombre) !== S(filtros.modalidad.nombre)) return false;
+    if (filtros.genero?.nombre && S(snap.genero?.nombre) !== S(filtros.genero.nombre)) return false;
+
+    const numOrNull = (v) => (v === null || v === undefined ? null : Number(v));
+    const eMin = numOrNull(filtros.edadMin);
+    const eMax = numOrNull(filtros.edadMax);
+    const pMin = numOrNull(filtros.pesoMin);
+    const pMax = numOrNull(filtros.pesoMax);
+
+    // si el filtro pide rangos, el snap debe estar dentro
+    if (eMin != null && numOrNull(snap.edadMin) != null && numOrNull(snap.edadMin) < eMin) return false;
+    if (eMax != null && numOrNull(snap.edadMax) != null && numOrNull(snap.edadMax) > eMax) return false;
+    if (pMin != null && numOrNull(snap.pesoMin) != null && numOrNull(snap.pesoMin) < pMin) return false;
+    if (pMax != null && numOrNull(snap.pesoMax) != null && numOrNull(snap.pesoMax) > pMax) return false;
+
+    return true;
   }
 
   async adjustPoints(id, delta) {
     const current = await this.db.getItemObject(this.collection, id);
     const puntos = Number(current?.puntos || 0) + Number(delta || 0);
-    await this.db.updateItem(this.collection, id, { puntos });
+    await this.db.updateItem(this.collection, id, { puntos, updatedAt: new Date().toISOString() });
     return id;
   }
-// /functions/src/infraestructure/adapters/RankingRepository.js
-async adjustCounter(id, field, delta = 1) {
-  const current = await this.db.getItemObject(this.collection, id) || {};
-  const next = Number(current?.[field] || 0) + Number(delta || 0);
-  await this.db.updateItem(this.collection, id, { [field]: next });
-  return id;
-}
 
-// Single roundtrip atomic-ish patch (read, compute, write once)
-async adjustMany(id, increments = {}) {
-  const current = await this.db.getItemObject(this.collection, id) || {};
-  const patch = {};
-  for (const [k, inc] of Object.entries(increments)) {
-    if (!Number.isFinite(inc) || inc === 0) continue;
-    patch[k] = Number(current?.[k] || 0) + Number(inc);
+  async adjustCounter(id, field, delta = 1) {
+    const current = await this.db.getItemObject(this.collection, id) || {};
+    const next = Number(current?.[field] || 0) + Number(delta || 0);
+    await this.db.updateItem(this.collection, id, { [field]: next, updatedAt: new Date().toISOString() });
+    return id;
   }
-  if (Object.keys(patch).length) {
-    await this.db.updateItem(this.collection, id, patch);
+
+  async adjustMany(id, increments = {}) {
+    const current = await this.db.getItemObject(this.collection, id) || {};
+    const patch = {};
+    for (const [k, inc] of Object.entries(increments)) {
+      if (!Number.isFinite(inc) || inc === 0) continue;
+      patch[k] = Number(current?.[k] || 0) + Number(inc);
+    }
+    if (Object.keys(patch).length) {
+      patch.updatedAt = new Date().toISOString();
+      await this.db.updateItem(this.collection, id, patch);
+    }
+    return id;
   }
-  return id;
-}
-
-
 }
 
 export { RankingRepository };

@@ -1,10 +1,10 @@
+// usecases/Usuarios/PrecargaFederados.js
 import DBConnection from "../../infraestructure/ports/DBConnection.js";
 import AuthConnection from "../../infraestructure/ports/AuthConnection.js";
 import Registrado from "../../domain/entities/Registrado.js";
 import Federado from "../../domain/entities/Federado.js";
 import { UsuarioRepository } from "../../infraestructure/adapters/UsuarioRepository.js";
 import { FederadoRepository } from "../../infraestructure/adapters/FederadoRepository.js";
-import { SubscripcionRepository } from "../../infraestructure/adapters/SubscripcionRepository.js";
 
 // Lista de nombres y apellidos realistas (32)
 const maleNames = [
@@ -25,7 +25,7 @@ const apellidos = [
 ];
 
 class PrecargaFederados {
-  constructor(){
+  constructor() {
     this.db = new DBConnection();
     this.auth = new AuthConnection();
     this.usuarioRepository = new UsuarioRepository();
@@ -33,47 +33,55 @@ class PrecargaFederados {
     this.password = "Q1w2e3r4!";
   }
 
-  async execute(){
-    try{
-      for(let i = 1; i <= 32; i++){
+  async execute() {
+    try {
+      for (let i = 1; i <= 32; i++) {
         const email = `${i}@fed`;
-        // Decide género y nombre acorde
-        const isMale = i % 2 === 0; // alternar para diversidad
-        const nombre = isMale ? maleNames[(i/2 - 1) % maleNames.length] : femaleNames[((i-1)/2) % femaleNames.length];
-        const apellido = apellidos[(i-1) % apellidos.length];
-        const genero = isMale ? 'Masculino' : 'Femenino';
-        const nacimiento = randomDate(new Date(1980,0,1), new Date(2015,11,31)).toISOString();
-        // Check if auth user exists
+
+        const isMale = i % 2 === 0;
+        const nombre = isMale
+          ? maleNames[(i / 2 - 1) % maleNames.length]
+          : femaleNames[((i - 1) / 2) % femaleNames.length];
+        const apellido = apellidos[(i - 1) % apellidos.length];
+        const genero = isMale ? "Masculino" : "Femenino";
+        const nacimiento = randomDate(
+          new Date(1980, 0, 1),
+          new Date(2015, 11, 31)
+        ).toISOString();
+
+        // Auth user
         let userRecord;
-        try{
+        try {
           userRecord = await this.auth.createUser({
             email,
             password: this.password,
-            displayName: `${nombre} ${apellido}`
+            displayName: `${nombre} ${apellido}`,
           });
           console.log(`Auth creado para ${email} -> uid ${userRecord.uid}`);
-        }catch(err){
-          if(err.code === 'auth/email-already-exists' || err.message?.includes('already exists')){
+        } catch (err) {
+          if (
+            err.code === "auth/email-already-exists" ||
+            err.message?.includes("already exists")
+          ) {
             userRecord = await this.auth.getUserByEmail(email);
             console.log(`Auth ya existente para ${email} -> uid ${userRecord.uid}`);
-          }else{
+          } else {
             console.error(`Error creando auth para ${email}:`, err);
             throw err;
           }
         }
 
-        // Asegurar custom claims: rol = federado
-        try{
-          await this.auth.setRole(userRecord.uid, 'federado');
-          console.log(`Custom claim 'rol:federado' asignado a ${userRecord.uid}`);
-        }catch(err){
+        // claims
+        try {
+          await this.auth.setRole(userRecord.uid, "federado");
+        } catch (err) {
           console.error(`Error asignando rol a ${userRecord.uid}:`, err);
           throw err;
         }
 
-        // Create usuario record if not exists
-        const existsUsuario = await this.db.getItem("federados", userRecord.uid);
-        if(!existsUsuario){
+        // A) usuario -> en colección "usuarios"
+        const existsUsuario = await this.db.getItem("usuarios", userRecord.uid);
+        if (!existsUsuario) {
           const usuario = new Registrado(
             userRecord.uid,
             email,
@@ -83,17 +91,22 @@ class PrecargaFederados {
             nacimiento,
             genero
           );
-          await this.db.putItem("federados", usuario.toPlainObject(), userRecord.uid);
-          console.log(`Usuario creado en Firestore para ${email}`);
+          await this.db.putItem("usuarios", usuario.toPlainObject(), userRecord.uid);
+          console.log(`Usuario creado en "usuarios" para ${email}`);
         } else {
-          this.db.updateItem("federados", userRecord.uid, {genero: genero, nacimiento: nacimiento})
-          console.log(`Usuario ya existe en Firestore para ${email}`);
+          await this.db.updateItem("usuarios", userRecord.uid, {
+            genero,
+            nacimiento,
+          });
+          console.log(`Usuario ya existe en "usuarios" para ${email}`);
         }
 
+        // B) federado -> en colección "federados"
         const hoy = new Date();
-        // Create federado record if not exists
-        const existsFed = await this.federadoRepository.getFederadoById(userRecord.uid);
-        if(!existsFed){
+        const existsFed = await this.federadoRepository.getFederadoById(
+          userRecord.uid
+        );
+        if (!existsFed) {
           const federado = new Federado(
             userRecord.uid,
             email,
@@ -101,28 +114,30 @@ class PrecargaFederados {
             apellido,
             "activo",
             nacimiento,
-            genero
+            genero,
+            null // categoriaId
           );
           await this.federadoRepository.save(federado.toPlainObject());
           await this.federadoRepository.update(federado.id, {
-            ...federado,
+            ...federado.toPlainObject(),
             estado: "activo",
             validoHasta: new Date(hoy.setMonth(hoy.getMonth() + 1)).toISOString(),
           });
           console.log(`Federado creado para ${email}`);
         } else {
           console.log(`Federado ya existe para ${email}`);
-          if(existsFed.validoHasta < new Date()){
+          const venc = existsFed.validoHasta ? new Date(existsFed.validoHasta) : null;
+          if (!venc || venc < new Date()) {
             await this.federadoRepository.update(existsFed.id, {
               ...existsFed,
               estado: "activo",
+              rol: existsFed.rol || "federado",
               validoHasta: new Date(hoy.setMonth(hoy.getMonth() + 1)).toISOString(),
             });
-
           }
         }
       }
-    }catch(err){
+    } catch (err) {
       console.error("Error en precarga de federados:", err);
       throw err;
     }
@@ -131,8 +146,7 @@ class PrecargaFederados {
 
 export default new PrecargaFederados();
 
-// helper: random date between start and end
-function randomDate(start, end){
+function randomDate(start, end) {
   const s = start.getTime();
   const e = end.getTime();
   const t = s + Math.floor(Math.random() * (e - s + 1));

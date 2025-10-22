@@ -34,16 +34,83 @@ const AdministracionUsuarios = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      let usuariosRes = await fetch('/api/usuarios', { credentials: 'include' });
+
+      const usuariosRes = await fetch('/api/usuarios', { credentials: 'include' });
       if (usuariosRes.status === 401) {
         setIsUnauthorized(true);
         setLoading(false);
         return;
       }
-      const usuariosData = await usuariosRes.json();
-      if(usuariosData.length > 0){
-        setUsuarios(usuariosData);
+      const baseUsuarios = await usuariosRes.json();
+
+      const federadosRes = await fetch('/api/usuarios/federados', { credentials: 'include' });
+      let listaFederados = [];
+      if (federadosRes.ok) {
+        listaFederados = await federadosRes.json();
       }
+
+      // normalizar posibles nombres de campo y tipado
+      const normalizeFederado = (f) => ({
+        ...f,
+        validoHasta: f?.validoHasta ?? f?.valido_hasta ?? f?.vencimiento ?? null,
+        categoriaId: f?.categoriaId ?? f?.categoria_id ?? null,
+      });
+
+      // indexar federados por id para lookup rápido
+      const federadosById = new Map();
+      for (const rf of Array.isArray(listaFederados) ? listaFederados : []) {
+        if (!rf?.id) continue;
+        const f = normalizeFederado(rf);
+        federadosById.set(f.id, f);
+      }
+
+      // construir mapa base
+      const map = new Map();
+      for (const u of Array.isArray(baseUsuarios) ? baseUsuarios : []) {
+        if (!u?.id) continue;
+        map.set(u.id, { ...u, esFederado: false });
+      }
+
+      // mezclar datos de federados y marcar flag
+      for (const [fid, f] of federadosById) {
+        const prev = map.get(fid);
+        if (prev) {
+          map.set(fid, {
+            ...prev,           // datos base
+            ...f,              // completa con campos de federado
+            esFederado: true,
+            validoHasta: f.validoHasta ?? prev.validoHasta ?? null,
+            categoriaId: f.categoriaId ?? prev.categoriaId ?? null,
+          });
+        } else {
+          map.set(fid, {
+            ...f,
+            esFederado: true,
+            validoHasta: f.validoHasta ?? null,
+            categoriaId: f.categoriaId ?? null,
+          });
+        }
+      }
+
+      // derivar rol final (admin > federado > usuario)
+      const merged = Array.from(map.values()).map((u) => {
+        const rolBase = u.rol || 'usuario';
+        const rol =
+          rolBase === 'administrador'
+            ? 'administrador'
+            : (u.esFederado ? 'federado' : 'usuario');
+        return { ...u, _rolOriginal: rolBase, rol };
+      });
+
+      // ordenar por nombre
+      merged.sort((a, b) =>
+        `${a?.nombre || ''} ${a?.apellido || ''}`.localeCompare(
+          `${b?.nombre || ''} ${b?.apellido || ''}`,
+          'es'
+        )
+      );
+
+      setUsuarios(merged);
       setLoading(false);
     } catch (err) {
       setError('Error al cargar los datos: ' + err.message);
@@ -184,11 +251,10 @@ const AdministracionUsuarios = () => {
       if (usuario.rol !== roleFilter) return false;
     }
     if (federadoFilter !== 'all') {
-      const vencimiento = usuario.rol == "federado" && usuario.validoHasta ? new Date(usuario.validoHasta) : null;
+      const vencimiento = usuario.rol === "federado" && usuario.validoHasta ? new Date(usuario.validoHasta) : null;
       const now = new Date();
-      const isExpired = vencimiento ? vencimiento < now : true; // treat missing as expired/not federated
-      
-      if (usuario.rol != "federado") return false;
+      const isExpired = vencimiento ? vencimiento < now : true; // si no hay fecha, se trata como vencido
+      if (usuario.rol !== "federado") return false;
       if (federadoFilter === 'active' && !vencimiento) return false;
       if (federadoFilter === 'active' && isExpired) return false;
       if (federadoFilter === 'expired' && !isExpired) return false;
@@ -204,14 +270,11 @@ const AdministracionUsuarios = () => {
     const diaActual = hoy.getDate();
     const mesNacimiento = nacimiento.getMonth();
     const diaNacimiento = nacimiento.getDate();
-
-    // Ajuste si aún no cumplió años este año
     if (mesActual < mesNacimiento || (mesActual === mesNacimiento && diaActual < diaNacimiento)) {
       edad--;
     }
-
     return edad;
-  }
+  };
 
   if (authLoading) {
     return (
@@ -231,6 +294,7 @@ const AdministracionUsuarios = () => {
   if (!user || user.rol !== 'administrador') {
     return <SoloAdmin />;
   }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -241,6 +305,7 @@ const AdministracionUsuarios = () => {
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -341,20 +406,19 @@ const AdministracionUsuarios = () => {
                             <CalendarFold className="w-4 h-4 mr-2" style={{ color: '#4AC0E4', display: 'inline' }} />
                             {usuario.nacimiento} ({calcularEdad(usuario.nacimiento)} años)
                           </p>
-                          {/* Federation expiry */}
-                          {usuario.rol == "federado" && (usuario.validoHasta ? (
-                            (() => {
-                              const fecha = new Date(usuario.validoHasta);
-                              const isExpired = fecha < new Date();
-                              return (
-                                <p className={`text-xs mt-1 ${isExpired ? 'text-red-400 font-semibold' : 'text-green-300'}`}>
-                                  Federado hasta: {fecha.toLocaleDateString()} {isExpired ? '(Vencida)' : ''}
-                                </p>
-                              );
-                            })()
-                          ) : (
-                            <p className="text-xs mt-1 text-yellow-300">No federado</p>
-                          ))}
+                          {/* Federation state */}
+                          {usuario.rol === "federado" && (() => {
+                            const fecha = usuario.validoHasta ? new Date(usuario.validoHasta) : null;
+                            if (!fecha) {
+                              return <p className="text-xs mt-1 text-yellow-300">Federado (sin fecha de vencimiento)</p>;
+                            }
+                            const isExpired = fecha < new Date();
+                            return (
+                              <p className={`text-xs mt-1 ${isExpired ? 'text-red-400 font-semibold' : 'text-green-300'}`}>
+                                Federado hasta: {fecha.toLocaleDateString()} {isExpired ? '(vencida)' : ''}
+                              </p>
+                            );
+                          })()}
                         </td>
                         <td>
                           {/* Edit button */}
@@ -362,14 +426,16 @@ const AdministracionUsuarios = () => {
                             <Pencil className="w-4 h-4 mr-2 inline" /> Editar
                           </button>
 
-                          {/* Federar */}
-                          {usuario.rol != "administrador" && 
-                            (
-                              <button disabled={usuario.estado == "federacion_pendiente"} className="btn btn-sm btn-info mr-2" onClick={() => { setEditingUser(usuario); setFederarModalOpen(true); }}>
-                                Federar
-                              </button>
-                            )
-                          }
+                          {/* Federar/Renovar */}
+                          {usuario.rol !== "administrador" && (
+                            <button
+                              disabled={usuario.estado === "federacion_pendiente"}
+                              className="btn btn-sm btn-info mr-2"
+                              onClick={() => { setEditingUser(usuario); setFederarModalOpen(true); }}
+                            >
+                              {usuario.rol === 'federado' ? 'Renovar' : 'Federar'}
+                            </button>
+                          )}
 
                           {/* Block / Unblock */}
                           {usuario.estado === 'inactivo' ? (
@@ -415,8 +481,8 @@ const AdministracionUsuarios = () => {
         </div>
       </div>
     </div>
+
     {/* Modals */}
-    {/* Block confirmation */}
     <ConfirmActionModal
       open={!!modalBloqueo}
       title="Bloquear usuario"
@@ -431,7 +497,6 @@ const AdministracionUsuarios = () => {
       onCancel={() => setModalBloqueo(null)}
     />
 
-    {/* Unblock confirmation */}
     <ConfirmActionModal
       open={!!modalDesbloqueo}
       title="Rehabilitar usuario"
@@ -446,7 +511,6 @@ const AdministracionUsuarios = () => {
       onCancel={() => setModalDesbloqueo(null)}
     />
 
-    {/* Deletion confirmation */}
     <ConfirmActionModal
       open={!!modalEliminacion}
       title="Eliminar usuario"
@@ -461,7 +525,6 @@ const AdministracionUsuarios = () => {
       onCancel={() => setModalEliminacion(null)}
     />
 
-    {/* Edit modal */}
     <EditUserModal
       open={!!modalEdicion}
       usuario={editingUser}
@@ -469,7 +532,6 @@ const AdministracionUsuarios = () => {
       onSave={(payload) => saveEditedUser(editingUser?.id, payload)}
     />
 
-    {/* Federar modal */}
     <FederarUsuarioModal
       open={federarModalOpen}
       usuario={editingUser}
@@ -477,7 +539,7 @@ const AdministracionUsuarios = () => {
       onFederar={(id, planId) => federarUsuario(id, planId)}
     />
     {/* end page container */}
-    </>);
+  </>);
 };
 
 export default AdministracionUsuarios;

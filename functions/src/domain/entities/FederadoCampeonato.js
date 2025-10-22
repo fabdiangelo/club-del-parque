@@ -5,13 +5,11 @@ export default class FederadoCampeonato {
         this.lugar = lugar;
         this.federadoID = federadoID;
         this.campeonatoID = campeonatoID;
-        // Asociaciones dentro del campeonato
-        this.etapaID = null; // id de la etapa a la que pertenece
-        this.grupoID = null; // id del grupo si aplica
-        this.posicion = null; // posición dentro del grupo/etapa
-        this.partidosIDs = []; // ids de partidos asociados
-            // Invitaciones (para dobles)
-            this.invite = null; // { to: inviteeUid, estado: 'pendiente'|'aceptada'|'expirada', fechaEnvio, fechaAceptacion }
+        this.etapaID = null;
+        this.grupoID = null;
+        this.posicion = null;
+        this.partidosIDs = [];
+        this.invite = null;
     }
 
     toPlainObject() {

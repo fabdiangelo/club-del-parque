@@ -25,6 +25,7 @@ import CanchaController from "./src/controllers/CanchaController.js";
 import TemporadaController from "./src/controllers/TemporadaController.js";
 import ReservaController from "./src/controllers/ReservaController.js";
 import RankingsController from "./src/controllers/RankingsController.js";
+import RankingCategoriasController from "./src/controllers/RankingCategoriasController.js";
 import CategoriaController from "./src/controllers/CategoriaController.js";
 import ModalidadController from "./src/controllers/ModalidadController.js";
 import GeneroController from "./src/controllers/GeneroController.js";
@@ -99,6 +100,8 @@ app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController
 app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(req, res));
 app.post("/federados/precarga", (req, res) => UsuarioController.precarga(req, res));
 app.get("/federados/:id", (req, res) => UsuarioController.getFederadoById(req, res));
+app.patch("/federados/:id/categoria", (req, res) => UsuarioController.cambiarCategoriaFederado(req, res));
+
 
 // Categorías
 app.patch("/categorias/orden", (req, res) => CategoriaController.setOrden(req, res));
@@ -237,6 +240,18 @@ app.get("/canchas/:id", (req, res) => CanchaController.getById(req, res));
 app.post("/canchas", (req, res) => CanchaController.crearCancha(req, res));
 app.delete("/canchas/:id", (req, res) => CanchaController.eliminarCancha(req, res));
 app.get("/canchas", (req, res) => CanchaController.getAll(req, res));
+//
+app.patch("/ranking-categorias/orden", (req, res) =>
+  RankingCategoriasController.setOrden(req, res)
+);
+
+// other routes
+app.post("/ranking-categorias", (req, res) => RankingCategoriasController.crear(req, res));
+app.get("/ranking-categorias", (req, res) => RankingCategoriasController.listar(req, res));
+app.get("/ranking-categorias/:id", (req, res) => RankingCategoriasController.getById(req, res));
+// keep this AFTER /orden
+app.patch("/ranking-categorias/:id", (req, res) => RankingCategoriasController.editar(req, res));
+app.delete("/ranking-categorias/:id", (req, res) => RankingCategoriasController.eliminar(req, res));
 
 //Reservas
 

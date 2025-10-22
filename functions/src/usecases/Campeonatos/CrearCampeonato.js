@@ -25,7 +25,7 @@ class CrearCampeonato {
   const inputCantidad = typeof payload.cantidadParticipantes !== 'undefined' ? payload.cantidadParticipantes : payload.cantidadJugadores;
   // If campeonato is dobles, the provided number represents teams; store total individuals in the Campeonato entity (teams * 2)
   const totalJugadores = dobles ? Number(inputCantidad) * 2 : Number(inputCantidad);
-  const c = new Campeonato(id, payload.nombre, payload.descripcion || '', payload.inicio, payload.fin || null, payload.ultimaPosicionJugable || 1, totalJugadores, requisitos, dobles, esTenis);
+  const c = new Campeonato(id, payload.nombre, payload.descripcion || '', payload.inicio, payload.fin || null, payload.ultimaPosicionJugable || 1, totalJugadores, requisitos, dobles, esTenis,  temporadaID,tipoDePartido,deporte,puntosPorPosicion);
 
     // If payload.etapas is provided, validate and persist each etapa, attaching their IDs to campeonato
     const etapasPayload = Array.isArray(payload.etapas) ? payload.etapas : [];

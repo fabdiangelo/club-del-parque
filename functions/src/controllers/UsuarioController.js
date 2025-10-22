@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 
+import CambiarCategoriaFederado from "../usecases/Usuarios/CambiarCategoriaFederado.js";
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 import ObtenerDatosUsuario from "../usecases/Usuarios/ObtenerDatosUsuario.js";
 import ActualizarUsuario from "../usecases/Usuarios/ActualizarUsuario.js";
@@ -9,6 +10,8 @@ import FederarUsuario from "../usecases/Usuarios/FederarUsuario.js";
 import GetCantUsuarios from "../usecases/Usuarios/GetCantUsuarios.js";
 import BloquearUsuario from "../usecases/Usuarios/BloquearUsuario.js";
 import GetAllFederados from "../usecases/Usuarios/getAllFederados.js";
+import EnsureRankingForFederado from "../usecases/Rankings/EnsureRankingForFederado.js";
+
 import PrecargaFederados from "../usecases/Usuarios/PrecargaFederados.js";
 import getFederadoById from "../usecases/Usuarios/getFederadoById.js";
 
@@ -43,7 +46,50 @@ class UsuarioController {
       return res.status(401).json({ error: "Invalid or expired session" });
     }
   }
+async cambiarCategoriaFederado(req, res) {
+  try {
+    const sessionCookie = req.cookies.session || "";
+    if (!sessionCookie) {
+      return res.status(401).json({ error: "No session cookie found" });
+    }
+    const user = GetActualUser.execute(sessionCookie);
+    if (user.rol !== "administrador") {
+      return res.status(403).json({ error: "Acceso no autorizado" });
+    }
 
+    const { id } = req.params; // federadoId
+    if (!id) return res.status(400).json({ error: "Falta id del federado" });
+
+    // Scope and target category come in the body:
+    const {
+      categoriaId,      // required to assign; can be null to clear, but then ranking default points = 0
+      temporadaID,      // required to build the scope
+      deporte,          // "tenis" | "padel" | null
+      tipoDePartido,    // "singles" | "dobles"  (required)
+      filtroId = null,  // FK only
+    } = req.body ?? {};
+
+    if (!temporadaID || !tipoDePartido) {
+      return res.status(400).json({ error: "Faltan temporadaID o tipoDePartido" });
+    }
+
+    // This guarantees a ranking row exists (or is updated) **right now**
+    const ranking = await EnsureRankingForFederado.execute({
+      federadoId: id,
+      temporadaID,
+      deporte,
+      tipoDePartido,
+      filtroId,
+      categoriaId: categoriaId ?? null,
+    });
+
+    // Respond with the (new/updated) ranking so the UI can refresh instantly
+    return res.json({ ok: true, ranking });
+  } catch (error) {
+    console.error("Error in PATCH /federados/:id/categoria:", error);
+    return res.status(400).json({ error: error?.message || "Bad Request" });
+  }
+}
   async getFederadoById(req, res) {
 
     const {id} = req.params;
@@ -84,7 +130,39 @@ async getAllFederados(req, res) {
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }
+async cambiarCategoriaFederado(req, res) {
+  try {
+    const sessionCookie = req.cookies.session || "";
+    if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
+    const user = GetActualUser.execute(sessionCookie);
+    if (user.rol !== "administrador") return res.status(403).json({ error: "Acceso no autorizado" });
 
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: "Falta id del federado" });
+
+    const { categoriaId, temporadaID, deporte, tipoDePartido, filtroId = null } = req.body ?? {};
+
+    // 1) Asignamos categoría al federado (dato “maestro”)
+    const result = await CambiarCategoriaFederado.execute(id, categoriaId ?? null);
+
+    // 2) Si hay scope → aseguramos ranking y aplicamos puntos por defecto “top de la de abajo”
+    if (temporadaID && tipoDePartido) {
+      await EnsureRankingForFederado.execute({
+        federadoId: id,
+        temporadaID,
+        deporte,
+        tipoDePartido,
+        filtroId,
+        categoriaId: categoriaId ?? null,
+      });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.error("Error in PATCH /federados/:id/categoria:", error);
+    return res.status(400).json({ error: error?.message || "Bad Request" });
+  }
+}
   async editarUsuario (req, res) {
     try {
       const sessionCookie = req.cookies.session || "";
@@ -222,8 +300,78 @@ async getAllFederados(req, res) {
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }
-  
+// functions/src/controllers/UsuarioController.js  (inside class)
+async cambiarCategoriaFederado(req, res) {
+  try {
+    const sessionCookie = req.cookies.session || "";
+    if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
+    const user = GetActualUser.execute(sessionCookie);
+    if (user.rol !== "administrador") return res.status(403).json({ error: "Acceso no autorizado" });
 
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: "Falta id del federado" });
+
+    const {
+      categoriaId,            // puede ser ID de /categorias o de /ranking-categorias (scoped con "|")
+      temporadaID,
+      deporte,
+      tipoDePartido,
+      filtroId = null,
+    } = req.body ?? {};
+
+    const looksLikeRankingCategoria = typeof categoriaId === "string" && categoriaId.includes("|");
+
+    let masterUpdate = null;
+    if (!looksLikeRankingCategoria) {
+      masterUpdate = await CambiarCategoriaFederado.execute(id, categoriaId ?? null);
+    }
+
+    if (temporadaID && tipoDePartido) {
+      await EnsureRankingForFederado.execute({
+        federadoId: id,
+        temporadaID,
+        deporte,
+        tipoDePartido,
+        filtroId,
+        categoriaId: categoriaId ?? null, // acá sí aceptamos el ID con pipes (ranking-categorías)
+      });
+    }
+
+    return res.json(masterUpdate ?? { ok: true });
+  } catch (error) {
+    console.error("Error in PATCH /federados/:id/categoria:", error);
+    return res.status(400).json({ error: error?.message || "Bad Request" });
+  }
+}
+
+async cambiarCategoriaFederado(req, res) {
+  try {
+    const federadoId = req.params.id;
+    const {
+      categoriaId,
+      temporadaID,
+      deporte,
+      tipoDePartido,
+      filtroId = null,
+      puntos,
+    } = req.body || {};
+
+    const doc = await EnsureRankingForFederado.execute({
+      federadoId,
+      categoriaId,
+      temporadaID,
+      deporte,
+      tipoDePartido,
+      filtroId,
+      puntos, 
+    });
+
+    return res.status(200).json(doc);
+  } catch (err) {
+    console.error("Error in PATCH /federados/:id/categoria:", err);
+    return res.status(400).json({ error: err?.message || String(err) });
+  }
+}
   async bloquearUsuario(req, res) {
     try{
       const sessionCookie = req.cookies.session || "";

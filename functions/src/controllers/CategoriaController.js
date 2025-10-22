@@ -8,6 +8,7 @@ class CategoriaController {
   }
 
   async crearCategoria(req, res) {
+  
     try {
       const { nombre, capacidad } = req.body || {};
       if (!nombre || !String(nombre).trim()) throw new Error("nombre obligatorio");
@@ -16,7 +17,7 @@ class CategoriaController {
         throw new Error("capacidad inválida (4,8,16,32,64,128,256)");
 
       const all = await this.repo.getAll();
-      const orden = all.length; // new goes to the end by default
+      const orden = all.length;
       const id = await this.repo.save({ nombre: String(nombre).trim(), capacidad: cap, orden });
       res.status(201).json({ id });
     } catch (e) {
