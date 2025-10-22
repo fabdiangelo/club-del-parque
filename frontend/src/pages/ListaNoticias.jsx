@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthProvider";
 import { Link } from "react-router-dom";
-import NavbarBlanco from '../components/NavbarBlanco.jsx';
+import NavbarBlanco from "../components/NavbarBlanco.jsx";
 import RichTextEditor from "../components/RichTextEditor";
 
 // Endpoint configurable por .env (VITE_NOTICIAS_API). Fallback: /api/noticias
@@ -45,7 +45,7 @@ function firstParagraph(md = "") {
 }
 
 export default function Noticias() {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [noticias, setNoticias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -93,16 +93,20 @@ export default function Noticias() {
   const showEmptyState = !loading && filteredNoticias.length === 0;
 
   return (
-    <div className="min-h-dvh w-full bg-base-200 text-base-content flex flex-col">
+    // Fuerza tema claro con DaisyUI
+    <div
+      data-theme="light"
+      className="min-h-dvh w-full bg-white text-gray-900 flex flex-col"
+    >
       <NavbarBlanco />
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
             Noticias
           </h1>
-          <p className="mt-4 max-w-2xl opacity-80">
+          <p className="mt-4 max-w-2xl text-gray-600">
             Las novedades del club más recientes.
           </p>
           {user?.rol == "administrador" && (
@@ -117,7 +121,7 @@ export default function Noticias() {
                 key={f}
                 onClick={() => setActiveFilter(f)}
                 className={`btn btn-sm ${
-                  activeFilter === f ? "btn-primary" : "btn-ghost"
+                  activeFilter === f ? "btn-primary" : "btn-outline"
                 }`}
               >
                 {f}
@@ -126,17 +130,17 @@ export default function Noticias() {
           </div>
 
           {loading && (
-            <p className="mt-4 text-sm opacity-70">Cargando noticias…</p>
+            <p className="mt-4 text-sm text-gray-500">Cargando noticias…</p>
           )}
           {fetchError && !loading && (
-            <p className="mt-4 text-sm text-error">
+            <p className="mt-4 text-sm text-red-600">
               No se pudieron cargar las noticias ({fetchError}).
             </p>
           )}
         </div>
       </section>
 
-      {/* Listado */}
+      {/* Listado vertical (85% del ancho) */}
       <section className="pb-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           {showEmptyState ? (
@@ -144,13 +148,12 @@ export default function Noticias() {
               <p className="text-2xl font-extrabold">No hay noticias</p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col items-center gap-4">
               {filteredNoticias.map((n) => {
                 const fecha = n?.fechaCreacion
                   ? new Date(n.fechaCreacion).toLocaleDateString()
                   : "—";
 
-                // Preferir la primera del array; fallback a imagenUrl legacy
                 const firstImg =
                   (Array.isArray(n.imagenes) && n.imagenes[0]?.imageUrl) ||
                   n.imagenUrl ||
@@ -159,43 +162,40 @@ export default function Noticias() {
                 return (
                   <div
                     key={n.id}
-                    className="card bg-base-100 border border-base-200 shadow-sm"
+                    className="w-[85vw] max-w-5xl flex items-stretch bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden h-40"
                   >
+                    {/* Imagen lateral */}
                     {firstImg ? (
-                      <figure className="aspect-[16/9] overflow-hidden">
+                      <div className="w-1/3 h-full">
                         <img
                           src={firstImg}
                           alt={n?.titulo || "Noticia"}
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                      </figure>
+                      </div>
                     ) : (
-                      <div className="aspect-[16/9] bg-base-300" />
+                      <div className="w-1/3 h-full bg-gray-100" />
                     )}
 
-                    <div className="card-body">
-                      <span className="text-xs uppercase opacity-60">
-                        {fecha}
-                      </span>
-                      <h2 className="card-title">{n?.titulo || "Título"}</h2>
-
-                      {/* Preview con el mismo viewer (solo primer párrafo), sin toolbar y transparente */}
-                      <div className="text-sm mt-1">
-                        <RichTextEditor
-                          valueMarkdown={firstParagraph(n?.mdContent || "")}
-                          readOnly
-                          hideToolbar
-                          transparent
-                          autoHeight
-                          className="!rounded-none !overflow-visible"
-                        />
+                    {/* Contenido */}
+                    <div className="flex-1 flex flex-col justify-between p-4">
+                      <div>
+                        <span className="text-xs uppercase text-gray-500">
+                          {fecha}
+                        </span>
+                        <h2 className="font-bold text-lg text-gray-900 truncate">
+                          {n?.titulo || "Título"}
+                        </h2>
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {firstParagraph(n?.mdContent || "")}
+                        </p>
                       </div>
 
-                      <div className="card-actions justify-between items-center mt-2">
+                      <div className="flex justify-end">
                         <Link
                           to={`/noticias/${n.id}`}
-                          className="btn btn-neutral btn-sm"
+                          className="btn btn-neutral btn-xs"
                         >
                           Leer más
                         </Link>

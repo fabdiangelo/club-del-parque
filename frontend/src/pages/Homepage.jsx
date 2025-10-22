@@ -6,6 +6,67 @@ import logoUrl from "../assets/Logo.svg";
 import "../styles/Home.css";
 import RichTextEditor from "../components/RichTextEditor";
 
+// === Canchas photos
+import img1 from "../assets/CanchasTenisPadel/1.jpg";
+import img2 from "../assets/CanchasTenisPadel/2.jpg";
+import img3 from "../assets/CanchasTenisPadel/3.jpg";
+import img4 from "../assets/CanchasTenisPadel/4.jpg";
+import img5 from "../assets/CanchasTenisPadel/5.jpg";
+import img6 from "../assets/CanchasTenisPadel/6.jpg";
+const CANCHAS_IMAGES = [img1, img2, img3, img4, img5, img6];
+
+// === Leaflet map
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Small CSS for our custom Leaflet divIcon + lightbox
+if (typeof document !== "undefined" && !document.getElementById("club-custom-css")) {
+  const style = document.createElement("style");
+  style.id = "club-custom-css";
+  style.innerHTML = `
+    .tennis-marker {
+      font-size: 28px;
+      line-height: 28px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+      transform: translateY(-4px);
+    }
+    .LightboxOverlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.9);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 60;
+    }
+    .LightboxContent {
+      position: relative; max-width: min(95vw, 1200px); max-height: 90vh;
+    }
+    .LightboxContent img {
+      width: 100%; height: auto; max-height: 90vh; object-fit: contain; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    }
+    .LightboxBtn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.25);
+      width: 44px; height: 44px; border-radius: 9999px; display: grid; place-items: center;
+      cursor: pointer; user-select: none;
+    }
+    .LightboxBtn:hover { background: rgba(255,255,255,.25); }
+    .LightboxPrev { left: -56px; }
+    .LightboxNext { right: -56px; }
+    .LightboxClose {
+      position: absolute; top: -56px; right: 0;
+      width: 40px; height: 40px; border-radius: 9999px;
+      background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.25);
+      display: grid; place-items: center; cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .LightboxPrev { left: 8px; }
+      .LightboxNext { right: 8px; }
+      .LightboxClose { top: 8px; right: 8px; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Configurable endpoint (VITE_NOTICIAS_API) or fallback
 const NOTICIAS_ENDPOINT =
   (typeof import.meta !== "undefined" &&
@@ -17,9 +78,9 @@ const NOTICIAS_ENDPOINT =
 const NEWS_GAP_PX = 48;
 
 // Brand accents
-const BRAND_CYAN = "#22d3ee"; // cyan-400-ish
-const BRAND_GRADIENT_FROM = "#0ea5e9"; // sky-500
-const BRAND_GRADIENT_TO = "#0284c7"; // sky-600
+const BRAND_CYAN = "#22d3ee";
+const BRAND_GRADIENT_FROM = "#0ea5e9";
+const BRAND_GRADIENT_TO = "#0284c7";
 
 // Inyectar @font-face para Amsterdam Four si no existe
 if (typeof document !== "undefined" && !document.getElementById("amsterdam-four-font")) {
@@ -38,47 +99,40 @@ if (typeof document !== "undefined" && !document.getElementById("amsterdam-four-
 }
 
 /* --- Utils --- */
-// Strong cleaner: remove YAML front matter, HTML, kramdown attrs, shortcodes, etc.
 function cleanMdForPreview(md = "") {
   if (!md) return "";
   let s = String(md);
-
-  // YAML front matter
   s = s.replace(/^---[\s\S]*?---\s*/g, "");
-
-  // HTML tags
   s = s.replace(/<[^>]+>/g, "");
-
-  // Kramdown attribute lists {: .class #id }
   s = s.replace(/\{:\s*[^}]*\}/g, "");
-
-  // Shortcodes [tag ...] or [/tag]
   s = s.replace(/\[(\/)?[a-zA-Z0-9_-]+(?:[^\]]*)\]/g, "");
-
-  // Excessive underscores/asterisks/tilde
   s = s.replace(/[*_~]{1,}/g, "");
-
-  // Normalize CRLF + squeeze whitespace
   s = s.replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n");
-
   return s.trim();
 }
-
 function firstParagraph(md = "") {
   if (!md) return "";
   const parts = cleanMdForPreview(md).split(/\n{2,}/);
-  // Return first non-empty block
   const p = parts.find((x) => x.trim().length > 0) || "";
   return p.trim();
 }
 
+// Map center
+const CLUB_LAT = -34.33312002069657;
+const CLUB_LNG = -56.730515149400006;
+
+// Create a custom tennis-ball marker (emoji in a divIcon)
+const TennisIcon = L.divIcon({
+  className: "tennis-marker",
+  html: "🎾",
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+});
+
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
-
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 40);
-    };
+    const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -89,7 +143,6 @@ export default function Home() {
 
   useEffect(() => {
     let isCancelled = false;
-
     async function load() {
       setLoading(true);
       setFetchError("");
@@ -104,7 +157,6 @@ export default function Home() {
         if (!isCancelled) setLoading(false);
       }
     }
-
     load();
     return () => {
       isCancelled = true;
@@ -114,7 +166,7 @@ export default function Home() {
   const top3 = useMemo(() => (noticias || []).slice(0, 3), [noticias]);
   const hasNoticias = top3.length > 0;
 
-  // Measure a sample card height to size the empty-state box like 3 cards
+  // measure
   const measureRef = useRef(null);
   const [cardHeight, setCardHeight] = useState(0);
   useEffect(() => {
@@ -123,10 +175,25 @@ export default function Home() {
       if (h && h !== cardHeight) setCardHeight(h);
     }
   }, [measureRef, cardHeight, hasNoticias, top3]);
+  const emptyMinHeight = cardHeight ? 3 * cardHeight + 2 * NEWS_GAP_PX : undefined;
 
-  const emptyMinHeight = cardHeight
-    ? 3 * cardHeight + 2 * NEWS_GAP_PX
-    : undefined;
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
+
+  // lightbox keyboard handlers
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setLightboxOpen(false);
+      if (e.key === "ArrowRight")
+        setPhotoIndex((i) => (i + 1) % CANCHAS_IMAGES.length);
+      if (e.key === "ArrowLeft")
+        setPhotoIndex((i) => (i + CANCHAS_IMAGES.length - 1) % CANCHAS_IMAGES.length);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen]);
 
   return (
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
@@ -177,16 +244,14 @@ export default function Home() {
               <Link to="/campeonatos" className="btn btn-primary">
                 Ver Campeonatos
               </Link>
-              <Link to="/register" className="btn btn-outline btn-accent">
+              <Link to="/register" className="btn btn-success btn-outline btn-accent">
                 Registrarse
               </Link>
             </div>
 
             {(loading || fetchError) && (
               <p className="mt-6 text-sm opacity-70">
-                {loading
-                  ? "Cargando noticias…"
-                  : `No se pudieron cargar noticias (${fetchError}).`}
+                {loading ? "Cargando noticias…" : `No se pudieron cargar noticias (${fetchError}).`}
               </p>
             )}
           </div>
@@ -197,7 +262,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* INSTALACIONES — gradient in brand blue family */}
+      {/* INSTALACIONES */}
       <section
         className="text-primary-content"
         style={{
@@ -211,14 +276,32 @@ export default function Home() {
         >
           <h2 className="text-4xl font-extrabold">Instalaciones</h2>
           <p className="mt-4 max-w-2xl opacity-95">
-            Texto placeholder sobre las instalaciones. Cámbialo por tu propio contenido.
+            Contamos con varias canchas dentro del Parque Rodó en San José de Mayo
           </p>
 
           <div className="mt-12 grid lg:grid-cols-12 gap-10">
+            {/* MAP */}
             <div className="lg:col-span-7">
               <div className="card shadow-xl bg-base-200/20 backdrop-blur-[1px]">
-                <div className="w-full h-[320px] bg-base-100/20 grid place-items-center rounded-box">
-                  <span className="opacity-90">Mapa Placeholder</span>
+                <div className="w-full h-[340px] rounded-box overflow-hidden">
+                  <MapContainer
+                    center={[CLUB_LAT, CLUB_LNG]}
+                    zoom={16}
+                    scrollWheelZoom={false}
+                    style={{ width: "100%", height: "100%" }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={[CLUB_LAT, CLUB_LNG]} icon={TennisIcon}>
+                      <Popup>
+                        <strong>Club del Parque</strong>
+                        <br />
+                        San José de Mayo, Uruguay
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
                 </div>
               </div>
               <p className="mt-6">
@@ -228,11 +311,26 @@ export default function Home() {
               </p>
             </div>
 
+            {/* PHOTOS */}
             <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="card shadow rounded-box bg-base-200/20 h-[120px] grid place-items-center">
-                  <span className="opacity-90 text-sm">Foto {i + 1}</span>
-                </div>
+              {CANCHAS_IMAGES.map((src, i) => (
+                <button
+                  type="button"
+                  key={i}
+                  className="card shadow rounded-box bg-base-200/20 h-[160px] overflow-hidden cursor-pointer group"
+                  onClick={() => {
+                    setPhotoIndex(i);
+                    setLightboxOpen(true);
+                  }}
+                  aria-label={`Abrir foto ${i + 1}`}
+                >
+                  <img
+                    src={src}
+                    alt={`Cancha ${i + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    loading="lazy"
+                  />
+                </button>
               ))}
             </div>
           </div>
@@ -243,10 +341,8 @@ export default function Home() {
       <section className="bg-white text-neutral-900 py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
           <h2 className="text-5xl font-extrabold text-center mb-12">Noticias</h2>
-          <div className="grid lg:grid-cols-12 gap-10">
-            {/* Lista principal */}
-            <div className="lg:col-span-8 space-y-12 relative">
-              {/* Hidden sample card to measure height */}
+          <div className="grid gap-10">
+            <div className="w-full space-y-12 relative">
               <div className="absolute -left-[9999px] -top-[9999px]" aria-hidden>
                 <ArticleCard
                   ref={measureRef}
@@ -263,8 +359,7 @@ export default function Home() {
                     const imgs = Array.isArray(n?.imagenes)
                       ? n.imagenes.map((it) => it?.imageUrl).filter(Boolean)
                       : [];
-                    if (imgs.length === 0 && n?.imagenUrl) imgs.push(n.imagenUrl); // legacy fallback
-
+                    if (imgs.length === 0 && n?.imagenUrl) imgs.push(n.imagenUrl);
                     return (
                       <ArticleCard
                         key={n.id}
@@ -285,46 +380,62 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Button stays at the same position */}
-              <Link to="/noticias" className="btn btn-neutral">
-                Ver más noticias
-              </Link>
+              <Link to="/noticias" className="btn btn-neutral">Ver más noticias</Link>
             </div>
-
-            {/* Aside de últimos partidos */}
-            <aside className="lg:col-span-4">
-              <div className="card bg-neutral-900 text-neutral-content shadow-xl">
-                <div className="card-body">
-                  <h3 className="card-title">Últimos partidos</h3>
-                  <div className="mt-2 space-y-6">
-                    {["3 - 5", "6 - 4", "7 - 5"].map((score, i) => (
-                      <MatchRow key={i} score={score} />
-                    ))}
-                  </div>
-                  <div className="">
-                    <Link to="/register" className="btn btn-primary w-full">
-                Ver torneos
-              </Link>
-                  </div>
-                </div>
-              </div>
-            </aside>
           </div>
         </div>
       </section>
+
       <section className="m-5">
         <label className="pr-5">Te has encontrado con algún problema? </label>
         <Link to="/reportes" className="btn btn-outline">
           Envíanos tu reporte!
         </Link>
       </section>
+
+      {/* LIGHTBOX (no deps) */}
+      {lightboxOpen && (
+        <div
+          className="LightboxOverlay"
+          onClick={() => setLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="LightboxContent" onClick={(e) => e.stopPropagation()}>
+            <img src={CANCHAS_IMAGES[photoIndex]} alt={`Foto ${photoIndex + 1}`} />
+            <button
+              className="LightboxBtn LightboxPrev"
+              onClick={() =>
+                setPhotoIndex((i) => (i + CANCHAS_IMAGES.length - 1) % CANCHAS_IMAGES.length)
+              }
+              aria-label="Anterior"
+            >
+              ‹
+            </button>
+            <button
+              className="LightboxBtn LightboxNext"
+              onClick={() => setPhotoIndex((i) => (i + 1) % CANCHAS_IMAGES.length)}
+              aria-label="Siguiente"
+            >
+              ›
+            </button>
+            <button
+              className="LightboxClose"
+              onClick={() => setLightboxOpen(false)}
+              aria-label="Cerrar"
+              title="Cerrar (Esc)"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ---------- Subcomponentes ---------- */
 
-// forwardRef so we can measure this card’s height
 const ArticleCard = React.forwardRef(function ArticleCard(
   { id, date, title, excerptMd, images = [] },
   ref
@@ -332,12 +443,10 @@ const ArticleCard = React.forwardRef(function ArticleCard(
   const [idx, setIdx] = React.useState(0);
   const [fadeIn, setFadeIn] = React.useState(true);
 
-  // rotate every 6s (respect reduced motion)
   React.useEffect(() => {
     if (!images.length) return;
     const mediaOK = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     if (mediaOK?.matches) return;
-
     const t = setInterval(() => {
       setFadeIn(false);
       requestAnimationFrame(() => {
@@ -345,11 +454,9 @@ const ArticleCard = React.forwardRef(function ArticleCard(
         setFadeIn(true);
       });
     }, 6000);
-
     return () => clearInterval(t);
   }, [images.length]);
 
-  // prefetch next image
   React.useEffect(() => {
     const next = images[(idx + 1) % images.length];
     if (next) {
@@ -362,9 +469,7 @@ const ArticleCard = React.forwardRef(function ArticleCard(
 
   return (
     <div ref={ref} className="card bg-white border border-base-200 shadow overflow-hidden rounded-xl">
-      {/* Two-column card: left image, right content */}
       <div className="grid grid-cols-[220px_1fr] md:grid-cols-[280px_1fr]">
-        {/* LEFT: image (with soft fade/rotate) */}
         <div className="relative h-[160px] md:h-[190px]">
           {current ? (
             <>
@@ -373,18 +478,12 @@ const ArticleCard = React.forwardRef(function ArticleCard(
                 src={current}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover"
-                style={{
-                  opacity: fadeIn ? 1 : 0,
-                  transition: "opacity 700ms ease",
-                }}
+                style={{ opacity: fadeIn ? 1 : 0, transition: "opacity 700ms ease" }}
                 loading="lazy"
               />
-              {/* optional soft gradient on top of image */}
               <div
                 className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: "linear-gradient(0deg, rgba(0,0,0,0.05), rgba(0,0,0,0))",
-                }}
+                style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.05), rgba(0,0,0,0))" }}
               />
             </>
           ) : (
@@ -397,8 +496,6 @@ const ArticleCard = React.forwardRef(function ArticleCard(
         <div className="p-5 md:p-6">
           <h4 className="card-title m-0">{title}</h4>
           <p className="text-sm text-neutral/70 mt-1">{date}</p>
-
-          {/* Preview rendered with the same viewer, but only first paragraph and transparent */}
           <div className="mt-3 text-neutral-700">
             <RichTextEditor
               valueMarkdown={firstParagraph(excerptMd)}
@@ -409,7 +506,6 @@ const ArticleCard = React.forwardRef(function ArticleCard(
               className="!rounded-none !overflow-visible"
             />
           </div>
-
           <div className="card-actions mt-4">
             <Link to={`/noticias/${id}`} className="btn btn-neutral btn-sm">
               Ver Más ▷

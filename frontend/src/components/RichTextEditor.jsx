@@ -259,10 +259,11 @@ export default function RichTextEditor({
 
   useEffect(() => () => debounceTimerRef.current && clearTimeout(debounceTimerRef.current), []);
 
+  // === Light theme classes here ===
   const wrapperClasses = [
     "rounded-xl",
     "overflow-hidden",
-    transparent ? "bg-transparent border-0" : "bg-neutral-900 border border-white/10",
+    transparent ? "bg-transparent border-0" : "bg-white border border-neutral-200",
     "flex",
     "flex-col",
     className || ""
@@ -287,7 +288,7 @@ export default function RichTextEditor({
             style={quillStyle}
           />
         ) : (
-          <div className="p-4 text-sm text-white/60">Cargando editor…</div>
+          <div className="p-4 text-sm text-neutral-500">Cargando editor…</div>
         )}
       </div>
     </div>

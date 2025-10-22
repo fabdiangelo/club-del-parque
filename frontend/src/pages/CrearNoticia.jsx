@@ -19,12 +19,12 @@ const field = (v) => (typeof v === "string" ? v.trim() : v ?? "");
 function normalizeMarkdown(src = "") {
   if (!src) return "";
 
-   const md = String(src).replace(/\r\n?/g, "\n");
-   return md.replace(
-     /([^\n])\n((?:\s*[-+*]\s+\S)|(?:\s*\d+\.\s+\S))/g,
-     (_m, a, b) => `${a}\n\n${b}`
-   );
- }
+  const md = String(src).replace(/\r\n?/g, "\n");
+  return md.replace(
+    /([^\n])\n((?:\s*[-+*]\s+\S)|(?:\s*\d+\.\s+\S))/g,
+    (_m, a, b) => `${a}\n\n${b}`
+  );
+}
 
 const fmtDate = (iso) => {
   if (!iso) return "—";
@@ -284,25 +284,25 @@ export default function CrearNoticia() {
   if (!user || user.rol !== "administrador") return <SoloAdmin />;
 
   return (
-    <div className="min-h-dvh flex flex-col bg-neutral-900 text-white">
+    <div className="min-h-dvh flex flex-col bg-white text-neutral-900">
       <NavbarBlanco />
       <main className="max-w-7xl w-full mx-auto px-6 lg:px-8 py-24 space-y-12">
         {/* Header */}
         <header className="flex items-center justify-between gap-4">
           <h1 className="text-4xl font-extrabold">Panel de Noticias</h1>
-          <Link to="/noticias" className="rounded-full bg-sky-400 px-5 py-2 font-semibold text-white hover:bg-sky-500">
+          <Link to="/noticias" className="rounded-full bg-sky-600 px-5 py-2 font-semibold text-white hover:bg-sky-700">
             Ver lista pública
           </Link>
         </header>
 
         {error && (
-          <div className="rounded-xl bg-red-600/20 border border-red-500/40 p-4">
-            <p className="text-red-200 text-sm">{error}</p>
+          <div className="rounded-xl bg-red-50 border border-red-200 p-4">
+            <p className="text-red-700 text-sm">{error}</p>
           </div>
         )}
 
         {/* CREATE */}
-        <section className="rounded-3xl bg-neutral-800 border border-white/10 p-6">
+        <section className="rounded-3xl bg-white border border-neutral-200 p-6 shadow-sm">
           <h2 className="text-2xl font-bold mb-4">Crear Noticia</h2>
           <form onSubmit={onCreate} className="grid md:grid-cols-2 gap-4">
             <TextInput label="Nombre" value={form.nombre} onChange={(v) => setForm((s) => ({ ...s, nombre: v }))} />
@@ -329,7 +329,7 @@ export default function CrearNoticia() {
                 onChange={(e) => setForm((s) => ({ ...s, imagenes: Array.from(e.target.files || []) }))}
               />
               {!!form.imagenes?.length && (
-                <p className="text-xs text-neutral-400 mt-1">{form.imagenes.length} archivo(s) seleccionados.</p>
+                <p className="text-xs text-neutral-600 mt-1">{form.imagenes.length} archivo(s) seleccionados.</p>
               )}
             </div>
 
@@ -337,7 +337,7 @@ export default function CrearNoticia() {
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-xl bg-sky-500 hover:bg-sky-600 px-5 py-3 font-semibold disabled:opacity-60"
+                className="rounded-xl bg-sky-600 hover:bg-sky-700 px-5 py-3 font-semibold text-white disabled:opacity-60"
               >
                 {loading ? "Creando…" : "Crear Noticia"}
               </button>
@@ -349,37 +349,37 @@ export default function CrearNoticia() {
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Noticias</h2>
-            <button onClick={fetchNoticias} className="rounded-xl border border-white/20 px-4 py-2 hover:bg-white/10">
+            <button onClick={fetchNoticias} className="rounded-xl border border-neutral-300 px-4 py-2 hover:bg-neutral-100">
               Recargar
             </button>
           </div>
 
           {loading ? (
-            <p className="text-neutral-300">Cargando…</p>
+            <p className="text-neutral-700">Cargando…</p>
           ) : noticias.length === 0 ? (
-            <p className="text-neutral-300">No hay noticias aún.</p>
+            <p className="text-neutral-700">No hay noticias aún.</p>
           ) : (
             <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {noticias.map((n) => {
                 const firstImg = (Array.isArray(n.imagenes) && n.imagenes[0]?.imageUrl) || n.imagenUrl || null;
                 return (
-                  <li key={n.id} className="rounded-2xl bg-neutral-800 border border-white/10 overflow-hidden">
+                  <li key={n.id} className="rounded-2xl bg-white border border-neutral-200 overflow-hidden shadow-sm">
                     {firstImg ? (
                       <img src={firstImg} alt={n.titulo} className="w-full h-40 object-cover" />
                     ) : (
-                      <div className="w-full h-40 bg-neutral-700 grid place-items-center text-neutral-400 text-sm">
+                      <div className="w-full h-40 bg-neutral-100 grid place-items-center text-neutral-500 text-sm">
                         Sin imagen
                       </div>
                     )}
                     <div className="p-4 space-y-2">
                       <h3 className="text-lg font-bold">{n.titulo || "—"}</h3>
-                      <p className="text-sm text-neutral-300">{n.nombre || "—"}</p>
-                      <p className="text-xs text-neutral-400">
+                      <p className="text-sm text-neutral-700">{n.nombre || "—"}</p>
+                      <p className="text-xs text-neutral-500">
                         {fmtDate(n.fechaCreacion)} · {n.tipo || "—"}
                       </p>
 
                       <div className="pt-2">
-                        <label className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm hover:bg-amber-700 cursor-pointer inline-block">
+                        <label className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm text-white hover:bg-amber-600 cursor-pointer inline-block">
                           Agregar imágenes
                           <input
                             type="file"
@@ -396,17 +396,17 @@ export default function CrearNoticia() {
                         <button
                           onClick={() => fetchNoticiaById(n.id)}
                           disabled={busyId === n.id}
-                          className="rounded-lg bg-neutral-700 px-3 py-1.5 text-sm hover:bg-neutral-600 disabled:opacity-60"
+                          className="rounded-lg bg-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-200 disabled:opacity-60"
                         >
                           {busyId === n.id ? "Abriendo…" : "Ver"}
                         </button>
-                        <button onClick={() => openEdit(n)} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-700">
+                        <button onClick={() => openEdit(n)} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm text-white hover:bg-sky-700">
                           Editar
                         </button>
                         <button
                           onClick={() => onDelete(n.id)}
                           disabled={busyId === n.id}
-                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm hover:bg-red-700 disabled:opacity-60"
+                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-60"
                         >
                           Eliminar
                         </button>
@@ -420,17 +420,17 @@ export default function CrearNoticia() {
         </section>
 
         {/* DETAIL */}
-        <section className="rounded-3xl bg-neutral-800 border border-white/10 p-6">
+        <section className="rounded-3xl bg-white border border-neutral-200 p-6 shadow-sm">
           <h2 className="text-2xl font-bold mb-4">Detalle</h2>
           {!selected ? (
-            <p className="text-neutral-400">Elige “Ver” en una noticia.</p>
+            <p className="text-neutral-600">Elige “Ver” en una noticia.</p>
           ) : (
             <article className="space-y-4">
               <div className="flex items-center gap-3">
                 <h3 className="text-xl font-extrabold">{selected.titulo}</h3>
-                <span className="text-xs bg-white/10 rounded-full px-2 py-0.5">{selected.tipo || "—"}</span>
+                <span className="text-xs bg-neutral-100 text-neutral-700 rounded-full px-2 py-0.5">{selected.tipo || "—"}</span>
               </div>
-              <p className="text-sm text-neutral-300">
+              <p className="text-sm text-neutral-600">
                 Por <strong>{selected.nombre || "—"}</strong> · {fmtDate(selected.fechaCreacion)} (actualizado{" "}
                 {fmtDate(selected.fechaActualizacion)})
               </p>
@@ -439,11 +439,11 @@ export default function CrearNoticia() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {selected.imagenes.map((img, idx) => (
                     <div key={img.imagePath || idx} className="relative group">
-                      <img className="w-full h-40 object-cover rounded-xl border border-white/10" src={img.imageUrl} alt={`img-${idx}`} />
+                      <img className="w-full h-40 object-cover rounded-xl border border-neutral-200" src={img.imageUrl} alt={`img-${idx}`} />
                       <button
                         onClick={() => onRemoveImage(selected.id, img.imagePath)}
                         disabled={busyId === selected.id}
-                        className="absolute top-2 right-2 text-xs rounded-md bg-red-600 px-2 py-1 opacity-0 group-hover:opacity-100 transition"
+                        className="absolute top-2 right-2 text-xs rounded-md bg-red-600 text-white px-2 py-1 opacity-0 group-hover:opacity-100 transition"
                       >
                         ✕
                       </button>
@@ -451,14 +451,14 @@ export default function CrearNoticia() {
                   ))}
                 </div>
               ) : selected.imagenUrl ? (
-                <img className="w-full max-h-96 object-cover rounded-xl border border-white/10" src={selected.imagenUrl} alt={selected.titulo} />
+                <img className="w-full max-h-96 object-cover rounded-xl border border-neutral-200" src={selected.imagenUrl} alt={selected.titulo} />
               ) : (
-                <div className="w-full h-40 bg-neutral-700 grid place-items-center text-neutral-400 text-sm rounded-xl border border-white/10">
+                <div className="w-full h-40 bg-neutral-100 grid place-items-center text-neutral-500 text-sm rounded-xl border border-neutral-200">
                   Sin imágenes
                 </div>
               )}
 
-              <div className="prose prose-invert max-w-none">
+              <div className="prose max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                   {selected.mdContent || "*Sin contenido*"}
                 </ReactMarkdown>
@@ -470,18 +470,18 @@ export default function CrearNoticia() {
 
       {/* EDIT MODAL */}
       {edit.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm grid place-items-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm grid place-items-center p-4">
           <div
-            className={`w-full ${editFullscreen ? "max-w-[95vw]" : "max-w-3xl"} rounded-2xl bg-neutral-900 border border-white/10 flex flex-col`}
+            className={`w-full ${editFullscreen ? "max-w-[95vw]" : "max-w-3xl"} rounded-2xl bg-white border border-neutral-200 flex flex-col shadow-xl`}
             style={{ maxHeight: "90vh" }}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 sticky top-0 bg-neutral-900/90">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 sticky top-0 bg-white/90">
               <h3 className="text-xl font-bold">Editar Noticia</h3>
               <div className="flex items-center gap-2">
-                <button onClick={() => setEditFullscreen((v) => !v)} className="rounded-lg px-3 py-1.5 hover:bg-white/10 text-sm">
+                <button onClick={() => setEditFullscreen((v) => !v)} className="rounded-lg px-3 py-1.5 hover:bg-neutral-100 text-sm">
                   {editFullscreen ? "Ventana" : "Pantalla completa"}
                 </button>
-                <button onClick={closeEdit} className="rounded-lg px-3 py-1.5 hover:bg-white/10">
+                <button onClick={closeEdit} className="rounded-lg px-3 py-1.5 hover:bg-neutral-100">
                   Cerrar
                 </button>
               </div>
@@ -513,21 +513,21 @@ export default function CrearNoticia() {
                     onChange={(e) => setEdit((s) => ({ ...s, imagenesNew: Array.from(e.target.files || []) }))}
                   />
                   {!!edit.imagenesNew?.length && (
-                    <p className="text-xs text-neutral-400 mt-1">{edit.imagenesNew.length} archivo(s) para subir al guardar.</p>
+                    <p className="text-xs text-neutral-600 mt-1">{edit.imagenesNew.length} archivo(s) para subir al guardar.</p>
                   )}
                 </div>
               </form>
             </div>
 
-            <div className="px-6 py-4 border-t border-white/10 sticky bottom-0 bg-neutral-900/90 flex gap-3">
+            <div className="px-6 py-4 border-t border-neutral-200 sticky bottom-0 bg-white/90 flex gap-3">
               <button
                 onClick={onUpdate}
                 disabled={busyId === edit.id}
-                className="rounded-xl bg-sky-500 hover:bg-sky-600 px-5 py-3 font-semibold disabled:opacity-60"
+                className="rounded-xl bg-sky-600 hover:bg-sky-700 px-5 py-3 font-semibold text-white disabled:opacity-60"
               >
                 {busyId === edit.id ? "Guardando…" : "Guardar cambios"}
               </button>
-              <button type="button" onClick={closeEdit} className="rounded-xl border border-white/20 px-5 py-3 hover:bg-white/10">
+              <button type="button" onClick={closeEdit} className="rounded-xl border border-neutral-300 px-5 py-3 hover:bg-neutral-100">
                 Cancelar
               </button>
             </div>
@@ -540,7 +540,7 @@ export default function CrearNoticia() {
 
 /* ---------- UI BITS ---------- */
 function Label({ children }) {
-  return <label className="text-sm text-neutral-300">{children}</label>;
+  return <label className="text-sm text-neutral-700">{children}</label>;
 }
 
 function TextInput({ label, value, onChange, placeholder }) {
@@ -548,7 +548,7 @@ function TextInput({ label, value, onChange, placeholder }) {
     <div>
       <Label>{label}</Label>
       <input
-        className="mt-2 w-full rounded-xl bg-neutral-700 border border-white/10 p-3"
+        className="mt-2 w-full rounded-xl bg-white border border-neutral-300 p-3 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || ""}

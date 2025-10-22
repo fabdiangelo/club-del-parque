@@ -4,6 +4,7 @@ import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { defaultSchema } from "hast-util-sanitize";
 import "react-quill-new/dist/quill.bubble.css";
 import RichTextEditor from "../components/RichTextEditor";
+
 /* API endpoint */
 const NOTICIAS_ENDPOINT =
   (typeof import.meta !== "undefined" &&
@@ -11,10 +12,10 @@ const NOTICIAS_ENDPOINT =
     import.meta.env.VITE_NOTICIAS_API) ||
   "/api/noticias";
 
-/* Theme */
-const PAGE_BG = "#242424";
-const CARD_BG = "#2f2f2f";
-const ACCENT = "#1f6b82";
+/* Theme (light) */
+const PAGE_BG = "#f8fafc";
+const CARD_BG = "#ffffff";
+const ACCENT  = "#1f6b82";
 
 /* Utils */
 function fmtDate(iso) {
@@ -30,8 +31,7 @@ const SANITIZE_SCHEMA = {
   tagNames: [
     ...(defaultSchema.tagNames || []),
     "h1", "h2", "h3", "h4", "h5", "h6",
-    "p", "div", "blockquote", "li", "table", "th", "td",
-    "u"
+    "p", "div", "blockquote", "li", "table", "th", "td", "u"
   ],
   attributes: {
     ...defaultSchema.attributes,
@@ -71,32 +71,23 @@ function repairMarkdownLinks(md = "") {
 function useSwipe(onLeft, onRight) {
   const start = useRef({ x: 0, y: 0 });
   const threshold = 40;
-  function onStart(x, y) {
-    start.current = { x, y };
-  }
+  function onStart(x, y) { start.current = { x, y }; }
   function onMoveEnd(x, y) {
     const dx = x - start.current.x;
     const dy = y - start.current.y;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
-      if (dx < 0) onLeft?.();
-      else onRight?.();
+      if (dx < 0) onLeft?.(); else onRight?.();
     }
   }
   return {
-    onTouchStart: (e) => {
-      const t = e.touches?.[0];
-      if (t) onStart(t.clientX, t.clientY);
-    },
-    onTouchEnd: (e) => {
-      const t = e.changedTouches?.[0];
-      if (t) onMoveEnd(t.clientX, t.clientY);
-    },
+    onTouchStart: (e) => { const t = e.touches?.[0]; if (t) onStart(t.clientX, t.clientY); },
+    onTouchEnd: (e) => { const t = e.changedTouches?.[0]; if (t) onMoveEnd(t.clientX, t.clientY); },
     onMouseDown: (e) => onStart(e.clientX, e.clientY),
     onMouseUp: (e) => onMoveEnd(e.clientX, e.clientY),
   };
 }
 
-/* Tiny carousel */
+/* Tiny carousel (claro + mejor uso de ancho) */
 function Carousel({ images, title }) {
   const [idx, setIdx] = useState(0);
   const [fade, setFade] = useState(true);
@@ -105,10 +96,7 @@ function Carousel({ images, title }) {
     if (!images?.length) return;
     const next = (i + images.length) % images.length;
     setFade(false);
-    requestAnimationFrame(() => {
-      setIdx(next);
-      setFade(true);
-    });
+    requestAnimationFrame(() => { setIdx(next); setFade(true); });
   };
   const next = () => go(idx + 1);
   const prev = () => go(idx - 1);
@@ -129,21 +117,16 @@ function Carousel({ images, title }) {
     if (!images?.length) return;
     const left = images[(idx - 1 + images.length) % images.length]?.src;
     const right = images[(idx + 1) % images.length]?.src;
-    [left, right].forEach((u) => {
-      if (!u) return;
-      const img = new Image();
-      img.src = u;
-    });
+    [left, right].forEach((u) => { if (!u) return; const img = new Image(); img.src = u; });
   }, [idx, images]);
 
   if (!images?.length) return null;
   const cur = images[idx];
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 lg:-mx-6 xl:-mx-8">
       <div
-        className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl select-none"
-        style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+        className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl select-none border border-neutral-200 bg-neutral-100/60"
         {...swipe}
       >
         <img
@@ -159,7 +142,7 @@ function Carousel({ images, title }) {
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 hover:bg-black/60 p-2"
+              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
               aria-label="Anterior"
               title="Anterior"
             >
@@ -167,7 +150,7 @@ function Carousel({ images, title }) {
             </button>
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 hover:bg-black/60 p-2"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
               aria-label="Siguiente"
               title="Siguiente"
             >
@@ -182,10 +165,7 @@ function Carousel({ images, title }) {
               <button
                 key={i}
                 onClick={() => go(i)}
-                className="h-2 w-2 rounded-full"
-                style={{
-                  backgroundColor: i === idx ? "white" : "rgba(255,255,255,0.5)",
-                }}
+                className={`h-2 w-2 rounded-full ${i === idx ? "bg-neutral-900" : "bg-neutral-500/60"}`}
                 aria-label={`Ir a imagen ${i + 1}`}
                 title={`Imagen ${i + 1}`}
               />
@@ -195,13 +175,13 @@ function Carousel({ images, title }) {
       </div>
 
       {images.length > 1 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:-mx-6 xl:-mx-8 px-1">
           {images.map((im, i) => (
             <button
               key={im.src + i}
               onClick={() => go(i)}
               className={`relative h-16 w-24 flex-none overflow-hidden rounded-xl border ${
-                i === idx ? "border-white/80" : "border-white/15"
+                i === idx ? "border-neutral-600" : "border-neutral-200"
               }`}
               title={`Imagen ${i + 1}`}
             >
@@ -229,9 +209,7 @@ export default function NoticiaDetalle() {
   const [fetchError, setFetchError] = useState("");
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
+  useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -268,9 +246,7 @@ export default function NoticiaDetalle() {
     }
 
     load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [id]);
 
   useEffect(() => {
@@ -291,15 +267,10 @@ export default function NoticiaDetalle() {
       }
     }
     loadRel();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [noticia]);
 
-  useEffect(() => {
-    if (!noticia) return;
-    setReady(true);
-  }, [noticia]);
+  useEffect(() => { if (noticia) setReady(true); }, [noticia]);
 
   const images = useMemo(() => {
     const arr = Array.isArray(noticia?.imagenes) ? noticia.imagenes : [];
@@ -314,7 +285,6 @@ export default function NoticiaDetalle() {
     return list;
   }, [noticia]);
 
-  // Repair old/bad links for rendering
   const mdForView = useMemo(
     () => repairMarkdownLinks(noticia?.mdContent || ""),
     [noticia?.mdContent]
@@ -322,10 +292,10 @@ export default function NoticiaDetalle() {
 
   if (fetching) {
     return (
-      <div className="min-h-dvh w-full flex flex-col text-white" style={{ backgroundColor: PAGE_BG }}>
+      <div className="min-h-dvh w-full flex flex-col text-neutral-900" style={{ backgroundColor: PAGE_BG }}>
         <NavbarBlanco />
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <p className="text-lg opacity-80">Cargando…</p>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 text-center">
+          <p className="text-lg text-neutral-500">Cargando…</p>
         </div>
       </div>
     );
@@ -333,14 +303,14 @@ export default function NoticiaDetalle() {
 
   if (!noticia) {
     return (
-      <div className="min-h-dvh w-full flex flex-col text-white" style={{ backgroundColor: PAGE_BG }}>
+      <div className="min-h-dvh w-full flex flex-col text-neutral-900" style={{ backgroundColor: PAGE_BG }}>
         <NavbarBlanco />
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
-          <div className="rounded-2xl p-8" style={{ backgroundColor: CARD_BG }}>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16">
+          <div className="rounded-2xl p-8 border border-neutral-200 bg-white">
             <h1 className="text-2xl font-semibold">Noticia no encontrada</h1>
-            <p className="mt-2 text-white/70">La noticia que intentas ver no existe o fue movida.</p>
-            {fetchError && <p className="mt-2 text-sm text-red-300">Error al cargar: {fetchError}</p>}
-            <Link to="/noticias" className="mt-6 inline-block rounded-full px-4 py-2" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
+            <p className="mt-2 text-neutral-600">La noticia que intentas ver no existe o fue movida.</p>
+            {fetchError && <p className="mt-2 text-sm text-red-600">Error al cargar: {fetchError}</p>}
+            <Link to="/noticias" className="mt-6 inline-block rounded-full px-4 py-2 border border-neutral-200 hover:bg-neutral-50">
               ← Volver a Noticias
             </Link>
           </div>
@@ -350,86 +320,104 @@ export default function NoticiaDetalle() {
   }
 
   return (
-    <div className="min-h-dvh w-full flex flex-col text-white" style={{ backgroundColor: PAGE_BG }}>
+    <div className="min-h-dvh w-full flex flex-col text-neutral-900" style={{ backgroundColor: PAGE_BG }}>
       <NavbarBlanco />
 
       <section className="relative">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-          <Link to="/noticias" className="mb-6 inline-block rounded-full px-4 py-1.5 text-sm" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-10 md:py-14">
+          <Link
+            to="/noticias"
+            className="mb-6 inline-block rounded-full px-4 py-1.5 text-sm border border-neutral-200 hover:bg-neutral-50"
+          >
             ← Volver a Noticias
           </Link>
 
-          <p className="text-xs uppercase tracking-wider text-white/60">{fmtDate(noticia.fechaCreacion)}</p>
-          <h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight">{noticia.titulo || "Título"}</h1>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-xs uppercase tracking-wider text-neutral-500">{fmtDate(noticia.fechaCreacion)}</p>
+          </div>
+          <h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
+            {noticia.titulo || "Título"}
+          </h1>
 
           <Carousel images={images} title={noticia?.titulo} />
 
-          {/* Content + Sidebar */}
-          <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_320px] transition-opacity duration-700" style={{ opacity: ready ? 1 : 0 }}>
-            <article className="rounded-2xl p-6" style={{ backgroundColor: CARD_BG }}>
+          {/* Contenido ancho cómodo, sin sidebar */}
+          <div
+            className="mt-8 transition-opacity duration-700"
+            style={{ opacity: ready ? 1 : 0 }}
+          >
+            <article className="rounded-2xl p-6 border border-neutral-200" style={{ backgroundColor: CARD_BG }}>
               <div
                 className="
-                  prose dark:prose-invert md:max-w-3xl max-w-none
-                  prose-headings:text-white
-                  prose-p:text-white/90
-                  prose-strong:text-white
-                  prose-blockquote:text-white/70
-                  prose-li:text-white/90
-                  prose-a:text-blue-400 hover:prose-a:text-blue-300
+                  prose prose-lg md:prose-xl max-w-[85ch]
+                  prose-headings:text-neutral-900
+                  prose-p:text-neutral-800
+                  prose-strong:text-neutral-900
+                  prose-blockquote:text-neutral-700
+                  prose-li:text-neutral-800
+                  prose-a:text-sky-700 hover:prose-a:text-sky-600
                   prose-img:rounded-xl prose-img:mx-auto
-                  prose-code:text-white
-                  break-words
+                  prose-code:text-neutral-900
+                  leading-relaxed
                 "
-                style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
+                style={{ overflowWrap: "anywhere", wordBreak: "break-word", marginInline: "auto" }}
               >
-<RichTextEditor
-                 valueMarkdown={mdForView || "*Sin contenido*"}
-                 readOnly
-                hideToolbar
-                 transparent
-                 autoHeight
-                 className="!rounded-none !overflow-visible"
-               />
+                <RichTextEditor
+                  valueMarkdown={mdForView || "*Sin contenido*"}
+                  readOnly
+                  hideToolbar
+                  transparent
+                  autoHeight
+                  className="!rounded-none !overflow-visible"
+                />
               </div>
             </article>
-
-            <aside className="space-y-4">
-              <div className="rounded-2xl p-5" style={{ backgroundColor: CARD_BG }}>
-                <h3 className="text-lg font-semibold">Relacionadas</h3>
-                {relacionadas.length === 0 ? (
-                  <p className="mt-2 text-white/60">Sin noticias relacionadas.</p>
-                ) : (
-                  <ul className="mt-3 space-y-3">
-                    {relacionadas.map((rel) => {
-                      const relFirst = (Array.isArray(rel.imagenes) && rel.imagenes[0]?.imageUrl) || rel.imagenUrl || null;
-                      return (
-                        <li key={rel.id} className="flex items-center gap-3">
-                          <div className="h-10 w-14 rounded overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
-                            {relFirst ? <img src={relFirst} alt={rel?.titulo || "Noticia"} className="h-full w-full object-cover" loading="lazy" /> : null}
-                          </div>
-                          <div className="flex-1">
-                            <Link to={`/noticias/${rel.id}`} className="text-sm leading-tight hover:underline">
-                              {rel.titulo}
-                            </Link>
-                            <p className="text-xs text-white/60">{fmtDate(rel.fechaCreacion)}</p>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            </aside>
           </div>
         </div>
       </section>
 
-      <section className="py-10 mt-8" style={{ backgroundColor: ACCENT }}>
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-6">
-          <p className="text-white/95">¿Te gustó esta noticia?</p>
-          <button className="rounded-full px-6 py-2 font-medium hover:opacity-90 transition" style={{ backgroundColor: "#fff", color: ACCENT }}>
-            Compartir
-          </button>
+      {/* Relacionadas al fondo, solitas pero usando mejor el ancho */}
+      <section className="pb-16">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="rounded-2xl p-6 border border-neutral-200 bg-white">
+            <h3 className="text-xl font-semibold text-neutral-900">Relacionadas</h3>
+            {relacionadas.length === 0 ? (
+              <p className="mt-2 text-neutral-600">Sin noticias relacionadas.</p>
+            ) : (
+              <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {relacionadas.map((rel) => {
+                  const relFirst =
+                    (Array.isArray(rel.imagenes) && rel.imagenes[0]?.imageUrl) ||
+                    rel.imagenUrl ||
+                    null;
+                  return (
+                    <li key={rel.id} className="group rounded-xl border border-neutral-200 overflow-hidden bg-white hover:shadow-sm transition">
+                      <Link to={`/noticias/${rel.id}`} className="block">
+                        <div className="aspect-[16/9] bg-neutral-100">
+                          {relFirst ? (
+                            <img
+                              src={relFirst}
+                              alt={rel?.titulo || "Noticia"}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : null}
+                        </div>
+                        <div className="p-4">
+                          <h4 className="text-sm font-semibold text-neutral-900 line-clamp-2 group-hover:underline">
+                            {rel.titulo || "titulo"}
+                          </h4>
+                          <p className="mt-1 text-xs text-neutral-500">
+                            {fmtDate(rel.fechaCreacion)}
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       </section>
     </div>

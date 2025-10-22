@@ -28,7 +28,7 @@ export default function ResultadosPage() {
         });
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
-        
+
         const sinGanadores = (data || []).filter(
           (p) => !Array.isArray(p.ganadores) || p.ganadores.length === 0
         );
@@ -46,10 +46,10 @@ export default function ResultadosPage() {
   }, [user?.uid]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 w-full">
       <NavbarBlanco transparent={false} />
       <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
-        <h1 className="text-3xl font-extrabold text-gray-800">
+        <h1 className="text-3xl font-extrabold text-gray-900">
           Acuerdo de Resultados
         </h1>
 
@@ -85,11 +85,11 @@ export default function ResultadosPage() {
                       key={key}
                       className="hover:bg-gray-50 transition-colors duration-150"
                     >
-                      <td className="px-4 py-3 text-gray-800">{fechaStr}</td>
-                      <td className="px-4 py-3 text-gray-800">
+                      <td className="px-4 py-3 text-gray-900">{fechaStr}</td>
+                      <td className="px-4 py-3 text-gray-900">
                         {p?.etapa || "—"}
                       </td>
-                      <td className="px-4 py-3 text-gray-800">
+                      <td className="px-4 py-3 text-gray-900">
                         {p?.tipoPartido || "—"}
                       </td>
                       <td className="px-4 py-3">
