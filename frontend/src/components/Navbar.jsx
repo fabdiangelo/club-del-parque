@@ -5,26 +5,37 @@ import logoUrl from "../assets/Logo.svg";
 import { useNotification } from "../contexts/NotificacionContext.jsx";
 import BellDropdown from "./BellDropdown.jsx";
 
-export default function Navbar({ transparent }) {
+export default function Navbar({ transparent, color }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { notiCount } = useNotification();
 
   console.log(user);
 
+  const whichColorBg = () => {
+    if (color !== "white") return "bg-neutral-900";
+    else return "bg-white";
+  }
+
+  const whichColorText = () => {
+    if (transparent) return "text-white"; // Mantener el texto blanco si es transparente
+    if (color !== "white") return "text-white/90";
+    return "text-black/90";
+  };
+
   const navItem =
-    "px-4 py-2 text-sm  font-normal text-white/90 hover:text-white transition";
-  const activeItem = "text-white";
+    "px-4 py-2 text-sm  font-normal " + whichColorText() + " hover:text-white transition";
+  const activeItem = {  color: color === "white" ? "black" : "white" };
 
   return (
     <header
-      className={`w-full fixed top-0 z-[200] transition-colors duration-300 ${
-        transparent ? "backdrop-blur" : "bg-neutral-800"
-      }`}
+      className={`w-full fixed top-0 z-[200] transition-colors duration-300 ${transparent ? "backdrop-blur" : whichColorBg()}`}
       role="banner"
       style={{ left: "0" }}
     >
-      <nav className="mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+
+      <div className="hidden md:block">
+<nav  className=" mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
           <img
             src={logoUrl}
@@ -56,7 +67,7 @@ export default function Navbar({ transparent }) {
               Noticias
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink
               to="/creadorNoticias"
               className={({ isActive }) =>
@@ -65,7 +76,7 @@ export default function Navbar({ transparent }) {
             >
               Crear Noticia
             </NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink
               to="/reportes"
@@ -76,46 +87,61 @@ export default function Navbar({ transparent }) {
               Reportes
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/temporadas"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Temporadas
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/ranking"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Ranking
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/campeonatos"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Campeonatos
-            </NavLink>
-          </li>
-          <li>
-  <NavLink
-    to="/resultados"
-    className={({ isActive }) =>
-      `${navItem} ${isActive ? activeItem : ""}`
-    }
-  >
-    Resultados
-  </NavLink>
-</li>
+
+          {user && (
+            <li>
+              <NavLink
+                to="/temporadas"
+                className={({ isActive }) =>
+                  `${navItem} ${isActive ? activeItem : ""}`
+                }
+              >
+                Temporadas
+              </NavLink>
+            </li>
+          )}
+
+          {user && (
+            <li>
+              <NavLink
+                to="/ranking"
+                className={({ isActive }) =>
+                  `${navItem} ${isActive ? activeItem : ""}`
+                }
+              >
+                Ranking
+              </NavLink>
+            </li>
+          )}
+
+          {user && (
+            <li>
+              <NavLink
+                to="/campeonatos"
+                className={({ isActive }) =>
+                  `${navItem} ${isActive ? activeItem : ""}`
+                }
+              >
+                Campeonatos
+              </NavLink>
+            </li>
+          )}
+
+          {
+            user && (
+              <li>
+                <NavLink
+                  to="/resultados"
+                  className={({ isActive }) =>
+                    `${navItem} ${isActive ? activeItem : ""}`
+                  }
+                >
+                  Resultados
+                </NavLink>
+              </li>
+            )
+          }
+
         </ul>
 
         <div className="flex items-center gap-3">
@@ -162,7 +188,7 @@ export default function Navbar({ transparent }) {
                   </span>
                 )}
               </div>
-                    <BellDropdown color="white" />
+              <BellDropdown color="white" />
               <button
                 className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
                 onClick={() => navigate("/perfil")}
@@ -180,6 +206,46 @@ export default function Navbar({ transparent }) {
           )}
         </div>
       </nav>
+      </div>
+
+      <nav className="z-1200 fixed bottom-0 left-0 right-0 bg-neutral-800 text-white shadow-inner border-t border-neutral-700 flex justify-around items-center h-14 md:hidden z-[300]">
+        <NavLink to="/" className="flex flex-col items-center text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75L12 4.5l9 5.25v9.75a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 19.5V9.75z" />
+          </svg>
+          Inicio
+        </NavLink>
+
+        <NavLink to="/Noticias" className="flex flex-col items-center text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+          </svg>
+          Noticias
+        </NavLink>
+
+        {user && (
+          <NavLink to="/ranking" className="flex flex-col items-center text-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-6m6 6V7" />
+            </svg>
+            Ranking
+          </NavLink>
+        )}
+
+        {user && (
+          <NavLink to="/perfil" className="flex flex-col items-center text-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9A3.75 3.75 0 1 1 8.25 9a3.75 3.75 0 0 1 7.5 0Zm-7.5 6a6.75 6.75 0 0 0 13.5 0" />
+            </svg>
+            Perfil
+          </NavLink>
+        )}
+      </nav>
+
+
+      
+
+      
     </header>
   );
 }

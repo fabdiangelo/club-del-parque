@@ -37,28 +37,20 @@ if (typeof document !== "undefined" && !document.getElementById("amsterdam-four-
   document.head.appendChild(style);
 }
 
-/* --- Utils --- */
-// Strong cleaner: remove YAML front matter, HTML, kramdown attrs, shortcodes, etc.
 function cleanMdForPreview(md = "") {
   if (!md) return "";
   let s = String(md);
 
-  // YAML front matter
   s = s.replace(/^---[\s\S]*?---\s*/g, "");
 
-  // HTML tags
   s = s.replace(/<[^>]+>/g, "");
 
-  // Kramdown attribute lists {: .class #id }
   s = s.replace(/\{:\s*[^}]*\}/g, "");
 
-  // Shortcodes [tag ...] or [/tag]
   s = s.replace(/\[(\/)?[a-zA-Z0-9_-]+(?:[^\]]*)\]/g, "");
 
-  // Excessive underscores/asterisks/tilde
   s = s.replace(/[*_~]{1,}/g, "");
 
-  // Normalize CRLF + squeeze whitespace
   s = s.replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n");
 
   return s.trim();
@@ -130,10 +122,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
-      {/* NAVBAR */}
-      <Navbar transparent={!scrolled} />
 
-      {/* HERO */}
+      <Navbar transparent={!scrolled} color="white" />
       <section
         className="relative flex items-center justify-center w-full"
         style={{
@@ -143,26 +133,16 @@ export default function Home() {
           backgroundPosition: "center",
           position: "relative",
           flex: 1,
+          overflow: 'hidden'
         }}
       >
+        <div className="absolute inset-0 bg-black/60 z-1" />
         <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0, 0, 0, 0.6)",
-            zIndex: 1,
-          }}
-        />
-        <div
-          className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full"
-          style={{ position: "relative", zIndex: 2 }}
+          className="relative z-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 grid grid-cols-1 md:grid-cols-2 gap-15 items-center w-full text-center md:text-left"
         >
-          <div>
+          <div  style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
             <h1
-              className="font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6"
+              className="font-serif text-4xl sm:text-5xl lg:text-7xl italic tracking-wide mb-6"
               style={{
                 color: BRAND_CYAN,
                 fontFamily: "Amsterdam Four, serif",
@@ -171,13 +151,16 @@ export default function Home() {
             >
               Club del Parque
             </h1>
-            <p className="opacity-80 font-medium italic">Tenis y pádel</p>
+            <div>
+<p className="opacity-100 font-medium italic">Tenis y pádel</p>
             <p className="opacity-70 mt-2">San José de Mayo, Uruguay</p>
-            <div className="mt-10 flex gap-4">
-              <Link to="/campeonatos" className="btn btn-primary">
+            </div>
+            
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <Link to="/campeonatos" className="btn btn-primary w-full sm:w-auto " style={{fontWeight: '300'}}>
                 Ver Campeonatos
               </Link>
-              <Link to="/register" className="btn btn-outline">
+              <Link to="/register" className="btn btn-outline w-full sm:w-auto" style={{fontWeight: '300'}}>
                 Registrarse
               </Link>
             </div>
@@ -191,53 +174,58 @@ export default function Home() {
             )}
           </div>
 
-          <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
-            <img src={logoUrl} alt="Club del Parque Logo" className="h-90 w-auto opacity-100" />
+          <div className="relative h-[220px] sm:h-[300px] md:h-[400px] lg:h-[500px] flex items-center justify-center">
+            <img
+              src={logoUrl}
+              alt="Club del Parque Logo"
+              className="max-h-full w-auto opacity-100 transition-all"
+            />
           </div>
         </div>
       </section>
+<section
+  className="text-primary-content"
+  style={{
+    backgroundImage: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM} 0%, ${BRAND_GRADIENT_TO} 100%)`,
+  }}
+>
+  <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16">
+    <h2 className="text-3xl sm:text-4xl font-extrabold text-center">
+      Instalaciones
+    </h2>
+    <p className="mt-4 max-w-2xl text-center opacity-95">
+      Texto placeholder sobre las instalaciones. Cámbialo por tu propio contenido.
+    </p>
 
-      {/* INSTALACIONES — gradient in brand blue family */}
-      <section
-        className="text-primary-content"
-        style={{
-          height: "100vh",
-          backgroundImage: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM} 0%, ${BRAND_GRADIENT_TO} 100%)`,
-        }}
-      >
-        <div
-          className="mx-auto max-w-7xl px-6 "
-          style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}
-        >
-          <h2 className="text-4xl font-extrabold">Instalaciones</h2>
-          <p className="mt-4 max-w-2xl opacity-95">
-            Texto placeholder sobre las instalaciones. Cámbialo por tu propio contenido.
-          </p>
-
-          <div className="mt-12 grid lg:grid-cols-12 gap-10">
-            <div className="lg:col-span-7">
-              <div className="card shadow-xl bg-base-200/20 backdrop-blur-[1px]">
-                <div className="w-full h-[320px] bg-base-100/20 grid place-items-center rounded-box">
-                  <span className="opacity-90">Mapa Placeholder</span>
-                </div>
-              </div>
-              <p className="mt-6">
-                Parque José Enrique Rodó
-                <br />
-                San José de Mayo, Uruguay
-              </p>
-            </div>
-
-            <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="card shadow rounded-box bg-base-200/20 h-[120px] grid place-items-center">
-                  <span className="opacity-90 text-sm">Foto {i + 1}</span>
-                </div>
-              ))}
-            </div>
+    <div className="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Mapa y descripción */}
+      <div className="lg:col-span-7">
+        <div className="card shadow-xl bg-base-200/20 backdrop-blur-[1px]">
+          <div className="w-full h-[200px] sm:h-[320px] lg:h-[400px] bg-base-100/20 grid place-items-center rounded-box">
+            <span className="opacity-90">Mapa Placeholder</span>
           </div>
         </div>
-      </section>
+        <p className="mt-6 text-center lg:text-left">
+          Parque José Enrique Rodó
+          <br />
+          San José de Mayo, Uruguay
+        </p>
+      </div>
+
+      {/* Fotos */}
+      <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="card shadow rounded-box bg-base-200/20 h-[100px] sm:h-[120px] lg:h-[150px] grid place-items-center"
+          >
+            <span className="opacity-90 text-sm">Foto {i + 1}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* NOTICIAS */}
       <section className="bg-white text-neutral-900 py-20">
