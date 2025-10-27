@@ -215,7 +215,7 @@ const Administracion = () => {
           zIndex: -1
         }}
       ></div>
-      <NavbarBlanco />
+      <Navbar color="white"/>
       <div className="max-w-7xl mx-auto relative" style={{ marginTop: '3rem', zIndex: 1 }}>
         {/* Header */}
         <div className="mb-8">

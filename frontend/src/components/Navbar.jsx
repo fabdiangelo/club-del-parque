@@ -201,7 +201,7 @@ export default function Navbar({ transparent, color }) {
       </nav>
       </div>
 
-      <nav className="z-1200 fixed bottom-0 left-0 right-0 bg-neutral-800 text-white shadow-inner border-t border-neutral-700 flex justify-around items-center h-14 md:hidden z-[300]">
+      <nav className="z-100 fixed bottom-0 left-0 right-0 bg-neutral-800 text-white shadow-inner border-t border-neutral-700 flex justify-around items-center h-14 md:hidden z-[300]">
         <NavLink to="/" className="flex flex-col items-center text-xs">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75L12 4.5l9 5.25v9.75a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 19.5V9.75z" />
