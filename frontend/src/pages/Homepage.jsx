@@ -140,7 +140,7 @@ export default function Home() {
         <div
           className="relative z-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 grid grid-cols-1 md:grid-cols-2 gap-15 items-center w-full text-center md:text-left"
         >
-          <div  style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h1
               className="font-serif text-4xl sm:text-5xl lg:text-7xl italic tracking-wide mb-6"
               style={{
@@ -152,15 +152,15 @@ export default function Home() {
               Club del Parque
             </h1>
             <div>
-<p className="opacity-100 font-medium italic">Tenis y pádel</p>
-            <p className="opacity-70 mt-2">San José de Mayo, Uruguay</p>
+              <p className="opacity-100 font-medium italic">Tenis y pádel</p>
+              <p className="opacity-70 mt-2">San José de Mayo, Uruguay</p>
             </div>
-            
+
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link to="/campeonatos" className="btn btn-primary w-full sm:w-auto " style={{fontWeight: '300'}}>
+              <Link to="/campeonatos" className="btn btn-primary w-full sm:w-auto " style={{ fontWeight: '300' }}>
                 Ver Campeonatos
               </Link>
-              <Link to="/register" className="btn btn-outline w-full sm:w-auto" style={{fontWeight: '300'}}>
+              <Link to="/register" className="btn btn-outline w-full sm:w-auto" style={{ fontWeight: '300' }}>
                 Registrarse
               </Link>
             </div>
@@ -183,113 +183,210 @@ export default function Home() {
           </div>
         </div>
       </section>
-<section
+      <section
   className="text-primary-content"
   style={{
-    backgroundImage: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM} 0%, ${BRAND_GRADIENT_TO} 100%)`,
+    backgroundColor: "white",
   }}
 >
   <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16">
-    <h2 className="text-3xl sm:text-4xl font-extrabold text-center">
+    <h2
+      className="text-3xl sm:text-4xl font-extrabold text-center"
+      style={{ color: "var(--neutro)" }}
+    >
       Instalaciones
     </h2>
-    <p className="mt-4 max-w-2xl text-center opacity-95">
-      Texto placeholder sobre las instalaciones. Cámbialo por tu propio contenido.
+    <p
+      style={{ color: "gray" }}
+      className="mt-4 max-w-2xl text-center opacity-95 mx-auto"
+    >
+      Canchas de tenis y pádel en un entorno natural y acogedor.
     </p>
 
     <div className="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Mapa y descripción */}
       <div className="lg:col-span-7">
         <div className="card shadow-xl bg-base-200/20 backdrop-blur-[1px]">
-          <div className="w-full h-[200px] sm:h-[320px] lg:h-[400px] bg-base-100/20 grid place-items-center rounded-box">
-            <span className="opacity-90">Mapa Placeholder</span>
+          <div className="w-full h-[220px] sm:h-[320px] lg:h-[400px] rounded-box overflow-hidden">
+            <iframe
+              title="Ubicación Club del Parque"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d898.2212405698841!2d-56.731551567172225!3d-34.33291067375281!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a17751d22bfc15%3A0x1a83f754b3962b69!2sClub%20del%20Parque%20(Canchas%20tenis)!5e0!3m2!1ses!2suy!4v1761506263634!5m2!1ses!2suy"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
           </div>
         </div>
-        <p className="mt-6 text-center lg:text-left">
+        <p
+          className="mt-6 text-center lg:text-left"
+          style={{ color: "gray" }}
+        >
           Parque José Enrique Rodó
           <br />
           San José de Mayo, Uruguay
         </p>
       </div>
 
-      {/* Fotos */}
-      <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="card shadow rounded-box bg-base-200/20 h-[100px] sm:h-[120px] lg:h-[150px] grid place-items-center"
-          >
-            <span className="opacity-90 text-sm">Foto {i + 1}</span>
-          </div>
-        ))}
+      {/* Galería de imágenes */}
+      <div className="lg:col-span-5">
+        <div
+          className="
+            grid 
+            grid-cols-1
+            xs:grid-cols-2
+            sm:grid-cols-3
+            lg:grid-cols-2
+            gap-4
+          "
+        >
+          {["/img1.jpeg", "/img2.jpeg", "/img3.jpeg", "/img4.jpeg"].map(
+            (src, i) => (
+              <div
+                key={i}
+                className="relative rounded-2xl overflow-hidden shadow-lg group"
+              >
+                <img
+                  src={src}
+                  alt={`Instalación ${i + 1}`}
+                  className="
+                    w-full 
+                    h-[220px] 
+                    sm:h-[200px] 
+                    lg:h-[220px] 
+                    object-cover 
+                    transform 
+                    group-hover:scale-105 
+                    transition-transform 
+                    duration-500 
+                    ease-in-out
+                  "
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+            )
+          )}
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-      {/* NOTICIAS */}
-      <section className="bg-white text-neutral-900 py-20">
+
+      <section className="bg-gradient-to-b from-white via-sky-50 to-white text-neutral-900 py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
-          <h2 className="text-5xl font-extrabold text-center mb-12">Noticias</h2>
+          {/* Título */}
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center mb-4" style={{ color: 'var(--neutro)' }}>
+            Noticias
+          </h2>
+          <p className="text-center text-gray-500 max-w-2xl mx-auto mb-12">
+            Mantente al día con los torneos, eventos y novedades del Club del Parque.
+          </p>
+
           <div className="grid lg:grid-cols-12 gap-10">
-            {/* Lista principal */}
-            <div className="lg:col-span-8 space-y-12 relative">
-              {/* Hidden sample card to measure height */}
+            {/* Bloque principal de noticias */}
+            <div className="lg:col-span-8 space-y-10 relative">
+              {/* Hidden measure card */}
               <div className="absolute -left-[9999px] -top-[9999px]" aria-hidden>
                 <ArticleCard
                   ref={measureRef}
                   id="measure"
                   date="01/01/2025"
-                  title="Título de ejemplo para medir"
-                  excerptMd="Contenido de ejemplo para medir la altura de una tarjeta en la sección de noticias."
+                  title="Título de ejemplo"
+                  excerptMd="Texto de prueba para calcular la altura de una tarjeta."
                 />
               </div>
 
+              {/* Noticias */}
               {hasNoticias ? (
-                <>
+                <div className="grid sm:grid-cols-2 gap-8">
                   {top3.map((n) => {
                     const imgs = Array.isArray(n?.imagenes)
                       ? n.imagenes.map((it) => it?.imageUrl).filter(Boolean)
                       : [];
-                    if (imgs.length === 0 && n?.imagenUrl) imgs.push(n.imagenUrl); // legacy fallback
+                    if (imgs.length === 0 && n?.imagenUrl) imgs.push(n.imagenUrl);
 
                     return (
-                      <ArticleCard
+                      <div
                         key={n.id}
-                        id={n.id}
-                        date={n?.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "—"}
-                        title={n?.titulo || "Título"}
-                        excerptMd={n?.mdContent || ""}
-                        images={imgs}
-                      />
+                        className="group bg-white border border-gray-200 rounded-2xl shadow-md hover:shadow-xl overflow-hidden transition-all duration-500"
+                      >
+                        {/* Imagen destacada */}
+                        <div className="relative h-48 sm:h-56 md:h-60 overflow-hidden">
+                          {imgs.length ? (
+                            <img
+                              src={imgs[0]}
+                              alt={n?.titulo || "Noticia"}
+                              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 grid place-items-center text-gray-400 text-sm">
+                              Sin imagen
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+
+                        {/* Contenido */}
+                        <div className="p-5 flex flex-col gap-3">
+                          <h3 className="font-bold text-lg group-hover:text-sky-700 transition-colors">
+                            {n?.titulo || "Título"}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {n?.fechaCreacion
+                              ? new Date(n.fechaCreacion).toLocaleDateString()
+                              : "—"}
+                          </p>
+                          <p className="text-gray-700 line-clamp-3 leading-snug">
+                            {firstParagraph(n?.mdContent || "")}
+                          </p>
+                          <Link
+                            to={`/noticias/${n.id}`}
+                            className="mt-3 inline-block text-sky-600 font-medium hover:underline"
+                          >
+                            Leer más →
+                          </Link>
+                        </div>
+                      </div>
                     );
                   })}
-                </>
+                </div>
               ) : (
-                <div className="card border border-neutral-200 bg-neutral-50 shadow" style={{ minHeight: emptyMinHeight }}>
-                  <div className="card-body items-center justify-center">
-                    <p className="text-2xl font-extrabold m-0">No hay noticias de momento</p>
-                  </div>
+                <div
+                  className="card border border-neutral-200 bg-neutral-50 shadow h-64 grid place-items-center"
+                  style={{ minHeight: emptyMinHeight }}
+                >
+                  <p className="text-xl font-semibold text-gray-500">
+                    No hay noticias disponibles
+                  </p>
                 </div>
               )}
 
-              {/* Button stays at the same position */}
-              <Link to="/noticias" className="btn btn-neutral">
-                Ver más noticias
-              </Link>
+              {/* Botón de ver más */}
+              <div className="flex justify-center mt-10">
+                <Link
+                  to="/noticias"
+                  className="btn btn-primary px-8 text-lg tracking-wide shadow-md hover:shadow-lg"
+                >
+                  Ver más noticias
+                </Link>
+              </div>
             </div>
 
             {/* Aside de últimos partidos */}
             <aside className="lg:col-span-4">
-              <div className="card bg-neutral-900 text-neutral-content shadow-xl">
+              <div className="card bg-neutral-900 text-neutral-content shadow-xl rounded-2xl overflow-hidden">
                 <div className="card-body">
-                  <h3 className="card-title">Últimos partidos</h3>
-                  <div className="mt-2 space-y-6">
+                  <h3 className="card-title text-lg font-semibold">Últimos partidos</h3>
+                  <div className="mt-4 space-y-6">
                     {["3 - 5", "6 - 4", "7 - 5"].map((score, i) => (
                       <MatchRow key={i} score={score} />
                     ))}
                   </div>
-                  <div className="card-actions mt-6">
+                  <div className="card-actions mt-8">
                     <button className="btn btn-primary w-full">Ver torneos</button>
                   </div>
                 </div>
@@ -298,6 +395,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
     </div>
   );
 }

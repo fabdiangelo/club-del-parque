@@ -25,8 +25,8 @@ export default function BellDropdown({ color = "white" }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const [backendNotis, setBackendNotis] = useState([]); // notificaciones backend
-  const [chatUnread, setChatUnread] = useState(0);      // mensajes de chat sin leer
+  const [backendNotis, setBackendNotis] = useState([]); 
+  const [chatUnread, setChatUnread] = useState(0);      
   const box = useRef(null);
 
   // cerrar si clic fuera
@@ -106,9 +106,10 @@ export default function BellDropdown({ color = "white" }) {
   const badgeCount = unreadBackend.length;
 
   return (
-    <div ref={box} className="relative">
+    <div ref={box} className="relative" >
       <button
         aria-label="Notificaciones"
+        style={{cursor: 'pointer'}}
         onClick={() => setOpen((v) => !v)}
         className={`relative p-2 rounded-full hover:bg-${color}/10 text-${color}`}
       >

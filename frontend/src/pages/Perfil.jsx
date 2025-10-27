@@ -94,7 +94,7 @@ export default function Perfil() {
   // Loading state
   if (loading || loadingUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
           <p className="mt-4 text-lg">Cargando perfil...</p>
@@ -110,14 +110,14 @@ export default function Perfil() {
 
   // Authenticated view
   return (
-    <div className="min-h-screen bg-base-200 py-12 px-4" style={{ paddingTop: "6rem" }}>
-      <Navbar />
-      <div className="max-w-3xl mx-auto">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-white py-12 px-4" style={{ paddingTop: "6rem" }}>
+      <Navbar color="white" />
+      <div className="max-w-3xl mx-auto" style={{backgroundColor: 'white'}}>
+        <div className="card bg-white shadow-xl">
+          <div className="card-body" style={{backgroundColor: 'white!important'}}>
+            <div className="flex items-center gap-4 bg-white">
               <div className="avatar">
-                <div className="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                <div className="w-20 rounded-full ring ring-primary bg-white ring-offset-2">
                   <img
                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
                       user.nombre + ' ' + userData?.apellido || user.email || "U"
@@ -127,7 +127,7 @@ export default function Perfil() {
                 </div>
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 bg-white">
                 <h1 className="text-2xl font-semibold">
                   {user.nombre || "Sin nombre"}
                 </h1>
@@ -166,8 +166,8 @@ export default function Perfil() {
 
             <div className="divider" />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-base-200 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white">
+              <div className="p-4 bg-white rounded-lg">
                 <h3 className="font-medium mb-2">Datos</h3>
                 <dl>
                   <dt className="text-xs text-gray-500">Nombre</dt>
@@ -181,9 +181,9 @@ export default function Perfil() {
                 </dl>
               </div>
 
-              <div className="p-4 bg-base-200 rounded-lg">
+              <div className="p-4 bg-white rounded-lg">
                 <h3 className="font-medium mb-2">Información adicional</h3>
-                <pre className="text-xs bg-base-100 p-3 rounded overflow-auto">
+                <pre className="text-xs bg-white p-3 rounded overflow-auto">
                   <dl>
                     <dt className="text-xs text-gray-500">Genero</dt>
                     <dd className="mb-2">{userData?.genero || "-"}</dd>

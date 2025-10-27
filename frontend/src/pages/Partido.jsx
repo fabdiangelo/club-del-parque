@@ -3,11 +3,13 @@ import { useParams } from 'react-router-dom';
 import NavbarBlanco from '../components/NavbarBlanco';
 import '../styles/Partido.css';
 import { useAuth } from '../contexts/AuthProvider';
+import Navbar from '../components/Navbar';
 
 const Partido = () => {
     const { id } = useParams();
     const [partido, setPartido] = useState(null);
     const [cancha, setCancha] = useState(null);
+    const [horarioSeleccionado, setHorarioSeleccionado] = useState('');
 
     const { user } = useAuth();
 
@@ -27,6 +29,7 @@ const Partido = () => {
     const [mensajeAlerta, setMensajeAlerta] = useState('');
     const [posicionUser, setPosicionUser] = useState('');
     const [modalPropuestas, setModalPropuestas] = useState(false);
+    const [reservas, setReservas] = useState([]);
 
     const [modalResponder, setModalResponder] = useState(false);
 
@@ -36,6 +39,23 @@ const Partido = () => {
     const getUserById = (userId) => {
         return usuarios.find(u => u.id === userId);
     }
+
+    const fetchAllReservas = async() => {
+        try {
+            const response = await fetch(`/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            if (!response.ok) {
+                throw new Error(`Error en la solicitud: ${response.statusText}`);
+            }
+            const data = await response.json();
+
+            console.log("FETCH ALL RESERVAS", data);
+            setReservas(data);
+        } catch(error) {
+            console.error("Error al obtener las reservas:", error);
+        }
+
+    }
+
 
     const fetchReserva = async () => {
         try {
@@ -81,10 +101,8 @@ const Partido = () => {
             const data = await response.json();
             console.log("Propuesta aceptada:", data);
 
-            // Actualizar el estado para reflejar la propuesta aceptada
             setPropuestaAceptada(propuestaId);
 
-            // Iniciar el proceso de creación de una reserva
             crearReserva(propuestaId);
         } catch (error) {
             console.error("Error al aceptar propuesta:", error);
@@ -107,7 +125,6 @@ const Partido = () => {
         estado: 'pendiente'
     };
 
-    console.log("Datos enviados para crear reserva:", nuevaReserva);
 
     try {
         const response = await fetch(`/api/reservas`, {
@@ -134,25 +151,6 @@ const Partido = () => {
     }
 
 
-//     try {
-    
-//         const admins = usuarios.filter(u => u.rol === 'administrador');
-
-        
-
-//         for(const a in admins) {
-//             const datos = {
-//             mensaje: `Se ha creado una nueva reserva para el partido ${partido.id}`,
-//             telefono: admins.map(a => a.telefono).filter(t => t), 
-//         }
-
-// const response = await fetch('/api/reservas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(datos) });
-//         }
-
-        
-//     } catch(error) {
-//         console.error("Error al crear reserva:", error);
-//     }
 };
 
     const verPropuestas = () => {
@@ -162,6 +160,7 @@ const Partido = () => {
     useEffect(() => {
 
         fetchReserva();
+        fetchAllReservas();
 
         const fetchPartido = async () => {
             const response = await fetch(`/api/partidos/${id}`, { credentials: 'include' });
@@ -227,11 +226,6 @@ const Partido = () => {
         fetchTemporada();
     }, [usuarios, partido]);
 
-    // useEffect(() => {
-    //     if (!partido) return;
-    //     fetchReserva();
-    // }, [partido])
-
     useEffect(() => {
         if (!partido || !user) return;
 
@@ -252,59 +246,118 @@ const Partido = () => {
     };
 
     const obtenerProximasSemanas = () => {
-        const fechas = [];
-        const hoy = new Date();
-        for (let i = 1; i <= 14; i++) {
-            const f = new Date();
-            f.setDate(hoy.getDate() + i);
-            fechas.push(f);
-        }
-        return fechas;
-    };
+    const fechas = [];
+    const hoy = new Date();
+    const fechaMaxima = partido?.fechaMaxima ? new Date(partido.fechaMaxima) : new Date(hoy.setDate(hoy.getDate() + 14)); // Por defecto, 2 semanas
 
-    const seleccionarFecha = (fecha) => {
-        const fechaStr = fecha.toISOString().split('T')[0];
-        setFechaSeleccionada(fechaStr);
-        setHorariosDisponibles(generarHorariosDisponibles());
-        setHorarioSeleccionado('');
-    };
+    let fechaActual = new Date(hoy); // Comienza desde hoy
+
+    while (fechaActual <= fechaMaxima) {
+        // Excluir domingos
+        if (fechaActual.getDay() !== 0) {
+            fechas.push(new Date(fechaActual)); // Agregar la fecha si no es domingo
+        }
+
+        // Incrementar un día
+        fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+
+    return fechas;
+};
+
+   const seleccionarFecha = (fecha) => {
+    const fechaLocal = new Date(fecha);
+    const year = fechaLocal.getFullYear();
+    const month = String(fechaLocal.getMonth() + 1).padStart(2, '0');
+    const day = String(fechaLocal.getDate()).padStart(2, '0');
+
+    const fechaStr = `${year}-${month}-${day}`;
+
+    setFechaSeleccionada(fechaStr);
+
+    console.log("Fecha seleccionada:", fechaStr);
+    setHorariosDisponibles(generarHorariosDisponibles());
+    setHorarioSeleccionado('');
+};
 
     const agregarDisponibilidad = () => {
-        if (!fechaSeleccionada || !horaInicio || !horaFin) {
-            setMensajeAlerta('Selecciona una fecha y rango de horas');
-            setMostrarAlerta(true);
-            setTimeout(() => setMostrarAlerta(false), 2500);
-            return;
-        }
-        if (horaFin <= horaInicio) {
-            setMensajeAlerta('La hora de fin debe ser mayor que la de inicio');
-            setMostrarAlerta(true);
-            setTimeout(() => setMostrarAlerta(false), 2500);
-            return;
-        }
-        const duplicado = disponibilidadUsuario.find(
-            d => d.fecha === fechaSeleccionada && d.horaInicio === horaInicio && d.horaFin === horaFin
+    if (!fechaSeleccionada || !horaInicio || !horaFin) {
+        setMensajeAlerta('Selecciona una fecha y rango de horas');
+        setMostrarAlerta(true);
+        setTimeout(() => setMostrarAlerta(false), 2500);
+        return;
+    }
+
+    if (horaFin <= horaInicio) {
+        setMensajeAlerta('La hora de fin debe ser mayor que la de inicio');
+        setMostrarAlerta(true);
+        setTimeout(() => setMostrarAlerta(false), 2500);
+        return;
+    }
+
+    const duplicado = disponibilidadUsuario.find(
+        d => d.fecha === fechaSeleccionada && d.horaInicio === horaInicio && d.horaFin === horaFin
+    );
+
+    if (duplicado) {
+        setMensajeAlerta('Esta disponibilidad ya fue agregada');
+        setMostrarAlerta(true);
+        setTimeout(() => setMostrarAlerta(false), 2500);
+        return;
+    }
+
+    console.log("Verificando conflictos con reservas existentes...");
+    console.log("Nueva disponibilidad:", { fechaSeleccionada, horaInicio, horaFin });
+    console.log("Reservas existentes:", reservas);
+
+    // Convertir horaInicio y horaFin a objetos Date para la nueva disponibilidad
+    const fechaHoraInicioNueva = new Date(`${fechaSeleccionada}T${horaInicio}`);
+    const fechaHoraFinNueva = new Date(`${fechaSeleccionada}T${horaFin}`);
+
+    // Verificar si ya existe una reserva con el mismo horario y día
+    const conflictoReserva = reservas.some(reserva => {
+        const fechaReserva = reserva.fechaHora.split('T')[0];
+        const horaInicioReserva = reserva.fechaHora.split('T')[1];
+        const duracionReserva = reserva.duracion.split(':');
+        const fechaHoraInicioExistente = new Date(`${fechaReserva}T${horaInicioReserva}`);
+        const fechaHoraFinExistente = new Date(
+            fechaHoraInicioExistente.getTime() +
+            (parseInt(duracionReserva[0]) * 60 + parseInt(duracionReserva[1])) * 60 * 1000
         );
-        if (duplicado) {
-            setMensajeAlerta('Esta disponibilidad ya fue agregada');
-            setMostrarAlerta(true);
-            setTimeout(() => setMostrarAlerta(false), 2500);
-            return;
-        }
-        const item = {
-            id: Date.now(),
-            fecha: fechaSeleccionada,
-            horaInicio,
-            horaFin,
-            rango: `${horaInicio} - ${horaFin}`,
-            fechaHoraInicio: `${fechaSeleccionada}T${horaInicio}`,
-            fechaHoraFin: `${fechaSeleccionada}T${horaFin}`
-        };
-        setDisponibilidadUsuario(prev => [...prev, item]);
-        setHoraInicio('');
-        setHoraFin('');
+
+        console.log(`Comparando nueva reserva: ${fechaHoraInicioNueva} - ${fechaHoraFinNueva}`);
+        console.log(`Con reserva existente: ${fechaHoraInicioExistente} - ${fechaHoraFinExistente}`);
+
+        const solapamiento = (
+            fechaHoraInicioNueva < fechaHoraFinExistente && fechaHoraFinNueva > fechaHoraInicioExistente
+        );
+
+        console.log(`Solapamiento detectado: ${solapamiento}`);
+        return solapamiento;
+    });
+
+    if (conflictoReserva) {
+        setMensajeAlerta('Ya existe una reserva en este horario y día');
+        setMostrarAlerta(true);
+        setTimeout(() => setMostrarAlerta(false), 2500);
+        return;
+    }
+
+    const item = {
+        id: Date.now(),
+        fecha: fechaSeleccionada,
+        horaInicio,
+        horaFin,
+        rango: `${horaInicio} - ${horaFin}`,
+        fechaHoraInicio: `${fechaSeleccionada}T${horaInicio}`,
+        fechaHoraFin: `${fechaSeleccionada}T${horaFin}`
     };
 
+    console.log("Disponibilidad agregada:", item);
+    setDisponibilidadUsuario(prev => [...prev, item]);
+    setHoraInicio('');
+    setHoraFin('');
+};
     const comprobarSiUserEsJugador = () => {
         if (!partido || !user || !user.uid) return false;
         return Array.isArray(partido.jugadores) && partido.jugadores.includes(user.uid);
@@ -377,7 +430,7 @@ const Partido = () => {
     return (
 
         <>
-            <NavbarBlanco />
+            <Navbar color="white" />
 
 
          
@@ -696,7 +749,7 @@ const Partido = () => {
                     ) : (
                         comprobarSiUserEsJugador() ? (
                             obtenerPosicionUsuario() === 'local' ? (
-                                <div className='text-center my-5'>
+                                <div className='text-center my-5 intro-text'>
                                     <p>Todavía no se ha generado ninguna propuesta.</p>
                                     <button
                                         style={{
@@ -846,12 +899,16 @@ const Partido = () => {
                         <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                             {/* Calendario simple */}
                             <div className="md:col-span-2">
-                                <h4 className="font-medium mb-2">Próximos 14 días</h4>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                                     {obtenerProximasSemanas().map((f) => {
-                                        const fechaStr = f.toISOString().split('T')[0];
+                                        const year = f.getFullYear();
+                                        const month = String(f.getMonth() + 1).padStart(2, '0');
+                                        const day = String(f.getDate()).padStart(2, '0');
+                                        const fechaStr = `${year}-${month}-${day}`;
+
                                         const esHoy = fechaStr === fechaSeleccionada;
                                         const label = f.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' });
+
                                         return (
                                             <button
                                                 key={fechaStr}
@@ -869,6 +926,7 @@ const Partido = () => {
                                     <label className="block text-sm font-medium mb-1">Rango horario</label>
                                     <div className="flex gap-2">
                                         <select
+                                            style={{backgroundColor: 'white'}}
                                             className="select select-bordered w-full max-w-xs"
                                             value={horaInicio}
                                             onChange={e => setHoraInicio(e.target.value)}
@@ -881,6 +939,7 @@ const Partido = () => {
                                         </select>
                                         <span className="self-center">a</span>
                                         <select
+                                        style={{backgroundColor: 'white'}}
                                             className="select select-bordered w-full max-w-xs"
                                             value={horaFin}
                                             onChange={e => setHoraFin(e.target.value)}

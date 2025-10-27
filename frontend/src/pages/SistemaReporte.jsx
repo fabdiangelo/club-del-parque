@@ -81,7 +81,7 @@ const SistemaReporte = () => {
 
     return (
         <>
-            <NavbarBlanco />
+            <Navbar color="white" />
 
             <div className="flex flex-col justify-center items-center min-h-screen gap-4 px-4">
                 <h1 className="text-5xl font-bold text-center" style={{ 'color': 'var(--neutro)' }}>

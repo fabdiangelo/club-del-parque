@@ -135,14 +135,14 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <NavbarBlanco />
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <Navbar color="white"/>
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <h2 className="text-xl font-bold mb-4">Iniciar sesión / Registro</h2>
 
         <div className="space-y-3">
           <button onClick={handleGoogleLogin} disabled={loading} className="w-full py-2 bg-red-500 text-white rounded">
-            Sign in with Google
+            Acceder con Google
           </button>
         </div>
 

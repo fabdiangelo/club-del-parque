@@ -24,7 +24,7 @@ export default function Navbar({ transparent, color }) {
   };
 
   const navItem =
-    "px-4 py-2 text-sm  font-normal " + whichColorText() + " hover:text-white transition";
+    "px-4 py-2 text-sm  font-normal " + whichColorText() + " hover:+" + whichColorText() + " transition";
   const activeItem = {  color: color === "white" ? "black" : "white" };
 
   return (
@@ -35,7 +35,7 @@ export default function Navbar({ transparent, color }) {
     >
 
       <div className="hidden md:block">
-<nav  className=" mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+<nav  className="h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
           <img
             src={logoUrl}
@@ -45,7 +45,10 @@ export default function Navbar({ transparent, color }) {
           />
         </Link>
 
-        <ul className="hidden md:flex items-center gap-8">
+        
+        <div className="flex items-center gap-3">
+
+          <ul className="hidden md:flex items-center gap-8">
           <li>
             <NavLink
               to="/"
@@ -67,16 +70,7 @@ export default function Navbar({ transparent, color }) {
               Noticias
             </NavLink>
           </li>
-          {/* <li>
-            <NavLink
-              to="/creadorNoticias"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Crear Noticia
-            </NavLink>
-          </li> */}
+          
           <li>
             <NavLink
               to="/reportes"
@@ -144,7 +138,6 @@ export default function Navbar({ transparent, color }) {
 
         </ul>
 
-        <div className="flex items-center gap-3">
           {user ? (
             <>
 
@@ -157,7 +150,7 @@ export default function Navbar({ transparent, color }) {
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
-                  stroke="currentColor"
+                  stroke={`${transparent ? "white" : color === "white" ? "black" : "white" }`}
                   className="size-6"
                 >
                   <path
@@ -188,7 +181,7 @@ export default function Navbar({ transparent, color }) {
                   </span>
                 )}
               </div>
-              <BellDropdown color="white" />
+              <BellDropdown color={`${transparent ? "white" : color === "white" ? "black" : "white" }`} />
               <button
                 className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
                 onClick={() => navigate("/perfil")}

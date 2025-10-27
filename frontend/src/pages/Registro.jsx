@@ -33,6 +33,8 @@ function Registro() {
     // setError("");
     setSuccess("");
 
+    formData = {...formData, estado: "activo"};
+
     console.log("Registrando usuario:", formData);
 
     try {
@@ -51,8 +53,8 @@ function Registro() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <NavbarBlanco />
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <Navbar  color="white"/>
       <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center" style={{'color': 'var(--neutro)'}}>Registro</h2>
         <form style={{'color': 'var(--neutro)'}} onSubmit={handleSubmit} className="space-y-4">
@@ -100,7 +102,7 @@ function Registro() {
               required
             />
           </div>
-          <div>
+          {/* <div>
             <label className="block mb-1 font-medium">Estado</label>
             <input
               type="text"
@@ -110,7 +112,7 @@ function Registro() {
               className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
               required
             />
-          </div>
+          </div> */}
           <div>
             <label className="block mb-1 font-medium">Nacimiento</label>
             <input
@@ -124,14 +126,15 @@ function Registro() {
           </div>
           <div>
             <label className="block mb-1 font-medium">Genero</label>
-            <input
-              type="text"
-              name="genero"
-              value={formData.genero}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              required
-            />
+
+            <select value={formData.genero} onChange={handleChange} name="genero" className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300 mb-2">
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
+              <option value="otro">Otro</option>
+
+            </select>
+
+            
           </div>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
