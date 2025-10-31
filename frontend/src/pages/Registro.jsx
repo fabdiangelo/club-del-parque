@@ -32,7 +32,7 @@ function Registro() {
     // setError("");
     setSuccess("");
 
-    formData = {...formData, estado: "activo"};
+    setFormData({...formData, estado: "activo"});
 
     console.log("Registrando usuario:", formData);
 

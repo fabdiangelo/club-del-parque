@@ -253,6 +253,45 @@ export default function Navbar({ transparent }) {
           </nav>
         </aside>
       </div>
+
+      <nav className="z-1200 fixed bottom-0 left-0 right-0 bg-neutral-800 text-white shadow-inner border-t border-neutral-700 flex justify-around items-center h-14 md:hidden z-[300]">
+        <NavLink to="/" className="flex flex-col items-center text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75L12 4.5l9 5.25v9.75a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 19.5V9.75z" />
+          </svg>
+          Inicio
+        </NavLink>
+
+        <NavLink to="/Noticias" className="flex flex-col items-center text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+          </svg>
+          Noticias
+        </NavLink>
+
+        {user && (
+          <NavLink to="/ranking" className="flex flex-col items-center text-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-6m6 6V7" />
+            </svg>
+            Ranking
+          </NavLink>
+        )}
+
+        {user && (
+          <NavLink to="/perfil" className="flex flex-col items-center text-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9A3.75 3.75 0 1 1 8.25 9a3.75 3.75 0 0 1 7.5 0Zm-7.5 6a6.75 6.75 0 0 0 13.5 0" />
+            </svg>
+            Perfil
+          </NavLink>
+        )}
+      </nav>
+
+
+      
+
+      
     </header>
   );
 }
