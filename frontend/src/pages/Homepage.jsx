@@ -210,26 +210,14 @@ export default function Home() {
           backgroundPosition: "center",
           position: "relative",
           flex: 1,
+          overflow: "hidden",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0, 0, 0, 0.6)",
-            zIndex: 1,
-          }}
-        />
-        <div
-          className="mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28 grid lg:grid-cols-2 gap-10 items-center w-full"
-          style={{ position: "relative", zIndex: 2 }}
-        >
-          <div>
+        <div className="absolute inset-0 bg-black/60 z-1" />
+        <div className="relative z-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 grid grid-cols-1 md:grid-cols-2 gap-15 items-center w-full text-center md:text-left">
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <h1
-              className="font-serif text-5xl sm:text-6xl lg:text-7xl italic tracking-wide mb-6"
+              className="font-serif text-4xl sm:text-5xl lg:text-7xl italic tracking-wide mb-6"
               style={{
                 color: BRAND_CYAN,
                 fontFamily: "Amsterdam Four, serif",
@@ -256,8 +244,12 @@ export default function Home() {
             )}
           </div>
 
-          <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
-            <img src={logoUrl} alt="Club del Parque Logo" className="h-90 w-auto opacity-100" />
+          <div className="relative h-[220px] sm:h-[300px] md:h-[400px] lg:h-[500px] flex items-center justify-center">
+            <img
+              src={logoUrl}
+              alt="Club del Parque Logo"
+              className="max-h-full w-auto opacity-100 transition-all"
+            />
           </div>
         </div>
       </section>
@@ -266,17 +258,15 @@ export default function Home() {
       <section
         className="text-primary-content"
         style={{
-          height: "100vh",
-          backgroundImage: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM} 0%, ${BRAND_GRADIENT_TO} 100%)`,
+          backgroundColor: "white",
         }}
       >
-        <div
-          className="mx-auto max-w-7xl px-6 "
-          style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}
-        >
-          <h2 className="text-4xl font-extrabold">Instalaciones</h2>
-          <p className="mt-4 max-w-2xl opacity-95">
-            Contamos con varias canchas dentro del Parque Rodó en San José de Mayo
+        <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center" style={{ color: "var(--neutro)" }}>
+            Instalaciones
+          </h2>
+          <p style={{ color: "gray" }} className="mt-4 max-w-2xl text-center opacity-95 mx-auto">
+            Canchas de tenis y pádel en un entorno natural y acogedor.
           </p>
 
           <div className="mt-12 grid lg:grid-cols-12 gap-10">
@@ -304,7 +294,7 @@ export default function Home() {
                   </MapContainer>
                 </div>
               </div>
-              <p className="mt-6">
+              <p className="mt-6" style={{ color: "gray" }}>
                 Parque José Enrique Rodó
                 <br />
                 San José de Mayo, Uruguay
@@ -338,50 +328,117 @@ export default function Home() {
       </section>
 
       {/* NOTICIAS */}
-      <section className="bg-white text-neutral-900 py-20">
+      <section className="bg-gradient-to-b from-white via-sky-50 to-white text-neutral-900 py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 w-full">
-          <h2 className="text-5xl font-extrabold text-center mb-12">Noticias</h2>
-          <div className="grid gap-10">
-            <div className="w-full space-y-12 relative">
+          {/* Título */}
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center mb-4" style={{ color: "var(--neutro)" }}>
+            Noticias
+          </h2>
+          <p className="text-center text-gray-500 max-w-2xl mx-auto mb-12">
+            Mantente al día con los torneos, eventos y novedades del Club del Parque.
+          </p>
+
+          <div className="grid lg:grid-cols-12 gap-10">
+            {/* Bloque principal de noticias */}
+            <div className="lg:col-span-8 space-y-10 relative">
+              {/* Hidden measure card */}
               <div className="absolute -left-[9999px] -top-[9999px]" aria-hidden>
                 <ArticleCard
                   ref={measureRef}
                   id="measure"
                   date="01/01/2025"
-                  title="Título de ejemplo para medir"
-                  excerptMd="Contenido de ejemplo para medir la altura de una tarjeta en la sección de noticias."
+                  title="Título de ejemplo"
+                  excerptMd="Texto de prueba para calcular la altura de una tarjeta."
                 />
               </div>
 
+              {/* Noticias */}
               {hasNoticias ? (
-                <>
+                <div className="grid sm:grid-cols-2 gap-8">
                   {top3.map((n) => {
                     const imgs = Array.isArray(n?.imagenes)
                       ? n.imagenes.map((it) => it?.imageUrl).filter(Boolean)
                       : [];
                     if (imgs.length === 0 && n?.imagenUrl) imgs.push(n.imagenUrl);
+
                     return (
-                      <ArticleCard
+                      <div
                         key={n.id}
-                        id={n.id}
-                        date={n?.fechaCreacion ? new Date(n.fechaCreacion).toLocaleDateString() : "—"}
-                        title={n?.titulo || "Título"}
-                        excerptMd={n?.mdContent || ""}
-                        images={imgs}
-                      />
+                        className="group bg-white border border-gray-200 rounded-2xl shadow-md hover:shadow-xl overflow-hidden transition-all duration-500"
+                      >
+                        {/* Imagen destacada */}
+                        <div className="relative h-48 sm:h-56 md:h-60 overflow-hidden">
+                          {imgs.length ? (
+                            <img
+                              src={imgs[0]}
+                              alt={n?.titulo || "Noticia"}
+                              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 grid place-items-center text-gray-400 text-sm">
+                              Sin imagen
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+
+                        {/* Contenido */}
+                        <div className="p-5 flex flex-col gap-3">
+                          <h3 className="font-bold text-lg group-hover:text-sky-700 transition-colors">
+                            {n?.titulo || "Título"}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {n?.fechaCreacion
+                              ? new Date(n.fechaCreacion).toLocaleDateString()
+                              : "—"}
+                          </p>
+                          <p className="text-gray-700 line-clamp-3 leading-snug">
+                            {firstParagraph(n?.mdContent || "")}
+                          </p>
+                          <Link
+                            to={`/noticias/${n.id}`}
+                            className="mt-3 inline-block text-sky-600 font-medium hover:underline"
+                          >
+                            Leer más →
+                          </Link>
+                        </div>
+                      </div>
                     );
                   })}
-                </>
+                </div>
               ) : (
-                <div className="card border border-neutral-200 bg-neutral-50 shadow" style={{ minHeight: emptyMinHeight }}>
-                  <div className="card-body items-center justify-center">
-                    <p className="text-2xl font-extrabold m-0">No hay noticias de momento</p>
-                  </div>
+                <div
+                  className="card border border-neutral-200 bg-neutral-50 shadow h-64 grid place-items-center"
+                  style={{ minHeight: emptyMinHeight }}
+                >
+                  <p className="text-xl font-semibold text-gray-500">No hay noticias disponibles</p>
                 </div>
               )}
 
-              <Link to="/noticias" className="btn btn-neutral">Ver más noticias</Link>
+              {/* Botón de ver más */}
+              <div className="flex justify-center mt-10">
+                <Link to="/noticias" className="btn btn-primary px-8 text-lg tracking-wide shadow-md hover:shadow-lg">
+                  Ver más noticias
+                </Link>
+              </div>
             </div>
+
+            {/* Aside de últimos partidos */}
+            <aside className="lg:col-span-4">
+              <div className="card bg-neutral-900 text-neutral-content shadow-xl rounded-2xl overflow-hidden">
+                <div className="card-body">
+                  <h3 className="card-title text-lg font-semibold">Últimos partidos</h3>
+                  <div className="mt-4 space-y-6">
+                    {["3 - 5", "6 - 4", "7 - 5"].map((score, i) => (
+                      <MatchRow key={i} score={score} />
+                    ))}
+                  </div>
+                  <div className="card-actions mt-8">
+                    <button className="btn btn-primary w-full">Ver torneos</button>
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
         </div>
       </section>

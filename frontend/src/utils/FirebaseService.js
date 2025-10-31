@@ -12,6 +12,8 @@ const firebaseConfig = {
   measurementId: "G-Q8TJD5C0ZM"
 };
 
+
+
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const dbRT = getDatabase(app);
 

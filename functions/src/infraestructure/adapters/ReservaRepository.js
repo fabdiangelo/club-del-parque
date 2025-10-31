@@ -18,12 +18,34 @@ export class ReservaRepository {
         return reserva;
     }
 
-    // campos reserva: id, canchaId, fechaHora, duracion, esCampeonato, tipoPartido, partidoId, jugadoresIDS, quienPaga, autor, estado
     async save(reserva) {
-        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, tipoPartido } = reserva;
+        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion, tipoPartido } = reserva;
 
-        if (!canchaId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora) {
-            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora");
+        const allReservas = await this.db.getAllItems('reservas');
+
+        // Convertir fechaHora y calcular el rango de tiempo ocupado por la nueva reserva
+        const fechaHoraInicioNueva = new Date(fechaHora);
+        const fechaHoraFinNueva = new Date(fechaHoraInicioNueva.getTime() + duracion * 60 * 1000); // Duración en minutos
+
+        // Verificar conflictos de horario
+        const conflictoHorario = allReservas.some(r => {
+            if (r.canchaId !== canchaId || r.deshabilitar === true) return false;
+
+            const fechaHoraInicioExistente = new Date(r.fechaHora);
+            const fechaHoraFinExistente = new Date(fechaHoraInicioExistente.getTime() + r.duracion * 60 * 1000);
+
+            // Verificar si los rangos de tiempo se solapan
+            return (
+                (fechaHoraInicioNueva < fechaHoraFinExistente && fechaHoraFinNueva > fechaHoraInicioExistente)
+            );
+        });
+
+        if (conflictoHorario) {
+            throw new Error("Ya existe una reserva para la misma cancha en el mismo rango de tiempo");
+        }
+
+        if (!canchaId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora || !duracion) {
+            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora, duracion");
         }
 
         if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
@@ -35,7 +57,9 @@ export class ReservaRepository {
         }
         if (tipoPartido === 'dobles' && jugadoresIDS.length !== 4) {
             throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
-        } const cancha = await this.db.getItem("canchas", canchaId);
+        }
+
+        const cancha = await this.db.getItem("canchas", canchaId);
         if (!cancha) {
             throw new Error("La cancha asociada no existe");
         }
@@ -52,28 +76,40 @@ export class ReservaRepository {
         for (const j of jugadoresIDS) {
             const jugadorExists = await this.db.getItem("usuarios", j);
             if (!jugadorExists) {
-
                 noJugador = true;
             }
 
             const federado = await this.db.getItem("federados", j);
-            if (!federado && !noJugador) {
+            const admin = await this.db.getItem("administradores", j);
+
+            if (!federado && !noJugador && !admin) {
                 throw new Error(`El jugador con ID ${j} no es un federado`);
             }
         }
 
-
         const quienPagaExists = await this.db.getItem("usuarios", quienPaga);
         if (!quienPagaExists) {
+            console.log("Usuario que paga no es usuario normal, verificando en federados o administradores");
+            console.log("Usuario que paga ID:", quienPaga);
 
-            const quienPagaExists2 = await this.db.getItem("federados", quienPaga);
-            if (!quienPagaExists2) {
+            const quienPagaExistsFederado = await this.db.getItem("federados", quienPaga);
+            const quienPagaExistsAdmin = await this.db.getItem("administradores", quienPaga);
+
+            const allAdmins = await this.db.getAllItems("administradores");
+
+            for(const admin of allAdmins) {
+                console.log("Verificando admin:", admin);
+            }
+
+            if (!quienPagaExistsFederado && !quienPagaExistsAdmin) {
                 throw new Error("El usuario que paga no existe");
             }
         }
 
         const autorExists = await this.db.getItem("usuarios", autor);
-        if (!autorExists) {
+        const autorFederado = await this.db.getItem("federados", autor);
+        const adminExists = await this.db.getItem("administradores", autor);
+        if (!autorExists && !autorFederado && !adminExists) {
             throw new Error("El usuario autor no existe");
         }
 
@@ -85,44 +121,10 @@ export class ReservaRepository {
         const aceptadoPor = [];
         const timestamp = Date.now();
 
-        let deshabilitar = false;
-
         const doc = await this.db.putItem("reservas", { ...reserva, estado, aceptadoPor, timestamp, deshabilitar: false }, reserva.id);
 
         console.log("Se ha creado la reserva con id: " + doc.id);
         return doc.id;
-    }
-
-    async getById(reservaId) {
-        return this.db.getItem("reservas", reservaId);
-    }
-
-    async deshabilitarReserva(reservaId) {
-        console.log("llegand hasta aca", reservaId);
-        if (!reservaId || reservaId.trim() === '') {
-            throw new Error("ID de reserva es requerido");
-        }
-
-
-        const reserva = await this.db.getItem("reservas", reservaId);
-        if (!reserva) {
-            throw new Error("La reserva no existe");
-        }
-
-        try {
-
-            const reservaActualizada = {
-                ...reserva,
-                deshabilitar: true
-            };
-
-            const result = await this.db.putItem("reservas", reservaActualizada, reservaId);
-            console.log("Actualización exitosa:", result);
-            return reservaId;
-        } catch (error) {
-            console.error("Error en updateItem:", error);
-            throw error;
-        }
     }
 
     async habilitarReserva(reservaId) {
@@ -252,7 +254,7 @@ export class ReservaRepository {
             throw new Error("ID de reserva es requerido");
         }
 
-        
+
 
 
         const reserva = await this.getById(reservaId);

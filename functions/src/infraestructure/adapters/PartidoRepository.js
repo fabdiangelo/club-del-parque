@@ -70,6 +70,13 @@ export class PartidoRepository {
       }
     }
 
+    // Agregar fechaMaxima por defecto si no está definida
+    if (!partido.fechaMaxima) {
+      const hoy = new Date();
+      const dosSemanasDespues = new Date(hoy.setDate(hoy.getDate() + 14));
+      partido.fechaMaxima = dosSemanasDespues.toISOString(); // Formato ISO para consistencia
+    }
+
     const doc = await this.db.putItem("partidos", partido, partido.id);
     console.log("Se ha creado el partido con id: " + doc.id);
     return doc.id;
@@ -119,8 +126,8 @@ export class PartidoRepository {
       const jugadores = Array.isArray(partido.jugadores)
         ? partido.jugadores
         : Array.isArray(partido.federadosPartidoIDs)
-        ? partido.federadosPartidoIDs
-        : [];
+          ? partido.federadosPartidoIDs
+          : [];
       return jugadores.includes(jugadorID);
     });
   }
@@ -173,8 +180,8 @@ export class PartidoRepository {
     const prev = Array.isArray(actual?.disponibilidades?.propuestas)
       ? actual.disponibilidades.propuestas
       : Array.isArray(actual?.disponibilidades)
-      ? actual.disponibilidades // compat con versiones previas
-      : [];
+        ? actual.disponibilidades // compat con versiones previas
+        : [];
 
     // Normalizar entradas (acepta: horaInicio, horaFin, fecha, fechaHoraInicio, fechaHoraFin, rango)
     const norm = (disponibilidad || [])
@@ -221,7 +228,7 @@ export class PartidoRepository {
     await this.update(partidoId, updated);
     return merged;
   }
-  
+
 }
 
 
