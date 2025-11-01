@@ -1,0 +1,21 @@
+{
+  "name": "Club del Parque",
+  "short_name": "ClubParque",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0D8ABC",
+  "description": "Tu club deportivo en la palma de tu mano",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
