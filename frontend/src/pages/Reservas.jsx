@@ -300,7 +300,7 @@ const Reservas = () => {
 
             const data = await response.json();
             console.log(data);
-            console.log("Se ha confirmado la reserva");
+            await fetchReservas();
 
         } catch (error) {
             console.info(error);
@@ -329,7 +329,7 @@ const Reservas = () => {
 
             const data = await response.json();
             console.log(data);
-            console.log("Se ha rechazado la reserva");
+            await fetchReservas();
 
         } catch (error) {
             console.info(error);

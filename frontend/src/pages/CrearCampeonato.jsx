@@ -22,7 +22,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
+      <div className="modal-box max-w-2xl bg-white">
         <h3 className="font-bold text-lg mb-4">{title}</h3>
         {children}
         <div className="modal-action">
@@ -74,6 +74,20 @@ export default function CrearCampeonato() {
   const [precargaLoading, setPrecargaLoading] = useState(false);
   const [precargaError, setPrecargaError] = useState(null);
   const [contadorFederados, setContadorFederados] = useState(null);
+  const [temporada, setTemporada] = useState(null);
+
+  const fetchTemporadas = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/temporadas`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Error fetching temporadas');
+      const data = await res.json();
+      setTemporada(data || null);
+
+      console.log("Fetched temporada:", data);
+    } catch (err) {
+      console.error('fetchTemporada error', err);
+    }
+  }
 
   const [form, setForm] = useState({
     id: '',
@@ -93,6 +107,7 @@ export default function CrearCampeonato() {
     },
     dobles: false,
     esTenis: true,
+    temporadaID: '',
   });
 
   // Configuración dinámica de las etapas del formato seleccionado
@@ -113,6 +128,7 @@ export default function CrearCampeonato() {
   useEffect(() => {
     fetchFormatos();
     fetchFormatosEtapas();
+    fetchTemporadas();
   }, []);
 
   async function fetchFormatos() {
@@ -438,31 +454,34 @@ export default function CrearCampeonato() {
   }
 
   return (
-    <div className="min-h-screen bg-base-300 p-6 mt-12">
+    <div className="min-h-screen bg-base-300 p-6 mt-12 bg-white">
       <NavbarBlanco />
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-4xl font-bold mb-2">Crear Campeonato</h1>
-          <p className="text-base-content/70">Configure todos los detalles del nuevo campeonato</p>
+          <h1 className="text-4xl font-bold mb-2 text-black">Crear Campeonato</h1>
+          <p className="text-base-content/70 text-black">Configure todos los detalles del nuevo campeonato</p>
         </div>
 
         {/* Tabs */}
-        <div className="tabs tabs-boxed mb-6 bg-base-200 p-1">
+        <div className="tabs tabs-boxed mb-6 bg-base-200 p-1 bg-white text-black rounded-lg">
           <a 
             className={`tab tab-lg ${activeTab === 'campeonato' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('campeonato')}
+            style={{color: 'var(--neutro)'}}
           >
             📋 Campeonato
           </a>
           <a 
             className={`tab tab-lg ${activeTab === 'formatos' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('formatos')}
+            style={{color: 'var(--neutro)'}}
           >
             🏆 Gestión de Formatos
           </a>
           <a 
+          style={{color: 'var(--neutro)'}}
             className={`tab tab-lg ${activeTab === 'etapas' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('etapas')}
           >
@@ -470,12 +489,30 @@ export default function CrearCampeonato() {
           </a>
         </div>
 
-        {/* Tab Content - Campeonato */}
         {activeTab === 'campeonato' && (
           <form onSubmit={createCampeonato} className="space-y-6">
-            {/* Datos Básicos */}
-            <Card title="📝 Datos Básicos">
-              <div className="grid grid-cols-1 gap-4">
+            <Card title="Datos Básicos" className='bg-white'>
+
+              <div className="form-control">
+      <label className="label">
+        <span className="label-text font-semibold">Temporada</span>
+      </label>
+      <select
+        name="temporadaID"
+        value={form.temporadaID}
+        onChange={handleChange}
+        className="select select-bordered w-full bg-white"
+        required
+      >
+        <option value="">-- Selecciona una temporada --</option>
+        {Array.isArray(temporada) && temporada.map(t => (
+          <option key={t.id} value={t.id}>
+            {t.nombre} ({t.inicio} - {t.fin})
+          </option>
+        ))}
+      </select>
+    </div>
+              <div className="grid grid-cols-1 gap-4 bg-white">
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text font-semibold">Nombre del Campeonato</span>
@@ -490,15 +527,16 @@ export default function CrearCampeonato() {
                   />
                 </div>
 
-                <div className="form-control">
-                  <label className="label">
+                <div className="form-control bg-white">
+                  <label className="label bg-white">
                     <span className="label-text font-semibold">Descripción</span>
                   </label>
                   <textarea 
+                    
                     name="descripcion" 
                     value={form.descripcion} 
                     onChange={handleChange} 
-                    className="textarea textarea-bordered w-full h-24" 
+                    className="textarea textarea-bordered bg-white w-full h-24" 
                     placeholder="Describe el campeonato..."
                   />
                 </div>
@@ -527,10 +565,8 @@ export default function CrearCampeonato() {
                       onChange={handleChange}
                     />
 
-                    {/* Tenis */}
                     <div className="swap-on">🎾</div>
 
-                    {/* Pádel */}
                     <div className="swap-off">🥎</div>
                   </label>
 
@@ -541,9 +577,8 @@ export default function CrearCampeonato() {
               </div>
             </Card>
 
-            {/* Requisitos de Participación */}
-            <Card title="👥 Requisitos de Participación">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card title="Requisitos de Participación" className='bg-white'>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white">
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text font-semibold">Género</span>
@@ -552,7 +587,8 @@ export default function CrearCampeonato() {
                     name="req.genero" 
                     value={form.requisitosParticipacion.genero} 
                     onChange={handleChange} 
-                    className="select select-bordered w-full"
+                    
+                    className="select select-bordered w-full bg-white"
                   >
                     {form.dobles && 
                       <option value="ambos">Ambos</option>
@@ -638,8 +674,8 @@ export default function CrearCampeonato() {
             </Card>
 
             {/* Formato */}
-            <Card title="🏆 Formato del Campeonato">
-              <div className="form-control">
+            <Card title="🏆 Formato del Campeonato" className='bg-white'>
+              <div className="form-control bg-white">
                 <label className="label">
                   <span className="label-text font-semibold">Seleccionar Formato</span>
                 </label>
@@ -648,7 +684,7 @@ export default function CrearCampeonato() {
                     name="formatoCampeonatoID" 
                     value={form.formatoCampeonatoID} 
                     onChange={handleChange} 
-                    className="select select-bordered flex-1"
+                    className="select select-bordered flex-1 bg-white"
                     required
                   >
                     <option value="">-- Seleccionar formato --</option>
@@ -676,7 +712,7 @@ export default function CrearCampeonato() {
                   disabled={precargaLoading} 
                   type="button"
                 >
-                  {precargaLoading ? 'Precargando...' : '⬇️ Precargar Formatos'}
+                  {precargaLoading ? 'Precargando...' : 'Precargar Formatos'}
                 </button>
               </div>
               {precargaError && (
@@ -779,7 +815,7 @@ export default function CrearCampeonato() {
                 Cancelar
               </button>
               <button className="btn btn-primary btn-lg" type="submit">
-                ✅ Crear Campeonato
+                Crear Campeonato
               </button>
             </div>
           </form>
@@ -787,17 +823,17 @@ export default function CrearCampeonato() {
 
         {/* Tab Content - Gestión de Formatos */}
         {activeTab === 'formatos' && (
-          <div className="space-y-6">
-            <Card title="🏆 Gestión de Formatos">
+          <div className="space-y-6 bg-white">
+            <Card title="🏆 Gestión de Formatos" className='bg-white' style={{color: 'var(--neutro)'}}>
               <div className="flex justify-between items-center mb-4">
-                <p className="text-base-content/70">Administra los formatos de campeonato disponibles</p>
+                <p className="text-base-content/70" style={{color: 'var(--neutro)'}}>Administra los formatos de campeonato disponibles</p>
                 <button className="btn btn-primary" onClick={openNewFormato}>
                   + Nuevo Formato
                 </button>
               </div>
 
               {loadingFormatos ? (
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-8 bg-white">
                   <span className="loading loading-spinner loading-lg"></span>
                 </div>
               ) : formatos.length === 0 ? (
@@ -815,7 +851,6 @@ export default function CrearCampeonato() {
           </div>
         )}
 
-        {/* Tab Content - Gestión de Etapas */}
         {activeTab === 'etapas' && (
           <div className="space-y-6">
             <Card title="📊 Gestión de Etapas">
@@ -843,11 +878,13 @@ export default function CrearCampeonato() {
 
         {/* Modal Formato */}
         <Modal 
+          className="bg-white"
+          style={{backgroundColor: 'white'}}
           isOpen={!!editingFormato} 
           onClose={() => setEditingFormato(null)}
           title={formatos.filter(etapa => etapa.id == (editingFormato?.id || '')).length > 0 ? '✏️ Editar Formato' : '➕ Nuevo Formato'}
         >
-          <form onSubmit={saveFormato} className="space-y-4">
+          <form onSubmit={saveFormato} className="space-y-4 bg-white">
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-semibold">Nombre (clave única)</span>
@@ -881,7 +918,7 @@ export default function CrearCampeonato() {
                 <span className="label-text font-semibold">Etapas del Formato</span>
               </label>
               <select 
-                className="select select-bordered mb-2" 
+                className="select select-bordered mb-2 bg-white" 
                 onChange={e => {
                   const v = e.target.value;
                   if (!v) return;

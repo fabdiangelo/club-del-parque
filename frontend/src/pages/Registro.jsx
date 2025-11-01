@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
 
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
+import Navbar from "../components/Navbar.jsx";
 
 function Registro() {
   const [formData, setFormData] = useState({
@@ -53,7 +54,7 @@ function Registro() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <Navbar  color="white"/>
+      <Navbar  color="blanco"/>
       <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center" style={{'color': 'var(--neutro)'}}>Registro</h2>
         <form style={{'color': 'var(--neutro)'}} onSubmit={handleSubmit} className="space-y-4">

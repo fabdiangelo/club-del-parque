@@ -25,7 +25,7 @@ class CrearCampeonato {
   const inputCantidad = typeof payload.cantidadParticipantes !== 'undefined' ? payload.cantidadParticipantes : payload.cantidadJugadores;
   // If campeonato is dobles, the provided number represents teams; store total individuals in the Campeonato entity (teams * 2)
   const totalJugadores = dobles ? Number(inputCantidad) * 2 : Number(inputCantidad);
-  const c = new Campeonato(id, payload.nombre, payload.descripcion || '', payload.inicio, payload.fin || null, payload.ultimaPosicionJugable || 1, totalJugadores, requisitos, dobles, esTenis,  temporadaID,tipoDePartido,deporte,puntosPorPosicion);
+  const c = new Campeonato(id, payload.nombre, payload.descripcion || '', payload.inicio, payload.fin || null, payload.ultimaPosicionJugable || 1, totalJugadores, requisitos, dobles, esTenis,  payload.temporadaID,tipoDePartido,deporte,puntosPorPosicion);
 
     // If payload.etapas is provided, validate and persist each etapa, attaching their IDs to campeonato
     const etapasPayload = Array.isArray(payload.etapas) ? payload.etapas : [];
@@ -48,9 +48,6 @@ class CrearCampeonato {
               fechaFin = finDate.toISOString();
             }
 
-            // Determine initial number of participants (slots) for this etapa.
-            // Prefer payload.cantidadParticipantes, fall back to payload.cantidadJugadores.
-            // For dobles the provided value is already the number of teams (slots), so use it directly.
             let participantes = typeof payload.cantidadParticipantes !== 'undefined' ? payload.cantidadParticipantes : payload.cantidadJugadores;
             cantidadDeJugadoresIni = Number(participantes) || 0;
           }else{
@@ -61,8 +58,6 @@ class CrearCampeonato {
               fechaFin = finDate.toISOString();
             }
 
-            // For subsequent etapas, respect previous etapa's cantidadDeJugadoresFin.
-            // The etapasPayload values should be in the same unit as input: if dobles, they represent teams.
             let prevFin = etapasPayload[i - 1].cantidadDeJugadoresFin;
             cantidadDeJugadoresIni = typeof prevFin !== 'undefined' ? Number(prevFin) : 0;
           }

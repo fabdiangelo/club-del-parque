@@ -1,4 +1,5 @@
 import DBConnection from "../ports/DBConnection.js";
+import NotiConnection from "../ports/NotiConnection.js";
 
 export class PartidoRepository {
   constructor() {
@@ -8,13 +9,9 @@ export class PartidoRepository {
   async save(partido) {
     const { temporadaID } = partido;
 
-    console.log(partido);
 
     const temp = await this.db.getItem("temporadas", temporadaID);
     const cancha = await this.db.getItem("canchas", partido.canchaID);
-
-    console.log("Temporada encontrada:", temp);
-    console.log("Cancha encontrada:", cancha);
 
     if (!temp) {
       throw new Error("La temporada asociada no existe");
@@ -24,7 +21,7 @@ export class PartidoRepository {
       throw new Error("La cancha asociada no existe");
     }
 
-  const { jugadores, equipoVisitante, equipoLocal, jugador1, jugador2 } = partido;
+    const { jugadores, equipoVisitante, equipoLocal, jugador1, jugador2 } = partido;
 
     // Validar jugadores (plantel completo)
     for (const j of jugadores || []) {
@@ -41,8 +38,8 @@ export class PartidoRepository {
     const localCandidates = Array.isArray(jugador1)
       ? jugador1.map(p => p?.id).filter(Boolean)
       : Array.isArray(equipoLocal)
-      ? equipoLocal
-      : [];
+        ? equipoLocal
+        : [];
 
     for (const j of localCandidates) {
       const equipoExists = await this.db.getItem("usuarios", j);
@@ -57,8 +54,8 @@ export class PartidoRepository {
     const visitCandidates = Array.isArray(jugador2)
       ? jugador2.map(p => p?.id).filter(Boolean)
       : Array.isArray(equipoVisitante)
-      ? equipoVisitante
-      : [];
+        ? equipoVisitante
+        : [];
 
     for (const j of visitCandidates) {
       const equipoExists = await this.db.getItem("usuarios", j);
@@ -164,6 +161,8 @@ export class PartidoRepository {
       }
     });
 
+    
+
     return { success: true, message: "Propuesta aceptada correctamente" };
   }
 
@@ -224,8 +223,40 @@ export class PartidoRepository {
       },
     };
 
-    console.log("Guardando partido con disponibilidades:", updated.disponibilidades);
+
+
+
+
     await this.update(partidoId, updated);
+
+
+    const jugadores = actual.jugadores || [];
+    const noti = new NotiConnection();
+
+    const inviteePayload = {
+      tipo: "actualizacion_partido",
+      resumen: "El equipo contrario ha propuesto horarios disponibles parajugar el partido",
+      href: `/partido/${partidoId}`,
+    };
+
+    let equipoProponiente = null;
+
+    if (actual.equipoLocal.includes(disponibilidad.propuestoPor)) {
+      equipoProponiente = 'local';
+    } else {
+      equipoProponiente = 'visitante';
+    }
+
+    for (const jugadorId of jugadores) {
+      const perteneceAlEquipoProponiente = equipoProponiente === 'local'
+        ? actual.equipoLocal.includes(jugadorId)
+        : actual.equipoVisitante.includes(jugadorId);
+
+      if (jugadorId !== disponibilidad.propuestoPor && !perteneceAlEquipoProponiente) {
+        await noti.pushNotificationTo(jugadorId, inviteePayload).catch(() => { });
+      }
+    }
+
     return merged;
   }
 

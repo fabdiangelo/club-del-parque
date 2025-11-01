@@ -8,6 +8,7 @@ import {
   signInWithGoogle,
   linkGoogleToExistingAccount, 
 } from "../utils/LoginProviders.js";
+import Navbar from "../components/Navbar.jsx";
 
 function Login() {
   const [email, setEmail] = useState("");

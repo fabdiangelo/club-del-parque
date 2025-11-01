@@ -1,4 +1,5 @@
 import DBConnection from "../ports/DBConnection.js";
+import NotiConnection from "../ports/NotiConnection.js";
 
 export class ReservaRepository {
     constructor() {
@@ -19,7 +20,9 @@ export class ReservaRepository {
     }
 
     async save(reserva) {
-        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion, tipoPartido } = reserva;
+
+        try {
+const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion, tipoPartido } = reserva;
 
         const allReservas = await this.db.getAllItems('reservas');
 
@@ -123,8 +126,34 @@ export class ReservaRepository {
 
         const doc = await this.db.putItem("reservas", { ...reserva, estado, aceptadoPor, timestamp, deshabilitar: false }, reserva.id);
 
-        console.log("Se ha creado la reserva con id: " + doc.id);
+        const noti = new NotiConnection();
+        const partido = await this.db.getItem("partidos", reserva.partidoId);
+        
+
+        let equipoContrario = null;
+
+        if(partido.equipoLocal.includes(autor)) {
+            equipoContrario = partido.equipoVisitante;
+        } else {
+            equipoContrario = partido.equipoLocal;
+        }
+
+        for(const j of equipoContrario) {
+            await noti.pushNotificationTo(j, {
+                tipo: "actualizacion_partido",
+                resumen: "El equipo contrario ha aceptado un horario para jugar el partido",
+                href: `/partido/${partidoId}`
+            })
+        }
+
+
+
+
         return doc.id;
+        } catch(error) {
+            console.info(error);
+        }
+        
     }
 
     async habilitarReserva(reservaId) {
@@ -240,12 +269,23 @@ export class ReservaRepository {
         console.log("Llegando hasta aca");
 
 
-        const reserva = await this.getById(reservaId);
+        const reserva = await this.getReservaById(reservaId);
         if (!reserva) {
             throw new Error("La reserva no existe");
         }
 
         await this.db.updateItem("reservas", reservaId, { estado: 'confirmada' });
+
+        const noti = new NotiConnection();
+
+        for(const j of reserva.jugadoresIDS) {
+            await noti.pushNotificationTo(j, {
+                tipo: "reserva_confirmada",
+                resumen: "Tu reserva ha sido confirmada",
+                href: `/partido/${reserva.partidoId}`
+            })
+        }
+
         return reservaId;
     }
 
@@ -265,6 +305,10 @@ export class ReservaRepository {
         return reservaId;
     }
 
+    async getReservaById(id) {
+        return this.db.getItem('reservas', id);
+    }
+
     async cancelarReserva(reservaId, usuarioId) {
         if (!reservaId || reservaId.trim() === '') {
             throw new Error("ID de reserva es requerido");
@@ -279,7 +323,7 @@ export class ReservaRepository {
             throw new Error("Usuario no autorizado para cancelar la reserva");
         }
 
-        const reserva = await this.getById(reservaId);
+        const reserva = await this.getReservaById(reservaId);
         if (!reserva) {
             throw new Error("La reserva no existe");
         }

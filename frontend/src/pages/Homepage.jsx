@@ -19,6 +19,7 @@ const CANCHAS_IMAGES = [img1, img2, img3, img4, img5, img6];
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Navbar from "../components/Navbar";
 
 // Small CSS for our custom Leaflet divIcon + lightbox
 if (typeof document !== "undefined" && !document.getElementById("club-custom-css")) {
@@ -197,10 +198,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
-      {/* NAVBAR */}
-      <NavbarBlanco transparent={!scrolled} />
 
-      {/* HERO */}
+      <Navbar color="white" />
       <section
         className="relative flex items-center justify-center w-full"
         style={{

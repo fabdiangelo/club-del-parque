@@ -6,6 +6,6 @@ export class GetReservaById {
     }
 
     async execute(reservaID) {
-        return await this.reservaRepository.getById(reservaID);
+        return await this.reservaRepository.getReservaById(reservaID);
     }
 }

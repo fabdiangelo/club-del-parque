@@ -32,7 +32,7 @@ const Partido = () => {
     const [reservas, setReservas] = useState([]);
 
     const [modalResponder, setModalResponder] = useState(false);
-
+    const [mensajeExito, setMensajeExito] = useState('');
     const [reserva, setReserva] = useState(null);
     const [propuestaAceptada, setPropuestaAceptada] = useState(null);
 
@@ -64,6 +64,8 @@ const Partido = () => {
                 throw new Error(`Error en la solicitud: ${response.statusText}`);
             }
             const data = await response.json();
+
+            console.log("RESERVA ENCONTRADA", data);
             setReserva(data);
         } catch(error) {
             console.error("Error al obtener la reserva:", error);
@@ -125,6 +127,8 @@ const Partido = () => {
         estado: 'pendiente'
     };
 
+    console.log("Nueva reserva:", nuevaReserva);
+
 
     try {
         const response = await fetch(`/api/reservas`, {
@@ -143,8 +147,9 @@ const Partido = () => {
         const data = await response.json();
         console.log("Reserva creada:", data);
         fetchReserva();
-
-        alert("Reserva creada exitosamente");
+        
+        setMensajeExito('¡La reserva fue creada exitosamente!');
+        setTimeout(() => setMensajeExito(''), 3500); 
     } catch (error) {
         console.error("Error al crear reserva:", error);
         alert("Error al crear la reserva");
@@ -153,33 +158,38 @@ const Partido = () => {
 
 };
 
+useEffect(() => {
+    fetchReserva();
+}, [])
+
     const verPropuestas = () => {
         console.log(partido.disponibilidades.propuestas);
     }
 
-    useEffect(() => {
+    const [loading, setLoading] = useState(true);
+const [error, setError] = useState('');
 
-        fetchReserva();
-        fetchAllReservas();
-
-        const fetchPartido = async () => {
-            const response = await fetch(`/api/partidos/${id}`, { credentials: 'include' });
-            const data = await response.json();
-            console.log("Datos del partido obtenidos:", data);
-            setPartido(data);
-        };
-
-        const fetchUsuarios = async () => {
-            const res = await fetch('/api/usuarios');
-            const data = await res.json();
-            setUsuarios(data);
-            console.log("Usuarios obtenidos:", data);
-        }
-
-
-        fetchPartido();
-        fetchUsuarios();
-    }, [id]);
+useEffect(() => {
+    setLoading(true);
+    setError('');
+    Promise.all([
+        fetch(`/api/partidos/${id}`, { credentials: 'include' }),
+        fetch('/api/usuarios'),
+        fetch(`/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } }),
+    ])
+    .then(async ([partidoRes, usuariosRes, reservasRes]) => {
+        if (!partidoRes.ok || !usuariosRes.ok || !reservasRes.ok) throw new Error('Error al cargar datos');
+        setPartido(await partidoRes.json());
+        setUsuarios(await usuariosRes.json());
+        setReservas(await reservasRes.json());
+        
+    })
+    .catch(e => {
+        setError('No se pudo cargar el partido. Intenta más tarde.');
+        console.error(e);
+    })
+    .finally(() => setLoading(false));
+}, [id]);
 
     useEffect(() => {
         if (usuarios.length > 0 && partido?.jugadores) {
@@ -432,7 +442,25 @@ const Partido = () => {
         <>
             <Navbar color="white" />
 
-
+{mensajeExito && (
+  <div
+    role="alert"
+    className="alert alert-success"
+    style={{
+      position: 'fixed',
+      left: '32px',
+      bottom: '32px',
+      zIndex: 9999,
+      minWidth: '280px',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+    }}
+  >
+    <svg style={{color: 'white'}} xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span style={{color: 'white'}}>{mensajeExito}</span>
+  </div>
+)}
          
             {partido && partido?.tipoPartido == 'doubles' ? (
                 <div className="container mx-auto py-4 battle-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px' }}>
@@ -747,8 +775,8 @@ const Partido = () => {
                             
                         </div>
                     ) : (
-                        comprobarSiUserEsJugador() ? (
-                            obtenerPosicionUsuario() === 'local' ? (
+                        comprobarSiUserEsJugador() && (
+                            obtenerPosicionUsuario() === 'local' || obtenerPosicionUsuario() === 'visitante' ? (
                                 <div className='text-center my-5 intro-text'>
                                     <p>Todavía no se ha generado ninguna propuesta.</p>
                                     <button
@@ -768,14 +796,10 @@ const Partido = () => {
                                 </div>
                             ) : (
                                 <div className='text-center'>
-                                    <p>Esperando a que el equipo local proponga fechas y horarios disponibles.</p>
+                                    
                                 </div>
                             )
-                        ) : user?.isAdmin ? (
-                            <p>No hay propuestas para este partido. Los administradores pueden ver todos los casos.</p>
-                        ) : (
-                            <p>No tienes permisos para ver las propuestas de este partido.</p>
-                        )
+                        ) 
                     )}
                             </div>
                         )
@@ -788,12 +812,7 @@ const Partido = () => {
                     {usuariosParticipantes.length >= 2 && (
                         <div className="stats-panel">
 
-                            <div className='text-center'>
-                                <p style={{ fontSize: '0.8rem', color: '#555' }}>Fecha y Hora: {partido.fechaHoraPartido ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span> : <span>No definido</span>}</p>
-                                <p style={{ fontSize: '0.8rem', color: '#555' }}>Cancha: {cancha ? <span>{cancha.nombre}</span> : <span>No definido</span>}</p>
-                                <p style={{ fontSize: '0.8rem', color: '#555' }}>Estado: {partido.estado}</p>
-
-                            </div>
+                            
 
                             <h3 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.5rem', color: '#333' }}>
                                 Estadísticas de los Jugadores
