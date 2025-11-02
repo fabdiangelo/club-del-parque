@@ -37,6 +37,9 @@ export default class Campeonato {
     this.tipoDePartido = tipoDePartido;
     this.deporte = deporte ? String(deporte).toLowerCase() : null;
     this.puntosPorPosicion = puntosPorPosicion || null;
+    // Reglamentos (opcional)
+    this.reglamentoUrl = null;
+    this.reglamentoPath = null;
   }
 
   toPlainObject() {
@@ -57,6 +60,8 @@ export default class Campeonato {
       tipoDePartido: this.tipoDePartido,
       deporte: this.deporte,
       puntosPorPosicion: this.puntosPorPosicion,
+      reglamentoUrl: this.reglamentoUrl || null,
+      reglamentoPath: this.reglamentoPath || null,
     };
   }
 }

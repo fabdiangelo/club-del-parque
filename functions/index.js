@@ -5,6 +5,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import multer from 'multer';
 
 import NoticiaController from "./src/controllers/NoticiaController.js";
 import AuthController from "./src/controllers/AuthController.js";
@@ -59,6 +60,11 @@ console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env
 console.log("[boot] GCLOUD_STORAGE_BUCKET =", process.env.GCLOUD_STORAGE_BUCKET || "(unset)");
 console.log("[boot] STORAGE_EMULATOR_HOST =", process.env.STORAGE_EMULATOR_HOST || "(unset)");
 
+/* ---------------- PDFs ---------------- */
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50 MB
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } });
+
+
 /* ---------------- App + CORS ---------------- */
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const app = express();
@@ -66,16 +72,32 @@ const app = express();
 app.use(
   cors({
     origin: FRONTEND_URL,
-    credentials: false, // using Vite proxy → no browser cross-origin cookies here
+    credentials: true, // allow credentials so browser can send cookies when frontend uses credentials: 'include'
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   })
 );
 app.options("*", cors());
 
+// Parse cookies early so handlers (including the upload handler) can read session cookie
+app.use(cookieParser());
+
+// Register reglamento upload route BEFORE body parser so multer receives raw multipart stream
+// Add a tiny logger for headers/length and listen for aborted connections to help debug truncation issues
+app.post(
+  '/campeonato/:id/reglamento',
+  (req, res, next) => {
+    console.log('[upload] headers:', { 'content-type': req.headers['content-type'], 'content-length': req.headers['content-length'] });
+    req.on('aborted', () => console.warn('[upload] request aborted by client'));
+    next();
+  },
+  upload.single('reglamento'),
+  (req, res) => CampeonatosController.uploadReglamento(req, res)
+);
+
 /* ---------------- Parsers ---------------- */
 app.use(bodyParser.json({ limit: "50mb" }));
-app.use(cookieParser());
+// cookieParser() was registered earlier so upload route and controllers can read cookies before body parsing
 
 /* ---------------- Routes ---------------- */
 // Auth
@@ -280,6 +302,21 @@ app.get("/_routes", (_req, res) => {
   });
   res.json({ base: "/us-central1/api", routes: list });
 });
+// Multer / upload errors handler (report clearer messages for file-size and parsing errors)
+app.use((err, req, res, next) => {
+  if (err) console.error('[global error handler] ', err && err.stack ? err.stack : err);
+  // multer specific
+  if (err && (err instanceof multer.MulterError || err.code === 'LIMIT_FILE_SIZE')) {
+    console.error('[multer error]', err);
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: `Archivo muy grande. Límite ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB.` });
+    }
+    return res.status(400).json({ error: err.message || String(err) });
+  }
+  next(err);
+});
+
+// Fallback generic error handler
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });

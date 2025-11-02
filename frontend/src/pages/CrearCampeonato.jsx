@@ -109,6 +109,8 @@ export default function CrearCampeonato() {
     esTenis: true,
     temporadaID: '',
   });
+  // reglamento PDF file (opcional)
+  const [reglamentoFile, setReglamentoFile] = useState(null);
 
   // Configuración dinámica de las etapas del formato seleccionado
   const [etapasConfig, setEtapasConfig] = useState([]);
@@ -442,6 +444,28 @@ export default function CrearCampeonato() {
         throw new Error(txt || 'Error creando campeonato');
       }
       const saved = await res.json();
+      // If reglamento file selected, upload it to the reglamento endpoint
+      if (reglamentoFile) {
+        try {
+          const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 20 MB client-side guard
+          if (reglamentoFile.size > MAX_UPLOAD_BYTES) {
+            alert(`El archivo seleccionado excede el límite de ${Math.round(MAX_UPLOAD_BYTES / (1024*1024))}MB.`);
+          } else {
+            const fd = new FormData();
+            fd.append('reglamento', reglamentoFile);
+            const up = await fetch(`${API_BASE}/campeonato/${saved.id}/reglamento`, {
+              method: 'POST',
+              credentials: 'include',
+              body: fd,
+            });
+            if (!up.ok) {
+              console.warn('No se pudo subir reglamento:', await up.text());
+            }
+          }
+        } catch (e) {
+          console.error('Error subiendo reglamento', e);
+        }
+      }
       navigate(`/campeonato/${saved.id}`);
     } catch (err) {
       console.error('createCampeonato err', err);
@@ -539,6 +563,24 @@ export default function CrearCampeonato() {
                     className="textarea textarea-bordered bg-white w-full h-24" 
                     placeholder="Describe el campeonato..."
                   />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">Reglamento (PDF) - opcional</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => {
+                      const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                      setReglamentoFile(f);
+                    }}
+                    className="file-input file-input-bordered w-full"
+                  />
+                  {reglamentoFile && (
+                    <div className="text-sm mt-2">Seleccionado: {reglamentoFile.name}</div>
+                  )}
                 </div>
 
                 

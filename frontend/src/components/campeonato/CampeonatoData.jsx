@@ -23,6 +23,8 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
     fin: fin,
   });
 
+  const [reglamentoUrl, setReglamentoUrl] = useState(null);
+
   const cantDias = diasEntreFechas(display.inicio, display.fin)
 
   useEffect(() =>{
@@ -156,6 +158,30 @@ export default function CampeonatoData({id = '', nombre = '', descripcion = '', 
           <Calendar className="w-4 h-4" />
           <span>{new Date(display.inicio).toLocaleDateString()} - {new Date(display.fin).toLocaleDateString()}</span>
         </div>
+        
+        {/** Botón para ver reglamento si existe */}
+        {reglamentoUrl && (
+          <div className="mt-3">
+            <button className="btn btn-sm btn-outline" onClick={async () => {
+              try {
+                if (reglamentoUrl) {
+                  window.open(reglamentoUrl, '_blank');
+                  return;
+                }
+                const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include' });
+                if (!res.ok) return alert('No se pudo obtener información del campeonato');
+                const data = await res.json();
+                const url = data?.reglamentoUrl || data?.reglamentoURL || null;
+                if (!url) return alert('No hay reglamento disponible para este campeonato');
+                setReglamentoUrl(url);
+                window.open(url, '_blank');
+              } catch (e) {
+                console.error(e);
+                alert('Error obteniendo reglamento');
+              }
+            }}>Ver reglamento (PDF)</button>
+          </div>
+        )}
 
         {(user?.rol == 'federado' && (participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || inscripto)) &&
           <div className='m-3'>

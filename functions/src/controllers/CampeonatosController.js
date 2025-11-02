@@ -5,6 +5,7 @@ import CerrarCampeonatoYAsignarPuntos from "../usecases/Campeonatos/CerrarCampeo
 import GetActualUser from "../usecases/Auth/GetActualUser.js";
 import EditarCampeonato from "../usecases/Campeonatos/EditarCampeonato.js";
 import ProcesarInicioCampeonato from "../usecases/Campeonatos/ProcesarInicioCampeonato.js";
+import { CampeonatoRepository } from "../infraestructure/adapters/CampeonatoRepository.js";
 
 class CampeonatosController {
   async crear(req, res) {
@@ -68,6 +69,32 @@ class CampeonatosController {
     } catch (error) {
       console.error("Error al editar campeonato:", error);
       res.status(500).json({ error: "Error interno del servidor" });
+    }
+  }
+
+  async uploadReglamento(req, res) {
+    try {
+      const sessionCookie = req.cookies.session || "";
+      if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
+      let user;
+      try {
+        user = GetActualUser.execute(sessionCookie);
+      } catch (err) {
+        console.error('uploadReglamento: token verify failed', err);
+        return res.status(401).json({ error: 'Invalid session' });
+      }
+      if (user.rol !== "administrador") return res.status(403).json({ error: "Acceso no autorizado" });
+
+      const campeonatoId = req.params.id;
+      if (!campeonatoId) return res.status(400).json({ error: 'ID de campeonato requerido' });
+
+      const file = req.file || null;
+      const repo = new CampeonatoRepository();
+      const out = await repo.setReglamento(campeonatoId, file);
+      return res.json({ ok: true, ...out });
+    } catch (e) {
+      console.error('Error uploadReglamento:', e);
+      return res.status(500).json({ error: e.message || String(e) });
     }
   }
   async cerrarYAsignar(req, res) {
