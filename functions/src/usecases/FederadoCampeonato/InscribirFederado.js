@@ -139,18 +139,24 @@ class InscribirFederado {
           if (typeof partido.jugador1Index !== 'undefined' && partido.jugador1Index === si) {
             // For doubles store team in jugador1 array; for singles use jugador1Id
             if (grupo.jugadores[si].players) {
-              partido.jugador1 = grupo.jugadores[si].players;
+              // dobles: copy players (with names)
+              partido.jugador1 = grupo.jugadores[si].players.map(p => ({ id: p.id, nombre: p.nombre }));
+              partido.equipoLocal = partido.jugador1.map(p => String(p.id));
             } else {
+              // singles: set id and nombre
               partido.jugador1Id = grupo.jugadores[si].id;
+              partido.jugador1Nombre = grupo.jugadores[si].nombre || null;
             }
             const partidoId = `${primeraEtapaId}-${grupo.id || 'grupo'}-${partido.id}`;
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e){ }
           }
           if (typeof partido.jugador2Index !== 'undefined' && partido.jugador2Index === si) {
             if (grupo.jugadores[si].players) {
-              partido.jugador2 = grupo.jugadores[si].players;
+              partido.jugador2 = grupo.jugadores[si].players.map(p => ({ id: p.id, nombre: p.nombre }));
+              partido.equipoVisitante = partido.jugador2.map(p => String(p.id));
             } else {
               partido.jugador2Id = grupo.jugadores[si].id;
+              partido.jugador2Nombre = grupo.jugadores[si].nombre || null;
             }
             const partidoId = `${primeraEtapaId}-${grupo.id || 'grupo'}-${partido.id}`;
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e){ }
@@ -238,7 +244,15 @@ class InscribirFederado {
                 break;
               }
             } else {
-              // legacy single-slot (not expected in dobles), skip
+              // legacy single-slot (singles tournaments): assign if empty
+              // slot expected to have .id and .nombre
+              if (!slot.id) {
+                slot.id = uid;
+                slot.nombre = `${federado.nombre || ''} ${federado.apellido || ''}`.trim();
+                await actualizarPartidosParaSlot(grupo, si);
+                colocado = true;
+                break;
+              }
             }
           }
         }
@@ -248,19 +262,37 @@ class InscribirFederado {
       if (!colocado) {
         if (etapa.grupos && etapa.grupos.length > 0) {
           const grupo = etapa.grupos[0];
-          grupo.jugadores.push({
-            id: null,
-            players: [ { id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }, { id: null, nombre: null } ],
-            posicion: grupo.jugadores.length + 1,
-            ganados: 0,
-            perdidos: 0,
-            puntos: 0,
-            setsGanados: 0,
-            setsPerdidos: 0,
-            juegosGanados: 0,
-            juegosPerdidos: 0
-          });
-          // No hay partidos que actualizar si se agregó al final
+          if (campeonato.dobles) {
+            grupo.jugadores.push({
+              id: null,
+              players: [ { id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }, { id: null, nombre: null } ],
+              posicion: grupo.jugadores.length + 1,
+              ganados: 0,
+              perdidos: 0,
+              puntos: 0,
+              setsGanados: 0,
+              setsPerdidos: 0,
+              juegosGanados: 0,
+              juegosPerdidos: 0
+            });
+          } else {
+            // singles: push single slot
+            grupo.jugadores.push({
+              id: uid,
+              nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim(),
+              posicion: grupo.jugadores.length + 1,
+              ganados: 0,
+              perdidos: 0,
+              puntos: 0,
+              setsGanados: 0,
+              setsPerdidos: 0,
+              juegosGanados: 0,
+              juegosPerdidos: 0
+            });
+            // attempt to update partidos for newly appended slot
+            const si = grupo.jugadores.length - 1;
+            await actualizarPartidosParaSlot(grupo, si);
+          }
         }
       }
     } else if (etapa.tipoEtapa === 'eliminacion' && Array.isArray(etapa.rondas)) {

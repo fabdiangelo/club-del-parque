@@ -40,8 +40,6 @@ function App() {
     <Routes>
       {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
-      <Route path="/gestor-filtros" element={<FiltrosGestor />} />
-      <Route path="/canchas" element={<CanchasGestor />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
@@ -228,6 +226,30 @@ function App() {
             <TemporadasPage />
           </RoleProtectedRoute>
         }
+      />
+      <Route 
+        path="/gestor-filtros" 
+        element={
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
+            <FiltrosGestor />
+          </RoleProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/canchas" 
+        element={
+          <RoleProtectedRoute
+            requiredRoles={"administrador"}
+            fallback={<SinSesion />}
+            unauthorizedFallback={<SoloAdmin />}
+          >
+            <CanchasGestor />
+          </RoleProtectedRoute>
+        } 
       />
       <Route
         path="/administracion"

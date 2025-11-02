@@ -7,18 +7,21 @@ export class PartidoRepository {
   }
 
   async save(partido) {
-    const { temporadaID } = partido;
+    const { temporadaID, canchaID } = partido;
 
-
-    const temp = await this.db.getItem("temporadas", temporadaID);
-    const cancha = await this.db.getItem("canchas", partido.canchaID);
-
-    if (!temp) {
-      throw new Error("La temporada asociada no existe");
+    // Validar solo si vienen explícitamente temporadaID o canchaID
+    if (typeof temporadaID !== 'undefined' && temporadaID !== null) {
+      const temp = await this.db.getItem("temporadas", temporadaID);
+      if (!temp) {
+        throw new Error("La temporada asociada no existe");
+      }
     }
 
-    if (!cancha) {
-      throw new Error("La cancha asociada no existe");
+    if (typeof canchaID !== 'undefined' && canchaID !== null) {
+      const cancha = await this.db.getItem("canchas", canchaID);
+      if (!cancha) {
+        throw new Error("La cancha asociada no existe");
+      }
     }
 
     const { jugadores, equipoVisitante, equipoLocal, jugador1, jugador2 } = partido;
@@ -147,19 +150,32 @@ export class PartidoRepository {
 
     const propuestas = Array.isArray(disponibilidades.propuestas) ? disponibilidades.propuestas : [];
 
-    propuestas.map((propuesta) => {
+    // Marcar la propuesta aceptada y programar la fecha del partido si viene
+    let acceptedProposal = null;
+    for (const propuesta of propuestas) {
       if (propuesta.id === propuestaId) {
         propuesta.aceptada = true;
+        acceptedProposal = propuesta;
       }
-    });
+    }
 
-    await this.update(partidoId, {
+    // Si se encontró y contiene fechaHoraInicio / fechaHoraFin, programar el partido
+    const updatedPartido = {
       ...partido,
       disponibilidades: {
         ...disponibilidades,
         propuestas
       }
-    });
+    };
+
+    if (acceptedProposal) {
+      if (acceptedProposal.fechaHoraInicio) updatedPartido.fechaProgramada = acceptedProposal.fechaHoraInicio;
+      else if (acceptedProposal.fechaHoraInicio === undefined && acceptedProposal.fecha && acceptedProposal.horaInicio) updatedPartido.fechaProgramada = `${acceptedProposal.fecha}T${acceptedProposal.horaInicio}`;
+      // Cambiar estado a programado si se agendó
+      if (updatedPartido.fechaProgramada) updatedPartido.estado = 'programado';
+    }
+
+    await this.update(partidoId, updatedPartido);
 
     
 
@@ -241,7 +257,7 @@ export class PartidoRepository {
 
     let equipoProponiente = null;
 
-    if (actual.equipoLocal.includes(disponibilidad.propuestoPor)) {
+    if (actual?.equipoLocal?.includes(disponibilidad.propuestoPor)) {
       equipoProponiente = 'local';
     } else {
       equipoProponiente = 'visitante';

@@ -37,7 +37,24 @@ const Partido = () => {
     const [propuestaAceptada, setPropuestaAceptada] = useState(null);
 
     const getUserById = (userId) => {
-        return usuarios.find(u => u.id === userId);
+        return usuarios.find(u => u.id === userId || u.uid === userId || u.email === userId);
+    }
+
+    // Normalize an array that can contain either string ids or objects like { id, nombre }
+    const normalizeIds = (arr) => {
+        if (!Array.isArray(arr)) return [];
+        return arr.map(x => {
+            if (!x) return '';
+            if (typeof x === 'string') return x;
+            if (typeof x === 'object') return x.id || x.uid || x?.usuarioId || '';
+            return String(x);
+        }).filter(Boolean);
+    }
+
+    const getNombreForId = (id) => {
+        if (!id) return '';
+        const u = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
+        return u?.nombre || u?.name || u?.displayName || u?.nombreCompleto || '';
     }
 
     const fetchAllReservas = async() => {
@@ -83,8 +100,8 @@ const Partido = () => {
             return;
         }
 
-        const idPartido = partido.id;
-        console.log("Aceptar propuesta", propuestaId);
+    const idPartido = id || partido?.id; // fallback to route param if partido.id missing
+    console.log("Aceptar propuesta", propuestaId, "partido.id:", partido?.id, "route id:", id);
 
         try {
             const response = await fetch(`/api/partidos/${idPartido}/confirmar-horario`, {
@@ -121,7 +138,7 @@ const Partido = () => {
         esCampeonato: true,
         tipoPartido: partido.tipoPartido,
         partidoId: partido.id,
-        jugadoresIDS: partido.jugadores,
+        jugadoresIDS: normalizeIds(partido.jugadores),
         quienPaga: user?.uid,
         autor: user?.uid,
         estado: 'pendiente'
@@ -144,8 +161,6 @@ const Partido = () => {
             throw new Error(`Error al crear reserva: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log("Reserva creada:", data);
         fetchReserva();
         
         setMensajeExito('¡La reserva fue creada exitosamente!');
@@ -192,48 +207,104 @@ useEffect(() => {
 }, [id]);
 
     useEffect(() => {
-        if (usuarios.length > 0 && partido?.jugadores) {
-            const usuariosParticipantes = usuarios.filter(u => partido.jugadores.includes(u.id));
-            setUsuariosParticipantes(usuariosParticipantes);
-            console.log("Usuarios participantes:", usuariosParticipantes);
-        }
+        // Build usuariosParticipantes from multiple possible shapes in partido
+        if (usuarios.length > 0 && partido) {
+            const participantes = [];
 
-
-        if (!partido?.temporadaID) return;
-        const fetchTemporada = async () => {
-
-            console.log("Fetch temporada llamado para temporadaID:", partido?.temporadaID);
-            try {
-                const response = await fetch(`/api/temporadas/${partido?.temporadaID}`, { credentials: 'include' });
-
-                if (!response.ok) throw new Error("Error al obtener la temporada");
-
-                const data = await response.json();
-                console.log("Temporada obtenida:", data);
-                setTemporada(data);
-            } catch (error) {
-                throw error;
+            // 1) If partido.jugadores is an array with items (ids or objects), use it
+            const jugadoresIds = normalizeIds(partido.jugadores || []);
+            if (jugadoresIds.length >= 2) {
+                jugadoresIds.forEach((id, idx) => {
+                    const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
+                    if (found) participantes.push(found);
+                    else participantes.push({ id, nombre: getNombreForId(id) || `Jugador ${idx + 1}` });
+                });
+            } else {
+                // 2) Try jugador1 / jugador2 arrays (could be for dobles)
+                if (Array.isArray(partido.jugador1) && Array.isArray(partido.jugador2) && (partido.jugador1.length || partido.jugador2.length)) {
+                    // flatten both arrays
+                    const combined = [...partido.jugador1, ...partido.jugador2];
+                    combined.forEach((j, idx) => {
+                        if (typeof j === 'string') {
+                            const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === j || u?.id === j);
+                            if (found) participantes.push(found);
+                            else participantes.push({ id: j, nombre: getNombreForId(j) || `Jugador ${idx + 1}` });
+                        } else if (typeof j === 'object') {
+                            const id = j.id || j.uid || j.usuarioId || '';
+                            const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
+                            if (found) participantes.push(found);
+                            else participantes.push({ id, nombre: j.nombre || j.name || getNombreForId(id) || `Jugador ${idx + 1}` });
+                        }
+                    });
+                } else if (partido.jugador1Id || partido.jugador2Id) {
+                    // 3) Individual id fields present
+                    const id1 = partido.jugador1Id || partido.jugador1?.[0] || '';
+                    const id2 = partido.jugador2Id || partido.jugador2?.[0] || '';
+                    if (id1) {
+                        const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id1 || u?.id === id1);
+                        if (found) participantes.push(found);
+                        else participantes.push({ id: id1, nombre: partido.jugador1Nombre || getNombreForId(id1) || 'Jugador 1' });
+                    }
+                    if (id2) {
+                        const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id2 || u?.id === id2);
+                        if (found) participantes.push(found);
+                        else participantes.push({ id: id2, nombre: partido.jugador2Nombre || getNombreForId(id2) || 'Jugador 2' });
+                    }
+                } else if (Array.isArray(partido.equipoLocal) || Array.isArray(partido.equipoVisitante)) {
+                    // 4) Equipo arrays (could be objects or ids)
+                    const local = partido.equipoLocal || [];
+                    const visit = partido.equipoVisitante || [];
+                    const localIds = normalizeIds(local);
+                    const visitIds = normalizeIds(visit);
+                    [...localIds, ...visitIds].forEach((id, idx) => {
+                        const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
+                        if (found) participantes.push(found);
+                        else participantes.push({ id, nombre: getNombreForId(id) || `Jugador ${idx + 1}` });
+                    });
+                }
             }
-        }
 
-        if (!partido?.canchaID) return;
-        const fetchCancha = async () => {
-
-            console.log("Fetch cancha llamado para canchaID:", partido?.canchaID);
-            try {
-                const response = await fetch(`/api/canchas/${partido?.canchaID}`, { credentials: 'include' });
-
-                if (!response.ok) throw new Error("Error al obtener la cancha");
-
-                const data = await response.json();
-                console.log("Cancha obtenida:", data);
-                setCancha(data);
-            } catch (error) {
-                throw error;
+            // Ensure at least two placeholders exist for singles view
+            while (participantes.length < 2) {
+                participantes.push({ id: '', nombre: participantes.length === 0 ? 'Jugador 1' : 'Jugador 2' });
             }
+
+            setUsuariosParticipantes(participantes);
+            console.log("Usuarios participantes (reconstruidos):", participantes);
         }
-        fetchCancha();
-        fetchTemporada();
+
+        // Fetch temporada and cancha if relevant (tolerant)
+        if (partido?.temporadaID) {
+            const fetchTemporada = async () => {
+                console.log("Fetch temporada llamado para temporadaID:", partido?.temporadaID);
+                try {
+                    const response = await fetch(`/api/temporadas/${partido?.temporadaID}`, { credentials: 'include' });
+                    if (!response.ok) throw new Error("Error al obtener la temporada");
+                    const data = await response.json();
+                    console.log("Temporada obtenida:", data);
+                    setTemporada(data);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            fetchTemporada();
+        }
+
+        if (partido?.canchaID) {
+            const fetchCancha = async () => {
+                console.log("Fetch cancha llamado para canchaID:", partido?.canchaID);
+                try {
+                    const response = await fetch(`/api/canchas/${partido?.canchaID}`, { credentials: 'include' });
+                    if (!response.ok) throw new Error("Error al obtener la cancha");
+                    const data = await response.json();
+                    console.log("Cancha obtenida:", data);
+                    setCancha(data);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            fetchCancha();
+        }
     }, [usuarios, partido]);
 
     useEffect(() => {
@@ -369,20 +440,44 @@ useEffect(() => {
     setHoraFin('');
 };
     const comprobarSiUserEsJugador = () => {
-        if (!partido || !user || !user.uid) return false;
-        return Array.isArray(partido.jugadores) && partido.jugadores.includes(user.uid);
+        if (!partido || !user) return false;
+        const userId = user?.uid || user?.id || '';
+        const jugadorIds = normalizeIds(partido.jugadores);
+        if (jugadorIds.includes(userId)) return true;
+        // check jugador1Id / jugador2Id
+        if (partido.jugador1Id && partido.jugador1Id === userId) return true;
+        if (partido.jugador2Id && partido.jugador2Id === userId) return true;
+        // check jugador arrays
+        if (Array.isArray(partido.jugador1) && partido.jugador1.some(j => (typeof j === 'string' ? j === userId : (j?.id === userId || j?.uid === userId)))) return true;
+        if (Array.isArray(partido.jugador2) && partido.jugador2.some(j => (typeof j === 'string' ? j === userId : (j?.id === userId || j?.uid === userId)))) return true;
+        return false;
     }
 
     const getUserId = (u) => u?.uid || u?.id || u?.email || '';
 
     const obtenerPosicionUsuario = () => {
         if (!partido || !user) return '';
-        const userId = getUserId(user);
-        if (Array.isArray(partido.equipoLocal) && partido.equipoLocal.includes(userId)) {
-            return 'local';
+        const userId = user?.uid || user?.id || '';
+        const localIds = normalizeIds(partido.equipoLocal);
+        const visitIds = normalizeIds(partido.equipoVisitante);
+        if (localIds.length > 0 && localIds.includes(userId)) return 'local';
+        if (visitIds.length > 0 && visitIds.includes(userId)) return 'visitante';
+
+        // fallback: infer from partido.jugadores order
+        const jugadoresIds = normalizeIds(partido.jugadores || []);
+        if (jugadoresIds.length >= 2) {
+            if (jugadoresIds[0] === userId) return 'local';
+            if (jugadoresIds[1] === userId) return 'visitante';
         }
-        if (Array.isArray(partido.equipoVisitante) && partido.equipoVisitante.includes(userId)) {
-            return 'visitante';
+
+        // other shapes: jugador1Id / jugador2Id
+        if (partido.jugador1Id || (Array.isArray(partido.jugador1) && partido.jugador1.length)) {
+            const id1 = partido.jugador1Id || (typeof partido.jugador1[0] === 'string' ? partido.jugador1[0] : partido.jugador1[0]?.id);
+            if (id1 === userId) return 'local';
+        }
+        if (partido.jugador2Id || (Array.isArray(partido.jugador2) && partido.jugador2.length)) {
+            const id2 = partido.jugador2Id || (typeof partido.jugador2[0] === 'string' ? partido.jugador2[0] : partido.jugador2[0]?.id);
+            if (id2 === userId) return 'visitante';
         }
         return '';
     }
@@ -725,13 +820,23 @@ useEffect(() => {
                         <div className="propuestas-panel mt-8 p-6" style={{ width: '100%', maxWidth: '800px' }}>
                             <h3 className="text-lg font-semibold mb-4 text-center">
                                 {(() => {
-                                    const propuestasUsuario = partido.disponibilidades.propuestas.filter(
-                                        (propuesta) => propuesta.usuarioId === getUserId(user)
+                                    const uid = user?.uid || user?.id || '';
+                                    const propuestasUsuario = (partido.disponibilidades.propuestas || []).filter(
+                                        (propuesta) => propuesta.usuarioId === uid
                                     );
-                                    const propuestasEquipo = partido.disponibilidades.propuestas.filter(
-                                        (propuesta) =>
-                                            partido.equipoLocal.includes(propuesta.usuarioId) ===
-                                            partido.equipoLocal.includes(getUserId(user))
+                                    // derive equipoLocalIds robustly from available shapes
+                                    const deriveEquipoLocalIds = () => {
+                                        if (!partido) return [];
+                                        if (Array.isArray(partido.equipoLocal) && partido.equipoLocal.length) return normalizeIds(partido.equipoLocal);
+                                        if (Array.isArray(partido.jugador1) && partido.jugador1.length) return normalizeIds(partido.jugador1);
+                                        if (partido.jugador1Id) return [partido.jugador1Id];
+                                        const jugadores = normalizeIds(partido.jugadores || []);
+                                        if (jugadores.length >= 2) return jugadores.slice(0, Math.ceil(jugadores.length / 2));
+                                        return [];
+                                    };
+                                    const equipoLocalIds = deriveEquipoLocalIds();
+                                    const propuestasEquipo = (partido.disponibilidades.propuestas || []).filter(
+                                        (propuesta) => equipoLocalIds.includes(propuesta.usuarioId)
                                     );
 
                                     if (propuestasUsuario.length > 0) {
@@ -745,9 +850,21 @@ useEffect(() => {
                             </h3>
 
                             <div style={{display: 'flex', gap: '20px', width: '100'}}>
-{partido.disponibilidades.propuestas.map((propuesta) => {
-                                const esDelMismoEquipo = partido.equipoLocal.includes(propuesta.usuarioId) === partido.equipoLocal.includes(getUserId(user));
-                                const esElMismoUsuario = propuesta.usuarioId === getUserId(user);
+{(partido.disponibilidades.propuestas || []).map((propuesta) => {
+                                const deriveEquipoLocalIds = () => {
+                                    if (!partido) return [];
+                                    if (Array.isArray(partido.equipoLocal) && partido.equipoLocal.length) return normalizeIds(partido.equipoLocal);
+                                    if (Array.isArray(partido.jugador1) && partido.jugador1.length) return normalizeIds(partido.jugador1);
+                                    if (partido.jugador1Id) return [partido.jugador1Id];
+                                    const jugadores = normalizeIds(partido.jugadores || []);
+                                    if (jugadores.length >= 2) return jugadores.slice(0, Math.ceil(jugadores.length / 2));
+                                    return [];
+                                };
+                                const equipoLocalIds = deriveEquipoLocalIds();
+                                const isProposerLocal = equipoLocalIds.includes(propuesta.usuarioId);
+                                const isUserLocal = equipoLocalIds.includes(user?.uid || user?.id || '');
+                                const esDelMismoEquipo = isProposerLocal === isUserLocal;
+                                const esElMismoUsuario = propuesta.usuarioId === (user?.uid || user?.id || '');
 
                                 return (
                                     <div key={propuesta.id} className="propuesta mt-4 p-4 border rounded shadow">
@@ -755,7 +872,7 @@ useEffect(() => {
                                             <p><strong>Fecha:</strong> {propuesta.fecha}</p>
                                             <p><strong>Horario:</strong> {propuesta.horaInicio} - {propuesta.horaFin}</p>
                                             <p><strong>Duración:</strong> {propuesta.duracion} minutos</p>
-                                            <p><strong>Propuesto por:</strong> {getUserById(partido.disponibilidades.propuestoPor)?.nombre}</p>
+                                            <p><strong>Propuesto por:</strong> {getUserById(propuesta.usuarioId)?.nombre || propuesta.usuarioId}</p>
                                         </div>
 
                                         {/* Botón para aceptar la propuesta */}

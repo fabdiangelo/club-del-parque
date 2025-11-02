@@ -157,16 +157,28 @@ export default function FixtureCampeonato() {
 
       <div className="max-w-7xl mx-auto">
         {etapa?.tipoEtapa === 'roundRobin' ? (
-          <FaseGrupos grupos={etapa?.grupos} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias} dobles={campeonato?.dobles} />
+          <FaseGrupos
+            grupos={etapa?.grupos}
+            fechaInicio={etapa?.inicio || campeonato?.inicio}
+            duracion={etapa?.duracionDias}
+            dobles={campeonato?.dobles}
+            etapaId={etapa?.id}
+          />
         ) : (
-          <FaseEliminacion rondas={etapa?.rondas} fechaInicio={etapa?.inicio || campeonato?.inicio} duracion={etapa?.duracionDias} dobles={campeonato?.dobles} />
+          <FaseEliminacion
+            rondas={etapa?.rondas}
+            fechaInicio={etapa?.inicio || campeonato?.inicio}
+            duracion={etapa?.duracionDias}
+            dobles={campeonato?.dobles}
+            etapaId={etapa?.id}
+          />
         )}
       </div>
     </div>
   );
 }
 
-const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
+const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
   const fechaFinEtapa = new Date(fechaInicio);
   fechaFinEtapa.setDate(fechaFinEtapa.getDate() + duracion);
   const { user } = useAuth();
@@ -213,20 +225,37 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
                         </div>
                         <div className="flex-1">
                           <div className="font-medium text-white truncate">
-                            {jugador.players.map((p, idx) => (
-                              <span key={idx}>{p?.nombre || 'Por definir'}{idx === 0 ? ' / ' : ''}</span>
-                            ))}
+                            {dobles ? 
+                              jugador.players.map((p, idx) => (
+                                <span key={idx}>{p?.nombre || 'Por definir'}{idx === 0 && dobles ? ' / ' : ''}</span>
+                              ))
+                            : 
+                              <span key={idx}>{jugador.players[0]?.nombre || 'Por definir'}</span>
+                            }
                             {jugador.players.some(p => p.id === user?.uid) && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}
                           </div>
                         </div>
                         {user && !jugador.players.some(p => p.id === user?.uid) && grupo.jugadores.some(j => Array.isArray(j.players) && j.players.some(p => p.id === user?.uid)) && (
                           <button
                             onClick={() => {
-                              const other = jugador.players.find(p => p.id && p.id !== user.uid);
-                              if (other) navigate(`/chats/${other.id}`);
+                              // Navegar a la página del partido donde participa este equipo con el usuario.
+                              const slotIndex = jIdx;
+                              // encontrar slot del usuario en el mismo grupo
+                              const userSlotIndex = (grupo.jugadores || []).findIndex(s => Array.isArray(s.players) ? s.players.some(p => p.id === user?.uid) : s.id === user?.uid);
+                              // Preferir partido donde el otro lado incluye el usuario
+                              let found = null;
+                              if (userSlotIndex !== -1) {
+                                found = (grupo.partidos || []).find(p => (p.jugador1Index === slotIndex && p.jugador2Index === userSlotIndex) || (p.jugador2Index === slotIndex && p.jugador1Index === userSlotIndex));
+                              }
+                              // fallback: cualquier partido que incluya el slot
+                              if (!found) found = (grupo.partidos || []).find(p => p.jugador1Index === slotIndex || p.jugador2Index === slotIndex);
+                              if (found && etapaId) {
+                                const fullId = `${etapaId}-${grupo.id}-${found.id}`;
+                                navigate(`/partido/${fullId}`);
+                              }
                             }}
                             className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
-                            title="Chatear con equipo"
+                            title="Ir al partido"
                           >
                             <MessageSquare className="w-4 h-4" />
                           </button>
@@ -244,9 +273,24 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
                         <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
                         {user && jugador.id !== user.uid && grupo.jugadores.filter(j => j.id == user.uid).length > 0 && (
                           <button
-                            onClick={() => navigate(`/chats/${jugador.id}`)}
+                            onClick={() => {
+                              const slotIndex = jIdx;
+                              const userSlotIndex = (grupo.jugadores || []).findIndex(s => Array.isArray(s.players) ? s.players.some(p => p.id === user?.uid) : s.id === user?.uid);
+                              let found = null;
+                              if (userSlotIndex !== -1) {
+                                found = (grupo.partidos || []).find(p => (p.jugador1Index === slotIndex && p.jugador2Index === userSlotIndex) || (p.jugador2Index === slotIndex && p.jugador1Index === userSlotIndex));
+                              }
+                              if (!found) {
+                                // legacy: match by explicit jugador1Id/jugador2Id
+                                found = (grupo.partidos || []).find(p => p.jugador1Index === slotIndex || p.jugador2Index === slotIndex || (p.jugador1Id === jugador.id || p.jugador2Id === jugador.id));
+                              }
+                              if (found && etapaId) {
+                                const fullId = `${etapaId}-${grupo.id}-${found.id}`;
+                                navigate(`/partido/${fullId}`);
+                              }
+                            }}
                             className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
-                            title="Chatear con jugador"
+                            title="Ir al partido"
                           >
                             <MessageSquare className="w-4 h-4" />
                           </button>
@@ -275,7 +319,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion }) => {
   );
 };
 
-const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
+const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId }) => {
   const partidoGanado = rondas[rondas.length - 1]?.partidos[0] || null;
   const ganador = partidoGanado?.ganador;
   const { user } = useAuth();
@@ -398,9 +442,15 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
 
                           {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador1) ? partido.jugador1.map(p => p.id).find(id => id !== user.uid) : partido.jugador1Id) && (
                             <button
-                              onClick={() => navigate(`/chats/${oponenteId}`)}
+                              onClick={() => {
+                                // navegar a la página del partido
+                                if (etapaId && ronda && partido && partido.id) {
+                                  const fullId = `${etapaId}-${ronda.id}-${partido.id}`;
+                                  navigate(`/partido/${fullId}`);
+                                }
+                              }}
                               className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
-                              title="Agendar partido"
+                              title="Ir al partido"
                             >
                               <MessageSquare className="w-4 h-4" />
                             </button>
@@ -426,9 +476,14 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion }) => {
                           )}
                           {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador2) ? partido.jugador2.map(p => p.id).find(id => id !== user.uid) : partido.jugador2Id) && (
                             <button
-                              onClick={() => navigate(`/chats/${oponenteId}`)}
+                              onClick={() => {
+                                if (etapaId && ronda && partido && partido.id) {
+                                  const fullId = `${etapaId}-${ronda.id}-${partido.id}`;
+                                  navigate(`/partido/${fullId}`);
+                                }
+                              }}
                               className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
-                              title="Agendar partido"
+                              title="Ir al partido"
                             >
                               <MessageSquare className="w-4 h-4" />
                             </button>

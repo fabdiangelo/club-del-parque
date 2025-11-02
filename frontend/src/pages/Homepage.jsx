@@ -433,7 +433,9 @@ export default function Home() {
                     ))}
                   </div>
                   <div className="card-actions mt-8">
-                    <button className="btn btn-primary w-full">Ver torneos</button>
+                    <Link to={`/campeonatos`} className="btn btn-primary w-full">
+                      Ver torneos
+                    </Link>
                   </div>
                 </div>
               </div>

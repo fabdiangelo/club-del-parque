@@ -25,7 +25,9 @@ class CrearCampeonato {
   const inputCantidad = typeof payload.cantidadParticipantes !== 'undefined' ? payload.cantidadParticipantes : payload.cantidadJugadores;
   // If campeonato is dobles, the provided number represents teams; store total individuals in the Campeonato entity (teams * 2)
   const totalJugadores = dobles ? Number(inputCantidad) * 2 : Number(inputCantidad);
-  const c = new Campeonato(id, payload.nombre, payload.descripcion || '', payload.inicio, payload.fin || null, payload.ultimaPosicionJugable || 1, totalJugadores, requisitos, dobles, esTenis,  payload.temporadaID,tipoDePartido,deporte,puntosPorPosicion);
+  const deporte = esTenis? "Tenis": "Padel"
+  const puntosPorPosicion = 10;
+  const c = new Campeonato(id, payload.nombre, payload.descripcion || '', payload.inicio, payload.fin || null, payload.ultimaPosicionJugable || 1, totalJugadores, requisitos, dobles, esTenis,  payload.temporadaID,deporte,puntosPorPosicion);
 
     // If payload.etapas is provided, validate and persist each etapa, attaching their IDs to campeonato
     const etapasPayload = Array.isArray(payload.etapas) ? payload.etapas : [];
@@ -118,7 +120,7 @@ class CrearCampeonato {
                 timestamp: new Date().toISOString(),
                 estado: partido.estado || 'pendiente',
                 tipoPartido: 'grupo',
-                temporadaID: null,
+                temporadaID: c.temporadaID || null,
                 canchaID: null,
                 etapa: etapaId,
                 jugadores: [],
@@ -164,7 +166,7 @@ class CrearCampeonato {
                 timestamp: new Date().toISOString(),
                 estado: partido.estado || 'pendiente',
                 tipoPartido: 'eliminacion',
-                temporadaID: null,
+                temporadaID: c.temporadaID || null,
                 canchaID: null,
                 etapa: etapaId,
                 jugadores: [],
