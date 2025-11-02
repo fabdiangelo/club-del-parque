@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, connectDatabaseEmulator } from "firebase/database";
+import {getMessaging} from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDUm2HjqeRufuyFS9SbvDCXJhQycDUPnjI",
@@ -16,10 +17,11 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const dbRT = getDatabase(app);
+const messaging = getMessaging(app);
 
 // Conecta al emulador SOLO si estás en localhost
 if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
   connectDatabaseEmulator(dbRT, "localhost", 9000);
 }
 
-export { dbRT, app };
+export { dbRT, app, messaging };

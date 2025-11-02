@@ -119,6 +119,9 @@ app.get("/usuarios/cantidad", (req, res) => UsuarioController.cantUsuarios(req, 
 app.post("/usuarios/validar-federacion/:idReporte", (req, res) => UsuarioController.validarFederacion(req, res));
 app.put("/usuarios/negar-federacion/:idReporte", (req, res) => UsuarioController.negarFederacion(req, res));
 
+app.get("/usuarios/noti-tokens/:uid", (req, res) => UsuarioController.GetNotiToken(req, res));
+app.post("/usuarios/noti-tokens", (req, res) => UsuarioController.agregarNotiToken(req, res));
+
 app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(req, res));
 app.post("/federados/precarga", (req, res) => UsuarioController.precarga(req, res));
 app.get("/federados/:id", (req, res) => UsuarioController.getFederadoById(req, res));
@@ -176,6 +179,9 @@ app.put("/noticias/:id", (req, res) => NoticiaController.actualizar(req, res));
 app.delete("/noticias/:id", (req, res) => NoticiaController.eliminar(req, res));
 app.delete("/noticias/:id/imagenes/:index?", async (req, res) => NoticiaController.eliminarImagenID(req, res));
 app.post("/noticias/:id/imagenes-json", async (req, res) => NoticiaController.subirImagenesID(req, res));
+
+
+app.get("/probarnoti", async (req, res) => UsuarioController.probarnoti(req, res));
 
 // Infraestructura
 app.get("/infraestructura/metricas", (req, res) => InfraestructuraController.obtenerMetricas(req, res));

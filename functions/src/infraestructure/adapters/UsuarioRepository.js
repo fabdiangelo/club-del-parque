@@ -40,4 +40,32 @@ export class UsuarioRepository {
         return await this.db.cantItems("usuarios");
     }
 
+
+    async getNotiTokensById(usuarioID) {
+        const usuario = await this.db.getItem("usuarios", usuarioID);
+        return usuario ? usuario.notiTokens : [];
+    }
+
+    async agregarNotiToken(usuarioID, token) {
+        const usuario = await this.db.getItem("usuarios", usuarioID);
+        const admin = await this.db.getItem("administradores", usuarioID);
+        
+
+        if(!usuario) {
+            const notiTokens = admin.notiTokens || [];
+            if (!notiTokens.includes(token)) {
+                notiTokens.push(token);
+                await this.db.updateItem("administradores", usuarioID, { notiTokens });
+            }
+        } else {
+ const notiTokens = usuario.notiTokens || [];
+        if (!notiTokens.includes(token)) {
+            notiTokens.push(token);
+            await this.db.updateItem("usuarios", usuarioID, { notiTokens });
+        }
+        }
+
+       
+    }
+
 }

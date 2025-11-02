@@ -1,5 +1,6 @@
 
 import { ChatRepository } from "../infraestructure/adapters/ChatRepository.js";
+import { enviarNotificacion } from "../infraestructure/ports/PushNotification.js";
 import { CrearChat } from "../usecases/Chat/CrearChat.js";
 import { EnviarMensaje } from "../usecases/Chat/EnviarMensaje.js";
 import { EscucharNuevosMensajes } from "../usecases/Chat/EscucharNuevosMensajes.js";
@@ -74,6 +75,9 @@ class ChatController {
         }
 
         const msj = await this.enviarMensajeUseCase.execute(chatId, message);
+
+        
+
         return res.status(201).json(msj);
     }
 

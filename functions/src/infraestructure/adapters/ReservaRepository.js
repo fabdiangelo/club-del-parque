@@ -146,6 +146,8 @@ const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion
             })
         }
 
+      
+
 
 
 

@@ -3,6 +3,7 @@ import DBConnection from "../../infraestructure/ports/DBConnection.js";
 import AuthConnection from "../../infraestructure/ports/AuthConnection.js";
 
 import jwt from "jsonwebtoken";
+import { enviarNotificacion } from "../../infraestructure/ports/PushNotification.js";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 
 class Register {
@@ -51,6 +52,19 @@ class Register {
       nombre,
     };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "2h" });
+
+
+    const admins = await this.db.getAllItems("administradores");
+
+    for(const ad of admins) {
+      await enviarNotificacion(
+        ad.notiTokens,
+        "Nuevo Registro",
+        `Se ha registrado un nuevo usuario: ${nombre} ${apellido}`,
+        "/admin/usuarios"
+      );
+    }
+
     return { token, user: payload };
   }
 }
