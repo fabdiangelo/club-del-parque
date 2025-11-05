@@ -214,7 +214,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                 <span className="w-12 text-center">G | P</span>
                 <span className="w-16 text-center">Puntos</span>
               </div>
-              {grupo.jugadores?.map((jugador, jIdx) => (
+              {grupo.jugadores?.sort((a, b) => b.puntos - a.puntos).map((jugador, jIdx) => (
                 <div key={jIdx}>
                   {jugador ? (
                     // If dobles, jugador may be an equipo with players array
@@ -265,7 +265,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                       </div>
                     ) : jugador.id ? (
                       <div
-                        className={(jugador?.id == user.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
+                        className={(jugador?.id == user?.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
                       >
                         <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                           {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
@@ -319,7 +319,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
   );
 };
 
-const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId }) => {
+const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }) => {
   const partidoGanado = rondas[rondas.length - 1]?.partidos[0] || null;
   const ganador = partidoGanado?.ganador;
   const { user } = useAuth();
@@ -358,9 +358,18 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId }) => {
               
               <div className="relative w-full" style={{ paddingTop: `${offsetInicial}px` }}>
                 {ronda.partidos.map((partido, pIdx) => {
-                  const posicionY = pIdx * espaciado;
-                  const esParticipante = user && (partido.jugador1Id === user.uid || partido.jugador2Id === user.uid);
-                  const oponenteId = partido.jugador1Id === user?.uid ? partido.jugador2Id : partido.jugador1Id;
+                  const esParticipante = user && (partido.jugador1Id === user.uid || partido.jugador2Id === user.uid || partido?.jugador1?.some(j => j.id == user.uid) || partido?.jugador2?.some(j => j.id == user.uid));
+                  let oponenteId = null;
+                  if (esParticipante){
+                    if(partido.jugador1Id === user?.uid)
+                      oponenteId = partido.jugador2Id
+                    if (partido.jugador2Id === user?.uid)
+                      oponenteId = partido.jugador1Id
+                    if(partido?.jugador1?.some(j => j.id == user.uid))
+                      oponenteId = partido.jugador2[0].id
+                    if(partido?.jugador2?.some(j => j.id == user.uid))
+                      oponenteId = partido.jugador1[0].id
+                  }
                   
                   return (
                     <div 
@@ -426,7 +435,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId }) => {
                             </div>
                             <span className="font-medium text-black truncate">
                               {Array.isArray(partido.jugador1) ? (
-                                partido.jugador1.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}{!partido.jugador1[1]?.nombre && ' ~~~ '}</span>)
+                                partido.jugador1.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{(i === 0 && dobles) ? ' / ' : ''}{(!partido.jugador1[1]?.nombre && dobles) && ' ~~~ '}</span>)
                               ) : (
                                 partido.jugador1Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
                               )}
@@ -465,7 +474,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId }) => {
                             </div>
                             <span className="font-medium text-black truncate">
                               {Array.isArray(partido.jugador2) ? (
-                                partido.jugador2.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{i === 0 ? ' / ' : ''}{!partido.jugador2[1]?.nombre && ' ~~~ '}</span>)
+                                partido.jugador2.map((p, i) => <span key={i}>{p?.nombre || 'Por definir'}{(i === 0 && dobles) ? ' / ' : ''}{(!partido.jugador2[1]?.nombre && dobles) && ' ~~~ '}</span>)
                               ) : (
                                 partido.jugador2Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
                               )}

@@ -76,3 +76,4 @@ dist/
 # Persisted data
 emulator-data/
 firebase-export-*/
+dev-dist/

@@ -396,6 +396,56 @@ class InscribirFederado {
     // Guardar etapa actualizada
     await this.etapaRepository.save({ id: etapa.id, ...etapa });
 
+    // 8) Registrar en el federado los partidos asignados dentro de esta etapa (federadoPartidosIDs)
+    try {
+      const partidoIdsToAdd = new Set();
+      const primeraEtapa = primeraEtapaId; // ya tenemos la variable
+
+      if (etapa.tipoEtapa === 'roundRobin' && Array.isArray(etapa.grupos)) {
+        for (const grupo of etapa.grupos) {
+          if (!Array.isArray(grupo.partidos)) continue;
+          for (const partido of grupo.partidos) {
+            const pid = `${primeraEtapa}-${grupo.id || 'grupo'}-${partido.id}`;
+            // comprobar si el federado participa en este partido
+            const jugadores1 = Array.isArray(partido.jugador1) ? partido.jugador1.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador1Id ? [partido.jugador1Id] : []);
+            const jugadores2 = Array.isArray(partido.jugador2) ? partido.jugador2.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador2Id ? [partido.jugador2Id] : []);
+            if (jugadores1.includes(uid) || jugadores2.includes(uid)) partidoIdsToAdd.add(pid);
+          }
+        }
+      } else if (etapa.tipoEtapa === 'eliminacion' && Array.isArray(etapa.rondas)) {
+        for (const ronda of etapa.rondas) {
+          if (!Array.isArray(ronda.partidos)) continue;
+          for (const partido of ronda.partidos) {
+            const pid = `${primeraEtapa}-${ronda.id || 'ronda'}-${partido.id}`;
+            const jugadores1 = Array.isArray(partido.jugador1) ? partido.jugador1.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador1Id ? [partido.jugador1Id] : []);
+            const jugadores2 = Array.isArray(partido.jugador2) ? partido.jugador2.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador2Id ? [partido.jugador2Id] : []);
+            if (jugadores1.includes(uid) || jugadores2.includes(uid)) partidoIdsToAdd.add(pid);
+          }
+        }
+      }
+
+      if (partidoIdsToAdd.size > 0) {
+        federado.federadoPartidosIDs = Array.isArray(federado.federadoPartidosIDs) ? federado.federadoPartidosIDs : [];
+        const existentes = new Set(federado.federadoPartidosIDs.map(x => String(x)));
+        let changed = false;
+        for (const pid of partidoIdsToAdd) {
+          if (!existentes.has(pid)) {
+            federado.federadoPartidosIDs.push(pid);
+            changed = true;
+          }
+        }
+        if (changed) {
+          try {
+            await this.federadoRepository.update(uid, federado);
+          } catch (e) {
+            console.warn('No se pudo actualizar federadoPartidosIDs para federado', uid, e);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error al registrar federadoPartidosIDs tras inscripcion:', e);
+    }
+
     return fcId;
   }
 }

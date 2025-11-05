@@ -423,7 +423,17 @@ export default function AcuerdoResultado() {
   }, [authLoading, reload]);
 
   // ---- Helpers de datos jugador/teams ----
-  const jugadoresIds = useMemo(() => partido?.jugadores || [], [partido]);
+  // Nuevo formato: preferir jugador1Id/jugador2Id, fallback a partido.jugadores
+  const jugadoresIds = useMemo(() => {
+    if (!partido) return [];
+    if (partido.jugador1Id || partido.jugador2Id) {
+      const arr = [];
+      if (partido.jugador1Id) arr.push(partido.jugador1Id);
+      if (partido.jugador2Id) arr.push(partido.jugador2Id);
+      return arr;
+    }
+    return partido?.jugadores || [];
+  }, [partido]);
   const isAdmin = useMemo(() => {
     const roles = Array.isArray(user?.roles) ? user.roles : [];
     return (
@@ -433,11 +443,7 @@ export default function AcuerdoResultado() {
     );
   }, [user]);
 
-  const soyJugador = useMemo(
-    () => !!user && jugadoresIds.includes(user?.uid || user?.id),
-    [user, jugadoresIds]
-  );
-
+  
   // federados map y helpers de nombre
   const fedMap = useMemo(
     () => new Map(federados.map((f) => [f.id, f])),
@@ -461,41 +467,56 @@ export default function AcuerdoResultado() {
   };
 
   const equipoAIds = useMemo(() => {
+    // prefer explicit jugador1Id / jugador2Id
+    if (partido?.jugador1Id) return [partido.jugador1Id];
     const eA = partido?.equipoA || partido?.jugadoresA || partido?.equipo1;
-    if (Array.isArray(eA) && eA.length)
-      return eA.map((x) => (typeof x === "object" ? x.id : x));
-    if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
-      return (
-        partido?.tipoPartido === "dobles"
-          ? jugadoresIds.slice(0, 2)
-          : [jugadoresIds[0]]
-      ).filter(Boolean);
+    if (Array.isArray(eA) && eA.length) return eA.map((x) => (typeof x === "object" ? x.id : x));
+    if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 1) {
+      return [jugadoresIds[0]].filter(Boolean);
     }
     return [];
   }, [partido, jugadoresIds]);
+    
+    const equipoBIds = useMemo(() => {
+      if (partido?.jugador2Id) return [partido.jugador2Id];
+      const eB = partido?.equipoB || partido?.jugadoresB || partido?.equipo2;
+      if (Array.isArray(eB) && eB.length) return eB.map((x) => (typeof x === "object" ? x.id : x));
+      if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
+        return [jugadoresIds[1]].filter(Boolean);
+      }
+      return [];
+    }, [partido, jugadoresIds]);
+    
+    // Compose player display objects: if partido incluye nombre, use it; otherwise resolve from federados
+    const equipoA = useMemo(() => {
+      if (!partido) return equipoAIds.map(resolvePlayer);
+      if (partido.jugador1Id) return [{ id: partido.jugador1Id, nombre: partido.jugador1Nombre }];
+      return equipoAIds.map(resolvePlayer);
+    }, [partido, equipoAIds, fedMap]);
 
-  const equipoBIds = useMemo(() => {
-    const eB = partido?.equipoB || partido?.jugadoresB || partido?.equipo2;
-    if (Array.isArray(eB) && eB.length)
-      return eB.map((x) => (typeof x === "object" ? x.id : x));
-    if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
-      return (
-        partido?.tipoPartido === "dobles"
-          ? jugadoresIds.slice(2, 4)
-          : [jugadoresIds[1]]
-      ).filter(Boolean);
-    }
-    return [];
-  }, [partido, jugadoresIds]);
+    const equipoB = useMemo(() => {
+      if (!partido) return equipoBIds.map(resolvePlayer);
+      if (partido.jugador2Id) return [{ id: partido.jugador2Id, nombre: partido.jugador2Nombre }];
+      return equipoBIds.map(resolvePlayer);
+    }, [partido, equipoBIds, fedMap]);
+  
+  const soyJugador = useMemo(() => {
+    const uid = user?.uid || user?.id;
+    if (!uid) return false;
+    // jugadoresIds puede contener objetos o ids
+    const norm = (arr) =>
+      Array.isArray(arr)
+        ? arr.map((x) => (typeof x === "string" ? x : x?.id || x?.uid)).filter(Boolean)
+        : [];
 
-  const equipoA = useMemo(
-    () => equipoAIds.map(resolvePlayer),
-    [equipoAIds, fedMap]
-  );
-  const equipoB = useMemo(
-    () => equipoBIds.map(resolvePlayer),
-    [equipoBIds, fedMap]
-  );
+    const all = new Set([
+      ...norm(jugadoresIds),
+      ...equipoAIds,
+      ...equipoBIds,
+    ].filter(Boolean));
+
+    return all.has(uid);
+  }, [user, jugadoresIds, equipoAIds, equipoBIds]);
 
   const isInA = useMemo(
     () => equipoAIds.includes(user?.uid || user?.id),

@@ -302,21 +302,6 @@ app.get("/_routes", (_req, res) => {
   });
   res.json({ base: "/us-central1/api", routes: list });
 });
-// Multer / upload errors handler (report clearer messages for file-size and parsing errors)
-app.use((err, req, res, next) => {
-  if (err) console.error('[global error handler] ', err && err.stack ? err.stack : err);
-  // multer specific
-  if (err && (err instanceof multer.MulterError || err.code === 'LIMIT_FILE_SIZE')) {
-    console.error('[multer error]', err);
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ error: `Archivo muy grande. Límite ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB.` });
-    }
-    return res.status(400).json({ error: err.message || String(err) });
-  }
-  next(err);
-});
-
-// Fallback generic error handler
 app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: "Internal Server Error" });

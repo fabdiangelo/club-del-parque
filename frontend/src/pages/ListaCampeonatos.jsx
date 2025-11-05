@@ -59,9 +59,9 @@ export default function ListaCampeonatos() {
       
       <section className="pb-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          {!campeonatos ? (
+          {!campeonatos || campeonatos.length == 0 ? (
             <div className="w-full py-16 grid place-items-center">
-              <p className="text-2xl font-extrabold">No hay campeonatos para listar</p>
+              <p className="text-xl">No hay campeonatos para listar</p>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
