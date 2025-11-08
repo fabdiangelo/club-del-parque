@@ -364,9 +364,9 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                     if (partido.jugador2Id === user?.uid)
                       oponenteId = partido.jugador1Id
                     if(partido?.jugador1?.some(j => j.id == user.uid))
-                      oponenteId = partido.jugador2[0]?.id
+                      oponenteId = Array.isArray(partido?.jugador2) ? partido?.jugador2[0]?.id :partido?.jugador2?.id
                     if(partido?.jugador2?.some(j => j.id == user.uid))
-                      oponenteId = partido.jugador1[0]?.id
+                      oponenteId = Array.isArray(partido?.jugador1) ? partido?.jugador1[0]?.id :partido?.jugador1?.id
                   }
                   
                   return (
@@ -440,7 +440,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                               {Array.isArray(partido.ganadores) ? (
                                 partido.ganadores.some(g => g == partido.jugador1[0]?.id || g == partido.jugador1Id) ? <Crown />: ''
                               ) : (
-                                partido.ganadorId == partido.jugador1Id ? <Crown />: ''
+                                partido.ganadorId && partido.ganadorId == partido.jugador1Id ? <Crown />: ''
                               )}
                             </span>
                           </div>
@@ -479,7 +479,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                               {Array.isArray(partido.ganadores) ? (
                                 partido.ganadores.some(g => g == partido.jugador2[0]?.id || g == partido.jugador2Id) ? <Crown />: ''
                               ) : (
-                                partido.ganadorId == partido.jugador2Id ? <Crown />: ''
+                                partido.ganadorId && partido.ganadorId == partido.jugador2Id ? <Crown />: ''
                               )}
                             </span>
                           </div>

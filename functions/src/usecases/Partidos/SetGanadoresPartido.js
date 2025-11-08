@@ -3,6 +3,7 @@ import { EtapaRepository } from "../../infraestructure/adapters/EtapaRepository.
 import { PartidoRepository } from "../../infraestructure/adapters/PartidoRepository.js";
 import { CampeonatoRepository } from "../../infraestructure/adapters/CampeonatoRepository.js";
 import { FederadoRepository } from "../../infraestructure/adapters/FederadoRepository.js";
+import CerrarCampeonatoYAsignarPuntos from "../Campeonatos/CerrarCampeonatoYAsignarPuntos.js";
 
 export class SetGanadoresPartido {
   constructor(partidoRepo) {
@@ -410,6 +411,24 @@ async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
     
     if (!nextEtapaId) {
       console.log('✓ No hay siguiente etapa. Campeonato finalizado.');
+
+      // Al finalizar la última etapa del campeonato, distribuir puntos de ranking
+      try {
+        const campId = (campeonato && (campeonato.id || campeonato._id)) || etapa.campeonatoID || null;
+        if (campId) {
+          console.log(`Asignando puntos de ranking para campeonato ${campId}...`);
+          // Ejecutar el usecase que cierra el campeonato y asigna puntos
+          await new CerrarCampeonatoYAsignarPuntos().execute(campId).catch((e) => {
+            console.warn('Error al asignar puntos al cerrar campeonato:', e?.message || e);
+          });
+          console.log('Puntos de ranking distribuidos.');
+        } else {
+          console.warn('No se encontró ID de campeonato para asignar puntos');
+        }
+      } catch (e) {
+        console.warn('Error ejecutando asignación de puntos al finalizar campeonato:', e?.message || e);
+      }
+
       return;
     }
 
