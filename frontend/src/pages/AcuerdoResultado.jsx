@@ -72,14 +72,20 @@ async function pushNotiFor(uid, payload) {
   });
 }
 async function notificarAcuerdoPartido(jugadoresUids = [], partidoId, resumen) {
-  if (!Array.isArray(jugadoresUids) || jugadoresUids.length === 0) return;
-  const payload = {
-    tipo: "partido_acuerdo",
-    resumen,
-    href: `/partidos/${partidoId}/acuerdo`,
-    partidoId,
-  };
-  await Promise.all(jugadoresUids.map((uid) => pushNotiFor(uid, payload)));
+  try{
+
+    if (!Array.isArray(jugadoresUids) || jugadoresUids.length === 0) return;
+    console.log(partidoId)
+    const payload = {
+      tipo: "partido_acuerdo",
+      resumen,
+      href: `/partidos/${partidoId}/acuerdo`,
+      partidoId,
+    };
+    await Promise.all(jugadoresUids.map((uid) => pushNotiFor(uid, payload)));
+  }catch (e){
+    
+  }
 }
 
 /* --------------------- UI helpers --------------------- */
@@ -469,7 +475,7 @@ export default function AcuerdoResultado() {
   const equipoAIds = useMemo(() => {
     // prefer explicit jugador1Id / jugador2Id
     if (partido?.jugador1Id) return [partido.jugador1Id];
-    const eA = partido?.equipoA || partido?.jugadoresA || partido?.equipo1;
+    const eA = partido?.equipoA || partido?.jugadoresA || partido?.equipo1 || partido?.jugador1 || partido?.equipoLocal;
     if (Array.isArray(eA) && eA.length) return eA.map((x) => (typeof x === "object" ? x.id : x));
     if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 1) {
       return [jugadoresIds[0]].filter(Boolean);
@@ -479,7 +485,7 @@ export default function AcuerdoResultado() {
     
     const equipoBIds = useMemo(() => {
       if (partido?.jugador2Id) return [partido.jugador2Id];
-      const eB = partido?.equipoB || partido?.jugadoresB || partido?.equipo2;
+      const eB = partido?.equipoB || partido?.jugadoresB || partido?.equipo2 || partido?.jugador2 || partido?.equipoVisitante;
       if (Array.isArray(eB) && eB.length) return eB.map((x) => (typeof x === "object" ? x.id : x));
       if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
         return [jugadoresIds[1]].filter(Boolean);

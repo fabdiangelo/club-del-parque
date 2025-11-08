@@ -1,5 +1,6 @@
 import DBConnection from "../ports/DBConnection.js";
 import NotiConnection from "../ports/NotiConnection.js";
+import { PartidoRepository } from "./PartidoRepository.js";
 
 export class ReservaRepository {
     constructor() {
@@ -127,23 +128,26 @@ const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion
         const doc = await this.db.putItem("reservas", { ...reserva, estado, aceptadoPor, timestamp, deshabilitar: false }, reserva.id);
 
         const noti = new NotiConnection();
-        const partido = await this.db.getItem("partidos", reserva.partidoId);
-        
+        // Intentar obtener partido asociado para notificaciones; puede no existir
+        const partido = reserva.partidoId ? await this.db.getItem("partidos", reserva.partidoId) : null;
 
-        let equipoContrario = null;
-
-        if(partido.equipoLocal.includes(autor)) {
-            equipoContrario = partido.equipoVisitante;
-        } else {
-            equipoContrario = partido.equipoLocal;
+        let equipoContrario = [];
+        try {
+            if (partido && Array.isArray(partido.equipoLocal) && partido.equipoLocal.includes(autor)) {
+                equipoContrario = Array.isArray(partido.equipoVisitante) ? partido.equipoVisitante : [];
+            } else if (partido && Array.isArray(partido.equipoLocal)) {
+                equipoContrario = Array.isArray(partido.equipoLocal) ? partido.equipoLocal : [];
+            }
+        } catch (e) {
+            equipoContrario = [];
         }
 
-        for(const j of equipoContrario) {
+        for (const j of equipoContrario) {
             await noti.pushNotificationTo(j, {
                 tipo: "actualizacion_partido",
                 resumen: "El equipo contrario ha aceptado un horario para jugar el partido",
-                href: `/partido/${partidoId}`
-            })
+                href: `/partido/${reserva.partidoId || ''}`
+            }).catch(() => {});
         }
 
 
@@ -274,16 +278,40 @@ const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion
             throw new Error("La reserva no existe");
         }
 
+        // Marcar la reserva como confirmada
         await this.db.updateItem("reservas", reservaId, { estado: 'confirmada' });
 
-        const noti = new NotiConnection();
+        // Intentar programar el partido asociado (fechaProgramada, estado, cancha)
+        try {
+            if (reserva.partidoId) {
+                const partido = await this.db.getItem('partidos', reserva.partidoId).catch(() => null);
+                if (partido) {
+                    const updatedPartido = {
+                        ...partido,
+                        fechaProgramada: reserva.fechaHora || partido.fechaProgramada,
+                        estado: 'programado',
+                        canchaID: reserva.canchaId || partido.canchaID || partido.canchaId || null,
+                    };
+                    // Use PartidoRepository.update so etapa structures are propagated
+                    try {
+                        const pr = new PartidoRepository();
+                        await pr.update(reserva.partidoId, updatedPartido);
+                    } catch (e) {
+                        console.warn('No se pudo actualizar partido tras confirmar reserva:', e?.message || e);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Error al intentar setear partido tras confirmar reserva:', e?.message || e);
+        }
 
+        const noti = new NotiConnection();
         for(const j of reserva.jugadoresIDS) {
             await noti.pushNotificationTo(j, {
                 tipo: "reserva_confirmada",
                 resumen: "Tu reserva ha sido confirmada",
                 href: `/partido/${reserva.partidoId}`
-            })
+            }).catch(() => {});
         }
 
         return reservaId;

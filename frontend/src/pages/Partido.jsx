@@ -138,7 +138,7 @@ const Partido = () => {
         esCampeonato: true,
         tipoPartido: partido.tipoPartido,
         partidoId: partido.id,
-        jugadoresIDS: normalizeIds(partido.jugadores),
+        jugadoresIDS: normalizeIds(partido.jugadores || [{id: jugador1Id}, {id: jugador2Id}]),
         quienPaga: user?.uid,
         autor: user?.uid,
         estado: 'pendiente'

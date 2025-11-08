@@ -113,60 +113,108 @@ export class SetGanadoresPartido {
   /**
    * Maneja la lógica de un partido de Round Robin
    */
-  async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
-    console.log(`Procesando partido Round Robin en grupo ${updated.meta.grupoID}`);
-    const grupo = (etapa.grupos || []).find(g => g.id === updated.meta.grupoID);
-    if (!grupo) {
-      console.warn('Grupo no encontrado');
-      return;
-    }
+async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
+  console.log(`Procesando partido Round Robin en grupo ${updated.meta.grupoID}`);
+  const grupo = (etapa.grupos || []).find(g => g.id === updated.meta.grupoID);
+  if (!grupo) {
+    console.warn('Grupo no encontrado');
+    return;
+  }
 
-    // Actualizar partido en la estructura de la etapa
-    const partidoInGrupo = (grupo.partidos || []).find(p => (
-      (typeof p.jugador1Index !== 'undefined' && typeof p.jugador2Index !== 'undefined' && (
+  // Actualizar partido en la estructura de la etapa
+  const partidoInGrupo = (grupo.partidos || []).find((p) => {
+    if (typeof p.jugador1Index !== 'undefined' && typeof p.jugador2Index !== 'undefined') {
+      if (
         (p.jugador1Index === updated.meta?.jugador1Index && p.jugador2Index === updated.meta?.jugador2Index) ||
         (p.jugador1Index === updated.meta?.jugador2Index && p.jugador2Index === updated.meta?.jugador1Index)
-      )) || p.id === (updated.id.replace(`${etapa.id}-${grupo.id}-`, ''))
-    ));
-
-    if (partidoInGrupo) {
-      // Actualizar campos visibles del partido
-      if (Array.isArray(updated.jugador1) && updated.jugador1.length > 0) partidoInGrupo.jugador1 = updated.jugador1;
-      if (Array.isArray(updated.jugador2) && updated.jugador2.length > 0) partidoInGrupo.jugador2 = updated.jugador2;
-      if (updated.jugador1Id) partidoInGrupo.jugador1Id = updated.jugador1Id;
-      if (updated.jugador2Id) partidoInGrupo.jugador2Id = updated.jugador2Id;
-      partidoInGrupo.estado = updated.estado;
-      partidoInGrupo.resultado = updated.resultado;
-
-      // Actualizar estadísticas de grupo
-      await this._updateGroupStats(partidoInGrupo, grupo, updated, puntosPorPosicion);
-    }
-
-    // Guardar etapa actualizada
-    await this.etapaRepository.save({ id: etapa.id, ...etapa });
-
-    // Verificar si el grupo está completo
-    const grupoCompletado = this._isGroupComplete(grupo);
-    console.log(`Grupo ${grupo.id} completado: ${grupoCompletado}`);
-    
-    if (grupoCompletado) {
-      console.log(`✓ Grupo ${grupo.id} completado. Verificando si todos los grupos terminaron...`);
-      
-      // Verificar si TODOS los grupos de la etapa están completos
-      const todosGruposCompletos = (etapa.grupos || []).every(g => {
-        const completo = this._isGroupComplete(g);
-        console.log(`  - Grupo ${g.id}: ${completo ? 'COMPLETO ✓' : 'PENDIENTE ⏳'}`);
-        return completo;
-      });
-      
-      console.log(`\n¿Todos los grupos completos? ${todosGruposCompletos ? 'SÍ ✓' : 'NO ✗'}\n`);
-      
-      if (todosGruposCompletos) {
-        console.log('🎯 TODOS LOS GRUPOS COMPLETADOS. Promoviendo jugadores a siguiente etapa...');
-        await this._promoteRoundRobinWinners(etapa, campeonato);
+      ) {
+        return true;
       }
     }
+
+    const rawFromUpdated = String(updated.id || '').replace(`${etapa.id}-${grupo.id}-`, '');
+    if (String(p.id) === String(updated.id)) return true;
+    if (String(p.id) === rawFromUpdated) return true;
+    if (String(updated.id).endsWith(`-${p.id}`)) return true;
+    return false;
+  });
+
+  if (partidoInGrupo) {
+    // ✅ SINCRONIZAR TODOS LOS CAMPOS
+    if (Array.isArray(updated.jugador1) && updated.jugador1.length > 0) {
+      partidoInGrupo.jugador1 = updated.jugador1.map(j => ({
+        id: j.id,
+        nombre: j.nombre,
+        club: j.club
+      }));
+    }
+    if (Array.isArray(updated.jugador2) && updated.jugador2.length > 0) {
+      partidoInGrupo.jugador2 = updated.jugador2.map(j => ({
+        id: j.id,
+        nombre: j.nombre,
+        club: j.club
+      }));
+    }
+    if (updated.jugador1Id) partidoInGrupo.jugador1Id = updated.jugador1Id;
+    if (updated.jugador2Id) partidoInGrupo.jugador2Id = updated.jugador2Id;
+    
+    partidoInGrupo.estado = updated.estado;
+    
+    // Copiar resultado completo
+    if (updated.resultado) {
+      partidoInGrupo.resultado = JSON.parse(JSON.stringify(updated.resultado));
+    }
+    
+    // Copiar sets
+    if (updated.resultado && Array.isArray(updated.resultado.sets)) {
+      partidoInGrupo.sets = JSON.parse(JSON.stringify(updated.resultado.sets));
+    }
+    
+    // Sincronizar ganadores
+    if (updated.ganadores) {
+      partidoInGrupo.ganadores = Array.isArray(updated.ganadores)
+        ? updated.ganadores.map(g => String(g))
+        : [String(updated.ganadores)];
+    }
+    
+    // Sincronizar fechas
+    if (updated.fechaProgramada) {
+      partidoInGrupo.fechaProgramada = updated.fechaProgramada;
+    }
+    if (updated.fechaJugado) {
+      partidoInGrupo.fechaJugado = updated.fechaJugado;
+    } else if (updated.estado === 'finalizado' && !partidoInGrupo.fechaJugado) {
+      partidoInGrupo.fechaJugado = new Date().toISOString();
+    }
+
+    // Actualizar estadísticas de grupo
+    await this._updateGroupStats(partidoInGrupo, grupo, updated, puntosPorPosicion);
   }
+
+  // Guardar etapa actualizada
+  await this.etapaRepository.save({ id: etapa.id, ...etapa });
+
+  // Verificar si el grupo está completo
+  const grupoCompletado = this._isGroupComplete(grupo);
+  console.log(`Grupo ${grupo.id} completado: ${grupoCompletado}`);
+  
+  if (grupoCompletado) {
+    console.log(`✓ Grupo ${grupo.id} completado. Verificando todos los grupos...`);
+    
+    const todosGruposCompletos = (etapa.grupos || []).every(g => {
+      const completo = this._isGroupComplete(g);
+      console.log(`  - Grupo ${g.id}: ${completo ? 'COMPLETO ✓' : 'PENDIENTE ⏳'}`);
+      return completo;
+    });
+    
+    console.log(`\n¿Todos los grupos completos? ${todosGruposCompletos ? 'SÍ ✓' : 'NO ✗'}\n`);
+    
+    if (todosGruposCompletos) {
+      console.log('🎯 TODOS LOS GRUPOS COMPLETADOS. Promoviendo jugadores...');
+      await this._promoteRoundRobinWinners(etapa, campeonato);
+    }
+  }
+}
 
   /**
    * Actualiza las estadísticas de un grupo tras finalizar un partido
@@ -672,30 +720,47 @@ export class SetGanadoresPartido {
   /**
    * Añade los IDs de partidos al federado
    */
-  async _addMatchesToFederado(etapa, grupo, playerId, ronda = null) {
+  async _addMatchesToFederado(etapa, grupo, playerId, ronda = null, campeonato = null) {
     try {
       const fed = await this.federadoRepository.getFederadoById(playerId).catch(() => null);
       if (!fed) return;
 
-      const pidList = Array.isArray(fed.federadoPartidosIDs) ? fed.federadoPartidosIDs : [];
-      
+      const pidList = Array.isArray(fed.federadoPartidosIDs) ? fed.federadoPartidosIDs.slice() : [];
+
       if (ronda) {
-        // Para eliminación
+        // Para eliminación: comparar como strings para evitar problemas de tipo
         const newPids = (ronda.partidos || [])
-          .filter(p => p.jugador1Id === playerId || p.jugador2Id === playerId)
+          .filter(p => String(p.jugador1Id) === String(playerId) || String(p.jugador2Id) === String(playerId))
           .map(p => `${etapa.id}-${ronda.id}-${p.id}`);
         for (const np of newPids) {
           if (!pidList.includes(np)) pidList.push(np);
         }
       } else {
-        // Para round robin
-        const newPids = (grupo.partidos || []).map(p => `${etapa.id}-${grupo.id}-${p.id}`);
-        for (const np of newPids) {
-          if (!pidList.includes(np)) pidList.push(np);
+        // Para round robin: si se pasó un grupo completo, filtrar sólo partidos donde aparezca el jugador
+        if (Array.isArray(grupo.partidos)) {
+          const newPids = (grupo.partidos || [])
+            .filter(p => {
+              // Puede haber índices o ids en la estructura; aceptamos si el jugador aparece por id en jugador1/jugador2
+              const j1 = p.jugador1Id || (Array.isArray(p.jugador1) && p.jugador1[0]?.id) || null;
+              const j2 = p.jugador2Id || (Array.isArray(p.jugador2) && p.jugador2[0]?.id) || null;
+              return String(j1) === String(playerId) || String(j2) === String(playerId);
+            })
+            .map(p => `${etapa.id}-${grupo.id}-${p.id}`);
+          for (const np of newPids) {
+            if (!pidList.includes(np)) pidList.push(np);
+          }
         }
       }
 
-      await this.federadoRepository.updatePartial(fed.id, { federadoPartidosIDs: pidList }).catch(() => {});
+      // Log para diagnóstico
+      console.log(`Actualizando federado ${fed.id} partidos: agregando ${pidList.length} entradas (player ${playerId})`);
+
+      await this.federadoRepository.updatePartial(fed.id, { federadoPartidosIDs: pidList }).catch((err) => {
+        console.warn(`No se pudo actualizar federadoPartidosIDs para ${fed.id}:`, err?.message || err);
+      });
+
+      // Nota: si en el futuro hay que agregar también referencias a federadoCampeonatosIDs
+      // podríamos hacerlo aquí cuando se tenga el `campeonato` y el formato del ID a añadir.
     } catch (e) {
       console.warn('Error actualizando federadoPartidosIDs:', e?.message || e);
     }
@@ -757,115 +822,322 @@ export class SetGanadoresPartido {
    * Maneja la lógica de un partido de Eliminación
    */
   async _handleEliminationMatch(updated, etapa, campeonato) {
-    console.log(`Procesando partido Eliminación en ronda ${updated.meta.rondaID}`);
-    const etapaId = etapa.id;
-    const rawPartidoId = updated.id.replace(`${etapaId}-${updated.meta.rondaID}-`, '');
+  console.log(`Procesando partido Eliminación en ronda ${updated.meta.rondaID}`);
+  const etapaId = etapa.id;
 
-    // Propagar ganador a siguiente ronda
-    await this._propagateToNextRound(etapa, updated, rawPartidoId, campeonato);
+  // 1) Actualizar la estructura de la etapa con TODOS los campos del partido
+  try {
+    const ronda = (etapa.rondas || []).find(r => String(r.id) === String(updated.meta.rondaID));
+    if (ronda && Array.isArray(ronda.partidos)) {
+      const partidoInRonda = ronda.partidos.find(p => {
+        const rawFromUpdated = String(updated.id || '').replace(`${etapaId}-${ronda.id}-`, '');
+        if (String(p.id) === String(updated.id)) return true;
+        if (String(p.id) === rawFromUpdated) return true;
+        if (String(updated.id).endsWith(`-${p.id}`)) return true;
+        return false;
+      });
 
-    // Guardar etapa
-    await this.etapaRepository.save({ id: etapa.id, ...etapa });
+      if (partidoInRonda) {
+        // ✅ SINCRONIZAR TODOS LOS CAMPOS
+        partidoInRonda.estado = updated.estado || partidoInRonda.estado;
+        
+        // Sincronizar jugadores completos
+        if (Array.isArray(updated.jugador1) && updated.jugador1.length) {
+          partidoInRonda.jugador1 = updated.jugador1.map(j => ({
+            id: j.id,
+            nombre: j.nombre,
+            club: j.club
+          }));
+        }
+        if (Array.isArray(updated.jugador2) && updated.jugador2.length) {
+          partidoInRonda.jugador2 = updated.jugador2.map(j => ({
+            id: j.id,
+            nombre: j.nombre,
+            club: j.club
+          }));
+        }
+        if (updated.jugador1Id) partidoInRonda.jugador1Id = updated.jugador1Id;
+        if (updated.jugador2Id) partidoInRonda.jugador2Id = updated.jugador2Id;
+        
+        // Sincronizar resultado COMPLETO
+        if (updated.resultado) {
+          partidoInRonda.resultado = JSON.parse(JSON.stringify(updated.resultado)); // deep copy
+        }
+        
+        // Sincronizar sets
+        if (updated.resultado && Array.isArray(updated.resultado.sets)) {
+          partidoInRonda.sets = JSON.parse(JSON.stringify(updated.resultado.sets));
+        }
+        
+        // Sincronizar ganadores
+        partidoInRonda.ganadores = Array.isArray(updated.ganadores) 
+          ? updated.ganadores.map(g => String(g))
+          : (updated.ganadores ? [String(updated.ganadores)] : []);
+        
+        if (partidoInRonda.ganadores.length >= 1) {
+          partidoInRonda.ganadorId = String(partidoInRonda.ganadores[0]);
+        }
+        
+        // Sincronizar fechas
+        if (updated.fechaProgramada) {
+          partidoInRonda.fechaProgramada = updated.fechaProgramada;
+        }
+        if (updated.fechaJugado) {
+          partidoInRonda.fechaJugado = updated.fechaJugado;
+        } else if (updated.estado === 'finalizado' && !partidoInRonda.fechaJugado) {
+          partidoInRonda.fechaJugado = new Date().toISOString();
+        }
 
-    // Verificar si todas las rondas están completas
-    const todasRondasCompletas = this._areAllRoundsComplete(etapa);
-    console.log(`¿Todas las rondas completas? ${todasRondasCompletas ? 'SÍ ✓' : 'NO ✗'}`);
-    
-    if (todasRondasCompletas) {
-      console.log('🎯 Todas las rondas de eliminación completadas. Verificando siguiente etapa...');
-      await this._checkAndPromoteToNextStage(etapa, campeonato);
+        console.log(`✓ Partido sincronizado en estructura de etapa`);
+      }
     }
+  } catch (e) {
+    console.warn('Error actualizando estructura de etapa:', e?.message || e);
   }
+
+  // Guardar etapa actualizada ANTES de propagar
+  await this.etapaRepository.save({ id: etapa.id, ...etapa }).catch((e) => {
+    console.warn('No se pudo persistir etapa:', e?.message || e);
+  });
+
+  // 2) Propagar ganador a siguiente ronda
+  await this._propagateToNextRound(etapa, updated, campeonato);
+
+  // 3) Verificar si todas las rondas están completas
+  const todasRondasCompletas = this._areAllRoundsComplete(etapa);
+  console.log(`¿Todas las rondas completas? ${todasRondasCompletas ? 'SÍ ✓' : 'NO ✗'}`);
+  
+  if (todasRondasCompletas) {
+    console.log('🎯 Todas las rondas completadas. Verificando siguiente etapa...');
+    await this._checkAndPromoteToNextStage(etapa, campeonato);
+  }
+}
 
   /**
    * Propaga el ganador de un partido a la siguiente ronda
    */
-  async _propagateToNextRound(etapa, updated, rawPartidoId, campeonato) {
-    let propagated = false;
-    for (const ronda of etapa.rondas || []) {
-      for (const p of ronda.partidos || []) {
-        const pJugador1Origen = p.jugador1Origen || (p.meta?.jugador1Origen) || (p.meta?.team1Origen);
-        const pJugador2Origen = p.jugador2Origen || (p.meta?.jugador2Origen) || (p.meta?.team2Origen);
-        const targetOrigen = `ganador-${rawPartidoId}`;
+  /**
+ * Propaga el ganador de un partido a la siguiente ronda
+ * Corrige la lógica para manejar correctamente el avance por índices de bracket
+ */
+/**
+ * MÉTODO COMPLETO CORREGIDO: _propagateToNextRound
+ * Ahora sincroniza TAMBIÉN en la estructura de la etapa
+ */
+async _propagateToNextRound(etapa, updated, campeonato) {
+  try {
+    console.log(`\n--- Propagando ganador de partido ${updated.id} ---`);
+    
+    // 1. Identificar ronda actual
+    const currentRondaId = updated.meta.rondaID;
+    const currentRonda = (etapa.rondas || []).find(r => String(r.id) === String(currentRondaId));
+    
+    if (!currentRonda) {
+      console.warn('No se encontró la ronda actual');
+      return;
+    }
 
-        if (pJugador1Origen === targetOrigen || pJugador2Origen === targetOrigen) {
-          const targetPartidoId = `${etapa.id}-${ronda.id}-${p.id}`;
-          const partidoToUpdate = await this._internalPartidoRepo.getById(targetPartidoId).catch(() => null);
-          if (!partidoToUpdate) continue;
+    console.log(`Ronda actual: ${currentRonda.nombre} (índice ${currentRonda.indice})`);
 
-          if (pJugador1Origen === targetOrigen) {
-            if (Array.isArray(updated.ganadores) && updated.ganadores.length > 1) {
-              // Dobles: asignar array de ganadores
-              const ganadoresData = [];
-              for (const gId of updated.ganadores) {
-                const gData = await this._getFederadoData(gId, campeonato);
-                const gName = gData.nombre || await this._getFederadoName(gId);
-                ganadoresData.push({ ...gData, nombre: gName });
-              }
-              partidoToUpdate.jugador1 = ganadoresData;
-              partidoToUpdate.equipoLocal = updated.ganadores.map(g => String(g));
-            } else {
-              // Singles: asignar un solo ganador
-              const winnerId = updated.ganadores[0];
-              const winnerData = await this._getFederadoData(winnerId, campeonato);
-              const winnerName = winnerData.nombre || await this._getFederadoName(winnerId);
-              partidoToUpdate.jugador1Id = winnerId;
-              partidoToUpdate.jugador1 = { ...winnerData, nombre: winnerName };
-              partidoToUpdate.jugador1Nombre = winnerName;
-            }
-            p.jugador1Id = partidoToUpdate.jugador1Id || null;
-            p.jugador1 = partidoToUpdate.jugador1 || null;
-            console.log(`  ↳ Propagado ganador a ${targetPartidoId} (jugador1)`);
-          }
+    // 2. Identificar siguiente ronda
+    const nextRonda = (etapa.rondas || []).find(r => r.indice === currentRonda.indice + 1);
+    
+    if (!nextRonda) {
+      console.log('✓ No hay siguiente ronda. Este partido es la FINAL.');
+      return;
+    }
 
-          if (pJugador2Origen === targetOrigen) {
-            if (Array.isArray(updated.ganadores) && updated.ganadores.length > 1) {
-              // Dobles: asignar array de ganadores
-              const ganadoresData = [];
-              for (const gId of updated.ganadores) {
-                const gData = await this._getFederadoData(gId, campeonato);
-                const gName = gData.nombre || await this._getFederadoName(gId);
-                ganadoresData.push({ ...gData, nombre: gName });
-              }
-              partidoToUpdate.jugador2 = ganadoresData;
-              partidoToUpdate.equipoVisitante = updated.ganadores.map(g => String(g));
-            } else {
-              // Singles: asignar un solo ganador
-              const winnerId = updated.ganadores[0];
-              const winnerData = await this._getFederadoData(winnerId, campeonato);
-              const winnerName = winnerData.nombre || await this._getFederadoName(winnerId);
-              partidoToUpdate.jugador2Id = winnerId;
-              partidoToUpdate.jugador2 = { id: winnerId, nombre: winnerName };
-              partidoToUpdate.jugador2Nombre = winnerName;
-            }
-            p.jugador2Id = partidoToUpdate.jugador2Id || null;
-            p.jugador2 = partidoToUpdate.jugador2 || null;
-            console.log(`  ↳ Propagado ganador a ${targetPartidoId} (jugador2)`);
-          }
+    console.log(`Siguiente ronda: ${nextRonda.nombre} (índice ${nextRonda.indice})`);
 
-          await this._internalPartidoRepo.update(targetPartidoId, partidoToUpdate).catch(() => {});
-          propagated = true;
+    // 3. Encontrar índice del partido actual
+    const currentPartidoIndex = currentRonda.partidos.findIndex(p => {
+      const rawFromUpdated = String(updated.id || '').replace(`${etapa.id}-${currentRonda.id}-`, '');
+      if (String(p.id) === String(updated.id)) return true;
+      if (String(p.id) === rawFromUpdated) return true;
+      if (String(updated.id).endsWith(`-${p.id}`)) return true;
+      return false;
+    });
 
-          // Verificar bye en el partido actualizado
-          const byeResult = await this._checkAndProcessBye(targetPartidoId, ronda, p, etapa);
-          if (byeResult) {
-            // Propagar recursivamente
-            await this._propagateEliminationWinner(byeResult, etapa, campeonato);
-          }
+    if (currentPartidoIndex === -1) {
+      console.warn('No se encontró el partido en la estructura');
+      return;
+    }
 
-          // Añadir partido a federadoPartidosIDs de los ganadores
-          for (const g of updated.ganadores || []) {
-            await this._addMatchesToFederado(etapa, { partidos: [p] }, g, ronda);
-          }
-        }
+    console.log(`Partido actual: índice ${currentPartidoIndex}`);
+
+    // 4. Calcular destino (partidos [0,1] → siguiente[0], [2,3] → siguiente[1], etc.)
+    const targetPartidoIndex = Math.floor(currentPartidoIndex / 2);
+    const isJugador1 = (currentPartidoIndex % 2) === 0;
+
+    console.log(`Destino: partido ${targetPartidoIndex}, ${isJugador1 ? 'jugador1' : 'jugador2'}`);
+
+    // 5. Obtener partido de destino EN LA ESTRUCTURA
+    const targetPartido = nextRonda.partidos[targetPartidoIndex];
+    if (!targetPartido) {
+      console.warn(`No existe partido destino en índice ${targetPartidoIndex}`);
+      return;
+    }
+
+    // 6. Construir ID completo
+    const targetPartidoId = String(targetPartido.id).startsWith(`${etapa.id}-${nextRonda.id}-`) 
+      ? targetPartido.id 
+      : `${etapa.id}-${nextRonda.id}-${targetPartido.id}`;
+
+    console.log(`Partido destino: ${targetPartidoId}`);
+
+    // 7. Cargar partido persistido
+    const partidoToUpdate = await this._internalPartidoRepo.getById(targetPartidoId).catch(() => null);
+    if (!partidoToUpdate) {
+      console.warn(`No se pudo cargar partido ${targetPartidoId}`);
+      return;
+    }
+
+    // 8. Determinar modo (singles/dobles)
+    const ganadores = updated.ganadores || [];
+    const isDobles = Array.isArray(ganadores) && ganadores.length > 1;
+
+    console.log(`Modo: ${isDobles ? 'DOBLES' : 'SINGLES'}, Ganadores: ${ganadores.join(', ')}`);
+
+    // 9. Obtener datos completos de ganadores
+    let ganadoresData = [];
+    for (const gId of ganadores) {
+      const gData = await this._getFederadoData(gId, campeonato);
+      const gName = gData.nombre || await this._getFederadoName(gId);
+      ganadoresData.push({ 
+        id: gData.id,
+        nombre: gName,
+        club: gData.club 
+      });
+    }
+
+    // 10. Asignar en PARTIDO PERSISTIDO
+    if (isJugador1) {
+      if (isDobles) {
+        partidoToUpdate.jugador1 = ganadoresData;
+        partidoToUpdate.equipoLocal = ganadores.map(g => String(g));
+      } else {
+        const winnerId = ganadores[0];
+        partidoToUpdate.jugador1Id = winnerId;
+        partidoToUpdate.jugador1 = ganadoresData[0];
+        partidoToUpdate.jugador1Nombre = ganadoresData[0].nombre;
       }
+      console.log(`  ✓ Asignado a jugador1 en partido persistido`);
+    } else {
+      if (isDobles) {
+        partidoToUpdate.jugador2 = ganadoresData;
+        partidoToUpdate.equipoVisitante = ganadores.map(g => String(g));
+      } else {
+        const winnerId = ganadores[0];
+        partidoToUpdate.jugador2Id = winnerId;
+        partidoToUpdate.jugador2 = ganadoresData[0];
+        partidoToUpdate.jugador2Nombre = ganadoresData[0].nombre;
+      }
+      console.log(`  ✓ Asignado a jugador2 en partido persistido`);
     }
 
-    if (!propagated) {
-      // Fallback: propagación por índice de bracket
-      await this._propagateByBracketIndex(etapa, updated, rawPartidoId, campeonato);
+    // 11. ✅ CRÍTICO: Asignar TAMBIÉN en ESTRUCTURA DE ETAPA
+    if (isJugador1) {
+      if (isDobles) {
+        targetPartido.jugador1 = ganadoresData.map(g => ({
+          id: g.id,
+          nombre: g.nombre,
+          club: g.club
+        }));
+      } else {
+        const winnerId = ganadores[0];
+        targetPartido.jugador1Id = winnerId;
+        targetPartido.jugador1 = [{
+          id: ganadoresData[0].id,
+          nombre: ganadoresData[0].nombre,
+          club: ganadoresData[0].club
+        }];
+      }
+      console.log(`  ✓ Asignado a jugador1 en estructura de etapa`);
+    } else {
+      if (isDobles) {
+        targetPartido.jugador2 = ganadoresData.map(g => ({
+          id: g.id,
+          nombre: g.nombre,
+          club: g.club
+        }));
+      } else {
+        const winnerId = ganadores[0];
+        targetPartido.jugador2Id = winnerId;
+        targetPartido.jugador2 = [{
+          id: ganadoresData[0].id,
+          nombre: ganadoresData[0].nombre,
+          club: ganadoresData[0].club
+        }];
+      }
+      console.log(`  ✓ Asignado a jugador2 en estructura de etapa`);
     }
+
+    // 12. Resetear estado del partido destino (ambos lados)
+    partidoToUpdate.estado = 'pendiente';
+    delete partidoToUpdate.ganadores;
+    delete partidoToUpdate.ganadorId;
+    delete partidoToUpdate.resultado;
+    
+    targetPartido.estado = 'pendiente';
+    delete targetPartido.ganadores;
+    delete targetPartido.ganadorId;
+    delete targetPartido.resultado;
+    delete targetPartido.sets;
+
+    // 13. Persistir partido actualizado
+    await this._internalPartidoRepo.update(targetPartidoId, partidoToUpdate).catch((err) => {
+      console.warn(`Error persistiendo: ${err?.message || err}`);
+    });
+
+    // 14. ✅ GUARDAR ETAPA ACTUALIZADA CON JUGADORES ASIGNADOS
+    await this.etapaRepository.save({ id: etapa.id, ...etapa }).catch((e) => {
+      console.warn('No se pudo persistir etapa tras asignar jugadores:', e?.message || e);
+    });
+
+    // 15. Actualizar federadoPartidosIDs para cada ganador
+    for (const gId of ganadores) {
+      await this._addPartidoToFederado(gId, targetPartidoId);
+    }
+
+    console.log('--- Propagación completada ---\n');
+
+  } catch (e) {
+    console.error('Error en _propagateToNextRound:', e?.message || e);
+    console.error(e);
   }
+}
+
+/**
+ * NUEVO MÉTODO: Añade un partido específico al federado
+ */
+async _addPartidoToFederado(federadoId, partidoId) {
+  try {
+    const fed = await this.federadoRepository.getFederadoById(federadoId).catch(() => null);
+    if (!fed) {
+      console.warn(`Federado ${federadoId} no encontrado`);
+      return;
+    }
+
+    if (!Array.isArray(fed.federadoPartidosIDs)) {
+      fed.federadoPartidosIDs = [];
+    }
+
+    const partidoIdStr = String(partidoId);
+    if (!fed.federadoPartidosIDs.includes(partidoIdStr)) {
+      fed.federadoPartidosIDs.push(partidoIdStr);
+      
+      await this.federadoRepository.updatePartial(fed.id, { 
+        federadoPartidosIDs: fed.federadoPartidosIDs 
+      });
+      
+      console.log(`  ✓ Partido ${partidoId} añadido a federado ${federadoId}`);
+    } else {
+      console.log(`  ℹ Partido ${partidoId} ya existe en federado ${federadoId}`);
+    }
+  } catch (e) {
+    console.warn(`Error añadiendo partido a federado ${federadoId}:`, e?.message || e);
+  }
+}
 
   /**
    * Propagación alternativa por índice de bracket

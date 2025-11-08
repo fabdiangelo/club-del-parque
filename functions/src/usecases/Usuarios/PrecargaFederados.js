@@ -126,15 +126,12 @@ class PrecargaFederados {
           console.log(`Federado creado para ${email}`);
         } else {
           console.log(`Federado ya existe para ${email}`);
-          const venc = existsFed.validoHasta ? new Date(existsFed.validoHasta) : null;
-          if (!venc || venc < new Date()) {
-            await this.federadoRepository.update(existsFed.id, {
-              ...existsFed,
-              estado: "activo",
-              rol: existsFed.rol || "federado",
-              validoHasta: new Date(hoy.setMonth(hoy.getMonth() + 1)).toISOString(),
-            });
-          }
+          await this.federadoRepository.update(existsFed.id, {
+            ...existsFed,
+            estado: "activo",
+            rol: existsFed.rol || "federado",
+            validoHasta: new Date(hoy.setMonth(hoy.getMonth() + 6)).toISOString(),
+          });
         }
       }
     } catch (err) {
