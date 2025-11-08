@@ -147,6 +147,8 @@ class CrearCampeonato {
 
               try {
                 await this.partidoRepository.save(partidoObj);
+                // Actualizar el id del partido en la estructura de la etapa para que guarde el id persistido
+                partido.id = partidoObj.id;
               } catch (e) {
                 // Si falla la persistencia de partido, continuar sin bloquear la creación del campeonato
                 console.warn('No se pudo persistir partido de grupo', partidoObj.id, e.message || e);
@@ -189,7 +191,9 @@ class CrearCampeonato {
               }
 
               try {
-                await this.partidoRepository.save(partidoObj);
+                  await this.partidoRepository.save(partidoObj);
+                  // Guardar también el id persistido en la estructura de la ronda
+                  partido.id = partidoObj.id;
               } catch (e) {
                 console.warn('No se pudo persistir partido de eliminacion', partidoObj.id, e.message || e);
               }

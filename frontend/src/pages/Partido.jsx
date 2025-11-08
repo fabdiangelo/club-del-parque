@@ -138,7 +138,7 @@ const Partido = () => {
         esCampeonato: true,
         tipoPartido: partido.tipoPartido,
         partidoId: partido.id,
-        jugadoresIDS: normalizeIds(partido.jugadores),
+        jugadoresIDS: normalizeIds(partido.jugadores || [{id: jugador1Id}, {id: jugador2Id}]),
         quienPaga: user?.uid,
         autor: user?.uid,
         estado: 'pendiente'
@@ -876,7 +876,7 @@ useEffect(() => {
                                         </div>
 
                                         {/* Botón para aceptar la propuesta */}
-                                        {!esDelMismoEquipo && (
+                                        {!esDelMismoEquipo && !partido.disponibilidades.propuestas.some(p => p.aceptada || false) && (
                                             <button
                                                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                                                 onClick={() => aceptarPropuesta(propuesta.id)}

@@ -1,5 +1,6 @@
 import DBConnection from "../ports/DBConnection.js";
 import NotiConnection from "../ports/NotiConnection.js";
+import { EtapaRepository } from "./EtapaRepository.js";
 
 export class PartidoRepository {
   constructor() {
@@ -99,7 +100,63 @@ export class PartidoRepository {
   }
 
   async update(partidoId, partido) {
-    return await this.db.updateItem("partidos", partidoId, partido);
+    const updated = await this.db.updateItem("partidos", partidoId, partido);
+
+    // If this partido is part of an etapa, propagate fechaProgramada/estado to the etapa structure
+    try {
+      const etapaId = partido?.etapa;
+      if (etapaId) {
+        const etapaRepo = new EtapaRepository();
+        const etapa = await etapaRepo.findById(etapaId).catch(() => null);
+        if (etapa) {
+          let changed = false;
+
+          // Handle roundRobin groups
+          if (Array.isArray(etapa.grupos)) {
+            for (const grupo of etapa.grupos) {
+              if (!Array.isArray(grupo.partidos)) continue;
+              for (const p of grupo.partidos) {
+                // p.id might already be the full persisted id or the raw id.
+                const expectedId = String(p.id || '').startsWith(`${etapa.id}-${grupo.id}-`) ? p.id : `${etapa.id}-${grupo.id}-${p.id}`;
+                if (String(expectedId) === String(partidoId)) {
+                  // update fields
+                  p.fechaProgramada = partido.fechaProgramada || p.fechaProgramada;
+                  p.estado = partido.estado || p.estado;
+                  changed = true;
+                }
+              }
+            }
+          }
+
+          // Handle elimination rounds
+          if (Array.isArray(etapa.rondas)) {
+            for (const ronda of etapa.rondas) {
+              if (!Array.isArray(ronda.partidos)) continue;
+              for (const p of ronda.partidos) {
+                const expectedId = String(p.id || '').startsWith(`${etapa.id}-${ronda.id}-`) ? p.id : `${etapa.id}-${ronda.id}-${p.id}`;
+                if (String(expectedId) === String(partidoId)) {
+                  p.fechaProgramada = partido.fechaProgramada || p.fechaProgramada;
+                  p.estado = partido.estado || p.estado;
+                  // also attach cancha if present
+                  if (partido.canchaID || partido.canchaId) p.canchaID = partido.canchaID || partido.canchaId;
+                  changed = true;
+                }
+              }
+            }
+          }
+
+          if (changed) {
+            await etapaRepo.save({ id: etapa.id, ...etapa }).catch((e) => {
+              console.warn('No se pudo persistir etapa tras actualizar partido:', e?.message || e);
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error propagando cambios a etapa desde PartidoRepository.update:', e?.message || e);
+    }
+
+    return updated;
   }
 
   async getPartidosPorTemporada(temporadaID) {
@@ -257,7 +314,7 @@ export class PartidoRepository {
 
     let equipoProponiente = null;
 
-    if (actual?.equipoLocal?.includes(disponibilidad.propuestoPor)) {
+    if (actual?.equipoLocal?.includes(disponibilidad.propuestoPor) || actual?.jugador1?.includes(disponibilidad.propuestoPor)) {
       equipoProponiente = 'local';
     } else {
       equipoProponiente = 'visitante';
@@ -265,8 +322,8 @@ export class PartidoRepository {
 
     for (const jugadorId of jugadores) {
       const perteneceAlEquipoProponiente = equipoProponiente === 'local'
-        ? actual.equipoLocal.includes(jugadorId)
-        : actual.equipoVisitante.includes(jugadorId);
+        ? actual.equipoLocal?.includes(jugadorId) || actual.jugador1?.includes(jugadorId)
+        : actual.equipoVisitante?.includes(jugadorId)|| actual.jugador2?.includes(jugadorId);
 
       if (jugadorId !== disponibilidad.propuestoPor && !perteneceAlEquipoProponiente) {
         await noti.pushNotificationTo(jugadorId, inviteePayload).catch(() => { });

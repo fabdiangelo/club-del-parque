@@ -2,6 +2,7 @@ import { CampeonatoRepository } from "../../infraestructure/adapters/CampeonatoR
 import { EtapaRepository } from "../../infraestructure/adapters/EtapaRepository.js";
 import { FederadoCampeonatoRepository } from "../../infraestructure/adapters/FederadoCampeonatoRepository.js";
 import { RankingRepository } from "../../infraestructure/adapters/RankingRepository.js";
+import { FederadoRepository } from "../../infraestructure/adapters/FederadoRepository.js";
 
 const PUNTOS_MINIMOS = 0; 
 const DEFAULT_TABLA = { 1: 1000, 2: 600, 3: 360, 4: 270, 5: 180, 6: 150, 7: 120, 8: 90 };
@@ -12,6 +13,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
     this.etapaRepo = new EtapaRepository();
     this.fcRepo = new FederadoCampeonatoRepository();
     this.rankingRepo = new RankingRepository();
+    this.federadoRepo = new FederadoRepository();
   }
 
   puntos(camp, pos) {
@@ -37,6 +39,29 @@ export default class CerrarCampeonatoYAsignarPuntos {
     // 2) persistir en FederadoCampeonato y sumar al ranking
     const allFcs = await this.fcRepo.getAllFederados();
     const relacionados = (allFcs || []).filter(x => x.campeonatoID === campeonatoId);
+
+    // Preparar y mostrar tabla con los jugadores y puntos que se asignarán
+    try {
+      const rows = [];
+      for (const fc of relacionados) {
+        const pos = posiciones[fc.federadoID] || null;
+        const pts = pos ? this.puntos(camp, pos) : 0;
+        let nombre = '';
+        try {
+          const fed = await this.federadoRepo.getFederadoById(fc.federadoID).catch(() => null);
+          if (fed) nombre = `${fed.nombre || ''}${fed.apellido ? ' ' + fed.apellido : ''}`.trim() || fed.displayName || '';
+        } catch (err) {
+          // ignore
+        }
+        rows.push({ federadoID: fc.federadoID, nombre, posicion: pos, puntos: pts });
+      }
+      // ordenar por posicion (null/undefined al final)
+      rows.sort((a, b) => ((a.posicion || 1e9) - (b.posicion || 1e9)));
+      console.log('\n===== Tabla: puntos a asignar al cerrar campeonato =====');
+      console.table(rows);
+    } catch (e) {
+      console.warn('No se pudo generar tabla de puntos a asignar:', e?.message || e);
+    }
 
     for (const fc of relacionados) {
       const pos = posiciones[fc.federadoID] || null;

@@ -119,6 +119,29 @@ class InscribirFederado {
     const etapa = await this.etapaRepository.findById(primeraEtapaId);
     if (!etapa) return fcId; // etapa no encontrada, ya quedó inscripto en campeonato
 
+    // Helper: resolve partido id — some stored partido.id values are already the full persisted id
+    // (created in CrearCampeonato as `${etapaId}-${grupoOrRonda}-${partido.id}`), so avoid double-prefixing.
+    const resolvePartidoId = (partidoRef, containerId) => {
+      if (!partidoRef || typeof partidoRef.id === 'undefined' || partidoRef.id === null) {
+        return `${primeraEtapaId}-${containerId || 'partido'}-${partidoRef?.id || ''}`;
+      }
+      const pid = String(partidoRef.id);
+      if (pid.startsWith(String(primeraEtapaId))) return pid;
+      return `${primeraEtapaId}-${containerId || 'partido'}-${pid}`;
+    };
+
+    const buildJugadoresArray = (p) => {
+      const ids = [];
+      try {
+        if (Array.isArray(p.jugador1) && p.jugador1.length) ids.push(...p.jugador1);
+        else if (p.jugador1Id) ids.push(String(p.jugador1Id));
+
+        if (Array.isArray(p.jugador2) && p.jugador2.length) ids.push(...p.jugador2);
+        else if (p.jugador2Id) ids.push(String(p.jugador2Id));
+      } catch (e) { /* ignore */ }
+      return ids;
+    };
+
     // Round Robin: buscar primer slot vacío en grupos
     if (etapa.tipoEtapa === 'roundRobin' && Array.isArray(etapa.grupos)) {
       const now = Date.now();
@@ -147,7 +170,8 @@ class InscribirFederado {
               partido.jugador1Id = grupo.jugadores[si].id;
               partido.jugador1Nombre = grupo.jugadores[si].nombre || null;
             }
-            const partidoId = `${primeraEtapaId}-${grupo.id || 'grupo'}-${partido.id}`;
+            const partidoId = resolvePartidoId(partido, grupo.id || 'grupo');
+            partido.jugadores = buildJugadoresArray(partido);
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e){ }
           }
           if (typeof partido.jugador2Index !== 'undefined' && partido.jugador2Index === si) {
@@ -158,7 +182,8 @@ class InscribirFederado {
               partido.jugador2Id = grupo.jugadores[si].id;
               partido.jugador2Nombre = grupo.jugadores[si].nombre || null;
             }
-            const partidoId = `${primeraEtapaId}-${grupo.id || 'grupo'}-${partido.id}`;
+            const partidoId = resolvePartidoId(partido, grupo.id || 'grupo');
+            partido.jugadores = buildJugadoresArray(partido);
             try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e){ }
           }
         }
@@ -318,7 +343,8 @@ class InscribirFederado {
               // If no team yet, create team with this player
               if (!partido.jugador1 || partido.jugador1.length === 0) {
                 partido.jugador1 = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
-                const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                const partidoId = resolvePartidoId(partido, ronda.id || 'ronda');
+                partido.jugadores = buildJugadoresArray(partido);
                 try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
                 asignado = true;
                 break;
@@ -336,7 +362,8 @@ class InscribirFederado {
                 // Only add if the existing player isn't the same uid and there's no pending invite
                 if (!jugador1HasPendingInvite && partido.jugador1[0].id !== uid) {
                   partido.jugador1.push({ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() });
-                  const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                  const partidoId = resolvePartidoId(partido, ronda.id || 'ronda');
+                  partido.jugadores = buildJugadoresArray(partido);
                   try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
                   asignado = true;
                   break;
@@ -348,7 +375,7 @@ class InscribirFederado {
             if (partido.jugador2Origen === 'inscripcion') {
               if (!partido.jugador2 || partido.jugador2.length === 0) {
                 partido.jugador2 = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
-                const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                const partidoId = resolvePartidoId(partido, ronda.id || 'ronda');
                 try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
                 asignado = true;
                 break;
@@ -363,7 +390,8 @@ class InscribirFederado {
 
                 if (!jugador2HasPendingInvite && partido.jugador2[0].id !== uid) {
                   partido.jugador2.push({ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() });
-                  const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
+                  const partidoId = resolvePartidoId(partido, ronda.id || 'ronda');
+                  partido.jugadores = buildJugadoresArray(partido);
                   try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
                   asignado = true;
                   break;
@@ -371,22 +399,27 @@ class InscribirFederado {
               }
             }
           } else {
-            // Solo assign para singles (existing logic)
-            if (partido.jugador1Origen === 'inscripcion' && !partido.jugador1Id) {
-              partido.jugador1Id = uid;
-              partido.jugador1Nombre = `${federado.nombre || ''} ${federado.apellido || ''}`.trim();
-              const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
-              try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
-              asignado = true;
-              break;
+            // Solo assign para singles: almacenar como array de jugadores [{id,nombre}] para mantener consistencia con roundRobin
+            if (partido.jugador1Origen === 'inscripcion') {
+              // asignar solo si no hay jugador1 en la estructura (compatibilidad con distintos formatos)
+              if (!Array.isArray(partido.jugador1) || partido.jugador1.length === 0 || !partido.jugador1[0]?.id) {
+                partido.jugador1 = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
+                const partidoId = resolvePartidoId(partido, ronda.id || 'ronda');
+                partido.jugadores = buildJugadoresArray(partido);
+                try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
+                asignado = true;
+                break;
+              }
             }
-            if (partido.jugador2Origen === 'inscripcion' && !partido.jugador2Id) {
-              partido.jugador2Id = uid;
-              partido.jugador2Nombre = `${federado.nombre || ''} ${federado.apellido || ''}`.trim();
-              const partidoId = `${primeraEtapaId}-${ronda.id || 'ronda'}-${partido.id}`;
-              try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
-              asignado = true;
-              break;
+
+            if (partido.jugador2Origen === 'inscripcion') {
+              if (!Array.isArray(partido.jugador2) || partido.jugador2.length === 0 || !partido.jugador2[0]?.id) {
+                partido.jugador2 = [{ id: uid, nombre: `${federado.nombre || ''} ${federado.apellido || ''}`.trim() }];
+                const partidoId = resolvePartidoId(partido, ronda.id || 'ronda');
+                try { await this.partidoRepository.update(partidoId, { ...partido }); } catch(e) { }
+                asignado = true;
+                break;
+              }
             }
           }
         }
@@ -395,6 +428,56 @@ class InscribirFederado {
 
     // Guardar etapa actualizada
     await this.etapaRepository.save({ id: etapa.id, ...etapa });
+
+    // 8) Registrar en el federado los partidos asignados dentro de esta etapa (federadoPartidosIDs)
+    try {
+      const partidoIdsToAdd = new Set();
+      const primeraEtapa = primeraEtapaId; // ya tenemos la variable
+
+      if (etapa.tipoEtapa === 'roundRobin' && Array.isArray(etapa.grupos)) {
+        for (const grupo of etapa.grupos) {
+          if (!Array.isArray(grupo.partidos)) continue;
+          for (const partido of grupo.partidos) {
+            const pid = resolvePartidoId(partido, grupo.id || 'grupo');
+            // comprobar si el federado participa en este partido
+            const jugadores1 = Array.isArray(partido.jugador1) ? partido.jugador1.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador1Id ? [partido.jugador1Id] : []);
+            const jugadores2 = Array.isArray(partido.jugador2) ? partido.jugador2.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador2Id ? [partido.jugador2Id] : []);
+            if (jugadores1.includes(uid) || jugadores2.includes(uid)) partidoIdsToAdd.add(pid);
+          }
+        }
+      } else if (etapa.tipoEtapa === 'eliminacion' && Array.isArray(etapa.rondas)) {
+        for (const ronda of etapa.rondas) {
+          if (!Array.isArray(ronda.partidos)) continue;
+          for (const partido of ronda.partidos) {
+            const pid = resolvePartidoId(partido, ronda.id || 'ronda');
+            const jugadores1 = Array.isArray(partido.jugador1) ? partido.jugador1.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador1Id ? [partido.jugador1Id] : []);
+            const jugadores2 = Array.isArray(partido.jugador2) ? partido.jugador2.map(p => (typeof p === 'string' ? p : (p?.id || p?.uid))).filter(Boolean) : (partido.jugador2Id ? [partido.jugador2Id] : []);
+            if (jugadores1.includes(uid) || jugadores2.includes(uid)) partidoIdsToAdd.add(pid);
+          }
+        }
+      }
+
+      if (partidoIdsToAdd.size > 0) {
+        federado.federadoPartidosIDs = Array.isArray(federado.federadoPartidosIDs) ? federado.federadoPartidosIDs : [];
+        const existentes = new Set(federado.federadoPartidosIDs.map(x => String(x)));
+        let changed = false;
+        for (const pid of partidoIdsToAdd) {
+          if (!existentes.has(pid)) {
+            federado.federadoPartidosIDs.push(pid);
+            changed = true;
+          }
+        }
+        if (changed) {
+          try {
+            await this.federadoRepository.update(uid, federado);
+          } catch (e) {
+            console.warn('No se pudo actualizar federadoPartidosIDs para federado', uid, e);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error al registrar federadoPartidosIDs tras inscripcion:', e);
+    }
 
     return fcId;
   }
