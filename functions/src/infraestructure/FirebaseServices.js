@@ -31,7 +31,8 @@ export const rtdb = admin.database();
 export const messaging = admin.messaging();
 export const FieldValue = admin.firestore.FieldValue;
 export const Timestamp = admin.firestore.Timestamp;
-
-db.settings?.({ ignoreUndefinedProperties: true });
+if (!db._settingsFrozen) {
+  db.settings({ ignoreUndefinedProperties: true });
+}
 
 export default { auth, db, storage, rtdb, messaging, FieldValue, Timestamp };

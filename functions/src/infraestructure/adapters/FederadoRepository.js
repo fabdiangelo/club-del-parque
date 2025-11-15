@@ -128,14 +128,11 @@ class FederadoRepository {
     return this.getFederadoById(uid);
   }
 
-  /**
-   * Trae TODOS los federados, normalizados.
-   */
   async getAllFederados() {
     let raw = [];
     if (typeof this.db.findMany === "function") {
       raw = FederadoRepository._normalizeResultToArray(
-        await this.db.findMany(this.collection, {}) // sin filtro
+        await this.db.findMany(this.collection, {})
       );
     } else {
       raw = FederadoRepository._normalizeResultToArray(

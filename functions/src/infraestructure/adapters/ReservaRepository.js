@@ -23,143 +23,142 @@ export class ReservaRepository {
     async save(reserva) {
 
         try {
-const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion, tipoPartido } = reserva;
+            const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion, tipoPartido } = reserva;
 
-        const allReservas = await this.db.getAllItems('reservas');
+            const allReservas = await this.db.getAllItems('reservas');
 
-        // Convertir fechaHora y calcular el rango de tiempo ocupado por la nueva reserva
-        const fechaHoraInicioNueva = new Date(fechaHora);
-        const fechaHoraFinNueva = new Date(fechaHoraInicioNueva.getTime() + duracion * 60 * 1000); // Duración en minutos
+            // Convertir fechaHora y calcular el rango de tiempo ocupado por la nueva reserva
+            const fechaHoraInicioNueva = new Date(fechaHora);
+            const fechaHoraFinNueva = new Date(fechaHoraInicioNueva.getTime() + duracion * 60 * 1000); // Duración en minutos
 
-        // Verificar conflictos de horario
-        const conflictoHorario = allReservas.some(r => {
-            if (r.canchaId !== canchaId || r.deshabilitar === true) return false;
+            // Verificar conflictos de horario
+            const conflictoHorario = allReservas.some(r => {
+                if (r.canchaId !== canchaId || r.deshabilitar === true) return false;
 
-            const fechaHoraInicioExistente = new Date(r.fechaHora);
-            const fechaHoraFinExistente = new Date(fechaHoraInicioExistente.getTime() + r.duracion * 60 * 1000);
+                const fechaHoraInicioExistente = new Date(r.fechaHora);
+                const fechaHoraFinExistente = new Date(fechaHoraInicioExistente.getTime() + r.duracion * 60 * 1000);
 
-            // Verificar si los rangos de tiempo se solapan
-            return (
-                (fechaHoraInicioNueva < fechaHoraFinExistente && fechaHoraFinNueva > fechaHoraInicioExistente)
-            );
-        });
+                // Verificar si los rangos de tiempo se solapan
+                return (
+                    (fechaHoraInicioNueva < fechaHoraFinExistente && fechaHoraFinNueva > fechaHoraInicioExistente)
+                );
+            });
 
-        if (conflictoHorario) {
-            throw new Error("Ya existe una reserva para la misma cancha en el mismo rango de tiempo");
-        }
-
-        if (!canchaId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora || !duracion) {
-            throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora, duracion");
-        }
-
-        if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
-            throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
-        }
-
-        if (tipoPartido === 'singles' && jugadoresIDS.length !== 2) {
-            throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
-        }
-        if (tipoPartido === 'dobles' && jugadoresIDS.length !== 4) {
-            throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
-        }
-
-        const cancha = await this.db.getItem("canchas", canchaId);
-        if (!cancha) {
-            throw new Error("La cancha asociada no existe");
-        }
-
-        if (partidoId && partidoId.trim() !== '') {
-            const partido = await this.db.getItem("partidos", partidoId);
-            if (!partido) {
-                throw new Error("El partido asociado no existe");
-            }
-        }
-
-        let noJugador = false;
-
-        for (const j of jugadoresIDS) {
-            const jugadorExists = await this.db.getItem("usuarios", j);
-            if (!jugadorExists) {
-                noJugador = true;
+            if (conflictoHorario) {
+                throw new Error("Ya existe una reserva para la misma cancha en el mismo rango de tiempo");
             }
 
-            const federado = await this.db.getItem("federados", j);
-            const admin = await this.db.getItem("administradores", j);
-
-            if (!federado && !noJugador && !admin) {
-                throw new Error(`El jugador con ID ${j} no es un federado`);
-            }
-        }
-
-        const quienPagaExists = await this.db.getItem("usuarios", quienPaga);
-        if (!quienPagaExists) {
-            console.log("Usuario que paga no es usuario normal, verificando en federados o administradores");
-            console.log("Usuario que paga ID:", quienPaga);
-
-            const quienPagaExistsFederado = await this.db.getItem("federados", quienPaga);
-            const quienPagaExistsAdmin = await this.db.getItem("administradores", quienPaga);
-
-            const allAdmins = await this.db.getAllItems("administradores");
-
-            for(const admin of allAdmins) {
-                console.log("Verificando admin:", admin);
+            if (!canchaId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora || !duracion) {
+                throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora, duracion");
             }
 
-            if (!quienPagaExistsFederado && !quienPagaExistsAdmin) {
-                throw new Error("El usuario que paga no existe");
+            if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
+                throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
             }
-        }
 
-        const autorExists = await this.db.getItem("usuarios", autor);
-        const autorFederado = await this.db.getItem("federados", autor);
-        const adminExists = await this.db.getItem("administradores", autor);
-        if (!autorExists && !autorFederado && !adminExists) {
-            throw new Error("El usuario autor no existe");
-        }
-
-        if (new Date(fechaHora) < new Date()) {
-            throw new Error("La fecha y hora de la reserva no puede ser en el pasado");
-        }
-
-        const estado = reserva.estado || 'pendiente';
-        const aceptadoPor = [];
-        const timestamp = Date.now();
-
-        const doc = await this.db.putItem("reservas", { ...reserva, estado, aceptadoPor, timestamp, deshabilitar: false }, reserva.id);
-
-        const noti = new NotiConnection();
-        // Intentar obtener partido asociado para notificaciones; puede no existir
-        const partido = reserva.partidoId ? await this.db.getItem("partidos", reserva.partidoId) : null;
-
-        let equipoContrario = [];
-        try {
-            if (partido && Array.isArray(partido.equipoLocal) && partido.equipoLocal.includes(autor)) {
-                equipoContrario = Array.isArray(partido.equipoVisitante) ? partido.equipoVisitante : [];
-            } else if (partido && Array.isArray(partido.equipoLocal)) {
-                equipoContrario = Array.isArray(partido.equipoLocal) ? partido.equipoLocal : [];
+            if (tipoPartido === 'singles' && jugadoresIDS.length !== 2) {
+                throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
             }
-        } catch (e) {
-            equipoContrario = [];
+            if (tipoPartido === 'dobles' && jugadoresIDS.length !== 4) {
+                throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
+            }
+
+            const cancha = await this.db.getItem("canchas", canchaId);
+            if (!cancha) {
+                throw new Error("La cancha asociada no existe");
+            }
+
+            if (partidoId && partidoId.trim() !== '') {
+                const partido = await this.db.getItem("partidos", partidoId);
+                if (!partido) {
+                    throw new Error("El partido asociado no existe");
+                }
+            }
+
+            let noJugador = false;
+
+            for (const j of jugadoresIDS) {
+                const jugadorExists = await this.db.getItem("usuarios", j);
+                if (!jugadorExists) {
+                    noJugador = true;
+                }
+
+                const federado = await this.db.getItem("federados", j);
+                const admin = await this.db.getItem("administradores", j);
+
+                if (!federado && !noJugador && !admin) {
+                    throw new Error(`El jugador con ID ${j} no es un federado`);
+                }
+            }
+
+            const quienPagaExists = await this.db.getItem("usuarios", quienPaga);
+            if (!quienPagaExists) {
+                console.log("Usuario que paga no es usuario normal, verificando en federados o administradores");
+                console.log("Usuario que paga ID:", quienPaga);
+
+                const quienPagaExistsFederado = await this.db.getItem("federados", quienPaga);
+                const quienPagaExistsAdmin = await this.db.getItem("administradores", quienPaga);
+
+                const allAdmins = await this.db.getAllItems("administradores");
+
+                for (const admin of allAdmins) {
+                    console.log("Verificando admin:", admin);
+                }
+
+                if (!quienPagaExistsFederado && !quienPagaExistsAdmin) {
+                    throw new Error("El usuario que paga no existe");
+                }
+            }
+
+            const autorExists = await this.db.getItem("usuarios", autor);
+            const autorFederado = await this.db.getItem("federados", autor);
+            const adminExists = await this.db.getItem("administradores", autor);
+            if (!autorExists && !autorFederado && !adminExists) {
+                throw new Error("El usuario autor no existe");
+            }
+
+            if (new Date(fechaHora) < new Date()) {
+                throw new Error("La fecha y hora de la reserva no puede ser en el pasado");
+            }
+
+            const estado = reserva.estado || 'pendiente';
+            const aceptadoPor = [];
+            const timestamp = Date.now();
+
+            const doc = await this.db.putItem("reservas", { ...reserva, estado, aceptadoPor, timestamp, deshabilitar: false }, reserva.id);
+
+            const noti = new NotiConnection();
+            const partido = reserva.partidoId ? await this.db.getItem("partidos", reserva.partidoId) : null;
+
+            let equipoContrario = [];
+            try {
+                if (partido && Array.isArray(partido.equipoLocal) && partido.equipoLocal.includes(autor)) {
+                    equipoContrario = Array.isArray(partido.equipoVisitante) ? partido.equipoVisitante : [];
+                } else if (partido && Array.isArray(partido.equipoLocal)) {
+                    equipoContrario = Array.isArray(partido.equipoLocal) ? partido.equipoLocal : [];
+                }
+            } catch (e) {
+                equipoContrario = [];
+            }
+
+            for (const j of equipoContrario) {
+                await noti.pushNotificationTo(j, {
+                    tipo: "actualizacion_partido",
+                    resumen: "El equipo contrario ha aceptado un horario para jugar el partido",
+                    href: `/partido/${reserva.partidoId || ''}`
+                }).catch(() => { });
+            }
+
+
+
+
+
+
+            return doc.id;
+        } catch (error) {
+            throw new Error(error.message);
         }
 
-        for (const j of equipoContrario) {
-            await noti.pushNotificationTo(j, {
-                tipo: "actualizacion_partido",
-                resumen: "El equipo contrario ha aceptado un horario para jugar el partido",
-                href: `/partido/${reserva.partidoId || ''}`
-            }).catch(() => {});
-        }
-
-      
-
-
-
-
-        return doc.id;
-        } catch(error) {
-            console.info(error);
-        }
-        
     }
 
     async habilitarReserva(reservaId) {
@@ -308,12 +307,12 @@ const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion
         }
 
         const noti = new NotiConnection();
-        for(const j of reserva.jugadoresIDS) {
+        for (const j of reserva.jugadoresIDS) {
             await noti.pushNotificationTo(j, {
                 tipo: "reserva_confirmada",
                 resumen: "Tu reserva ha sido confirmada",
                 href: `/partido/${reserva.partidoId}`
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
         return reservaId;

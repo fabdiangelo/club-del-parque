@@ -72,7 +72,6 @@ export class AdministradorRepository {
   async update(id, administrador) {
     await this.db.updateItem(this.collectionName, id, administrador);
 
-    // Mirror relevant changes into Firebase Auth if provided
     if (administrador.email) {
       await this.auth.updateUser(id, { email: administrador.email });
     }
@@ -84,7 +83,6 @@ export class AdministradorRepository {
   async getAll() {
     const rows = await this.db.getAllItems(this.collectionName);
     if (!rows) return [];
-    // rows can be an array of snapshots OR plain objects
     return Array.from(rows).map((doc, i) => this._asPlain(doc, `admin-${i}`)).filter(Boolean);
   }
 
