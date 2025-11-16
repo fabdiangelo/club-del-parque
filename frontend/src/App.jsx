@@ -46,11 +46,9 @@ function App() {
   const requestPermission = async () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      console.log('Permiso concedido');
       const token = await getToken(messaging, { 
         vapidKey: 'BDCSL7Fj7jfxuhR7jPVnLkUiIADoL3kyqsdymO2cMPqEU9JlE2V6ypmOMou3PS6bdPFN9aUNyTHwMrRfXb5O4ls' 
       });
-      console.log('Token de registro:', token);
 
       if (!user) return; 
       const response = await fetch('/api/usuarios/noti-tokens', {
@@ -66,9 +64,6 @@ function App() {
       });
 
       if (!response.ok) return console.error(response.statusText);
-      console.log('Token enviado al servidor correctamente');
-    } else {
-      console.log('Permiso denegado');
     }
   };
 
@@ -83,7 +78,6 @@ function App() {
 
   return (
     <Routes>
-      {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />

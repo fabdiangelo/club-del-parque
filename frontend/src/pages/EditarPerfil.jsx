@@ -34,13 +34,7 @@ export default function EditarPerfil() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!user) {
-      setLoadingUser(false);
-      return;
-    }
-
-    const fetchUser = async () => {
+  const fetchUser = async () => {
       setLoadingUser(true);
       try {
         const res = await fetch(`/api/usuario/${user.uid}`, {
@@ -88,6 +82,14 @@ export default function EditarPerfil() {
         setLoadingUser(false);
       }
     };
+
+  useEffect(() => {
+    if (!user) {
+      setLoadingUser(false);
+      return;
+    }
+
+    
     fetchUser();
   }, [user]);
 
@@ -141,8 +143,8 @@ export default function EditarPerfil() {
       }
 
       setSuccess("Perfil actualizado correctamente");
-      // optional: navigate back to perfil after short delay
-      setTimeout(() => navigate("/perfil"), 900);
+      
+      fetchUser();
     } catch (err) {
       console.error("update error:", err);
       setError(err.message || String(err));
@@ -153,7 +155,7 @@ export default function EditarPerfil() {
 
   if (loading || loadingUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200">
+      <div className="min-h-screen flex items-center justify-center bg-base-200 bg-white">
         <div className="text-center">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
           <p className="mt-4 text-lg">Cargando datos del perfil...</p>
@@ -167,114 +169,151 @@ export default function EditarPerfil() {
   }
 
   return (
-    <div className="min-h-screen bg-base-200 py-12 px-4" style={{ paddingTop: "6rem" }}>
+    <div className="min-h-screen bg-white flex items-center justify-center">
       <NavbarBlanco />
-      <div className="max-w-4xl mx-auto">
-        <div className="card bg-base-100 shadow-xl">
+      <div className="max-w-4xl w-full">
+        <div className="card bg-white shadow-xl border rounded-lg">
           <div className="card-body">
             <h2 className="text-2xl font-semibold mb-4">Editar perfil</h2>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Datos */}
-              <div className="p-4 bg-base-200 rounded-lg">
+              <div className="p-4 bg-white rounded-lg border shadow-sm">
                 <h3 className="font-medium mb-3">Datos</h3>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm">Nombre</label>
-                    <input name="nombre" value={form.nombre} onChange={handleChange} className="input input-bordered w-full" required />
+                    <input
+                      name="nombre"
+                      value={form.nombre}
+                      onChange={handleChange}
+                      className="input input-bordered w-full"
+                      required
+                    />
                   </div>
-
                   <div>
                     <label className="block text-sm">Apellido</label>
-                    <input name="apellido" value={form.apellido} onChange={handleChange} className="input input-bordered w-full" />
+                    <input
+                      name="apellido"
+                      value={form.apellido}
+                      onChange={handleChange}
+                      className="input input-bordered w-full"
+                    />
                   </div>
-
                   <div>
                     <label className="block text-sm">Email</label>
-                    <input name="email" type="email" value={form.email} onChange={handleChange} className="input input-bordered w-full" required />
+                    <input
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      className="input input-bordered w-full"
+                      required
+                    />
                   </div>
-
+                  
                   <div>
-                    <label className="block text-sm">Contraseña (dejar en blanco para no cambiar)</label>
-                    <input name="password" type="password" value={form.password} onChange={handleChange} className="input input-bordered w-full" />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm">Estado</label>
-                    <select name="estado" value={form.estado} onChange={handleChange} className="select select-bordered w-full">
+                    <label className="block text-sm" >Estado</label>
+                    <select
+                      name="estado"
+                      value={form.estado}
+                      onChange={handleChange}
+                      className="input input-bordered w-full"
+                    >
                       <option value="activo">activo</option>
                       <option value="inactivo">inactivo</option>
                     </select>
                   </div>
-
                   <div>
                     <label className="block text-sm">Nacimiento</label>
-                    <input name="nacimiento" type="date" value={form.nacimiento || ""} onChange={handleChange} className="input input-bordered w-full" />
+                    <input
+                      name="nacimiento"
+                      type="date"
+                      value={form.nacimiento || ""}
+                      onChange={handleChange}
+                      className="input input-bordered w-full"
+                    />
                   </div>
-
-                  <div>
-                    <label className="block text-sm">Genero</label>
-                    <input name="genero" value={form.genero} onChange={handleChange} className="input input-bordered w-full" />
-                  </div>
+                  
                 </div>
               </div>
 
               {/* Preferencias */}
-              <div className="p-4 bg-base-200 rounded-lg">
+              <div className="p-4 bg-white rounded-lg border shadow-sm">
                 <h3 className="font-medium mb-3">Preferencias</h3>
-
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-sm font-medium">Notificaciones por email</p>
                     <p className="text-xs opacity-70">Recibir notificaciones vía correo electrónico</p>
                   </div>
-                  <input type="checkbox" checked={prefs.mail} onChange={() => handlePrefToggle('mail')} className="toggle toggle-primary" />
+                  <input
+                    type="checkbox"
+                    checked={prefs.mail}
+                    onChange={() => handlePrefToggle("mail")}
+                    className="toggle" style={{backgroundColor: 'var(--primario)'}}
+                  />
                 </div>
-
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-sm font-medium">Notificaciones por WhatsApp</p>
                     <p className="text-xs opacity-70">Recibir notificaciones vía WhatsApp</p>
                   </div>
-                  <input type="checkbox" checked={prefs.whatsapp} onChange={() => handlePrefToggle('whatsapp')} className="toggle toggle-secondary" />
+                  <input
+                    type="checkbox"
+                    checked={prefs.whatsapp}
+                    onChange={() => handlePrefToggle("whatsapp")}
+                   className="toggle" style={{backgroundColor: 'var(--primario)'}}
+                  />
                 </div>
-
                 <div className="mb-3">
                   <p className="text-sm font-medium">Tipos de notificaciones</p>
                   <div className="flex flex-col gap-2 mt-2">
                     <label className="label cursor-pointer">
-                      <input type="checkbox" className="checkbox checkbox-primary mr-2" checked={prefs.tipos.noticias} onChange={() => handleTipoToggle('noticias')} />
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary mr-2"
+                        checked={prefs.tipos.noticias}
+                        onChange={() => handleTipoToggle("noticias")}
+                      />
                       <span className="label-text">Noticias</span>
                     </label>
                     <label className="label cursor-pointer">
-                      <input type="checkbox" className="checkbox checkbox-primary mr-2" checked={prefs.tipos.campeonatos} onChange={() => handleTipoToggle('campeonatos')} />
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary mr-2"
+                        checked={prefs.tipos.campeonatos}
+                        onChange={() => handleTipoToggle("campeonatos")}
+                      />
                       <span className="label-text">Nuevos campeonatos</span>
                     </label>
                     <label className="label cursor-pointer">
-                      <input type="checkbox" className="checkbox checkbox-primary mr-2" checked={prefs.tipos.solicitudes} onChange={() => handleTipoToggle('solicitudes')} />
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary mr-2"
+                        checked={prefs.tipos.solicitudes}
+                        onChange={() => handleTipoToggle("solicitudes")}
+                      />
                       <span className="label-text">Solicitudes de partidos</span>
                     </label>
                   </div>
                 </div>
-
-                <div className="mb-3">
-                  <p className="text-sm font-medium">Tema</p>
-                  <div className="mt-2">
-                    <label className="inline-flex items-center mr-4">
-                      <input type="radio" name="tema" value="light" checked={prefs.tema === 'light'} onChange={handleTemaChange} className="radio radio-primary mr-2" />
-                      <span>Claro</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input type="radio" name="tema" value="dark" checked={prefs.tema === 'dark'} onChange={handleTemaChange} className="radio radio-primary mr-2" />
-                      <span>Oscuro</span>
-                    </label>
-                  </div>
-                </div>
-
                 <div className="mt-4 flex gap-2 justify-end">
-                  <button type="button" className="btn btn-ghost" onClick={() => navigate('/perfil')} disabled={saving}>Cancelar</button>
-                  <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+                  <button
+                    type="button"
+                    style={{padding: '10px 20px', color: 'white', backgroundColor: 'var(--neutro)', borderRadius: '8px', cursor: 'pointer'}}
+                    onClick={() => navigate("/perfil")}
+                    disabled={saving}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    style={{padding: '10px 20px', color: 'white', backgroundColor: 'var(--primario)', borderRadius: '8px', cursor: 'pointer'}}
+                    
+                    disabled={saving}
+                  >
+                    {saving ? "Guardando..." : "Guardar cambios"}
+                  </button>
                 </div>
-
                 {error && (
                   <div className="mt-3 alert alert-error">
                     <div>{error}</div>

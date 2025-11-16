@@ -4,3 +4,25 @@
   font-weight: normal;
   font-style: normal;
 }
+
+body {
+  padding: 0;
+  margin: 0
+}
+
+.logo-pelota {
+  width: 300px; /* Tamaño predeterminado */
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  .logo-pelota {
+    display: none; /* Ocultar en pantallas pequeñas */
+  }
+}
+
+@media (max-width: 768px) {
+  .homepage-section {
+    padding-top: 20%; /* Ajusta el espacio superior */
+  }
+}

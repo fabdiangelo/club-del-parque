@@ -4,24 +4,57 @@ import { useNavigate } from "react-router-dom";
 import logoUrl from "../assets/Logo.svg";
 import { useNotification } from "../contexts/NotificacionContext";
 import BellDropdown from "./BellDropdown.jsx";
-
+import { useState, useEffect } from "react";
 
 export default function NavbarBlanco({ transparent = false }) {
-  const { user } = useAuth();
+  const { user, loading, error, logout } = useAuth();
   const navigate = useNavigate();
-  const {notiCount} = useNotification();
+  const { notiCount } = useNotification();
 
-  console.log(user)
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // Estado para el menú hamburguesa
 
-  const navItem =
-    `px-4 py-2 text-sm sm:text-base font-normal transition ${transparent ? "text-white/90 hover:text-white" : "text-black/90 hover:text-black"}`;
-  const activeItem = transparent ? "text-white": "text-black";
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    const ok = await logout();
+    if (ok) {
+      navigate("/login");
+    } else {
+      console.error("Logout falló");
+    }
+  };
+
+  const navItem = `px-4 py-2 text-sm sm:text-base font-normal transition ${
+    transparent ? (isScrolled ? "text-black/90 hover:text-black" : "text-white/90 hover:text-white") : "text-black/90 hover:text-black"
+  }`;
+  const activeItem = transparent
+    ? isScrolled
+      ? "text-black font-bold" // Color para fondo blanco
+      : "text-white font-bold" // Color para fondo transparente
+    : "text-black font-bold";
 
   return (
     <header
-      className={`w-full top-0 z-[200] fixed transition-colors duration-300 ${transparent ? "backdrop-blur text-white" : "bg-white"}`}
+      className={`w-full top-0 z-[200] fixed transition-all duration-500 ${
+        transparent
+          ? isScrolled
+            ? "bg-white text-black "
+            : "bg-transparent text-white"
+          : "bg-white text-black "
+      }`}
       role="banner"
-      style={{'left': '0'}}
+      style={{ left: "0" }}
     >
       <nav className="mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
@@ -33,77 +66,115 @@ export default function NavbarBlanco({ transparent = false }) {
           />
         </Link>
 
+        {/* Menú hamburguesa para dispositivos pequeños */}
+        <button
+          className="md:hidden flex items-center justify-center p-2 rounded focus:outline-none"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Abrir menú"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3.75 5.25h16.5m-16.5 6h16.5m-16.5 6h16.5"
+            />
+          </svg>
+        </button>
 
-        <ul className="hidden md:flex items-center gap-8">
-          <li>
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Inicio
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/Noticias"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Noticias
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/ranking"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Ranking
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/resultados"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Resultados
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/campeonatos"
-              className={({ isActive }) =>
-                `${navItem} ${isActive ? activeItem : ""}`
-              }
-            >
-              Campeonatos
-            </NavLink>
-          </li>
-          { user?.rol == "administrador" &&
+        {/* Menú principal */}
+        <div
+          className={`${
+            menuOpen ? "block" : "hidden"
+          } md:flex flex-col md:flex-row items-center gap-3 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
+        >
+          <ul className="flex flex-col md:flex-row items-start md:items-end gap-2 md:gap-4 px-4 md:px-0">
             <li>
               <NavLink
-                to="/administracion"
-                className={({ isActive }) => `${navItem} ${isActive ? activeItem : ""}`}
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `${navItem} ${isActive ? activeItem : ""}`
+                }
               >
-                Administracion
+                Inicio
               </NavLink>
             </li>
-          }
-        </ul>
-        <div className="flex items-center gap-3">
-          {user ?
-            <>
-              <div style={{ position: 'relative', display: 'inline-block' }}>
+
+            {user && (
+              <li>
+                <NavLink
+                  to="/campeonatos"
+                  className={({ isActive }) =>
+                    `${navItem} ${isActive ? activeItem : ""}`
+                  }
+                >
+                  Campeonatos
+                </NavLink>
+              </li>
+            )}
+
+            <li>
+              <NavLink
+                to="/ranking"
+                className={({ isActive }) =>
+                  `${navItem} ${isActive ? activeItem : ""}`
+                }
+              >
+                Ranking
+              </NavLink>
+            </li>
+
+            <li>
+              <NavLink
+                to="/reportes"
+                className={({ isActive }) =>
+                  `${navItem} ${isActive ? activeItem : ""}`
+                }
+              >
+                Reportes
+              </NavLink>
+            </li>
+
+            {user && (
+              <li>
+                <NavLink
+                  to="/resultados"
+                  className={({ isActive }) =>
+                    `${navItem} ${isActive ? activeItem : ""}`
+                  }
+                >
+                  Resultados
+                </NavLink>
+              </li>
+            )}
+
+            {user?.rol === "administrador" && (
+              <li>
+                <NavLink
+                  to="/administracion"
+                  className={({ isActive }) =>
+                    `${navItem} ${isActive ? activeItem : ""}`
+                  }
+                >
+                  Administración
+                </NavLink>
+              </li>
+            )}
+          </ul>
+
+          {user ? (
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-3 px-4 md:px-0">
+              <div style={{ position: "relative", display: "inline-block" }}>
                 <svg
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => navigate('/chats')}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => navigate("/chats")}
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -111,47 +182,102 @@ export default function NavbarBlanco({ transparent = false }) {
                   stroke="currentColor"
                   className="size-6"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
+                  />
                 </svg>
                 {notiCount > 0 && (
                   <span
                     style={{
-                      position: 'absolute',
-                      top: '-6px',
-                      right: '-6px',
-                      background: '#0D8ABC',
-                      color: '#fff',
-                      borderRadius: '50%',
-                      padding: '1px 4px',
-                      fontSize: '0.7em',
+                      position: "absolute",
+                      top: "-6px",
+                      right: "-6px",
+                      background: "#0D8ABC",
+                      color: "#fff",
+                      borderRadius: "50%",
+                      padding: "1px 4px",
+                      fontSize: "0.7em",
                       fontWeight: 700,
-                      zIndex: 2,
-                      minWidth: '10px',
-                      textAlign: 'center',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.12)'
+                      zIndex: 0,
+                      minWidth: "10px",
+                      textAlign: "center",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
                     }}
                   >
                     {notiCount}
                   </span>
                 )}
-              </div> 
+              </div>
 
-              <BellDropdown color={transparent ? "white" : "black"}/>
+              <BellDropdown color={transparent ? (isScrolled ? "black" : "white") : "black"} />
 
-              <button 
-                className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
-                onClick={() => navigate('/perfil')}> 
-                Perfil 
+              <button
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  justifyContent: "center",
+                  backgroundColor: "var(--primario)",
+                  cursor: "pointer",
+                  padding: "10px 30px",
+                  borderRadius: "8px",
+                  color: "white",
+                }}
+                onClick={() => navigate("/perfil")}
+              >
+                Perfil
               </button>
-            </>
-          :
+
+              <button
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  justifyContent: "center",
+                  backgroundColor: "red",
+                  cursor: "pointer",
+                  padding: "10px 30px",
+                  borderRadius: "8px",
+                  color: "white",
+                }}
+                onClick={() => handleLogout()}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
+                  />
+                </svg>
+              </button>
+            </div>
+          ) : (
             <Link
-            to="/login"
-            className="rounded-full bg-sky-600 px-6 py-2 text-white font-medium hover:bg-sky-500 hover:text-white transition"
+              to="/login"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                justifyContent: "center",
+                backgroundColor: "var(--primario)",
+                cursor: "pointer",
+                padding: "10px 30px",
+                borderRadius: "8px",
+                color: "white",
+              }}
             >
               Login
             </Link>
-          }
+          )}
         </div>
       </nav>
     </header>

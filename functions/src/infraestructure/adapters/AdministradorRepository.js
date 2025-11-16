@@ -35,6 +35,12 @@ export class AdministradorRepository {
     return null;
   }
 
+  async getAdministradorById(id) {
+    const raw = await this.db.getItem(this.collectionName, id);
+    if (!raw) return null;
+    return this._asPlain(raw, id);
+  }
+
   /* ---------------- CRUD ---------------- */
   async save(administrador) {
     const ref = await this.db.putItem(
