@@ -124,6 +124,7 @@ export default function FixtureCampeonato() {
       <div className="max-w-7xl mx-auto mb-6 flex items-center justify-center gap-4">
         {etapaActual !== 0 ? (
           <button
+            title='Etapa Previa'
             onClick={() => navegarEtapa('prev')}
             disabled={etapaActual === 0}
             className="p-2 rounded-lg bg-white shadow hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all"
@@ -142,6 +143,7 @@ export default function FixtureCampeonato() {
 
         {etapaActual !== campeonato?.etapas.length - 1 ? (
           <button
+            title='Etapa Siguiente'
             onClick={() => navegarEtapa('next')}
             disabled={etapaActual === campeonato?.etapas.length - 1}
             className="p-2 rounded-lg bg-white shadow hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all"
@@ -283,8 +285,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                                 found = (grupo.partidos || []).find(p => p.jugador1Index === slotIndex || p.jugador2Index === slotIndex || (p.jugador1Id === jugador.id || p.jugador2Id === jugador.id));
                               }
                               if (found && etapaId) {
-                                const fullId = `${etapaId}-${grupo.id}-${found.id}`;
-                                navigate(`/partido/${fullId}`);
+                                navigate(`/partido/${found.id}`);
                               }
                             }}
                             className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"

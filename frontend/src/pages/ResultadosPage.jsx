@@ -22,31 +22,16 @@ export default function ResultadosPage() {
       setErr("");
 
       try {
-        // Obtener el registro de federado para leer federadoPartidosIDs
-        const fres = await fetch(toApi(`/federados/${user.uid}`), { credentials: 'include', cache: 'no-store' });
         let partidoList = [];
+        const federadoId = user?.id;
 
-        if (fres.ok) {
-          const federado = await fres.json();
-          const ids = Array.isArray(federado.federadoPartidosIDs) ? federado.federadoPartidosIDs : [];
-
-          // Si hay ids registrados, traerlos en paralelo
-          if (ids.length > 0) {
-            const fetches = ids.map(pid =>
-              fetch(toApi(`/partidos/${pid}`), { credentials: 'include', cache: 'no-store' })
-                .then(r => (r.ok ? r.json() : null))
-                .then(p => { if (p) p.id = pid; return p; })
-                .catch(() => null)
-            );
-            const results = await Promise.all(fetches);
-            partidoList = (results || []).filter(Boolean);
-          } else {
-            // Fallback: si no hay federadoPartidosIDs, intentar la ruta antigua por jugador
-            const res = await fetch(toApi(`/partidos/jugador/${user.uid}`), { credentials: 'include', cache: 'no-store' });
-            if (res.ok) partidoList = await res.json();
+        if (federadoId) {
+          const res = await fetch(toApi(`/partidos/jugador/${federadoId}`), { credentials: 'include', cache: 'no-store' });
+          if (res.ok) {
+            partidoList = await res.json();
           }
         } else {
-          // Si no encontramos federado, fallback a /partidos/jugador
+          // Si no existe id de federado, fallback a la ruta por jugador
           const res = await fetch(toApi(`/partidos/jugador/${user.uid}`), { credentials: 'include', cache: 'no-store' });
           if (res.ok) partidoList = await res.json();
         }
@@ -150,7 +135,7 @@ export default function ResultadosPage() {
                           <Link to={`/partido/${p?.id || p?._id}`} className="btn btn-success btn-sm normal-case">Finalizado</Link>
                         )
                         : tieneFecha ? (
-                          <Link to={`/partidos/${p?.id}/acuerdo`} className="btn btn-primary btn-sm normal-case">Proponer / Confirmar</Link>
+                          <Link to={`/partidos/${p?.id}/acuerdo`} title="Ir al partido" className="btn btn-primary btn-sm normal-case">Proponer / Confirmar</Link>
                         ) : (
                           <Link to={`/partido/${p?.id || p?._id}`} className="btn btn-secondary btn-sm normal-case">Agendar</Link>
                         )}

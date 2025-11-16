@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
@@ -16,9 +16,19 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
-  const { refetchUser } = useAuth()
+  const { refetchUser, logout } = useAuth()
 
   const navigate = useNavigate()
+
+  // Al entrar en la página de login, cerrar cualquier sesión existente
+  useEffect(() => {
+    (async () => {
+      try {
+        await logout();
+      } catch (err) {
+      }
+    })();
+  }, [logout]);
 
   const handleGoogleLogin = async () => {
     setMsg(null);

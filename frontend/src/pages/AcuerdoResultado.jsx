@@ -697,7 +697,6 @@ export default function AcuerdoResultado() {
       );
 
       await reload();
-      alert("Propuesta enviada. El otro jugador debe confirmarla.");
     } catch (e) {
       setErr(normalizeError(e));
     } finally {
@@ -776,11 +775,11 @@ export default function AcuerdoResultado() {
       }
 
       await reload();
-      alert(
-        acepta
-          ? "Resultado confirmado. ¡Gracias!"
-          : "Se registró la disputa. Un administrador resolverá."
-      );
+      if (!acepta) {
+        alert(
+          "Se registró la disputa. Un administrador resolverá el caso a la brevedad."
+        );
+      }
     } catch (e) {
       setErr(normalizeError(e));
     } finally {

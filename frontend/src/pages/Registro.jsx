@@ -71,7 +71,6 @@ const handleChange = (e) => {
                 required
               />
             </div>
-
             <div>
               <input
                 placeholder="Apellido"
