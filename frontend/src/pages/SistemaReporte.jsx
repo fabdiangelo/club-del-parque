@@ -1,5 +1,5 @@
 import React from "react";
-import NavbarBlanco from "../components/NavbarBlanco";
+import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { useState } from "react";
 
 import  '../styles/SistemaRegistro.css';
@@ -80,7 +80,7 @@ const SistemaReporte = () => {
 
     return (
         <>
-            <Navbar color="white" />
+            <NavbarBlanco color="white" />
 
             <div className="flex flex-col justify-center items-center min-h-screen gap-4 px-4">
                 <h1 className="text-5xl font-bold text-center" style={{ 'color': 'var(--neutro)' }}>

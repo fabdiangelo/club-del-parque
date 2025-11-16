@@ -598,18 +598,20 @@ async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
         if (l !== r) order.push(r);
         l++; r--;
       }
+      console.log(`Orden de asignación de slots: ${order.join(', ')}`);
+      console.log(`Jugadores intercalados: ${interleaved.join(', ')}`);
 
       // Assign players to slots based on interleaved order and outer-inner positions
       let asignados = 0;
       for (let i = 0; i < interleaved.length && i < order.length; i++) {
         const playerId = interleaved[i];
-        const pos = order[i];
+        const pos = i;
         const partidoIndex = Math.floor(pos / 2);
         const isJugador1 = (pos % 2) === 0;
         const p = partidos[partidoIndex];
         if (!p) continue;
 
-        const targetId = `${nextEtapa.id}-${firstR.id}-${p.id}`;
+        const targetId = p.id;
         const partidoToUpdate = await this._internalPartidoRepo.getById(targetId).catch(() => null);
         if (!partidoToUpdate) {
           console.warn(`Partido ${targetId} no encontrado al asignar ${playerId}`);
@@ -744,13 +746,15 @@ async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
       const fed = await this.federadoRepository.getFederadoById(playerId).catch(() => null);
       if (!fed) return;
 
-      const pidList = Array.isArray(fed.federadoPartidosIDs) ? fed.federadoPartidosIDs.slice() : [];
+      const pidList = Array.isArray(fed.federadoPartidosIDs) ? fed.federadoPartidosIDs.slice() : [fed.federadoPartidosIDs];
 
       if (ronda) {
         // Para eliminación: comparar como strings para evitar problemas de tipo
+        console.log(`Actualizando federado ${fed.id} para ronda ${ronda.id}`);
         const newPids = (ronda.partidos || [])
-          .filter(p => String(p.jugador1Id) === String(playerId) || String(p.jugador2Id) === String(playerId))
-          .map(p => `${etapa.id}-${ronda.id}-${p.id}`);
+          .filter(p => String(p.jugador1Id) === String(playerId) || String(p.jugador2Id) === String(playerId) || p.jugador1?.some(j => String(j.id) == String(playerId)) || p.jugador2?.some(j => String(j.id) == String(playerId)))
+          .map(p => `${p.id}`);
+        console.log(`Partidos nuevos a agregar para ${fed.id}:`, newPids);
         for (const np of newPids) {
           if (!pidList.includes(np)) pidList.push(np);
         }

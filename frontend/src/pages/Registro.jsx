@@ -55,7 +55,7 @@ function Registro() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <Navbar  color="blanco"/>
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
+      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md mt-20">
         <h2 className="text-2xl font-bold mb-6 text-center" style={{'color': 'var(--neutro)'}}>Registro</h2>
         <form style={{'color': 'var(--neutro)'}} onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -64,6 +64,17 @@ function Registro() {
               type="text"
               name="nombre"
               value={formData.nombre}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
+              required
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Apellido</label>
+            <input
+              type="text"
+              name="apellido"
+              value={formData.apellido}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
               required
@@ -86,17 +97,6 @@ function Registro() {
               type="password"
               name="password"
               value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium">Apellido</label>
-            <input
-              type="text"
-              name="apellido"
-              value={formData.apellido}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
               required

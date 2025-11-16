@@ -13,7 +13,6 @@ class Precarga {
       { id: 'eliminacion (3 Sets)', tipoEtapa: 'eliminacion', cantidadSets: 3, juegosPorSet: 6, permitirEmpate: false},
       { id: 'eliminacion (5 Sets)', tipoEtapa: 'eliminacion', cantidadSets: 5, juegosPorSet: 6, permitirEmpate: false},
       { id: 'fase de grupos (3 sets)', tipoEtapa: 'roundRobin', cantidadSets: 3, juegosPorSet: 6, permitirEmpate: false},
-      { id: 'fase de grupos (3 sets, con empates)', tipoEtapa: 'roundRobin', cantidadSets: 3, juegosPorSet: 6, permitirEmpate: true},
     ];
 
     // Formatos de Campeonatos
@@ -22,6 +21,8 @@ class Precarga {
       { id: 'single-16', nombre: 'Individual 16', cantidadJugadores: 16, formatosEtapasIDs: ['eliminacion (5 Sets)'] },
       { id: 'round-robin-4', nombre: 'Round Robin 4', cantidadJugadores: 4, formatosEtapasIDs: ['fase de grupos (3 sets)'] },
       { id: 'completo-32', nombre: 'Completo 32', cantidadJugadores: 32, formatosEtapasIDs: ['fase de grupos (3 sets)', 'eliminacion (3 Sets)'] },
+      { id: 'completo-16', nombre: 'Completo 16', cantidadJugadores: 16, formatosEtapasIDs: ['fase de grupos (3 sets)', 'eliminacion (3 Sets)'] },
+      { id: 'completo-8', nombre: 'Completo 8', cantidadJugadores: 8, formatosEtapasIDs: ['fase de grupos (3 sets)', 'eliminacion (3 Sets)'] },
     ];
   }
 

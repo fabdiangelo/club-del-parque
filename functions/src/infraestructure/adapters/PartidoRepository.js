@@ -171,22 +171,20 @@ export class PartidoRepository {
    * Devuelve los partidos en los que participa un jugador (compat: `jugadores` o `federadosPartidoIDs`)
    */
   async getPartidosPorJugador(jugadorID) {
-    const all = await this.db.getAllItems("partidos");
+    const federado = await this.db.getItem("federados", jugadorID);
+    const partidosFederadoIDs = federado?.federadoPartidosIDs || [];
 
-    // Normalizar a objetos simples que siempre tengan .id
-    const list = (Array.isArray(all) ? all : []).map((p) => {
-      const d = typeof p?.data === "function" ? p.data() : p; // Firestore o plain
-      return d?.id ? d : { id: p?.id, ...(d || {}) };
-    });
-
-    return list.filter((partido) => {
-      const jugadores = Array.isArray(partido.jugadores)
-        ? partido.jugadores
-        : Array.isArray(partido.federadosPartidoIDs)
-          ? partido.federadosPartidoIDs
-          : [];
-      return jugadores.includes(jugadorID);
-    });
+    if (partidosFederadoIDs.length > 0) {
+      const partidos = [];
+      for (const pid of partidosFederadoIDs) {
+        const partido = await this.db.getItem("partidos", pid);
+        if (partido) {
+          partidos.push({ id: pid, ...partido });
+        }
+      }
+      return partidos;
+    }
+    return [];
   }
 
   /**

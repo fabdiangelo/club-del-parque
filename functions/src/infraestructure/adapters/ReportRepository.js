@@ -25,8 +25,7 @@ export class ReporteRepository {
   }
 
   async findAll() {
-    const reportes = await this.db.getAllItems('reportes');
-    return reportes.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return await this.db.getAllItems('reportes');
   }
 
   async leido(id) {

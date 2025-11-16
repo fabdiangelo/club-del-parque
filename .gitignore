@@ -77,3 +77,8 @@ dist/
 emulator-data/
 firebase-export-*/
 dev-dist/
+
+
+# Test results
+screenshots
+videos
