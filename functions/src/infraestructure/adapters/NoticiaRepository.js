@@ -3,6 +3,8 @@ import INoticiaRepository from "../../domain/ports/INoticiaRepository.js";
 import Noticia from "../../domain/entities/Noticia.js";
 import DBConnection from "../DBConnection.js";
 import StorageConnection from "../ports/StorageConnection.js";
+import { enviarNotificacion } from "../ports/PushNotification.js";
+
 
 const COLLECTION = "noticias";
 
@@ -42,7 +44,6 @@ export default class NoticiaRepository extends INoticiaRepository {
     return items.map((d) => Noticia.fromData(d));
   }
 
-  /** CREATE — keeps legacy single image fields, initializes imagenes as [] */
   async create(noticia, image = null) {
     const n = noticia instanceof Noticia ? noticia : new Noticia(noticia);
     const plain = n.toPlainObject();
@@ -81,6 +82,27 @@ export default class NoticiaRepository extends INoticiaRepository {
       },
       { merge: false }
     );
+
+    const snapshot = await this.db.getAllItems("usuarios");
+const usuarios = snapshot.docs.map(doc => doc.data());
+
+
+for (const usuario of usuarios) {
+  if (usuario.notiTokens && usuario.notiTokens.length > 0) {
+    try {
+await enviarNotificacion(
+      usuario.notiTokens,
+      "Nueva Noticia",
+      `Se ha publicado una nueva noticia: ${n.titulo}`,
+      "/noticias/" + id
+    );
+
+    console.log("NOTIFIAICON ENVIADA A USUARIO", usuario.email);
+    } catch(error) {
+      console.error(error);
+    }
+  }
+}
 
     return id;
   }

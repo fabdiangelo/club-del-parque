@@ -8,88 +8,92 @@ export class PartidoRepository {
   }
 
   async save(partido) {
-    const { temporadaID, canchaID } = partido;
 
-    // Validar solo si vienen explícitamente temporadaID o canchaID
-    if (typeof temporadaID !== 'undefined' && temporadaID !== null) {
-      const temp = await this.db.getItem("temporadas", temporadaID);
-      if (!temp) {
-        throw new Error("La temporada asociada no existe");
-      }
-    }
 
-    if (typeof canchaID !== 'undefined' && canchaID !== null) {
-      const cancha = await this.db.getItem("canchas", canchaID);
-      if (!cancha) {
-        throw new Error("La cancha asociada no existe");
-      }
-    }
+    try {
+      const { temporadaID, canchaID } = partido;
 
-    const { jugadores, equipoVisitante, equipoLocal, jugador1, jugador2 } = partido;
 
-    // Validar jugadores (plantel completo)
-    for (const j of jugadores || []) {
-      const jugadorExists = await this.db.getItem("usuarios", j);
-      if (!jugadorExists) {
-        const fedExists = await this.db.getItem("federados", j);
-        if (!fedExists) {
-          throw new Error(`El jugador con ID ${j} no existe`);
+      // Validar solo si vienen explícitamente temporadaID o canchaID
+      if (typeof temporadaID !== 'undefined' && temporadaID !== null) {
+        const temp = await this.db.getItem("temporadas", temporadaID);
+        if (!temp) {
+          throw new Error("La temporada asociada no existe");
         }
       }
-    }
 
-    // Prefer jugador1/jugador2 arrays when present (dobles). Fallback to equipoLocal/equipoVisitante for legacy data.
-    const localCandidates = Array.isArray(jugador1)
-      ? jugador1.map(p => p?.id).filter(Boolean)
-      : Array.isArray(equipoLocal)
-        ? equipoLocal
-        : [];
-
-    for (const j of localCandidates) {
-      const equipoExists = await this.db.getItem("usuarios", j);
-      if (!equipoExists) {
-        const fedExists = await this.db.getItem("federados", j);
-        if (!fedExists) {
-          throw new Error(`El jugador ID ${j} no existe`);
+      if (typeof canchaID !== 'undefined' && canchaID !== null) {
+        const cancha = await this.db.getItem("canchas", canchaID);
+        if (!cancha) {
+          throw new Error("La cancha asociada no existe");
         }
       }
-    }
 
-    const visitCandidates = Array.isArray(jugador2)
-      ? jugador2.map(p => p?.id).filter(Boolean)
-      : Array.isArray(equipoVisitante)
-        ? equipoVisitante
-        : [];
+      const { jugadores, equipoVisitante, equipoLocal, jugador1, jugador2 } = partido;
 
-    for (const j of visitCandidates) {
-      const equipoExists = await this.db.getItem("usuarios", j);
-      if (!equipoExists) {
-        const fedExists = await this.db.getItem("federados", j);
-        if (!fedExists) {
-          throw new Error(`El jugador con ID ${j} no existe`);
+      // Validar jugadores (plantel completo)
+      for (const j of jugadores || []) {
+        const jugadorExists = await this.db.getItem("usuarios", j);
+        if (!jugadorExists) {
+          const fedExists = await this.db.getItem("federados", j);
+          if (!fedExists) {
+            throw new Error(`El jugador con ID ${j} no existe`);
+          }
         }
       }
+
+      // Prefer jugador1/jugador2 arrays when present (dobles). Fallback to equipoLocal/equipoVisitante for legacy data.
+      const localCandidates = Array.isArray(jugador1)
+        ? jugador1.map(p => p?.id).filter(Boolean)
+        : Array.isArray(equipoLocal)
+          ? equipoLocal
+          : [];
+
+      for (const j of localCandidates) {
+        const equipoExists = await this.db.getItem("usuarios", j);
+        if (!equipoExists) {
+          const fedExists = await this.db.getItem("federados", j);
+          if (!fedExists) {
+            throw new Error(`El jugador ID ${j} no existe`);
+          }
+        }
+      }
+
+      const visitCandidates = Array.isArray(jugador2)
+        ? jugador2.map(p => p?.id).filter(Boolean)
+        : Array.isArray(equipoVisitante)
+          ? equipoVisitante
+          : [];
+
+      for (const j of visitCandidates) {
+        const equipoExists = await this.db.getItem("usuarios", j);
+        if (!equipoExists) {
+          const fedExists = await this.db.getItem("federados", j);
+          if (!fedExists) {
+            throw new Error(`El jugador con ID ${j} no existe`);
+          }
+        }
+      }
+
+      // Agregar fechaMaxima por defecto si no está definida
+      if (!partido.fechaMaxima) {
+        const hoy = new Date();
+        const dosSemanasDespues = new Date(hoy.setDate(hoy.getDate() + 14));
+        partido.fechaMaxima = dosSemanasDespues.toISOString(); // Formato ISO para consistencia
+      }
+
+      const doc = await this.db.putItem("partidos", partido, partido.id);
+      return doc.id;
+    } catch (error) {
+      throw error;
     }
 
-    // Agregar fechaMaxima por defecto si no está definida
-    if (!partido.fechaMaxima) {
-      const hoy = new Date();
-      const dosSemanasDespues = new Date(hoy.setDate(hoy.getDate() + 14));
-      partido.fechaMaxima = dosSemanasDespues.toISOString(); // Formato ISO para consistencia
-    }
-
-    const doc = await this.db.putItem("partidos", partido, partido.id);
-    console.log("Se ha creado el partido con id: " + doc.id);
-    return doc.id;
   }
 
   async getById(partidoId) {
-    console.log("PartidoRepository.getById llamado con ID:", partidoId);
     const data = await this.db.getItem("partidos", partidoId);
-    console.log("Datos obtenidos de la DB:", data);
 
     if (!data) {
-      console.log("No se encontraron datos para ID:", partidoId);
       return null;
     }
     return { id: partidoId, ...data };
@@ -232,7 +236,7 @@ export class PartidoRepository {
 
     await this.update(partidoId, updatedPartido);
 
-    
+
 
     return { success: true, message: "Propuesta aceptada correctamente" };
   }
@@ -243,9 +247,6 @@ export class PartidoRepository {
 
     const actual = await this.db.getItem("partidos", partidoId);
     if (!actual) throw new Error("Partido no encontrado");
-
-    console.log("Disponibilidad actual:", actual.disponibilidades);
-    console.log("Nueva disponibilidad:", disponibilidad);
 
     const prev = Array.isArray(actual?.disponibilidades?.propuestas)
       ? actual.disponibilidades.propuestas
@@ -321,7 +322,7 @@ export class PartidoRepository {
     for (const jugadorId of jugadores) {
       const perteneceAlEquipoProponiente = equipoProponiente === 'local'
         ? actual.equipoLocal?.includes(jugadorId) || actual.jugador1?.includes(jugadorId)
-        : actual.equipoVisitante?.includes(jugadorId)|| actual.jugador2?.includes(jugadorId);
+        : actual.equipoVisitante?.includes(jugadorId) || actual.jugador2?.includes(jugadorId);
 
       if (jugadorId !== disponibilidad.propuestoPor && !perteneceAlEquipoProponiente) {
         await noti.pushNotificationTo(jugadorId, inviteePayload).catch(() => { });

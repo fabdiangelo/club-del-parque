@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
+    "test": "vitest",
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
@@ -26,10 +27,13 @@
     "multipart": "^0.1.5"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "@firebase/testing": "^0.20.11",
     "cross-env": "^10.0.0",
     "eslint": "^8.15.0",
     "eslint-config-google": "^0.14.0",
-    "firebase-functions-test": "^3.1.0"
+    "firebase-functions-test": "^3.1.0",
+    "vitest": "^4.0.9"
   },
   "private": true
 }

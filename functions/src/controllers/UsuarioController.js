@@ -14,8 +14,64 @@ import EnsureRankingForFederado from "../usecases/Rankings/EnsureRankingForFeder
 
 import PrecargaFederados from "../usecases/Usuarios/PrecargaFederados.js";
 import getFederadoById from "../usecases/Usuarios/getFederadoById.js";
+import { agregarNotiToken } from "../usecases/Usuarios/AgregarNotiToken.js";
+import { GetNotiToken } from "../usecases/Usuarios/GetNotiTokens.js";
+import DBConnection from "../infraestructure/ports/DBConnection.js";
+import admin from "firebase-admin";
+import { enviarNotificacion } from "../infraestructure/ports/PushNotification.js";
 
 class UsuarioController {
+
+  async probarnoti(req, res) {
+    const db = new DBConnection();
+    console.log("entrnado aca");
+
+    const usuarios = await db.getAllItems("usuarios");
+    for(const u of usuarios) {
+
+
+      if(u.notiTokens == null || u.notiTokens.length == 0) {
+        continue;
+      }
+      await enviarNotificacion(u.notiTokens, "Titulo de prueba", "Mensaje de prueba", "https://google.com");
+    }
+
+    res.json({ ok: true });
+  }
+
+  async GetNotiToken(req, res) {
+    try {
+      
+
+      const {uid, token} = req.body;
+
+      const tokens = await new GetNotiToken().execute(uid);
+      return res.json(tokens);
+
+    } catch(error) {
+      console.error("Error in /usuarios/noti-tokens:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+
+  async agregarNotiToken(req, res) {
+    try {
+
+
+      const { uid, token } = req.body;
+      if (!token) {
+        return res.status(400).json({ error: "Token is required" });
+      }
+
+      const result = await new agregarNotiToken().execute(uid, token);
+      return res.json(result);
+    } catch (error) {
+      console.error("Error in /me:", error);
+      return res.status(401).json({ error: "Invalid or expired session" });
+    }
+  }
+
   async getUserData(req, res) {
     try {
       const sessionCookie = req.cookies.session || "";
@@ -243,7 +299,6 @@ async cambiarCategoriaFederado(req, res) {
       if(!idReporte){
         return res.status(400).json({ error: "Falta idReporte" });
       }
-
       const userId = idReporte.split("-")[0];
       if(!userId){
         return res.status(400).json({ error: "idReporte inválido" });

@@ -1,35 +1,26 @@
 import DBConnection from "../ports/DBConnection.js";
 
 export class CanchaRepository {
-    constructor() {
-        this.db = new DBConnection();
+    constructor(db = new DBConnection()) {
+        this.db = db;
     }
-
+    
 
     async getAll() {
-        return this.db.getAllItems('canchas').then(docs => docs);
+        return this.db.getAllItems("canchas").then(docs => docs);
     }
 
     async getById(id) {
-        return this.db.getItem('canchas', id);
+        return this.db.getItem("canchas", id);
     }
 
     async save(cancha) {
-        console.log("Saving cancha:", cancha);
-        const docRef = await this.db.putItem('canchas', cancha, cancha.id);
+        const docRef = await this.db.putItem("canchas", cancha, cancha.id);
         return docRef.id || cancha.id;
     }
 
     async eliminarCancha(id) {
-
-        try {
-
-            await this.db.deleteItem('canchas', id);
-            return id;
-        } catch(error) {
-            throw error;
-        }
+        await this.db.deleteItem("canchas", id);
+        return id;
     }
-
-        
 }

@@ -28,17 +28,56 @@ import Partido from "./pages/Partido";
 import ResultadosPage from "./pages/ResultadosPage";
 import NotificationsPage from "./pages/NotificacionesPage";
 import CanchasGestor from "./pages/CanchasGestor";
-import { RoleProtectedRoute } from "./contexts/AuthProvider";
+import { RoleProtectedRoute, useAuth } from "./contexts/AuthProvider";
 import SinSesion from "./components/SinSesion";
 import SoloAdmin from "./components/SoloAdmin";
 import CategoriasGestor from "./pages/CategoriasGestor";
 import FiltrosGestor from "./pages/FiltrosGestor";
 import AsignarCategoriaFederado from "./pages/AsignarCategoriaFederado";
+import { messaging } from "./utils/FirebaseService";
+import { getToken, onMessage } from "firebase/messaging";
+import { useEffect } from "react";
 
 function App() {
+  const {user} = useAuth();
+
+
+  useEffect(() => {
+  const requestPermission = async () => {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      const token = await getToken(messaging, { 
+        vapidKey: 'BDCSL7Fj7jfxuhR7jPVnLkUiIADoL3kyqsdymO2cMPqEU9JlE2V6ypmOMou3PS6bdPFN9aUNyTHwMrRfXb5O4ls' 
+      });
+
+      if (!user) return; 
+      const response = await fetch('/api/usuarios/noti-tokens', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          uid: user.uid,
+          token: token,
+        }),
+      });
+
+      if (!response.ok) return console.error(response.statusText);
+    }
+  };
+
+  if (user) {
+    requestPermission();
+  }
+
+  
+
+}, [user]);
+
+
   return (
     <Routes>
-      {/* Rutas Publicas */}
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
