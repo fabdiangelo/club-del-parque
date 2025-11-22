@@ -10,7 +10,7 @@ export default function FixtureCampeonato() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [loading, setLoading] = useState(true);
   const [campeonato, setCampeonato] = useState(null);
   const [etapa, setEtapa] = useState(null);
@@ -19,7 +19,7 @@ export default function FixtureCampeonato() {
   async function load() {
     try {
       setLoading(true);
-      const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include'});
+      const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         // Calcular fechas de inicio y fin para cada etapa en cadena
@@ -50,10 +50,10 @@ export default function FixtureCampeonato() {
         setCampeonato(campeonatoConFechas);
         setEtapa(campeonatoConFechas.etapas[etapaActual]);
         console.log(data)
-      } 
+      }
     } catch (e) {
       console.log(e)
-    } finally{
+    } finally {
       setLoading(false);
     }
   }
@@ -71,7 +71,7 @@ export default function FixtureCampeonato() {
     }
   };
 
-  if(loading){
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -82,7 +82,7 @@ export default function FixtureCampeonato() {
     )
   }
 
-  if(!campeonato && !loading){
+  if (!campeonato && !loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-200 p-6">
         <div className="card w-full max-w-md bg-base-100 shadow-md">
@@ -128,14 +128,14 @@ export default function FixtureCampeonato() {
             onClick={() => navegarEtapa('prev')}
             disabled={etapaActual === 0}
             className="p-2 rounded-lg bg-white shadow hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
+          >
             <ChevronLeft className="w-6 h-6" />
           </button>
-        ): (
+        ) : (
           <span className="w-6"></span>
         )}
-        
-        <div className="bg-gray-800 text-white px-8 py-3 rounded-full shadow-lg">
+
+        <div className="bg-gray-800 text-white px-8 py-3 rounded-full shadow-lg" style={{ border: '1px solid' }}>
           <h2 className="text-xl font-semibold text-center uppercase tracking-wide">
             {etapa?.nombre}
           </h2>
@@ -150,7 +150,7 @@ export default function FixtureCampeonato() {
           >
             <ChevronRight className="w-6 h-6" />
           </button>
-        ): (
+        ) : (
           <span className="w-6"></span>
         )}
       </div>
@@ -184,7 +184,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const userGrupo = grupos?.find(grupo => 
+  const userGrupo = grupos?.find(grupo =>
     grupo.jugadores?.some(jugador => (
       // Support dobles: jugador may be an equipo with players array
       (jugador?.id && jugador.id === user?.uid) ||
@@ -192,10 +192,10 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
       jugador?.id === user?.uid
     ))
   );
-  
+
   return (
     <>
-      <h3 style={{zIndex:'30', width: '100%', marginTop: '', position:'sticky', top:'3rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
+      <h3 style={{ zIndex: '30', width: '100%', marginTop: '', position: 'sticky', top: '3rem' }} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
         Round Robin
         <br />
         <label className='label'>
@@ -221,15 +221,15 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                     Array.isArray(jugador.players) ? (
                       <div className={(jugador.players.some(p => p.id === user?.uid) ? "hover:bg-gray-500 bg-gray-600 " : "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}>
                         <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                          { (jugador.players[0]?.nombre || jugador.players[1]?.nombre || '?').charAt(0) }
+                          {(jugador.players[0]?.nombre || jugador.players[1]?.nombre || '?').charAt(0)}
                         </div>
                         <div className="flex-1">
                           <div className="font-medium text-white truncate">
-                            {dobles ? 
+                            {dobles ?
                               jugador.players.map((p, idx) => (
                                 <span key={idx}>{p?.nombre || 'Por definir'}{idx === 0 && dobles ? ' / ' : ''}</span>
                               ))
-                            : 
+                              :
                               <span key={idx}>{jugador.players[0]?.nombre || 'Por definir'}</span>
                             }
                             {jugador.players.some(p => p.id === user?.uid) && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}
@@ -265,7 +265,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                       </div>
                     ) : jugador.id ? (
                       <div
-                        className={(jugador?.id == user?.uid ? "hover:bg-gray-500 bg-gray-600 ": "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
+                        className={(jugador?.id == user?.uid ? "hover:bg-gray-500 bg-gray-600 " : "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
                       >
                         <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                           {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
@@ -333,7 +333,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
 
   return (
     <div className="relative bg-white rounded-xl shadow-xl overflow-x-auto p-8">
-      <div className="flex gap-8 items-start justify-center" style={{ minWidth: 'fit-content', maxHeight: '80vh'}}>
+      <div className="flex gap-8 items-start justify-center" style={{ minWidth: 'fit-content', maxHeight: '80vh' }}>
         {rondas.map((ronda, rIdx) => {
           const espaciado = calcularEspaciado(rIdx);
           const offsetInicial = espaciado / 2;
@@ -347,85 +347,85 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
 
           return (
             <div key={rIdx} className="relative flex flex-col items-center flex-1">
-              <h3 style={{zIndex:'30', width: '100%', marginTop: '-4rem', position:'sticky', top:'-2rem'}} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
+              <h3 style={{ zIndex: '30', width: '100%', marginTop: '-4rem', position: 'sticky', top: '-2rem' }} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
                 {ronda.nombre}
                 <br />
                 <label className='label'>
                   {ronda.inicio} - {ronda.fin}
                 </label>
               </h3>
-              
+
               <div className="relative w-full" style={{ paddingTop: `${offsetInicial}px` }}>
                 {ronda.partidos.map((partido, pIdx) => {
                   const esParticipante = user && (partido.jugador1Id === user.uid || partido.jugador2Id === user.uid || (Array.isArray(partido?.jugador1) && partido?.jugador1?.some(j => j.id == user.uid)) || (Array.isArray(partido?.jugador2) && partido?.jugador2?.some(j => j.id == user.uid)));
                   let oponenteId = null;
-                  if (esParticipante){
-                    if(partido.jugador1Id === user?.uid)
+                  if (esParticipante) {
+                    if (partido.jugador1Id === user?.uid)
                       oponenteId = partido.jugador2Id
                     if (partido.jugador2Id === user?.uid)
                       oponenteId = partido.jugador1Id
-                    if(partido?.jugador1?.some(j => j.id == user.uid))
-                      oponenteId = Array.isArray(partido?.jugador2) ? partido?.jugador2[0]?.id :partido?.jugador2?.id
-                    if(partido?.jugador2?.some(j => j.id == user.uid))
-                      oponenteId = Array.isArray(partido?.jugador1) ? partido?.jugador1[0]?.id :partido?.jugador1?.id
+                    if (partido?.jugador1?.some(j => j.id == user.uid))
+                      oponenteId = Array.isArray(partido?.jugador2) ? partido?.jugador2[0]?.id : partido?.jugador2?.id
+                    if (partido?.jugador2?.some(j => j.id == user.uid))
+                      oponenteId = Array.isArray(partido?.jugador1) ? partido?.jugador1[0]?.id : partido?.jugador1?.id
                   }
-                  
+
                   return (
-                    <div 
-                      key={pIdx} 
+                    <div
+                      key={pIdx}
                       className="relative"
-                      style={{ 
-                        marginTop: pIdx === 0 ? '0' : `${espaciado - 160 + margenEntrePartidos + rIdx * margenEntrePartidos - rIdx*rIdx*rIdx * 4 + rIdx }px`,
+                      style={{
+                        marginTop: pIdx === 0 ? '0' : `${espaciado - 160 + margenEntrePartidos + rIdx * margenEntrePartidos - rIdx * rIdx * rIdx * 4 + rIdx}px`,
                         marginBottom: `${margenEntrePartidos}px`,
                         position: 'relative'
                       }}
                     >
                       {/* Líneas conectoras hacia la siguiente ronda */}
                       {rIdx < rondas.length - 1 && (
-                        <svg 
-                          className="absolute left-full pointer-events-none" 
-                          style={{ 
-                            width: '32px', 
+                        <svg
+                          className="absolute left-full pointer-events-none"
+                          style={{
+                            width: '32px',
                             height: `${espaciado + margenEntrePartidos + 80}px`,
                             top: '40px',
                             overflow: 'visible'
                           }}
                         >
                           {/* Línea horizontal desde el partido */}
-                          <line 
-                            x1="0" 
-                            y1="15" 
-                            x2="16" 
-                            y2="15" 
-                            stroke="#000" 
+                          <line
+                            x1="0"
+                            y1="15"
+                            x2="16"
+                            y2="15"
+                            stroke="#000"
                             strokeWidth="2"
                           />
-                          
+
                           {/* Línea vertical conectando */}
-                          <line 
-                            x1="16" 
-                            y1="15" 
-                            x2="16" 
-                            y2={pIdx % 2 === 0 ? (espaciado + margenEntrePartidos) / 2 + 15 : -(espaciado + margenEntrePartidos) / 2 + 15} 
-                            stroke="#000" 
+                          <line
+                            x1="16"
+                            y1="15"
+                            x2="16"
+                            y2={pIdx % 2 === 0 ? (espaciado + margenEntrePartidos) / 2 + 15 : -(espaciado + margenEntrePartidos) / 2 + 15}
+                            stroke="#000"
                             strokeWidth="2"
                           />
-                          
+
                           {/* Línea horizontal hacia el siguiente partido (solo para partidos pares) */}
                           {pIdx % 2 === 0 && (
-                            <line 
-                              x1="16" 
-                              y1={(espaciado + margenEntrePartidos) / 2 + 5} 
-                              x2="32" 
-                              y2={(espaciado + margenEntrePartidos) / 2 + 5} 
-                              stroke="#000" 
+                            <line
+                              x1="16"
+                              y1={(espaciado + margenEntrePartidos) / 2 + 5}
+                              x2="32"
+                              y2={(espaciado + margenEntrePartidos) / 2 + 5}
+                              stroke="#000"
                               strokeWidth="2"
                             />
                           )}
                         </svg>
                       )}
 
-                      <div className={(esParticipante ? "bg-cyan-300 ": "bg-cyan-400 ") + "bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10"}>
+                      <div className={(esParticipante ? "bg-cyan-300 " : "bg-cyan-400 ") + "bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10"}>
                         {/* Player/Team 1 */}
                         <div className="flex items-center justify-between p-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -439,23 +439,23 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                                 partido.jugador1Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
                               )}
                               {Array.isArray(partido.ganadores) ? (
-                                partido.ganadores.some(g => g == partido.jugador1[0]?.id || g == partido.jugador1Id) ? <Crown />: ''
+                                partido.ganadores.some(g => g == partido.jugador1[0]?.id || g == partido.jugador1Id) ? <Crown /> : ''
                               ) : (
-                                partido.ganadorId && partido.ganadorId == partido.jugador1Id ? <Crown />: ''
+                                partido.ganadorId && partido.ganadorId == partido.jugador1Id ? <Crown /> : ''
                               )}
                             </span>
                           </div>
                           {partido.puntaje1 !== undefined ? (
                             <span className="font-bold text-black text-lg ml-2">{partido.puntaje1}</span>
                           ) : partido.fechaProgramada ? (
-                            <span className="text-sm text-black ml-2" style={{position: 'absolute', marginTop:'3.5rem', right: '1rem'}}>{partido.fechaProgramada}</span>
+                            <span className="text-sm text-black ml-2" style={{ position: 'absolute', marginTop: '3.5rem', right: '1rem' }}>{partido.fechaProgramada}</span>
                           ) : (
-                            <span className="text-sm text-black ml-2" style={{position: 'absolute', marginTop:'3.5rem', right: '1rem'}}>Sin agendar</span>
+                            <span className="text-sm text-black ml-2" style={{ position: 'absolute', marginTop: '3.5rem', right: '1rem' }}>Sin agendar</span>
                           )}
                           {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador1) ? partido.jugador1.map(p => p.id).find(id => id !== user.uid) : partido.jugador1Id) && (
                             <button
-                            onClick={() => {
-                                  navigate(`/partido/${partido.id}`);
+                              onClick={() => {
+                                navigate(`/partido/${partido.id}`);
                               }}
                               className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
                               title="Ir al partido"
@@ -478,9 +478,9 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                                 partido.jugador2Nombre || (ronda.inicioDate < new Date() ? 'Pase Libre' : 'Por Definirse')
                               )}
                               {Array.isArray(partido.ganadores) ? (
-                                partido.ganadores.some(g => g == partido.jugador2[0]?.id || g == partido.jugador2Id) ? <Crown />: ''
+                                partido.ganadores.some(g => g == partido.jugador2[0]?.id || g == partido.jugador2Id) ? <Crown /> : ''
                               ) : (
-                                partido.ganadorId && partido.ganadorId == partido.jugador2Id ? <Crown />: ''
+                                partido.ganadorId && partido.ganadorId == partido.jugador2Id ? <Crown /> : ''
                               )}
                             </span>
                           </div>

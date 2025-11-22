@@ -29,26 +29,29 @@ export default function ListaCampeonatos() {
   }, []);
 
   return (
-    <div className="min-h-dvh w-full bg-base-200 text-base-content flex flex-col">
+    <div className="min-h-dvh w-full bg-base-200 text-base-content flex flex-col bg-white">
       <NavbarBlanco />
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="mb-5 ml-5 mt-20">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
-            Campeonatos
-          </h1>
-          {user?.rol == "administrador" && 
-            <Link to="/crear-campeonato" className="btn btn-primary mt-4">
-              Crear Campeonato
+      <section className="relative overflow-hidden" >
+        <div className="my-5 ml-5 mt-30 " >
+
+          {user?.rol === "administrador" && (
+            <Link
+              to="/crear-campeonato"
+              className="fixed bottom-6 right-6 bg-[var(--primario)] text-white w-14 h-14 rounded-full flex items-center justify-center text-4xl shadow-xl hover:scale-110 transition-transform"
+            >
+              +
             </Link>
-          }
+          )}
+
+
 
           {loading && (
-            <p className="mt-4 text-sm opacity-70">Cargando campeonatos…</p>
+            <p style={{ color: 'black' }} className="mt-4 text-sm opacity-70">Cargando campeonatos…</p>
           )}
           {fetchError && !loading && (
-            <p className="mt-4 text-sm text-error">
+            <p className="mt-4 text-sm text-error" style={{ color: 'black' }}>
               No se pudieron cargar los campeonatos ({fetchError}).
             </p>
           )}
@@ -56,15 +59,14 @@ export default function ListaCampeonatos() {
       </section>
 
       {/* Listado */}
-      
+
       <section className="pb-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           {!campeonatos || campeonatos.length == 0 ? (
             <div className="w-full py-16 grid place-items-center">
-              <p className="text-xl">No hay campeonatos para listar</p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="">
               {console.log(campeonatos)}
               {campeonatos.map((campeonato) => (
                 <CampeonatoData

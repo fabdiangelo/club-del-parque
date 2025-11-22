@@ -119,17 +119,21 @@ export default function NavbarBlanco({ transparent = false }) {
                 </NavLink>
               </li>
             )}
+			
+			{user && user?.rol === "administrador" && (
+				<li>
+				  <NavLink
+					to="/ranking"
+					className={({ isActive }) =>
+					  `${navItem} ${isActive ? activeItem : ""}`
+					}
+				  >
+					Ranking
+				  </NavLink>
+				</li>
+			)}
 
-            <li>
-              <NavLink
-                to="/ranking"
-                className={({ isActive }) =>
-                  `${navItem} ${isActive ? activeItem : ""}`
-                }
-              >
-                Ranking
-              </NavLink>
-            </li>
+            
 
             <li>
               <NavLink

@@ -12,9 +12,6 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  console.log("📬 Recibido en background:", payload);
-
-  // Intenta tomar desde `data` (ya que quitamos `notification` del backend)
   const title = payload.data?.title || "Notificación";
   const body = payload.data?.body || "Tienes una nueva notificación.";
   const url = payload.data?.url || "/";
@@ -27,7 +24,7 @@ messaging.onBackgroundMessage((payload) => {
   });
 });
 
-// 🔗 Maneja el clic en la notificación
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification.data?.url || "/";

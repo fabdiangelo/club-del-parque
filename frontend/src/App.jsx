@@ -43,43 +43,45 @@ function App() {
 
 
   useEffect(() => {
-  const requestPermission = async () => {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      const token = await getToken(messaging, { 
-        vapidKey: 'BDCSL7Fj7jfxuhR7jPVnLkUiIADoL3kyqsdymO2cMPqEU9JlE2V6ypmOMou3PS6bdPFN9aUNyTHwMrRfXb5O4ls' 
-      });
+		const requestPermission = async () => {
+		const permission = await Notification.requestPermission();
+		if (permission === 'granted') {
+		const token = await getToken(messaging, { 
+		vapidKey: 'BDCSL7Fj7jfxuhR7jPVnLkUiIADoL3kyqsdymO2cMPqEU9JlE2V6ypmOMou3PS6bdPFN9aUNyTHwMrRfXb5O4ls' 
+		});
 
-      if (!user) return; 
-      const response = await fetch('/api/usuarios/noti-tokens', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          uid: user.uid,
-          token: token,
-        }),
-      });
+		if (!user) return; 
+		const response = await fetch('/api/usuarios/noti-tokens', {
+		method: 'POST',
+		headers: {
+		'Content-Type': 'application/json',
+		},
+		credentials: 'include',
+		body: JSON.stringify({
+		uid: user.uid,
+		token: token,
+		}),
+		});
 
-      if (!response.ok) return console.error(response.statusText);
-    }
-  };
+		if (!response.ok) return console.error(response.statusText);
+		}
+		};
 
-  if (user) {
-    requestPermission();
-  }
+		if (user) {
+		requestPermission();
+		}
 
   
 
-}, [user]);
+  }, [user]);
 
 
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/register" element={<Registro />} />
+		  {!user ? (
+			<Route path="/register" element={<Registro />} />
+		  ) : (<Route path="/" element={<Home />}/>)}
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
       <Route path="/noticias" element={<Noticias />} />

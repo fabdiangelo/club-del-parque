@@ -36,7 +36,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 
 // Componente para mostrar formatos en lista
 const FormatoItem = ({ formato, onEdit, dobles = false }) => (
-  <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg hover:bg-base-300 transition-colors">
+  <div className="flex items-center justify-between p-4 bg-white rounded-lg transition-colors">
     <div className="flex-1">
       <div className="font-semibold text-lg">{formato.nombre}</div>
       <div className="text-sm opacity-70">
@@ -52,8 +52,8 @@ const FormatoItem = ({ formato, onEdit, dobles = false }) => (
 
 // Componente para mostrar etapas en lista
 const EtapaItem = ({ etapa, onEdit }) => (
-  <div className="flex items-center justify-between p-4 bg-base-100 rounded-lg hover:bg-base-300 transition-colors">
-    <div className="flex-1">
+  <div className="flex items-center justify-between p-4 bg-white rounded-lg transition-colors">
+    <div className="flex-1 bg-white">
       <div className="font-semibold">{etapa.id}</div>
       <div className="text-xs opacity-50 mt-1">Tipo: {etapa.tipoEtapa}</div>
     </div>
@@ -489,7 +489,7 @@ export default function CrearCampeonato() {
         </div>
 
         {/* Tabs */}
-        <div className="tabs tabs-boxed mb-6 bg-base-200 p-1 bg-white text-black rounded-lg">
+        <div className="tabs tabs-boxed mb-6  p-1 bg-white text-black rounded-lg">
           <a 
             className={`tab tab-lg ${activeTab === 'campeonato' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('campeonato')}
@@ -576,11 +576,8 @@ export default function CrearCampeonato() {
                       const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                       setReglamentoFile(f);
                     }}
-                    className="file-input file-input-bordered w-full"
+                    className="file-input file-input-bordered w-full bg-white"
                   />
-                  {reglamentoFile && (
-                    <div className="text-sm mt-2">Seleccionado: {reglamentoFile.name}</div>
-                  )}
                 </div>
 
                 
@@ -716,7 +713,7 @@ export default function CrearCampeonato() {
             </Card>
 
             {/* Formato */}
-            <Card title="🏆 Formato del Campeonato" className='bg-white'>
+            <div title="🏆 Formato del Campeonato" className='bg-white'>
               <div className="form-control bg-white">
                 <label className="label">
                   <span className="label-text font-semibold">Seleccionar Formato</span>
@@ -809,7 +806,7 @@ export default function CrearCampeonato() {
                               const preview = computeEtapasPreview()[idx];
                               const error = etapasErrors[idx];
                               return (
-                                <div key={et.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center p-2 bg-base-100 rounded">
+                                <div key={et.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center p-2 bg-white rounded">
                                   <div className="md:col-span-2">
                                     <div className="font-medium">{idx+1}. {et.id}</div>
                                     <div className="text-xs opacity-60">Tipo: {et.nombre}</div>
@@ -845,7 +842,7 @@ export default function CrearCampeonato() {
                   </div>
                 </div>
               )}
-            </Card>
+            </div>
 
             {/* Botones de acción */}
             <div className="flex gap-3 justify-end">
@@ -866,7 +863,7 @@ export default function CrearCampeonato() {
         {/* Tab Content - Gestión de Formatos */}
         {activeTab === 'formatos' && (
           <div className="space-y-6 bg-white">
-            <Card title="🏆 Gestión de Formatos" className='bg-white' style={{color: 'var(--neutro)'}}>
+            <Card title="Gestión de Formatos" className='bg-white' style={{color: 'var(--neutro)'}}>
               <div className="flex justify-between items-center mb-4">
                 <p className="text-base-content/70" style={{color: 'var(--neutro)'}}>Administra los formatos de campeonato disponibles</p>
                 <button className="btn btn-primary" onClick={openNewFormato}>
@@ -894,10 +891,10 @@ export default function CrearCampeonato() {
         )}
 
         {activeTab === 'etapas' && (
-          <div className="space-y-6">
-            <Card title="📊 Gestión de Etapas">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-base-content/70">Administra los tipos de etapas para los formatos</p>
+          <div className="space-y-6 bg-white">
+            <Card title="📊 Gestión de Etapas" className="bg-white" >
+              <div className="flex justify-between items-center mb-4 bg-white">
+                <p style={{color: 'var(--neutro)'}}>Administra los tipos de etapas para los formatos</p>
                 <button className="btn btn-primary" onClick={openNewEtapa}>
                   + Nueva Etapa
                 </button>
@@ -908,7 +905,7 @@ export default function CrearCampeonato() {
                   <span>No hay etapas disponibles. Crea una nueva.</span>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 bg-white">
                   {formatosEtapas.map(et => (
                     <EtapaItem key={et.id} etapa={et} onEdit={openEditEtapa} />
                   ))}
@@ -984,7 +981,7 @@ export default function CrearCampeonato() {
                   {editingFormato.formatosEtapasIDs.map((id, idx) => {
                     const meta = formatosEtapas.find(x => x.id === id);
                     return (
-                      <div key={id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
+                      <div key={id} className="flex items-center justify-between p-3 bg-white rounded-lg">
                         <div className="flex items-center gap-2">
                           <span className="badge badge-neutral">{idx + 1}</span>
                           <span>{meta ? `${meta.id}` : id}</span>
