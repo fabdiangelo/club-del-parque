@@ -153,9 +153,9 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center gap-3 mb-3">
             <Trophy className="w-8 h-8 text-cyan-500" />
-            <h1 className="text-3xl font-bold text-gray-800">{display.nombre}</h1>
+            <h1 className=" font-bold text-gray-800" style={{ textTransform: 'uppercase' }}>{display.nombre}</h1>
           </div>
-          <p className="text-gray-600 mb-3 whitespace-pre-line">{display.descripcion}</p>
+          <p className="text-gray-600 mb-3 whitespace-pre-line" style={{ fontSize: '12px' }}>{display.descripcion}</p>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Calendar className="w-4 h-4" />
             <span>{new Date(display.inicio).toLocaleDateString()} - {new Date(display.fin).toLocaleDateString()}</span>
@@ -186,7 +186,7 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
           )}
 
           {(user?.rol == 'federado' && (participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || inscripto)) &&
-            <div className='m-3'>
+            <div className='mt-5 mb-2' style={{ textAlign: 'left' }}>
               <span className="text-sm bg-success p-3 mt-8 rounded-md">Inscripto</span>
 
             </div>
@@ -194,27 +194,28 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
 
           {(user?.rol == 'federado' && new Date(display.inicio) >= new Date() && !(participantes.map(part => part.split('federado-')[1].split('-')[0]).includes(user.uid) || participantes.includes(user.uid) || inscripto)) &&
             <div>
-              <span className="text-sm opacity-90">{participantes.length} Usuarios Inscriptos</span> <br />
+              <span className="text-sm opacity-90" style={{ textAlign: 'left', color: 'var(--neutro)' }}>{participantes.length} Usuarios Inscriptos</span> <br />
               {dobles && (
                 <div className="mt-3">
                   <label className="text-sm">Invitar a (UID) - opcional</label>
                   <input value={inviteeUid} onChange={(e) => setInviteeUid(e.target.value)} placeholder="uid del invitado" className="input input-bordered w-full mt-1" />
                 </div>
               )}
-              <button className='btn btn-info w-full md:w-auto mt-4' onClick={handleInscripcion} disabled={procesando} >{procesando ? 'Inscribiendo...' : 'Inscribirme'}</button>
-              <div className="flex items-center gap-2 mt-4">
-                <span className="text-sm opacity-70">¿No estás seguro si puedes participar en este torneo?</span>
+              <button style={{ backgroundColor: 'var(--primario)', padding: '10px 30px', borderRadius: '5px' }} onClick={handleInscripcion} disabled={procesando} >{procesando ? 'Inscribiendo...' : 'Inscribirme'}</button>
+              <div className=" mt-4">
+                <span className="text-sm opacity-70" style={{ color: 'var(--neutro)' }}>¿No estás seguro si puedes participar en este torneo?</span>
+                <br />
                 <button
-                  className="btn btn-sm btn-outline btn-secondary"
+                  style={{ color: 'blue', cursor: 'pointer', fontSize: '12px' }}
                   type="button"
                   onClick={() => setModalOpen(true)}
                 >
-                  VER CONDICIONES DE PARTICIPACION
+                  Ver condiciones de participación
                 </button>
               </div>
               {modalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                  <div className="absolute inset-0 bg-black opacity-40" onClick={() => setModalOpen(false)} />
+                  <div className="absolute inset-0 bg-white opacity-40" onClick={() => setModalOpen(false)} />
                   <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
                     <button className="absolute top-3 right-3 p-1 rounded-md hover:bg-gray-100" onClick={() => setModalOpen(false)} aria-label="Cerrar">
                       <X className="w-5 h-5 text-gray-600" />
@@ -282,7 +283,7 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
           )}
         </div>
       </div>
-    </div>
+    </div >
 
   );
 };

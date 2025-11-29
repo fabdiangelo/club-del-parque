@@ -40,13 +40,12 @@ export default function Navbar({ transparent }) {
 
   return (
     <header
-      className={`w-full fixed top-0 z-[200] transition-colors duration-300 ${
-        transparent ? "backdrop-blur" : "bg-neutral-800"
-      }`}
+      className={`w-full fixed top-0 z-[200] transition-colors duration-300 ${transparent ? "backdrop-blur" : "bg-neutral-800"
+        }`}
       role="banner"
       style={{ left: 0 }}
     >
-      <nav className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
+      <nav className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3" style={{ fontSize: "16px" }}>
         {/* Brand + Mobile toggle */}
         <div className="flex items-center gap-3">
           {/* Mobile: Hamburger */}
@@ -59,15 +58,15 @@ export default function Navbar({ transparent }) {
           >
             {!open ? (
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                  d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
               </svg>
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12" />
+                  d="M6 18L18 6M6 6l12 12" />
               </svg>
             )}
           </button>
@@ -166,23 +165,20 @@ export default function Navbar({ transparent }) {
 
       {/* Mobile panel (slide-over) */}
       <div
-        className={`lg:hidden fixed inset-0 z-[190] transition ${
-          open ? "pointer-events-auto" : "pointer-events-none"
-        }`}
+        className={`lg:hidden fixed inset-0 z-[190] transition ${open ? "pointer-events-auto" : "pointer-events-none"
+          }`}
         aria-hidden={!open}
       >
         {/* Backdrop */}
         <div
-          className={`absolute inset-0 bg-black/50 transition-opacity ${
-            open ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 bg-black/50 transition-opacity ${open ? "opacity-100" : "opacity-0"
+            }`}
           onClick={() => setOpen(false)}
         />
         {/* Panel */}
         <aside
-          className={`absolute top-0 left-0 h-full w-[82%] max-w-sm bg-neutral-900 text-white shadow-xl transform transition-transform duration-300 ${
-            open ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`absolute top-0 left-0 h-full w-[82%] max-w-sm bg-neutral-900 text-white shadow-xl transform transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"
+            }`}
           role="dialog"
           aria-modal="true"
         >
@@ -197,9 +193,9 @@ export default function Navbar({ transparent }) {
               aria-label="Cerrar menú"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12" />
+                  d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -213,8 +209,7 @@ export default function Navbar({ transparent }) {
                     end={end}
                     onClick={() => setOpen(false)}
                     className={({ isActive }) =>
-                      `block rounded-lg px-3 py-3 text-base ${
-                        isActive ? "bg-white/10 text-white" : "text-white/90 hover:bg-white/5 hover:text-white"
+                      `block rounded-lg px-3 py-3 text-base ${isActive ? "bg-white/10 text-white" : "text-white/90 hover:bg-white/5 hover:text-white"
                       }`
                     }
                   >
@@ -289,9 +284,9 @@ export default function Navbar({ transparent }) {
       </nav>
 
 
-      
 
-      
+
+
     </header>
   );
 }

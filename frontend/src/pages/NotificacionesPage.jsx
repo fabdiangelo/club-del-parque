@@ -193,12 +193,12 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full">
+    <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full bg-white">
       <NavbarBlanco transparent={false} />
 
-      <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
+      <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16 bg-white">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-extrabold">Notificaciones</h1>
+          <h1 className="text-2xl font-bold" style={{color: 'var(--primario)'}}>Notificaciones</h1>
           <div className="flex items-center gap-2">
             {/* (el texto de '0 no leídas...' fue eliminado) */}
             <label className="label cursor-pointer text-sm mx-2">
@@ -241,7 +241,7 @@ export default function NotificationsPage() {
         {paginated.length === 0 ? (
           <div className="card border border-neutral-200 bg-neutral-50 shadow">
             <div className="card-body items-center justify-center min-h-[220px] text-neutral-900">
-              <p className="text-xl font-extrabold m-0">
+              <p className="text-xl m-0">
                 No tienes notificaciones por ahora
               </p>
             </div>

@@ -35,9 +35,8 @@ export default function NavbarBlanco({ transparent = false }) {
     }
   };
 
-  const navItem = `px-4 py-2 text-sm sm:text-base font-normal transition ${
-    transparent ? (isScrolled ? "text-black/90 hover:text-black" : "text-white/90 hover:text-white") : "text-black/90 hover:text-black"
-  }`;
+  const navItem = `px-4 py-2 text-xs sm:text-sm font-normal transition ${transparent ? (isScrolled ? "text-black/90 hover:text-black" : "text-white/90 hover:text-white") : "text-black/90 hover:text-black"
+    }`;
   const activeItem = transparent
     ? isScrolled
       ? "text-black font-bold" // Color para fondo blanco
@@ -46,13 +45,12 @@ export default function NavbarBlanco({ transparent = false }) {
 
   return (
     <header
-      className={`w-full top-0 z-[200] fixed transition-all duration-500 ${
-        transparent
-          ? isScrolled
-            ? "bg-white text-black "
-            : "bg-transparent text-white"
-          : "bg-white text-black "
-      }`}
+      className={`w-full top-0 z-[200] fixed transition-all duration-500 shadow ${transparent
+        ? isScrolled
+          ? "bg-white text-black "
+          : "bg-transparent text-white"
+        : "bg-white text-black "
+        }`}
       role="banner"
       style={{ left: "0" }}
     >
@@ -90,9 +88,8 @@ export default function NavbarBlanco({ transparent = false }) {
 
         {/* Menú principal */}
         <div
-          className={`${
-            menuOpen ? "block" : "hidden"
-          } md:flex flex-col md:flex-row items-center gap-3 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
+          className={`${menuOpen ? "block" : "hidden"
+            } md:flex flex-col md:flex-row items-center gap-3 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
         >
           <ul className="flex flex-col md:flex-row items-start md:items-end gap-2 md:gap-4 px-4 md:px-0">
             <li>
@@ -119,21 +116,21 @@ export default function NavbarBlanco({ transparent = false }) {
                 </NavLink>
               </li>
             )}
-			
-			{user && user?.rol === "administrador" && (
-				<li>
-				  <NavLink
-					to="/ranking"
-					className={({ isActive }) =>
-					  `${navItem} ${isActive ? activeItem : ""}`
-					}
-				  >
-					Ranking
-				  </NavLink>
-				</li>
-			)}
 
-            
+            {user && user?.rol === "administrador" && (
+              <li>
+                <NavLink
+                  to="/ranking"
+                  className={({ isActive }) =>
+                    `${navItem} ${isActive ? activeItem : ""}`
+                  }
+                >
+                  Ranking
+                </NavLink>
+              </li>
+            )}
+
+
 
             <li>
               <NavLink

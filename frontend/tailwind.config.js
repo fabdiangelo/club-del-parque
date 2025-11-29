@@ -12,6 +12,7 @@ export default {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["light", "dark"],
+    themes: ["light"], // Solo tema light
+    darkTheme: "light", // Forzar light incluso en modo oscuro
   },
 }

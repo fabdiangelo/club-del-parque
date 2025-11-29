@@ -8,12 +8,44 @@
   font-family: "Poppins", sans-serif;
   --neutro: #383735;
   --primario: #4AC0E4;
-  --blanco: #FFFFFF; 
+  --blanco: #FFFFFF;
   --gris: rgb(233, 233, 233);
+}
+
+/* Forzar tema light en el HTML y reservar espacio para scrollbar */
+html {
+  color-scheme: light;
+  scrollbar-gutter: stable;
 }
 
 body {
   background-color: white;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+}
+
+/* Sobrescribir estilos de DaisyUI para inputs */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+.input,
+.textarea,
+.select {
+  background-color: white !important;
+  color: black !important;
+  border-color: #d1d5db !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Asegurar que los inputs disabled también sean legibles */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
 }
