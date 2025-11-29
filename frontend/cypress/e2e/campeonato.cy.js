@@ -41,14 +41,18 @@ describe('Dashboard Tests', () => {
     inscribirACampeonato('6@fed', 'Q1w2e3r4!', nombre);
     inscribirACampeonato('7@fed', 'Q1w2e3r4!', nombre);
     inscribirACampeonato('8@fed', 'Q1w2e3r4!', nombre);
+  });
 
+  it('should let book matches', () => {
     generarPartidosRoundRobin('1@fed', 'Q1w2e3r4!', nombre);
     generarPartidosRoundRobin('2@fed', 'Q1w2e3r4!', nombre);
     generarPartidosRoundRobin('3@fed', 'Q1w2e3r4!', nombre);
     generarPartidosRoundRobin('5@fed', 'Q1w2e3r4!', nombre);
     generarPartidosRoundRobin('6@fed', 'Q1w2e3r4!', nombre);
     generarPartidosRoundRobin('7@fed', 'Q1w2e3r4!', nombre);
-
+  });
+  
+  it('should let resolve matches', () => {
     resolverPartidos('1@fed', 'Q1w2e3r4!');
     resolverPartidos('2@fed', 'Q1w2e3r4!');
     resolverPartidos('3@fed', 'Q1w2e3r4!');
@@ -57,7 +61,9 @@ describe('Dashboard Tests', () => {
     resolverPartidos('6@fed', 'Q1w2e3r4!');
     resolverPartidos('7@fed', 'Q1w2e3r4!');
     resolverPartidos('8@fed', 'Q1w2e3r4!');
+});
 
+  it('should let end championship', () => {
     generarPartidosEliminacion('1@fed', 'Q1w2e3r4!', nombre);
     generarPartidosEliminacion('2@fed', 'Q1w2e3r4!', nombre);
     generarPartidosEliminacion('5@fed', 'Q1w2e3r4!', nombre);
@@ -69,8 +75,8 @@ describe('Dashboard Tests', () => {
     resolverPartidos('6@fed', 'Q1w2e3r4!');
 
     generarPartidosEliminacion('1@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosEliminacion('2@fed', 'Q1w2e3r4!', nombre);
+    generarPartidosEliminacion('5@fed', 'Q1w2e3r4!', nombre);
     resolverPartidos('1@fed', 'Q1w2e3r4!');
-    resolverPartidos('2@fed', 'Q1w2e3r4!');
+    resolverPartidos('5@fed', 'Q1w2e3r4!');
   });
 });

@@ -104,7 +104,7 @@ export default function PartidosGestor() {
             _uid: normID(f.uid ?? f.userId ?? ""),
           }))
         );
-        setPartidos(Array.isArray(ps) ? ps : []);
+        setPartidos(Array.isArray(ps) ? ps.reverse() : []);
       } catch (e) {
         if (!cancelled) setErr(normalizeError(e));
       } finally {
@@ -253,7 +253,7 @@ export default function PartidosGestor() {
       setLoading(true);
       setErr("");
       const ps = await fetchJSON("/partidos");
-      setPartidos(Array.isArray(ps) ? ps : []);
+      setPartidos(Array.isArray(ps) ? ps.reverse() : []);
     } catch (e) {
       setToast(normalizeError(e));
     } finally {

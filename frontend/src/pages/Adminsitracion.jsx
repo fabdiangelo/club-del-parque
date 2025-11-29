@@ -587,7 +587,6 @@ const Administracion = () => {
         ) : (
           <Reservas />
         )}
-        ;
       </div>
     </div>
   );
