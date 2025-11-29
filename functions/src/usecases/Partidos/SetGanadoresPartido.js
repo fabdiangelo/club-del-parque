@@ -568,7 +568,8 @@ async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
         groupMap[groupId].push(playerId);
       }
 
-      // Flatten players picking round-robin across groups to interleave same-group players
+      // Obtener la cantidad máxima de clasificados por grupo
+      const maxPorGrupo = Math.max(...Object.values(groupMap).map(arr => arr.length));
       const groupKeys = Object.keys(groupMap);
       const totalPlayers = groupKeys.reduce((s, k) => s + (groupMap[k]?.length || 0), 0);
       if (totalPlayers === 0) {
@@ -576,80 +577,65 @@ async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
         return;
       }
 
-      const interleaved = [];
-      let remaining = true;
-      while (interleaved.length < totalPlayers && remaining) {
-        remaining = false;
-        for (const k of groupKeys) {
-          const arr = groupMap[k];
-          if (arr && arr.length) {
-            interleaved.push(arr.shift());
-            remaining = true;
-            if (interleaved.length >= totalPlayers) break;
+      // Generar emparejamientos: mejor de un grupo vs peor de otro grupo
+      // Para cada posición (1°, 2°, ...), emparejar mejor de grupo A con peor de grupo B, etc.
+      // Evitar que jugadores del mismo grupo se enfrenten
+      const emparejamientos = [];
+      for (let pos = 0; pos < maxPorGrupo; pos++) {
+        for (let i = 0; i < groupKeys.length; i++) {
+          const grupoA = groupKeys[i];
+          const grupoB = groupKeys[(i + 1) % groupKeys.length];
+          const mejor = groupMap[grupoA][pos];
+          const peor = groupMap[grupoB][groupMap[grupoB].length - 1 - pos];
+          if (mejor && peor && grupoA !== grupoB) {
+            emparejamientos.push({ jugador1: mejor, jugador2: peor });
           }
         }
       }
 
-      // Determine position order: outer-inner (0,last,1,last-1,2,last-2...)
-      const order = [];
-      let l = 0, r = totalSlots - 1;
-      while (l <= r) {
-        order.push(l);
-        if (l !== r) order.push(r);
-        l++; r--;
-      }
-      console.log(`Orden de asignación de slots: ${order.join(', ')}`);
-      console.log(`Jugadores intercalados: ${interleaved.join(', ')}`);
-
-      // Assign players to slots based on interleaved order and outer-inner positions
+      // Si hay menos partidos que emparejamientos, solo tomar los primeros
       let asignados = 0;
-      for (let i = 0; i < interleaved.length && i < order.length; i++) {
-        const playerId = interleaved[i];
-        const pos = i;
-        const partidoIndex = Math.floor(pos / 2);
-        const isJugador1 = (pos % 2) === 0;
-        const p = partidos[partidoIndex];
-        if (!p) continue;
-
+      for (let i = 0; i < partidos.length && i < emparejamientos.length; i++) {
+        const p = partidos[i];
+        const { jugador1, jugador2 } = emparejamientos[i];
         const targetId = p.id;
         const partidoToUpdate = await this._internalPartidoRepo.getById(targetId).catch(() => null);
         if (!partidoToUpdate) {
-          console.warn(`Partido ${targetId} no encontrado al asignar ${playerId}`);
+          console.warn(`Partido ${targetId} no encontrado al asignar jugadores`);
           continue;
         }
-
         try {
           // Get player data with name
-          const federadoData = await this._getFederadoData(playerId, campeonato);
-          const playerName = federadoData.nombre || await this._getFederadoName(playerId);
+          const federadoData1 = await this._getFederadoData(jugador1, campeonato);
+          const federadoData2 = await this._getFederadoData(jugador2, campeonato);
+          const playerName1 = federadoData1.nombre || await this._getFederadoName(jugador1);
+          const playerName2 = federadoData2.nombre || await this._getFederadoName(jugador2);
 
-          if (isJugador1) {
-            // asignar a jugador1
-            if (Array.isArray(partidoToUpdate.jugador1)) {
-              partidoToUpdate.jugador1 = [{ ...federadoData, nombre: playerName }];
-              partidoToUpdate.equipoLocal = [federadoData.id];
-            } else {
-              partidoToUpdate.jugador1Id = federadoData.id;
-              partidoToUpdate.jugador1 = { ...federadoData, nombre: playerName };
-            }
-            partidoToUpdate.jugador1Nombre = playerName;
-            p.jugador1Id = partidoToUpdate.jugador1Id || null;
-            p.jugador1 = partidoToUpdate.jugador1 || null;
-            console.log(`  Asignando ${playerId} (${playerName}) a ${targetId} (jugador1)`);
+          // asignar a jugador1
+          if (Array.isArray(partidoToUpdate.jugador1)) {
+            partidoToUpdate.jugador1 = [{ ...federadoData1, nombre: playerName1 }];
+            partidoToUpdate.equipoLocal = [federadoData1.id];
           } else {
-            // asignar a jugador2
-            if (Array.isArray(partidoToUpdate.jugador2)) {
-              partidoToUpdate.jugador2 = [{ id: playerId, nombre: playerName }];
-              partidoToUpdate.equipoVisitante = [String(playerId)];
-            } else {
-              partidoToUpdate.jugador2Id = playerId;
-              partidoToUpdate.jugador2 = { id: playerId, nombre: playerName };
-            }
-            partidoToUpdate.jugador2Nombre = playerName;
-            p.jugador2Id = partidoToUpdate.jugador2Id || null;
-            p.jugador2 = partidoToUpdate.jugador2 || null;
-            console.log(`  Asignando ${playerId} (${playerName}) a ${targetId} (jugador2)`);
+            partidoToUpdate.jugador1Id = federadoData1.id;
+            partidoToUpdate.jugador1 = { ...federadoData1, nombre: playerName1 };
           }
+          partidoToUpdate.jugador1Nombre = playerName1;
+          p.jugador1Id = partidoToUpdate.jugador1Id || null;
+          p.jugador1 = partidoToUpdate.jugador1 || null;
+          console.log(`  Asignando ${jugador1} (${playerName1}) a ${targetId} (jugador1)`);
+
+          // asignar a jugador2
+          if (Array.isArray(partidoToUpdate.jugador2)) {
+            partidoToUpdate.jugador2 = [{ id: jugador2, nombre: playerName2 }];
+            partidoToUpdate.equipoVisitante = [String(jugador2)];
+          } else {
+            partidoToUpdate.jugador2Id = jugador2;
+            partidoToUpdate.jugador2 = { id: jugador2, nombre: playerName2 };
+          }
+          partidoToUpdate.jugador2Nombre = playerName2;
+          p.jugador2Id = partidoToUpdate.jugador2Id || null;
+          p.jugador2 = partidoToUpdate.jugador2 || null;
+          console.log(`  Asignando ${jugador2} (${playerName2}) a ${targetId} (jugador2)`);
 
           partidoToUpdate.estado = 'pendiente';
           delete partidoToUpdate.ganadores;
@@ -658,15 +644,16 @@ async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
           await this._internalPartidoRepo.update(targetId, partidoToUpdate).catch(() => {});
 
           // Añadir partido al federado
-          await this._addMatchesToFederado(nextEtapa, { partidos: [p] }, playerId, firstR);
+          await this._addMatchesToFederado(nextEtapa, { partidos: [p] }, jugador1, firstR);
+          await this._addMatchesToFederado(nextEtapa, { partidos: [p] }, jugador2, firstR);
 
           asignados++;
         } catch (e) {
-          console.warn(`Error asignando ${playerId} a ${targetId}:`, e?.message || e);
+          console.warn(`Error asignando jugadores a ${targetId}:`, e?.message || e);
         }
       }
 
-      console.log(`✓ ${asignados} jugadores asignados a Eliminación`);
+      console.log(`✓ ${asignados} partidos asignados a Eliminación`);
       await this.etapaRepository.save({ id: nextEtapa.id, ...nextEtapa });
     } catch (e) {
       console.warn('Error en _assignToElimination:', e?.message || e);

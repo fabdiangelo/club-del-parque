@@ -313,7 +313,7 @@ export class PartidoRepository {
 
     let equipoProponiente = null;
 
-    if (actual?.equipoLocal?.includes(disponibilidad.propuestoPor) || actual?.jugador1?.includes(disponibilidad.propuestoPor)) {
+    if (actual?.equipoLocal?.includes(disponibilidad.propuestoPor) || (actual?.jugador1?.isArray && actual?.jugador1?.includes(disponibilidad.propuestoPor)) || disponibilidad.propuestoPor == actual?.jugador1?.id) {
       equipoProponiente = 'local';
     } else {
       equipoProponiente = 'visitante';
