@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar';
 
 const Partido = () => {
     const { id } = useParams();
+    const [esDobles, setEsDobles] = useState(false);
     const [partido, setPartido] = useState(null);
     const [cancha, setCancha] = useState(null);
     const [horarioSeleccionado, setHorarioSeleccionado] = useState('');
@@ -55,6 +56,17 @@ const Partido = () => {
         if (!id) return '';
         const u = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
         return u?.nombre || u?.name || u?.displayName || u?.nombreCompleto || '';
+    }
+
+    // Given an element that may be an id string or an object, resolve a display name
+    const displayName = (elem) => {
+        if (!elem) return '';
+        if (typeof elem === 'string') return getNombreForId(elem) || elem;
+        if (typeof elem === 'object') {
+            const id = elem.id || elem.uid || elem.usuarioId || '';
+            return elem.nombre || elem.name || getNombreForId(id) || id;
+        }
+        return String(elem);
     }
 
     const fetchAllReservas = async() => {
@@ -129,6 +141,8 @@ const Partido = () => {
     };
 
     const crearReserva = async (propuestaId) => {
+        const jugador1 = partido.jugador1[0];
+        const jugador2 = partido.jugador2[0];
 
         const propuesta = partido.disponibilidades.propuestas.find(p => p.id === propuestaId);
     const nuevaReserva = {
@@ -136,9 +150,10 @@ const Partido = () => {
         fechaHora: propuesta.fechaHoraInicio,
         duracion: '2:00', 
         esCampeonato: true,
+        modo: esDobles ? 'dobles' : 'singles',
         tipoPartido: partido.tipoPartido,
         partidoId: partido.id,
-        jugadoresIDS: normalizeIds(partido.jugadores || [{id: jugador1Id}, {id: jugador2Id}]),
+        jugadoresIDS: [{id: jugador1.id}, {id: jugador2.id}],
         quienPaga: user?.uid,
         autor: user?.uid,
         estado: 'pendiente'
@@ -185,6 +200,8 @@ useEffect(() => {
 const [error, setError] = useState('');
 
 useEffect(() => {
+
+    
     setLoading(true);
     setError('');
     Promise.all([
@@ -197,7 +214,7 @@ useEffect(() => {
         setPartido(await partidoRes.json());
         setUsuarios(await usuariosRes.json());
         setReservas(await reservasRes.json());
-        
+        setLoading(false);
     })
     .catch(e => {
         setError('No se pudo cargar el partido. Intenta más tarde.');
@@ -310,8 +327,21 @@ useEffect(() => {
     useEffect(() => {
         if (!partido || !user) return;
 
+        
+
         console.log("SOS user", obtenerPosicionUsuario());
     }, [user])
+
+    useEffect(() => {
+        // Consider dobles only when both teams have at least two players
+        const localLen = Array.isArray(partido?.equipoLocal) ? partido.equipoLocal.length : 0;
+        const visitLen = Array.isArray(partido?.equipoVisitante) ? partido.equipoVisitante.length : 0;
+        if (localLen >= 2 && visitLen >= 2) {
+            setEsDobles(true);
+        } else {
+            setEsDobles(false);
+        }
+    }, [partido]);
 
     // -------- Helpers para disponibilidad --------
     const generarHorariosDisponibles = () => {
@@ -535,7 +565,7 @@ useEffect(() => {
     return (
 
         <>
-            <Navbar color="white" />
+            <NavbarBlanco />
 
 {mensajeExito && (
   <div
@@ -557,30 +587,30 @@ useEffect(() => {
   </div>
 )}
          
-            {partido && partido?.tipoPartido == 'doubles' ? (
-                <div className="container mx-auto py-4 battle-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px' }}>
+            {partido && esDobles ? (
+                <div className="container mx-auto py-4 battle-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px', padding: '20px' }}>
 
-                    <div style={{ paddingTop: '80px', margin: "0 auto", textAlign: 'center' }}>
+                    <div style={{ paddingTop: '60px', margin: "0 auto", textAlign: 'center', width: '100%' }}>
 
                         {temporada && partido && (
-                            <div style={{ paddingBottom: '50px' }}>
-                                <h3 style={{ fontSize: '48px', textTransform: 'uppercase' }}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
-                                <div style={{ textAlign: 'center', marginTop: '20px', width: '500px', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px' }}></div>
+                            <div style={{ paddingBottom: '30px' }}>
+                                <h3 style={{ fontSize: 'clamp(24px, 6vw, 48px)', textTransform: 'uppercase' }}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
+                                <div style={{ textAlign: 'center', marginTop: '20px', width: 'clamp(200px, 80%, 500px)', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px' }}></div>
                             </div>
                         )}
                     </div>
 
 
 
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '50px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: 'clamp(20px, 5vw, 50px)', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
                         {/* Equipo 1 - viene de la izquierda */}
                         <div className="player-circle-left">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
                                     className="player-circle"
                                     style={{
-                                        width: '300px',
-                                        height: '300px',
+                                        width: 'clamp(150px, 35vw, 300px)',
+                                        height: 'clamp(150px, 35vw, 300px)',
                                         borderRadius: '50%',
                                         overflow: 'hidden',
                                         border: '3px solid #0D8ABC',
@@ -590,29 +620,30 @@ useEffect(() => {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         color: 'white',
-                                        fontSize: '1.2rem',
+                                        fontSize: 'clamp(0.8rem, 2vw, 1.2rem)',
                                         fontWeight: 'bold',
-                                        flexDirection: 'column'
+                                        flexDirection: 'column',
+                                        padding: '10px'
                                     }}
                                 >
-                                    <div>{usuariosParticipantes[0]?.nombre || 'Jugador 1'}</div>
-                                    <div>{usuariosParticipantes[1]?.nombre || 'Jugador 2'}</div>
+                                    <div>{displayName(partido?.equipoLocal?.[0]) || 'Jugador 1'}</div>
+                                    <div>{displayName(partido?.equipoLocal?.[1]) || 'Jugador 2'}</div>
                                 </div>
-                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
+                                <p className="player-info" style={{ fontSize: 'clamp(0.9rem, 2vw, 1.3rem)', fontWeight: 'bold', color: '#333' }}>
                                     Equipo Azul
                                 </p>
                             </div>
                         </div>
-                        <div className="vs-text">VS</div>
+                        <div className="vs-text" style={{fontSize: 'clamp(1.5rem, 5vw, 2rem)'}}>VS</div>
 
                         <div className="player-circle-right">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
                                     className="player-circle"
                                     style={{
-                                        width: '300px',
-                                        height: '300px',
-                                        borderRadius: '50%',
+                                        width: 'clamp(150px, 35vw, 300px)',
+                                        height: 'clamp(150px, 35vw, 300px)',
+                                        borderRadius: '50%',        
                                         overflow: 'hidden',
                                         border: '3px solid #e74c3c',
                                         background: 'linear-gradient(135deg, #e74c3c, #ff6b6b)',
@@ -621,15 +652,16 @@ useEffect(() => {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         color: 'white',
-                                        fontSize: '1.2rem',
+                                        fontSize: 'clamp(0.8rem, 2vw, 1.2rem)',
                                         fontWeight: 'bold',
-                                        flexDirection: 'column'
+                                        flexDirection: 'column',
+                                        padding: '10px'
                                     }}
                                 >
-                                    <div>{usuariosParticipantes[2]?.nombre || 'Jugador 3'}</div>
-                                    <div>{usuariosParticipantes[3]?.nombre || 'Jugador 4'}</div>
+                                    <div>{displayName(partido?.equipoVisitante?.[0]) || 'Jugador 3'}</div>
+                                    <div>{displayName(partido?.equipoVisitante?.[1]) || 'Jugador 4'}</div>
                                 </div>
-                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
+                                <p className="player-info" style={{ fontSize: 'clamp(0.9rem, 2vw, 1.3rem)', fontWeight: 'bold', color: '#333' }}>
                                     Equipo Rojo
                                 </p>
                             </div>
@@ -711,16 +743,16 @@ useEffect(() => {
                 </div>
             ) : (
 
-                <div className="container mx-auto py-4 battle-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px' }}>
+                <div className="container mx-auto py-4 battle-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px', padding: '20px' }}>
 
-                    <div style={{ paddingTop: '80px', margin: "0 auto", textAlign: 'center' }}>
+                    <div style={{ paddingTop: '60px', margin: "0 auto", textAlign: 'center', width: '100%' }}>
 
                         {temporada && partido && (
 
-                            <div style={{ paddingBottom: '50px' }}>
-                                <h3 style={{ fontSize: '48px', textTransform: 'uppercase' }}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
+                            <div style={{ paddingBottom: '30px' }}>
+                                <h3 style={{ fontSize: 'clamp(24px, 6vw, 48px)', textTransform: 'uppercase' }}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
 
-                                <div style={{ textAlign: 'center', marginTop: '20px', width: '500px', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px' }}></div>
+                                <div style={{ textAlign: 'center', marginTop: '20px', width: 'clamp(200px, 80%, 500px)', height: '5px', backgroundColor: 'var(--primario)', margin: '0 auto', borderRadius: '5px' }}></div>
                             </div>
 
 
@@ -732,14 +764,14 @@ useEffect(() => {
 
 
 
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '50px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: 'clamp(20px, 5vw, 50px)', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
                         <div className="player-circle-left">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
                                     className="player-circle"
                                     style={{
-                                        width: '300px',
-                                        height: '300px',
+                                        width: 'clamp(150px, 35vw, 300px)',
+                                        height: 'clamp(150px, 35vw, 300px)',
                                         borderRadius: '50%',
                                         overflow: 'hidden',
                                         border: '3px solid #0D8ABC',
@@ -749,27 +781,27 @@ useEffect(() => {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         color: 'white',
-                                        fontSize: '1.5rem',
+                                        fontSize: 'clamp(1rem, 3vw, 1.5rem)',
                                         fontWeight: 'bold'
                                     }}
                                 >
                                     {usuariosParticipantes[0]?.nombre || 'Jugador 1'}
                                 </div>
-                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
+                                <p className="player-info" style={{ fontSize: 'clamp(0.9rem, 2vw, 1.3rem)', fontWeight: 'bold', color: '#333' }}>
                                     {usuariosParticipantes[0]?.nombre}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="vs-text">VS</div>
+                        <div className="vs-text" style={{fontSize: 'clamp(1.5rem, 5vw, 2rem)'}}>VS</div>
 
                         <div className="player-circle-right">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
                                     className="player-circle"
                                     style={{
-                                        width: '300px',
-                                        height: '300px',
+                                        width: 'clamp(150px, 35vw, 300px)',
+                                        height: 'clamp(150px, 35vw, 300px)',
                                         borderRadius: '50%',
                                         overflow: 'hidden',
                                         border: '3px solid #e74c3c',
@@ -779,13 +811,13 @@ useEffect(() => {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         color: 'white',
-                                        fontSize: '1.5rem',
+                                        fontSize: 'clamp(1rem, 3vw, 1.5rem)',
                                         fontWeight: 'bold'
                                     }}
                                 >
                                     {usuariosParticipantes[1]?.nombre || 'Jugador 2'}
                                 </div>
-                                <p className="player-info" style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#333' }}>
+                                <p className="player-info" style={{ fontSize: 'clamp(0.9rem, 2vw, 1.3rem)', fontWeight: 'bold', color: '#333' }}>
                                     {usuariosParticipantes[1]?.nombre}
                                 </p>
                             </div>
@@ -797,7 +829,7 @@ useEffect(() => {
                     {
                         reserva ? ((
 
-                        <div className="reserva-confirmada-panel mt-8 p-6" style={{ width: '80%', maxWidth: '800px', border: '2px solid green', borderRadius: '8px', backgroundColor: '#e6ffe6' }}>
+                        <div className="reserva-confirmada-panel mt-8 p-6" style={{ width: '90%', maxWidth: '800px', border: '2px solid green', borderRadius: '8px', backgroundColor: '#e6ffe6' }}>
                             <h3 className="text-lg font-semibold">Reserva Confirmada</h3>
                             <p className="mt-4">La reserva para este partido ha sido confirmada.</p>
                             <p className="mt-2">Fecha y Hora: {new Date(reserva.fechaHora).toLocaleString()}</p>
@@ -817,7 +849,7 @@ useEffect(() => {
                             <div>
 
                                 {partido?.disponibilidades?.propuestas?.length > 0 ? (
-                        <div className="propuestas-panel mt-8 p-6" style={{ width: '100%', maxWidth: '800px' }}>
+                        <div className="propuestas-panel mt-8 p-6" style={{ width: '90%', maxWidth: '800px' }}>
                             <h3 className="text-lg font-semibold mb-4 text-center">
                                 {(() => {
                                     const uid = user?.uid || user?.id || '';
@@ -849,7 +881,7 @@ useEffect(() => {
                                 })()}
                             </h3>
 
-                            <div style={{display: 'flex', gap: '20px', width: '100'}}>
+                            <div style={{display: 'flex', gap: '20px', width: '100%', flexWrap: 'wrap', justifyContent: 'center'}}>
 {(partido.disponibilidades.propuestas || []).map((propuesta) => {
                                 const deriveEquipoLocalIds = () => {
                                     if (!partido) return [];
@@ -1023,16 +1055,16 @@ useEffect(() => {
 
             {/* Modal de disponibilidad */}
             {modalReserva && (
-                <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-1200">
+                <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-1200 p-4">
                     <div className="bg-white rounded-md shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-4 border-b">
                             <h3 className="text-lg font-semibold">Seleccionar disponibilidad</h3>
                             <button className="btn btn-sm" onClick={() => setModalReserva(false)}>✕</button>
                         </div>
-                        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
                             {/* Calendario simple */}
                             <div className="md:col-span-2">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 gap-2">
                                     {obtenerProximasSemanas().map((f) => {
                                         const year = f.getFullYear();
                                         const month = String(f.getMonth() + 1).padStart(2, '0');
@@ -1057,10 +1089,10 @@ useEffect(() => {
                                 {/* Selector de rango horario */}
                                 <div className="mt-4">
                                     <label className="block text-sm font-medium mb-1">Rango horario</label>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-2">
                                         <select
                                             style={{backgroundColor: 'white'}}
-                                            className="select select-bordered w-full max-w-xs"
+                                            className="select select-bordered w-full"
                                             value={horaInicio}
                                             onChange={e => setHoraInicio(e.target.value)}
                                             disabled={!fechaSeleccionada}
@@ -1070,10 +1102,10 @@ useEffect(() => {
                                                 <option key={h} value={h}>{h}</option>
                                             ))}
                                         </select>
-                                        <span className="self-center">a</span>
+                                        <span className="self-center hidden sm:inline">a</span>
                                         <select
                                         style={{backgroundColor: 'white'}}
-                                            className="select select-bordered w-full max-w-xs"
+                                            className="select select-bordered w-full"
                                             value={horaFin}
                                             onChange={e => setHoraFin(e.target.value)}
                                             disabled={!fechaSeleccionada}
@@ -1083,21 +1115,21 @@ useEffect(() => {
                                                 <option key={h} value={h}>{h}</option>
                                             ))}
                                         </select>
-                                        <button className="btn btn-primary" onClick={agregarDisponibilidad} disabled={!fechaSeleccionada || !horaInicio || !horaFin}>Agregar</button>
+                                        <button className="btn btn-primary w-full sm:w-auto" onClick={agregarDisponibilidad} disabled={!fechaSeleccionada || !horaInicio || !horaFin}>Agregar</button>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Lista de disponibilidades */}
-                            <div className="md:col-span-1">
+                            <div className="lg:col-span-1">
                                 <h4 className="font-medium mb-2">Tus disponibilidades</h4>
                                 {disponibilidadUsuario.length === 0 ? (
                                     <p className="text-sm text-gray-500">Aún no agregas rangos.</p>
                                 ) : (
                                     <ul className="space-y-2">
                                         {disponibilidadUsuario.map(d => (
-                                            <li key={d.id} className="flex items-center justify-between border rounded px-3 py-2">
-                                                <span className="text-sm">{new Date(d.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' })} - {d.rango}</span>
+                                            <li key={d.id} className="flex items-center justify-between border rounded px-3 py-2 text-sm">
+                                                <span>{new Date(d.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' })} - {d.rango}</span>
                                                 <button className="btn btn-xs" onClick={() => removerDisponibilidad(d.id)}>Quitar</button>
                                             </li>
                                         ))}
@@ -1105,15 +1137,15 @@ useEffect(() => {
                                 )}
                             </div>
                         </div>
-                        <div className="p-4 border-t flex items-center justify-between">
+                        <div className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2">
                             {mostrarAlerta && (
-                                <div className="alert alert-warning py-2 px-3 text-sm">
+                                <div className="alert alert-warning py-2 px-3 text-sm w-full">
                                     {mensajeAlerta}
                                 </div>
                             )}
-                            <div className="ml-auto flex gap-2">
-                                <button className="btn" onClick={() => setModalReserva(false)}>Cancelar</button>
-                                <button className="btn btn-primary" onClick={enviarDisponibilidad}>Enviar disponibilidad</button>
+                            <div className="ml-auto flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                <button className="btn w-full sm:w-auto" onClick={() => setModalReserva(false)}>Cancelar</button>
+                                <button className="btn btn-primary w-full sm:w-auto" onClick={enviarDisponibilidad}>Enviar disponibilidad</button>
                             </div>
                         </div>
                     </div>

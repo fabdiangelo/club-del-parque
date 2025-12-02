@@ -141,6 +141,7 @@ export default function Home() {
             <h1
               className="font-serif text-4xl sm:text-5xl lg:text-7xl italic tracking-wide mb-6"
               style={{
+                textAlign: 'center',
                 color: BRAND_CYAN,
                 fontFamily: "Amsterdam Four, serif",
                 letterSpacing: "0.04em",
