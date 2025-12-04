@@ -23,50 +23,147 @@ export class ReservaRepository {
     async save(reserva) {
 
         try {
-            const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, duracion, tipoPartido } = reserva;
+            // Normalize jugadoresIDS: if items are objects like { id: '...' }, extract the id
+            let jugadoresIDS = reserva.jugadoresIDS || [];
+            jugadoresIDS = jugadoresIDS.map(j => {
+                if (typeof j === 'string') return j;
+                if (typeof j === 'object' && j?.id) return j.id;
+                return String(j);
+            }).filter(Boolean);
 
+            // Normalize quienPaga and autor: extract id if they come as objects
+            let quienPaga = reserva.quienPaga;
+            if (typeof quienPaga === 'object' && quienPaga?.id) quienPaga = quienPaga.id;
+            quienPaga = String(quienPaga).trim();
+
+            let autor = reserva.autor;
+            if (typeof autor === 'object' && autor?.id) autor = autor.id;
+            autor = String(autor).trim();
+
+            const { canchaId, partidoId, fechaHora, duracion, modo, tipoPartido } = reserva;
+            console.log("Guardando reserva con datos:", reserva);
             const allReservas = await this.db.getAllItems('reservas');
+
+            // Normalize and convert duration to minutes. Accept formats like 120, '120', or '2:00'
+            let duracionMin = null;
+            if (typeof duracion === 'number') {
+                duracionMin = duracion;
+            } else if (typeof duracion === 'string') {
+                // Accept HH:MM or minutes string
+                const hhmm = duracion.match(/^(\d+):(\d{2})$/);
+                if (hhmm) {
+                    const hours = parseInt(hhmm[1], 10);
+                    const mins = parseInt(hhmm[2], 10);
+                    duracionMin = hours * 60 + mins;
+                } else {
+                    const parsed = parseInt(duracion, 10);
+                    if (!isNaN(parsed)) duracionMin = parsed;
+                }
+            }
+
+            if (!duracionMin || isNaN(duracionMin) || duracionMin <= 0) {
+                throw new Error('La duración debe ser un número válido de minutos o en formato HH:MM');
+            }
 
             // Convertir fechaHora y calcular el rango de tiempo ocupado por la nueva reserva
             const fechaHoraInicioNueva = new Date(fechaHora);
-            const fechaHoraFinNueva = new Date(fechaHoraInicioNueva.getTime() + duracion * 60 * 1000); // Duración en minutos
+            const fechaHoraFinNueva = new Date(fechaHoraInicioNueva.getTime() + duracionMin * 60 * 1000); // Duración en minutos
 
-            // Verificar conflictos de horario
-            const conflictoHorario = allReservas.some(r => {
-                if (r.canchaId !== canchaId || r.deshabilitar === true) return false;
+            // If canchaId not provided, pick the first available cancha for that time slot.
+            // Otherwise, validate that the requested cancha is free.
+            const allCanchas = await this.db.getAllItems('canchas');
 
-                const fechaHoraInicioExistente = new Date(r.fechaHora);
-                const fechaHoraFinExistente = new Date(fechaHoraInicioExistente.getTime() + r.duracion * 60 * 1000);
+            const hasConflictForCancha = (cid) => {
+                return allReservas.some(r => {
+                    if (r.canchaId !== cid || r.deshabilitar === true) return false;
 
-                // Verificar si los rangos de tiempo se solapan
-                return (
-                    (fechaHoraInicioNueva < fechaHoraFinExistente && fechaHoraFinNueva > fechaHoraInicioExistente)
-                );
-            });
+                    const fechaHoraInicioExistente = new Date(r.fechaHora);
 
-            if (conflictoHorario) {
-                throw new Error("Ya existe una reserva para la misma cancha en el mismo rango de tiempo");
+                    // Normalize existing reservation duration to minutes (accept numbers or strings like '2:00')
+                    let rDurMin = null;
+                    if (typeof r.duracion === 'number') {
+                        rDurMin = r.duracion;
+                    } else if (typeof r.duracion === 'string') {
+                        const hhmm = r.duracion.match(/^(\d+):(\d{2})$/);
+                        if (hhmm) {
+                            rDurMin = parseInt(hhmm[1], 10) * 60 + parseInt(hhmm[2], 10);
+                        } else {
+                            const parsed = parseInt(r.duracion, 10);
+                            if (!isNaN(parsed)) rDurMin = parsed;
+                        }
+                    }
+
+                    if (!rDurMin || isNaN(rDurMin) || rDurMin <= 0) {
+                        // If existing reservation has invalid duration, skip it for conflict checks
+                        return false;
+                    }
+
+                    const fechaHoraFinExistente = new Date(fechaHoraInicioExistente.getTime() + rDurMin * 60 * 1000);
+
+                    // Overlap check
+                    return (fechaHoraInicioNueva < fechaHoraFinExistente && fechaHoraFinNueva > fechaHoraInicioExistente);
+                });
+            };
+
+            let chosenCanchaId = (canchaId && typeof canchaId === 'string' && canchaId.trim() !== '') ? canchaId : null;
+            let chosenCancha = null;
+
+            if (!chosenCanchaId) {
+                // Find first cancha without conflict
+                for (const c of (allCanchas || [])) {
+                    try {
+                        if (!hasConflictForCancha(c.id || c.uid || c?.id)) {
+                            chosenCanchaId = c.id || c.uid || c?.id;
+                            chosenCancha = c;
+                            break;
+                        }
+                    } catch (e) {
+                        // ignore and continue
+                      console.warn('Error checking cancha availability for', c, e);
+                    }
+                }
+
+                if (!chosenCanchaId) {
+                    throw new Error('No hay canchas disponibles en ese horario');
+                }
+            } else {
+                // If a canchaId was provided, validate it's free
+                if (hasConflictForCancha(chosenCanchaId)) {
+                    throw new Error('La cancha solicitada no está disponible en ese horario');
+                }
+                // fetch cancha object (if exists)
+                try {
+                    chosenCancha = await this.db.getItem('canchas', chosenCanchaId);
+                } catch (e) {
+                    chosenCancha = null;
+                }
             }
 
-            if (!canchaId || !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora || !duracion) {
+            if ( !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora || !duracion) {
                 throw new Error("Faltan campos obligatorios para crear la reserva, los campos obligatorios son: canchaId, jugadoresIDS (mínimo 2), quienPaga, autor, fechaHora, duracion");
             }
 
-            if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
+            // 'modo' es la propiedad que indica 'singles' o 'dobles' en la mayoría de los payloads.
+            // Si no está presente, aceptamos 'tipoPartido' como fallback (pero en este proyecto
+            // 'tipoPartido' a veces contiene valores como 'eliminacion', por eso preferimos 'modo').
+            const partidoModo = modo || tipoPartido;
+
+            if (partidoModo && !['singles', 'dobles'].includes(partidoModo)) {
+                // If modo is not one of expected values, ignore validation here if tipoPartido corresponds
+                // to another domain concept (e.g. 'eliminacion'). Only enforce when modo/tipo explicitly
+                // carries singles/dobles meaning.
                 throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
             }
 
-            if (tipoPartido === 'singles' && jugadoresIDS.length !== 2) {
+            if (partidoModo === 'singles' && jugadoresIDS.length !== 2) {
                 throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
             }
-            if (tipoPartido === 'dobles' && jugadoresIDS.length !== 4) {
+            if (partidoModo === 'dobles' && jugadoresIDS.length !== 4) {
                 throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
             }
 
-            const cancha = await this.db.getItem("canchas", canchaId);
-            if (!cancha) {
-                throw new Error("La cancha asociada no existe");
-            }
+            // Use the cancha selected above (either from input or chosen automatically)
+            let cancha = chosenCancha;
 
             if (partidoId && partidoId.trim() !== '') {
                 const partido = await this.db.getItem("partidos", partidoId);
@@ -125,7 +222,9 @@ export class ReservaRepository {
             const aceptadoPor = [];
             const timestamp = Date.now();
 
-            const doc = await this.db.putItem("reservas", { ...reserva, estado, aceptadoPor, timestamp, deshabilitar: false }, reserva.id);
+            // Store normalized duration in minutes so downstream code can rely on numeric minutes
+            const reservaToSave = { ...reserva, canchaId: chosenCanchaId, estado, aceptadoPor, timestamp, deshabilitar: false, duracion: duracionMin };
+            const doc = await this.db.putItem("reservas", reservaToSave, reserva.id);
 
             const noti = new NotiConnection();
             const partido = reserva.partidoId ? await this.db.getItem("partidos", reserva.partidoId) : null;
@@ -156,6 +255,7 @@ export class ReservaRepository {
 
             return doc.id;
         } catch (error) {
+            console.log("Error al guardar la reserva:", error);
             throw new Error(error.message);
         }
 
@@ -197,18 +297,18 @@ export class ReservaRepository {
             throw new Error("La reserva no existe");
         }
 
-        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, tipoPartido } = reserva;
+        const { canchaId, partidoId, jugadoresIDS, quienPaga, autor, fechaHora, modo } = reserva;
 
         // Validar tipoPartido
-        if (tipoPartido && !['singles', 'dobles'].includes(tipoPartido)) {
+        if (modo && !['singles', 'dobles'].includes(modo)) {
             throw new Error("El tipo de partido debe ser 'singles' o 'dobles'");
         }
 
         // Validar número de jugadores según tipo de partido
-        if (tipoPartido === 'singles' && jugadoresIDS && jugadoresIDS.length !== 2) {
+        if (modo === 'singles' && jugadoresIDS && jugadoresIDS.length !== 2) {
             throw new Error("Para partidos de singles se requieren exactamente 2 jugadores");
         }
-        if (tipoPartido === 'dobles' && jugadoresIDS && jugadoresIDS.length !== 4) {
+        if (modo === 'dobles' && jugadoresIDS && jugadoresIDS.length !== 4) {
             throw new Error("Para partidos de dobles se requieren exactamente 4 jugadores");
         }
 

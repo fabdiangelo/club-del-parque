@@ -14,7 +14,6 @@ export class PartidoRepository {
       const { temporadaID, canchaID } = partido;
 
 
-      // Validar solo si vienen explícitamente temporadaID o canchaID
       if (typeof temporadaID !== 'undefined' && temporadaID !== null) {
         const temp = await this.db.getItem("temporadas", temporadaID);
         if (!temp) {
@@ -31,7 +30,6 @@ export class PartidoRepository {
 
       const { jugadores, equipoVisitante, equipoLocal, jugador1, jugador2 } = partido;
 
-      // Validar jugadores (plantel completo)
       for (const j of jugadores || []) {
         const jugadorExists = await this.db.getItem("usuarios", j);
         if (!jugadorExists) {
@@ -42,7 +40,6 @@ export class PartidoRepository {
         }
       }
 
-      // Prefer jugador1/jugador2 arrays when present (dobles). Fallback to equipoLocal/equipoVisitante for legacy data.
       const localCandidates = Array.isArray(jugador1)
         ? jugador1.map(p => p?.id).filter(Boolean)
         : Array.isArray(equipoLocal)
@@ -75,11 +72,10 @@ export class PartidoRepository {
         }
       }
 
-      // Agregar fechaMaxima por defecto si no está definida
       if (!partido.fechaMaxima) {
         const hoy = new Date();
         const dosSemanasDespues = new Date(hoy.setDate(hoy.getDate() + 14));
-        partido.fechaMaxima = dosSemanasDespues.toISOString(); // Formato ISO para consistencia
+        partido.fechaMaxima = dosSemanasDespues.toISOString();
       }
 
       const doc = await this.db.putItem("partidos", partido, partido.id);
@@ -243,6 +239,8 @@ export class PartidoRepository {
 
   async addDisponibilidad(partidoId, disponibilidad = [], usuarioId = null) {
     if (!partidoId) throw new Error("partidoId requerido");
+
+    console.log("INFORMACION DE PARTIDO => ", partidoId, disponibilidad, usuarioId);
     if (!Array.isArray(disponibilidad)) throw new Error("disponibilidad debe ser un array");
 
     const actual = await this.db.getItem("partidos", partidoId);
@@ -321,11 +319,13 @@ export class PartidoRepository {
 
     for (const jugadorId of jugadores) {
       const perteneceAlEquipoProponiente = equipoProponiente === 'local'
-        ? actual.equipoLocal?.includes(jugadorId) || actual.jugador1?.includes(jugadorId)
-        : actual.equipoVisitante?.includes(jugadorId) || actual.jugador2?.includes(jugadorId);
+        ? actual.equipoLocal?.includes(jugadorId.id) || actual.jugador1?.includes(jugadorId.id)
+        : actual.equipoVisitante?.includes(jugadorId.id) || actual.jugador2?.includes(jugadorId.id);
+
+      console.log('Notificando a jugador:', jugadorId, 'perteneceAlEquipoProponiente:', perteneceAlEquipoProponiente);
 
       if (jugadorId !== disponibilidad.propuestoPor && !perteneceAlEquipoProponiente) {
-        await noti.pushNotificationTo(jugadorId, inviteePayload).catch(() => { });
+        await noti.pushNotificationTo(jugadorId.id, inviteePayload).catch(() => { });
       }
     }
 

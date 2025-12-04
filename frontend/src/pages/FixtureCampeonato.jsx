@@ -104,9 +104,9 @@ export default function FixtureCampeonato() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8 mt-14">
+    <div className="min-h-screen bg-white p-2 md:p-8 mt-14">
       <NavbarBlanco />
-      <div className="max-w-7xl mx-auto mb-8">
+      <div className="max-w-2xl mx-auto mb-8">
         <CampeonatoData
           id={id}
           nombre={campeonato?.nombre}
@@ -194,7 +194,9 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
   );
 
   return (
-    <>
+    < >
+    
+
       <h3 style={{ zIndex: '30', width: '100%', marginTop: '', position: 'sticky', top: '3rem' }} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
         Round Robin
         <br />
@@ -205,8 +207,8 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {grupos?.map((grupo, idx) => (
           <div key={idx} className="bg-gray-800 text-white rounded-xl shadow-xl overflow-hidden">
-            <div className="bg-gray-900 px-6 py-4">
-              <h3 className="text-xl font-bold">{grupo.nombre}</h3>
+            <div className="bg'white px-6 py-4">
+              <h3 className="text-xl font-bold " style={{ color: 'var(--primario)' }}>{grupo.nombre}</h3>
             </div>
             <div className="p-6">
               <div className="flex text-sm font-semibold mb-3 px-3 text-cyan-300">

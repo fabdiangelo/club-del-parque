@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
-
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 import Footer from "../components/Footer.jsx";
 
 function Registro() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -19,16 +19,16 @@ function Registro() {
   const [success, setSuccess] = useState("");
   const { register, error } = useAuth()
 
-function formatDate(date) {
-  if (!date) return ""; // Maneja el caso de valores vacíos
-  const [year, month, day] = date.split("-");
-  return `${day}-${month}-${year}`;
-}
+  function formatDate(date) {
+    if (!date) return ""; // Maneja el caso de valores vacíos
+    const [year, month, day] = date.split("-");
+    return `${day}-${month}-${year}`;
+  }
 
-const handleChange = (e) => {
-  const { name, value } = e.target;
-  setFormData((prev) => ({ ...prev, [name]: value })); 
-};
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -106,19 +106,19 @@ const handleChange = (e) => {
             </div>
 
             <div>
-  <input
-    placeholder="Nacimiento"
-    type="date"
-    name="nacimiento"
-    value={formData.nacimiento} // Mantén el formato yyyy-mm-dd aquí
-    onChange={handleChange}
-    className="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300"
-    required
-  />
-</div>
+              <input
+                placeholder="Nacimiento"
+                type="date"
+                name="nacimiento"
+                value={formData.nacimiento} // Mantén el formato yyyy-mm-dd aquí
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300"
+                required
+              />
+            </div>
             <div>
               <select value={formData.genero} onChange={handleChange} name="genero" className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300 mb-2">
-           
+
                 <option value="masculino">Masculino</option>
                 <option value="femenino">Femenino</option>
                 <option value="otro">Otro</option>

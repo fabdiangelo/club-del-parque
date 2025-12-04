@@ -13,6 +13,7 @@ export default function NavbarBlanco({ transparent = false }) {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false); // Estado para el menú hamburguesa
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,6 +27,27 @@ export default function NavbarBlanco({ transparent = false }) {
     };
   }, []);
 
+  // Detect mobile viewport and update on resize
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const set = (e) => setIsMobile(!!e.matches);
+    set(mq);
+    try {
+      mq.addEventListener("change", set);
+    } catch (e) {
+      // Safari fallback
+      mq.addListener(set);
+    }
+    return () => {
+      try {
+        mq.removeEventListener("change", set);
+      } catch (e) {
+        mq.removeListener(set);
+      }
+    };
+  }, []);
+
   const handleLogout = async () => {
     const ok = await logout();
     if (ok) {
@@ -35,28 +57,40 @@ export default function NavbarBlanco({ transparent = false }) {
     }
   };
 
-  const navItem = `px-4 py-2 text-sm sm:text-base font-normal transition ${
-    transparent ? (isScrolled ? "text-black/90 hover:text-black" : "text-white/90 hover:text-white") : "text-black/90 hover:text-black"
-  }`;
-  const activeItem = transparent
-    ? isScrolled
-      ? "text-black font-bold" // Color para fondo blanco
-      : "text-white font-bold" // Color para fondo transparente
+
+  // Texto y estados de los items
+  const navTextColor = isMobile
+    ? "text-black/90 hover:text-black"
+    : transparent && !isScrolled && !menuOpen
+    ? "text-white/90 hover:text-white"
+    : "text-black/90 hover:text-black";
+
+  const activeItem = isMobile
+    ? "text-black font-bold"
+    : transparent
+    ? isScrolled || menuOpen
+      ? "text-black font-bold"
+      : "text-white font-bold"
     : "text-black font-bold";
 
   return (
     <header
-      className={`w-full top-0 z-[200] fixed transition-all duration-500 ${
-        transparent
+      className={`w-full top-0 z-[200] fixed transition-all duration-500 shadow ${
+        // Mobile always white
+        isMobile
+          ? "bg-white text-black"
+          : menuOpen
+          ? "bg-white text-black"
+          : transparent
           ? isScrolled
-            ? "bg-white text-black "
+            ? "bg-white text-black"
             : "bg-transparent text-white"
-          : "bg-white text-black "
+          : "bg-white text-black"
       }`}
       role="banner"
       style={{ left: "0" }}
     >
-      <nav className="mx-auto max-w-6xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <nav className="mx-auto w-full max-w-6xl h-20 md:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
           <img
             src={logoUrl}
@@ -70,7 +104,7 @@ export default function NavbarBlanco({ transparent = false }) {
         <button
           className="md:hidden flex items-center justify-center p-2 rounded focus:outline-none"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Abrir menú"
+          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -90,17 +124,15 @@ export default function NavbarBlanco({ transparent = false }) {
 
         {/* Menú principal */}
         <div
-          className={`${
-            menuOpen ? "block" : "hidden"
-          } md:flex flex-col md:flex-row items-center gap-3 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
+          className={`${menuOpen ? "block" : "hidden"} md:flex flex-col md:flex-row items-center gap-4 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
         >
-          <ul className="flex flex-col md:flex-row items-start md:items-end gap-2 md:gap-4 px-4 md:px-0">
+          <ul className="flex flex-col md:flex-row items-center gap-3 md:gap-6 px-4 md:px-0 text-center w-full md:w-auto justify-center">
             <li>
               <NavLink
                 to="/"
                 end
                 className={({ isActive }) =>
-                  `${navItem} ${isActive ? activeItem : ""}`
+                  `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
                 }
               >
                 Inicio
@@ -112,34 +144,34 @@ export default function NavbarBlanco({ transparent = false }) {
                 <NavLink
                   to="/campeonatos"
                   className={({ isActive }) =>
-                    `${navItem} ${isActive ? activeItem : ""}`
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
                   }
                 >
                   Campeonatos
                 </NavLink>
               </li>
             )}
-			
-			{user && user?.rol === "administrador" && (
-				<li>
-				  <NavLink
-					to="/ranking"
-					className={({ isActive }) =>
-					  `${navItem} ${isActive ? activeItem : ""}`
-					}
-				  >
-					Ranking
-				  </NavLink>
-				</li>
-			)}
 
-            
+            {user && user?.rol === "administrador" && (
+              <li>
+                <NavLink
+                  to="/ranking"
+                  className={({ isActive }) =>
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
+                  }
+                >
+                  Ranking
+                </NavLink>
+              </li>
+            )}
+
+
 
             <li>
               <NavLink
                 to="/reportes"
                 className={({ isActive }) =>
-                  `${navItem} ${isActive ? activeItem : ""}`
+                  `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
                 }
               >
                 Reportes
@@ -151,7 +183,7 @@ export default function NavbarBlanco({ transparent = false }) {
                 <NavLink
                   to="/resultados"
                   className={({ isActive }) =>
-                    `${navItem} ${isActive ? activeItem : ""}`
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
                   }
                 >
                   Resultados
@@ -164,7 +196,7 @@ export default function NavbarBlanco({ transparent = false }) {
                 <NavLink
                   to="/administracion"
                   className={({ isActive }) =>
-                    `${navItem} ${isActive ? activeItem : ""}`
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
                   }
                 >
                   Administración
@@ -174,7 +206,7 @@ export default function NavbarBlanco({ transparent = false }) {
           </ul>
 
           {user ? (
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-3 px-4 md:px-0">
+            <div className="flex flex-col md:flex-row items-center gap-4 px-4 md:px-0 w-full md:w-auto justify-center">
               <div style={{ position: "relative", display: "inline-block" }}>
                 <svg
                   style={{ cursor: "pointer" }}
@@ -215,7 +247,7 @@ export default function NavbarBlanco({ transparent = false }) {
                 )}
               </div>
 
-              <BellDropdown color={transparent ? (isScrolled ? "black" : "white") : "black"} />
+              <BellDropdown color={isMobile ? "black" : transparent ? (isScrolled ? "black" : "white") : "black"} />
 
               <button
                 style={{

@@ -163,11 +163,11 @@ export default function CanchasGestor() {
   }, [canchas, query, sportFilter]);
 
   return (
-    <div className="relative min-h-screen w-full bg-white text-slate-900">
+    <div className="relative min-h-screen w-full bg-white text-slate-900" style={{height: '100vh'}}>
       {/* Background */}
-      <div aria-hidden className="fixed inset-0 z-0 bg-center bg-cover bg-no-repeat" style={{ backgroundImage: `url(${bgImg})` }} />
+      <div  />
       {/* overlay clara para legibilidad */}
-      <div className="fixed inset-0 z-0 bg-white/70 backdrop-blur-sm pointer-events-none" />
+      <div className="fixed inset-0 z-0 bg-white backdrop-blur-sm pointer-events-none h-full" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
         <NavbarBlanco />
@@ -175,8 +175,8 @@ export default function CanchasGestor() {
         {/* Header */}
         <header className="w-full">
           <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center" style={{ paddingTop: `${NAVBAR_OFFSET_REM}rem`, paddingBottom: "1.25rem" }}>
-            <h1 className="text-6xl sm:text-7xl font-extrabold tracking-tight drop-shadow" style={strokeTitle}>
-              <AnimatedTitle text="Gestor de Canchas" />
+            <h1 className="text-5xl sm:text-5xl " style={{fontWeight: 'bold'}}>
+              GESTOR DE CANCHAS
             </h1>
 
             {/* Controls */}

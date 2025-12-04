@@ -14,6 +14,7 @@ const Chats = () => {
   const [chats, setChats] = useState([])
   const [searchTerm, setSearchTerm] = useState("");
   const [chatSeleccionado, setChatSeleccionado] = useState(null);
+  const [chatSeleccionadoId, setChatSeleccionadoId] = useState(null);
   
   const [mensajesChat, setMensajesChat] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
@@ -58,7 +59,6 @@ const Chats = () => {
       }, 2000);
       return;
     }
-
     if (new Date(fechaPartido) < new Date()) {
       setAlertaReserva(true);
       setMensajeReserva("La fecha del partido no puede ser en el pasado");
@@ -68,6 +68,7 @@ const Chats = () => {
         setAlertaReserva(false);
         setMensajeReserva('');
         setTipoMensajeReserva(null);
+
       }, 2000);
       return;
     }
@@ -192,6 +193,7 @@ const Chats = () => {
     if (snap.exists()) {
       const chatData = snap.val();
       setChatSeleccionado(chatData);
+      setChatSeleccionadoId(chatData.id);
 
       const mensajeRef = ref(dbRT, `chats/${chatId}/mensajes`);
       const unsubscribe = onValue(mensajeRef, (mensajeSnap) => {
@@ -232,20 +234,38 @@ const Chats = () => {
 
       const response = ref(dbRT, 'chats/');
 
-      const buscar = onValue(response, (snap) => {
+      // First check if chat already exists
+      const snap = await get(response);
+      if (snap.exists()) {
         const data = snap.val();
-
         const dataArr = Array.isArray(data) ? data : Object.values(data);
 
-        dataArr.map((c) => {
+        for (let c of dataArr) {
           if (c.participantes[0]?.uid === participante1.uid && c.participantes[1]?.uid === participante2.uid ||
             c.participantes[0]?.uid === participante2.uid && c.participantes[1]?.uid === participante1.uid) {
             setChatSeleccionado(c);
+            setChatSeleccionadoId(c.id);
+            // subscribe to messages
+            if (mensajesListenerRef.current) {
+              mensajesListenerRef.current();
+              mensajesListenerRef.current = null;
+            }
+            const mensajeRef = ref(dbRT, `chats/${c.id}/mensajes`);
+            const unsubscribe = onValue(mensajeRef, (mensajeSnap) => {
+              const data = mensajeSnap.val() || {};
+              const mensajesArr = Object.entries(data).map(([id, msg]) => ({
+                id,
+                ...msg
+              }));
+              setMensajesChat(mensajesArr);
+            });
+            mensajesListenerRef.current = unsubscribe;
             return;
           }
-        });
-      });
+        }
+      }
 
+      // If not found, create new chat
       const nuevoChatRef = push(response);
 
       if (!nuevoChatRef) {
@@ -261,6 +281,23 @@ const Chats = () => {
 
       await set(nuevoChatRef, obj);
       setChatSeleccionado(obj);
+      setChatSeleccionadoId(obj.id);
+
+      // Subscribe to messages for the newly created chat
+      if (mensajesListenerRef.current) {
+        mensajesListenerRef.current();
+        mensajesListenerRef.current = null;
+      }
+      const mensajeRef = ref(dbRT, `chats/${obj.id}/mensajes`);
+      const unsubscribe = onValue(mensajeRef, (mensajeSnap) => {
+        const data = mensajeSnap.val() || {};
+        const mensajesArr = Object.entries(data).map(([id, msg]) => ({
+          id,
+          ...msg
+        }));
+        setMensajesChat(mensajesArr);
+      });
+      mensajesListenerRef.current = unsubscribe;
 
 
     } catch (error) {
@@ -288,6 +325,7 @@ const Chats = () => {
         );
         if (encontrado) {
           setChatSeleccionado(encontrado);
+          setChatSeleccionadoId(encontrado.id);
           // subscribe to messages (clean previous listener first)
           if (mensajesListenerRef.current) {
             mensajesListenerRef.current();
@@ -339,6 +377,7 @@ const Chats = () => {
         );
         if (encontrado2) {
           setChatSeleccionado(encontrado2);
+          setChatSeleccionadoId(encontrado2.id);
           if (mensajesListenerRef.current) {
             mensajesListenerRef.current();
             mensajesListenerRef.current = null;
@@ -389,9 +428,11 @@ const Chats = () => {
         if (existingChatSnap && existingChatSnap.exists()) {
           const existing = existingChatSnap.val();
           setChatSeleccionado(existing);
+          setChatSeleccionadoId(existing.id);
         } else {
           await set(chatRef, obj);
           setChatSeleccionado(obj);
+          setChatSeleccionadoId(obj.id);
 
           // subscribe to messages for the newly created chat
           if (mensajesListenerRef.current) {
@@ -486,6 +527,14 @@ const Chats = () => {
       );
       setChats(chatsDelUsuario);
 
+      // Si hay un chat seleccionado por ID, actualiza el objeto chatSeleccionado con la data más reciente
+      if (chatSeleccionadoId) {
+        const chatActualizado = chatsDelUsuario.find(c => c.id === chatSeleccionadoId);
+        if (chatActualizado) {
+          setChatSeleccionado(chatActualizado);
+        }
+      }
+
       const notifs = {};
       chatsDelUsuario.forEach((chat) => {
         let count = 0;
@@ -506,7 +555,7 @@ const Chats = () => {
       setNotificaciones(notifs);
     });
     return () => unsuscribe();
-  }, [user]);
+  }, [user, chatSeleccionadoId]);
 
 
   // When route param is present, try to open or create chat
@@ -779,9 +828,13 @@ useEffect(() => {
               disabled={!usuarioSeleccionado}
               onClick={async () => {
                 if (!usuarioSeleccionado) return;
-                await crearChat();
-                setShowModal(false);
-                setUsuarioSeleccionado(null);
+                try {
+                  await crearChat();
+                  setShowModal(false);
+                  setUsuarioSeleccionado(null);
+                } catch (error) {
+                  console.error('Error al crear chat:', error);
+                }
               }}
             >
               Crear chat
@@ -795,7 +848,7 @@ useEffect(() => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: "90vh",
+          minHeight: "100vh",
           background: "white",
           paddingTop: '50px'
         }}
