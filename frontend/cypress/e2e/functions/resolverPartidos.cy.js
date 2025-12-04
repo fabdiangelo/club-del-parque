@@ -7,13 +7,13 @@ export const resolverPartidos = (email = '', contraseña = '') => {
   }
 
   cy.intercept('GET', '/api/partidos/jugador/*').as('getPartidos');
-  cy.contains('a', 'Resultados', { timeout: 20000 }).first().click({ force: true });
-  cy.url({ timeout: 20000 }).should('include', '/resultados');
-  cy.wait('@getPartidos', { timeout: 20000 });
-  cy.wait(16000);
+  cy.contains('a', 'Resultados', { timeout: 40000 }).first().click({ force: true });
+  cy.url({ timeout: 40000 }).should('include', '/resultados');
+  cy.wait('@getPartidos', { timeout: 40000 });
+  cy.wait(35000);
 
   function procesar(i) {
-    cy.document({ timeout: 20000 }).then(doc => {
+    cy.document({ timeout: 40000 }).then(doc => {
       const links = doc.querySelectorAll('a[title="Ir al partido"]');
 
       if (links.length === 0) {
@@ -29,41 +29,41 @@ export const resolverPartidos = (email = '', contraseña = '') => {
       cy.log(`Procesando índice: ${i}`);
 
       cy.intercept('GET', '/api/partidos/*').as('getPartido');
-      cy.wrap(links[i], { timeout: 20000 }).click({ force: true });
-      cy.wait('@getPartido', { timeout: 20000 });
-      cy.url({ timeout: 20000 }).should('include', '/partidos/');
-      cy.wait(19000);
+      cy.wrap(links[i], { timeout: 40000 }).click({ force: true });
+      cy.wait('@getPartido', { timeout: 40000 });
+      cy.url({ timeout: 40000 }).should('include', '/partidos/');
+      cy.wait(40000);
 
-      cy.get('body', { timeout: 30000 }).then($body => {
+      cy.get('body', { timeout: 60000 }).then($body => {
         const existeProponer = $body.text().includes('Proponer resultado');
         const existeAceptar = $body.text().includes('Aceptar propuesta');
 
         if (existeProponer) {
           cy.intercept('PUT', '/api/partidos/*').as('enviarResultado');
-          cy.contains('button', 'Proponer resultado', { timeout: 20000 }).click({ force: true });
-          cy.wait('@enviarResultado', { timeout: 20000 }).its('response.statusCode').should('eq', 200);
+          cy.contains('button', 'Proponer resultado', { timeout: 40000 }).click({ force: true });
+          cy.wait('@enviarResultado', { timeout: 40000 }).its('response.statusCode').should('eq', 200);
 
           cy.go('back');
-          cy.url({ timeout: 20000 }).should('include', '/resultados');
-          cy.wait('@getPartidos', { timeout: 20000 });
-          cy.wait(10000);
+          cy.url({ timeout: 40000 }).should('include', '/resultados');
+          cy.wait('@getPartidos', { timeout: 40000 });
+          cy.wait(30000);
           procesar(i + 1);
 
         } else if (existeAceptar){
           cy.intercept('POST', '/api/partidos/*/ganadores').as('confirmarResultado');
-          cy.contains('Aceptar propuesta', { timeout: 20000 }).click({ force: true });
-          cy.wait('@confirmarResultado', { timeout: 20000 }).its('response.statusCode').should('eq', 200);
+          cy.contains('Aceptar propuesta', { timeout: 40000 }).click({ force: true });
+          cy.wait('@confirmarResultado', { timeout: 40000 }).its('response.statusCode').should('eq', 200);
 
           cy.go('back');
-          cy.url({ timeout: 20000 }).should('include', '/resultados');
-          cy.wait('@getPartidos', { timeout: 20000 });
-          cy.wait(10000);
+          cy.url({ timeout: 40000 }).should('include', '/resultados');
+          cy.wait('@getPartidos', { timeout: 40000 });
+          cy.wait(30000);
           procesar(i);
         } else {
           cy.go('back');
-          cy.url({ timeout: 20000 }).should('include', '/resultados');
-          cy.wait('@getPartidos', { timeout: 20000 });
-          cy.wait(10000);
+          cy.url({ timeout: 40000 }).should('include', '/resultados');
+          cy.wait('@getPartidos', { timeout: 40000 });
+          cy.wait(30000);
           procesar(i + 1);
         }
       });

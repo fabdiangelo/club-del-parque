@@ -147,14 +147,37 @@ const crear = async (req, res) => {
       filtroId,
     });
 
-    // Upsert por (usuario, temporada, tipo, deporte, filtroId)
-    const existing = await repo.getByUsuarioTemporadaTipo(
-      S(usuarioID),
-      S(temporadaID),
-      tipo,
-      dep || undefined,
-      filtroId != null ? String(filtroId) : undefined
+    console.log('Crear ranking con datos:', { temporadaID, usuarioID, tipo, dep, puntos, categoriaId, filtroId });
+
+    // Buscar ranking previo del usuario en el mismo scope (para evitar dupes y copiar counters)
+    // Buscar todos los rankings del usuario en el scope (ignorando categoría)
+    let allRankings = await repo.getAll();
+    const scopeRankings = allRankings.filter(r =>
+      S(r.temporadaID) === S(temporadaID) &&
+      S(r.usuarioID) === S(usuarioID) &&
+      normalizeTipo(r.tipoDePartido) === tipo &&
+      (dep == null ? r.deporte == null : L(r.deporte) === dep) &&
+      (filtroId == null ? r.filtroId == null : S(r.filtroId) === S(filtroId))
     );
+
+    // Si hay más de uno, elimina duplicados y conserva el primero
+    let existing = scopeRankings[0] || null;
+    if (scopeRankings.length > 1) {
+      for (let i = 1; i < scopeRankings.length; i++) {
+        await repo.delete(scopeRankings[i].id);
+      }
+    }
+
+    // Si existe, actualiza el ranking
+    let prevPuntos = 0, prevGanados = 0, prevPerdidos = 0, prevAbandonados = 0;
+    let prevCategoriaId = null;
+    if (existing) {
+      prevPuntos = N(existing.puntos, 0);
+      prevGanados = N(existing.partidosGanados, 0);
+      prevPerdidos = N(existing.partidosPerdidos, 0);
+      prevAbandonados = N(existing.partidosAbandonados, 0);
+      prevCategoriaId = existing.categoriaId;
+    }
 
     const now = new Date().toISOString();
 
@@ -163,11 +186,23 @@ const crear = async (req, res) => {
       const patch = {
         updatedAt: now,
       };
-      if (puntos !== undefined) patch.puntos = N(puntos, 0);
-      if (categoriaId !== undefined) patch.categoriaId = categoriaId ?? null;
+      if (puntos !== undefined) patch.puntos = puntos;
+      if (categoriaId !== undefined) patch.categoriaId = categoriaId;
       if (dep != null) patch.deporte = dep;
-      if (filtroId !== undefined) patch.filtroId = filtroId ?? null;
-
+      if (filtroId !== undefined) patch.filtroId = filtroId;
+      // Mantener género si existe en el ranking anterior o deducir del filtro
+      let genero = existing.genero;
+      if (!genero && req.body.genero) genero = req.body.genero;
+      if (!genero && req.body.filtrosSnapshot?.genero?.nombre) genero = req.body.filtrosSnapshot.genero.nombre;
+      if (genero) patch.genero = genero;
+      // Si se está cambiando de categoría, copiar partidos ganados/perdidos
+      if (prevRanking) {
+        patch.partidosGanados = prevGanados;
+        patch.partidosPerdidos = prevPerdidos;
+        patch.partidosAbandonados = prevAbandonados;
+        // Si el ranking anterior tenía género, conservarlo
+        if (prevRanking.genero) patch.genero = prevRanking.genero;
+      }
       await repo.update(existing.id, patch);
       const updated = await repo.findById(existing.id);
       return ok(res, updated, 200);
@@ -183,9 +218,16 @@ const crear = async (req, res) => {
         filtroId,
         categoriaIdActual: categoriaId,
       });
-    } else {
-      initialPoints = N(puntos, 0);
+    } else if (puntos !== undefined) {
+      initialPoints = puntos;
+    } else if (prevRanking) {
+      initialPoints = prevPuntos;
     }
+
+    // Deducir género para el nuevo ranking
+    let genero = req.body.genero;
+    if (!genero && req.body.filtrosSnapshot?.genero?.nombre) genero = req.body.filtrosSnapshot.genero.nombre;
+    if (!genero && prevRanking?.genero) genero = prevRanking.genero;
 
     const id = buildDeterministicId({
       temporadaID,
@@ -195,25 +237,23 @@ const crear = async (req, res) => {
       filtroId,
     });
 
-    const doc = {
+    // Crear el nuevo ranking con género incluido
+    const newRanking = {
       id,
-      temporadaID: S(temporadaID),
-      usuarioID: S(usuarioID),
+      temporadaID,
+      usuarioID,
       tipoDePartido: tipo,
-      deporte: dep, // null | "tenis" | "padel"
+      deporte: dep,
+      filtroId,
+      categoriaId,
       puntos: initialPoints,
-      categoriaId: categoriaId ?? null,
-      filtroId: filtroId ?? null,
-      filtrosSnapshot: null, // eliminado el snapshot, dejamos en null
-      partidosGanados: 0,
-      partidosPerdidos: 0,
-      partidosAbandonados: 0,
-      createdAt: now,
+      partidosGanados: prevGanados,
+      partidosPerdidos: prevPerdidos,
+      partidosAbandonados: prevAbandonados,
       updatedAt: now,
+      genero,
     };
-
-    await repo.save(doc);
-    return ok(res, doc, 201);
+    await repo.save(newRanking);
   } catch (err) {
     return bad(res, err, 400);
   }
@@ -222,14 +262,16 @@ const crear = async (req, res) => {
 const listar = async (req, res) => {
   try {
     const { temporadaID, tipoDePartido, deporte, leaderboard, filtroId } = req.query || {};
-
+    console.log('Listar rankings con filtros:', { temporadaID, tipoDePartido, deporte, leaderboard, filtroId });
     // Leaderboard con agregaciones/orden (sin construir "Filtros")
     if (L(leaderboard) === "true") {
+      const genero = req.query.genero || undefined;
       const rows = await repo.getLeaderboard({
         temporadaID: temporadaID ? S(temporadaID) : undefined,
         tipoDePartido: tipoDePartido ? normalizeTipo(tipoDePartido) : undefined,
         deporte: deporte ? normalizeDeporte(deporte) : undefined,
-        filtroId: filtroId != null ? String(filtroId) : undefined,
+        filtroId: undefined,
+        genero,
         limit: 2000,
       });
       return ok(res, rows, 200);
@@ -241,9 +283,10 @@ const listar = async (req, res) => {
     if (tipoDePartido) rows = rows.filter((r) => L(r.tipoDePartido) === normalizeTipo(tipoDePartido));
     if (deporte) {
       const dep = normalizeDeporte(deporte);
+      console.log('Filtro deporte:', dep);
       rows = rows.filter((r) => (dep == null ? r.deporte == null : L(r.deporte) === dep));
     }
-    if (filtroId != null) rows = rows.filter((r) => S(r.filtroId) === S(filtroId));
+    //if (filtroId != null) rows = rows.filter((r) => S(r.filtroId) === S(filtroId));
 
     return ok(res, rows, 200);
   } catch (err) {

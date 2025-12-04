@@ -44,7 +44,9 @@ class RankingRepository {
 
   async getByTemporadaYTipo(temporadaID, tipoDePartido, deporte /* optional */, filtroId /* optional */) {
     let rows = await this.getByTemporada(temporadaID);
-    rows = rows.filter(r => String(r.tipoDePartido) === String(tipoDePartido));
+    // Normaliza tipoDePartido a 'singles' o 'dobles'
+    const normTipo = normalizeTipoDePartido(tipoDePartido);
+    rows = rows.filter(r => normalizeTipoDePartido(r.tipoDePartido) === normTipo);
     if (deporte) rows = rows.filter(r => (r.deporte || "").toLowerCase() === String(deporte).toLowerCase());
     if (filtroId != null) rows = rows.filter(r => String(r.filtroId || "") === String(filtroId));
     return rows;
@@ -52,7 +54,8 @@ class RankingRepository {
 
   async getByUsuarioYTipo(usuarioID, tipoDePartido, deporte /* optional */, filtroId /* optional */) {
     let rows = await this.getByUsuario(usuarioID);
-    rows = rows.filter(r => String(r.tipoDePartido) === String(tipoDePartido));
+    const normTipo = normalizeTipoDePartido(tipoDePartido);
+    rows = rows.filter(r => normalizeTipoDePartido(r.tipoDePartido) === normTipo);
     if (deporte) rows = rows.filter(r => (r.deporte || "").toLowerCase() === String(deporte).toLowerCase());
     if (filtroId != null) rows = rows.filter(r => String(r.filtroId || "") === String(filtroId));
     return rows;
@@ -63,29 +66,38 @@ class RankingRepository {
     const all = await this.getAll();
     const L = (x) => String(x ?? "").toLowerCase();
 
+    const normTipo = normalizeTipoDePartido(tipoDePartido);
     const filtered = all.filter(
       r =>
         L(r.usuarioID) === L(usuarioID) &&
         L(r.temporadaID) === L(temporadaID) &&
-        L(r.tipoDePartido) === L(tipoDePartido) &&
+        normalizeTipoDePartido(r.tipoDePartido) === normTipo &&
         (deporte ? L(r.deporte) === L(deporte) : true) &&
         (filtroId != null ? String(r.filtroId || "") === String(filtroId) : true)
     );
+// Normaliza tipoDePartido a 'singles' o 'dobles'
+function normalizeTipoDePartido(tipo) {
+  const t = String(tipo || "").toLowerCase();
+  if (t === "singles" || t === "single") return "singles";
+  if (t === "dobles" || t === "double" || t === "doubles" || t === "doble") return "dobles";
+  // Si viene eliminacion/roundRobin, usar el campo de modalidad/género si está disponible, o fallback a null
+  if (t === "eliminacion" || t === "roundrobin") return null;
+  return t;
+}
 
     // preferí filas sin deporte/filtro cuando no se pasen explícitamente
     const prefer = filtered.find(r => (!deporte ? !r.deporte : true) && (filtroId == null ? !r.filtroId : true));
     return (prefer || filtered[0]) || null;
   }
 
-  async getLeaderboard({ temporadaID, tipoDePartido, deporte /* opt */, filtroId /* opt */, filtros /* opt: objeto */ , limit = 50 } = {}) {
+  async getLeaderboard({ temporadaID, tipoDePartido, deporte /* opt */, filtroId /* opt */, genero /* opt: objeto */ , limit = 50 } = {}) {
     let items = await this.getAll();
     const s = (v) => (v == null ? "" : String(v));
     if (temporadaID) items = items.filter(i => s(i.temporadaID) === s(temporadaID));
     if (tipoDePartido) items = items.filter(i => s(i.tipoDePartido) === s(tipoDePartido));
     if (deporte) items = items.filter(i => (i.deporte || "").toLowerCase() === s(deporte).toLowerCase());
     if (filtroId != null) items = items.filter(i => s(i.filtroId) === s(filtroId));
-    if (filtros && Object.keys(filtros).length) items = items.filter(i => this.matchByFiltros(i, filtros));
-
+    if (genero) items =  items = items.filter(i => (i.genero || "").toLowerCase() === genero.toLowerCase());
     items.sort((a, b) => Number(b.puntos || 0) - Number(a.puntos || 0));
     return items.slice(0, limit);
   }

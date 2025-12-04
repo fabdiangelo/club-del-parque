@@ -105,31 +105,98 @@ class UsuarioController {
 async cambiarCategoriaFederado(req, res) {
   try {
     const sessionCookie = req.cookies.session || "";
-    if (!sessionCookie) {
-      return res.status(401).json({ error: "No session cookie found" });
-    }
+    if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
     const user = GetActualUser.execute(sessionCookie);
-    if (user.rol !== "administrador") {
-      return res.status(403).json({ error: "Acceso no autorizado" });
-    }
+    if (user.rol !== "administrador") return res.status(403).json({ error: "Acceso no autorizado" });
 
-    const { id } = req.params; // federadoId
+    const { id } = req.params;
     if (!id) return res.status(400).json({ error: "Falta id del federado" });
 
-    // Scope and target category come in the body:
     const {
-      categoriaId,      // required to assign; can be null to clear, but then ranking default points = 0
-      temporadaID,      // required to build the scope
-      deporte,          // "tenis" | "padel" | null
-      tipoDePartido,    // "singles" | "dobles"  (required)
-      filtroId = null,  // FK only
+      categoriaId,            // puede ser ID de /categorias o de /ranking-categorias (scoped con "|")
+      deporte,
+      filtroId = null,
+      temporadaID,
+      tipoDePartido,
+      puntos,
     } = req.body ?? {};
+    let genero = req.body?.genero;
+
+    console.log(`[UsuarioController] cambiarCategoriaFederado: federadoId=${id}, categoriaId=${categoriaId}, temporadaID=${temporadaID}, tipoDePartido=${tipoDePartido}, deporte=${deporte}, filtroId=${filtroId}, puntos=${puntos}`);
 
     if (!temporadaID || !tipoDePartido) {
       return res.status(400).json({ error: "Faltan temporadaID o tipoDePartido" });
     }
 
-    // This guarantees a ranking row exists (or is updated) **right now**
+    // Obtener el género del federado
+    if (req.body && typeof req.body.genero === "string") {
+      genero = req.body.genero.trim().toLowerCase();
+    }
+
+    // Importar repositorios necesarios
+    const { RankingRepository } = await import("../infraestructure/adapters/RankingRepository.js");
+    const { CategoriaRepository } = await import("../infraestructure/adapters/CategoriaRepository.js");
+    const rankingRepo = new RankingRepository();
+    const categoriaRepo = new CategoriaRepository();
+
+    // Buscar ranking actual del federado en el scope
+    const allRankings = await rankingRepo.getAll();
+    let rankingActual = allRankings.find(r =>
+      r.usuarioID === id &&
+      r.temporadaID === temporadaID &&
+      r.tipoDePartido === tipoDePartido &&
+      (deporte ? r.deporte.toLowerCase() === deporte.toLowerCase() : true)
+    );
+
+    console.log(`[UsuarioController] rankingActual: ${rankingActual ? JSON.stringify(rankingActual) : "none"}`);
+
+    // Si se especifica una nueva categoriaId, verificar capacidad
+    if (categoriaId) {
+      const cat = await categoriaRepo.getById(categoriaId);
+      if (!cat) return res.status(400).json({ error: "Categoría no encontrada" });
+      const rankingsEnCategoria = allRankings.filter(r =>
+        r.categoriaId === categoriaId &&
+        r.temporadaID === temporadaID &&
+        r.tipoDePartido === tipoDePartido &&
+        (deporte ? r.deporte.toLowerCase() === deporte.toLowerCase() : true)
+      );
+      console.log(`[UsuarioController] Rankings en categoria destino: ${rankingsEnCategoria.length} / ${cat.capacidad}`);
+      if (rankingsEnCategoria.length >= cat.capacidad) {
+        return res.status(400).json({ error: "La categoría destino está llena (capacidad máxima alcanzada)" });
+      }
+    }
+
+    // Si existe ranking actual y la categoría es diferente, eliminar ranking anterior
+    let puntosFinal = puntos;
+    let partidosGanados = 0;
+    let partidosPerdidos = 0;
+    let partidosAbandonados = 0;
+    if (rankingActual) {
+      partidosGanados = rankingActual.partidosGanados;
+      partidosPerdidos = rankingActual.partidosPerdidos;
+      partidosAbandonados = rankingActual.partidosAbandonados;
+      // Si la categoría cambia, eliminar ranking anterior
+      if (rankingActual.categoriaId !== categoriaId) {
+        // Si no se especifican nuevos puntos, conservar los anteriores
+        if (typeof puntos === "undefined" || puntos === null) {
+          puntosFinal = rankingActual.puntos;
+        }
+        await rankingRepo.delete(rankingActual.id);
+      } else {
+        // Si la categoría no cambia, actualizar puntos si se especifican
+        if (typeof puntos !== "undefined" && puntos !== null) {
+          puntosFinal = puntos;
+        } else {
+          puntosFinal = rankingActual.puntos;
+        }
+      }
+    } else {
+      // Si no existe ranking previo, inicializar stats en 0
+      puntosFinal = typeof puntos !== "undefined" && puntos !== null ? puntos : 0;
+    }
+
+    // Crear/actualizar ranking con stats preservados
+    const EnsureRankingForFederado = (await import("../usecases/Rankings/EnsureRankingForFederado.js")).default;
     const ranking = await EnsureRankingForFederado.execute({
       federadoId: id,
       temporadaID,
@@ -137,10 +204,25 @@ async cambiarCategoriaFederado(req, res) {
       tipoDePartido,
       filtroId,
       categoriaId: categoriaId ?? null,
+      puntos: puntosFinal,
+      genero,
+      partidosGanados,
+      partidosPerdidos,
+      partidosAbandonados,
     });
 
-    // Respond with the (new/updated) ranking so the UI can refresh instantly
-    return res.json({ ok: true, ranking });
+    // Obtener rankings actualizados filtrados por género
+    const ListarRankings = (await import("../usecases/Rankings/ListarRankings.js")).default;
+    const rankingsFiltrados = await ListarRankings.execute({
+      temporadaID,
+      tipoDePartido,
+      deporte,
+      filtroId,
+      leaderboard: true,
+      genero
+    });
+
+    return res.json({ ok: true, ranking, rankings: rankingsFiltrados });
   } catch (error) {
     console.error("Error in PATCH /federados/:id/categoria:", error);
     return res.status(400).json({ error: error?.message || "Bad Request" });
@@ -186,39 +268,7 @@ async getAllFederados(req, res) {
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }
-async cambiarCategoriaFederado(req, res) {
-  try {
-    const sessionCookie = req.cookies.session || "";
-    if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
-    const user = GetActualUser.execute(sessionCookie);
-    if (user.rol !== "administrador") return res.status(403).json({ error: "Acceso no autorizado" });
 
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ error: "Falta id del federado" });
-
-    const { categoriaId, temporadaID, deporte, tipoDePartido, filtroId = null } = req.body ?? {};
-
-    // 1) Asignamos categoría al federado (dato “maestro”)
-    const result = await CambiarCategoriaFederado.execute(id, categoriaId ?? null);
-
-    // 2) Si hay scope → aseguramos ranking y aplicamos puntos por defecto “top de la de abajo”
-    if (temporadaID && tipoDePartido) {
-      await EnsureRankingForFederado.execute({
-        federadoId: id,
-        temporadaID,
-        deporte,
-        tipoDePartido,
-        filtroId,
-        categoriaId: categoriaId ?? null,
-      });
-    }
-
-    return res.json(result);
-  } catch (error) {
-    console.error("Error in PATCH /federados/:id/categoria:", error);
-    return res.status(400).json({ error: error?.message || "Bad Request" });
-  }
-}
   async editarUsuario (req, res) {
     try {
       const sessionCookie = req.cookies.session || "";
@@ -356,77 +406,7 @@ async cambiarCategoriaFederado(req, res) {
     }
   }
 // functions/src/controllers/UsuarioController.js  (inside class)
-async cambiarCategoriaFederado(req, res) {
-  try {
-    const sessionCookie = req.cookies.session || "";
-    if (!sessionCookie) return res.status(401).json({ error: "No session cookie found" });
-    const user = GetActualUser.execute(sessionCookie);
-    if (user.rol !== "administrador") return res.status(403).json({ error: "Acceso no autorizado" });
-
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ error: "Falta id del federado" });
-
-    const {
-      categoriaId,            // puede ser ID de /categorias o de /ranking-categorias (scoped con "|")
-      temporadaID,
-      deporte,
-      tipoDePartido,
-      filtroId = null,
-    } = req.body ?? {};
-
-    const looksLikeRankingCategoria = typeof categoriaId === "string" && categoriaId.includes("|");
-
-    let masterUpdate = null;
-    if (!looksLikeRankingCategoria) {
-      masterUpdate = await CambiarCategoriaFederado.execute(id, categoriaId ?? null);
-    }
-
-    if (temporadaID && tipoDePartido) {
-      await EnsureRankingForFederado.execute({
-        federadoId: id,
-        temporadaID,
-        deporte,
-        tipoDePartido,
-        filtroId,
-        categoriaId: categoriaId ?? null, // acá sí aceptamos el ID con pipes (ranking-categorías)
-      });
-    }
-
-    return res.json(masterUpdate ?? { ok: true });
-  } catch (error) {
-    console.error("Error in PATCH /federados/:id/categoria:", error);
-    return res.status(400).json({ error: error?.message || "Bad Request" });
-  }
-}
-
-async cambiarCategoriaFederado(req, res) {
-  try {
-    const federadoId = req.params.id;
-    const {
-      categoriaId,
-      temporadaID,
-      deporte,
-      tipoDePartido,
-      filtroId = null,
-      puntos,
-    } = req.body || {};
-
-    const doc = await EnsureRankingForFederado.execute({
-      federadoId,
-      categoriaId,
-      temporadaID,
-      deporte,
-      tipoDePartido,
-      filtroId,
-      puntos, 
-    });
-
-    return res.status(200).json(doc);
-  } catch (err) {
-    console.error("Error in PATCH /federados/:id/categoria:", err);
-    return res.status(400).json({ error: err?.message || String(err) });
-  }
-}
+// ...existing code...
   async bloquearUsuario(req, res) {
     try{
       const sessionCookie = req.cookies.session || "";

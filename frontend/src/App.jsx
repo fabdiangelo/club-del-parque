@@ -79,9 +79,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-		  {!user ? (
 			<Route path="/register" element={<Registro />} />
-		  ) : (<Route path="/" element={<Home />}/>)}
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
       <Route path="/noticias" element={<Noticias />} />

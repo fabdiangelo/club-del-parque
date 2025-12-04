@@ -21,11 +21,33 @@ export class SetGanadoresPartido {
 
     const uniq = (arr = []) => Array.from(new Set((arr || []).map((v) => String(v).trim())));
 
+    // Determinar el deporte correctamente
+    let deporte = oldPartido.deporte;
+    // Si no está, intentar obtenerlo desde etapa/campeonato
+    if (!deporte && oldPartido.etapa) {
+      try {
+        const etapa = await this.etapaRepository.findById(oldPartido.etapa);
+        if (etapa && etapa.deporte) {
+          deporte = etapa.deporte;
+        } else if (etapa && etapa.campeonatoID) {
+          const campeonato = await this.campeonatoRepository.findById(etapa.campeonatoID);
+          if (campeonato && campeonato.deporte) {
+            deporte = campeonato.deporte;
+          }
+        }
+      } catch (e) {
+        // Si no se puede obtener, dejar como null
+      }
+    }
+    // Normalizar a string si existe
+    if (deporte) deporte = String(deporte).toLowerCase();
+
     const updated = {
       ...oldPartido,
       ganadores: uniq(ganadores),
       resultado: resultado ?? oldPartido.resultado,
       estado: "finalizado",
+      deporte: deporte ?? 'Tenis',
     };
 
     console.log(`Ganadores: ${updated.ganadores.join(', ')}`);
@@ -35,7 +57,7 @@ export class SetGanadoresPartido {
 
     // Actualizar rankings / puntos de temporada (si aplica)
     try {
-      await applyOnEdit(oldPartido, updated, puntosGanador, puntosPerdedor);
+      //await applyOnEdit(oldPartido, updated, puntosGanador, puntosPerdedor);
     } catch (e) {
       console.warn('Error aplicando rankings desde SetGanadoresPartido:', e?.message || e);
     }
@@ -57,6 +79,33 @@ export class SetGanadoresPartido {
           // ELIMINACION
           if (etapa.tipoEtapa === 'eliminacion' && updated.meta && updated.meta.rondaID) {
             await this._handleEliminationMatch(updated, etapa, campeonato);
+          }
+
+          // Verificar si es el último partido de la última etapa
+          if (campeonato && Array.isArray(campeonato.etapasIDs) && campeonato.etapasIDs.length) {
+            const isLastEtapa = String(etapa.id) === String(campeonato.etapasIDs[campeonato.etapasIDs.length - 1]);
+            let isLastPartido = false;
+            if (isLastEtapa) {
+              if (etapa.tipoEtapa === 'eliminacion' && Array.isArray(etapa.rondas)) {
+                // Última ronda, todos los partidos finalizados
+                const lastRonda = etapa.rondas[etapa.rondas.length - 1];
+                if (lastRonda && Array.isArray(lastRonda.partidos)) {
+                  isLastPartido = lastRonda.partidos.every(p => p.estado === 'finalizado' || p.estado === 'cerrado');
+                }
+              } else if (etapa.tipoEtapa === 'roundRobin' && Array.isArray(etapa.grupos)) {
+                // Todos los partidos de todos los grupos finalizados
+                isLastPartido = etapa.grupos.every(g => (g.partidos || []).every(p => p.estado === 'finalizado' || p.estado === 'cerrado'));
+              }
+            }
+            if (isLastEtapa && isLastPartido) {
+              console.log('✓ Último partido de la última etapa. Cerrando campeonato y asignando puntos...');
+              try {
+                await new CerrarCampeonatoYAsignarPuntos().execute(campeonato.id);
+                console.log('✓ Puntos de ranking asignados al cerrar campeonato.');
+              } catch (cerrarErr) {
+                console.warn('Error al cerrar campeonato y asignar puntos:', cerrarErr?.message || cerrarErr);
+              }
+            }
           }
         }
       }
@@ -414,7 +463,8 @@ async _handleRoundRobinMatch(updated, etapa, campeonato, puntosPorPosicion) {
 
       // Al finalizar la última etapa del campeonato, distribuir puntos de ranking
       try {
-        const campId = (campeonato && (campeonato.id || campeonato._id)) || etapa.campeonatoID || null;
+        const campId = campeonato.id;
+        console.log('Iniciando asignación de puntos al cerrar campeonato...' + campId);
         if (campId) {
           console.log(`Asignando puntos de ranking para campeonato ${campId}...`);
           // Ejecutar el usecase que cierra el campeonato y asigna puntos

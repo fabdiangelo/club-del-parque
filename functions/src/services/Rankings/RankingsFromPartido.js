@@ -74,8 +74,42 @@ function eligibleForEdit(p) {
 async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sign = +1) {
   if (!partido || !Array.isArray(partido.jugadores)) return;
 
-  const { temporadaID, tipoPartido } = partido;
-  if (!temporadaID || !tipoPartido) return;
+  const { temporadaID } = partido;
+  if (!temporadaID) return;
+
+  // Obtener el tipoDePartido correcto desde el campeonato (vía etapa si es necesario)
+  let tipoDePartido = null;
+  let campeonatoID = partido.campeonatoID;
+  if (!campeonatoID && partido.etapa) {
+    try {
+      const { EtapaRepository } = await import("../../infraestructure/adapters/EtapaRepository.js");
+      const etapaRepo = new EtapaRepository();
+      const etapa = await etapaRepo.findById(partido.etapa);
+      if (etapa && etapa.campeonatoID) {
+        campeonatoID = etapa.campeonatoID;
+      }
+    } catch (e) {
+      // fallback abajo
+    }
+  }
+  if (campeonatoID) {
+    try {
+      const { CampeonatoRepository } = await import("../../infraestructure/adapters/CampeonatoRepository.js");
+      const campRepo = new CampeonatoRepository();
+      const camp = await campRepo.findById(campeonatoID);
+      if (camp) {
+        // Usar tipoDePartido del campeonato si existe, si no, deducir por dobles
+        tipoDePartido = (camp.dobles ? "dobles" : "singles");
+      }
+    } catch (e) {
+      // fallback abajo
+    }
+  }
+  // Fallback: si no hay campeonato, intentar deducir por partido
+  if (!tipoDePartido) {
+    if (String(partido.tipoPartido).toLowerCase().includes("doble")) tipoDePartido = "dobles";
+    else tipoDePartido = "singles";
+  }
 
   const deporte = (String(partido.deporte || "").trim().toLowerCase()) || null;
 
@@ -93,14 +127,21 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
 
   const ups = [];
 
+  // Obtener género del partido
+  const genero = partido.genero ?? null;
+
+  // Si el género es null, no crear ningún ranking
+  if (genero == null) return;
+
   // Ganadores → +3 y +1 ganado
   for (const uid of winners) {
     ups.push(
       UpsertRankingPuntos.execute({
         usuarioID: String(uid),
         temporadaID: String(temporadaID),
-        tipoDePartido: String(tipoPartido),
+        tipoDePartido,
         deporte,
+        genero,
         delta: sign * win,
         deltaGanados: sign * 1,
       })
@@ -122,8 +163,9 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
       UpsertRankingPuntos.execute({
         usuarioID: uid,
         temporadaID: String(temporadaID),
-        tipoDePartido: String(tipoPartido),
+        tipoDePartido,
         deporte,
+        genero,
         delta: sign * losePoints,
         deltaPerdidos: isAbandono ? 0 : sign * 1,
         deltaAbandonados: isAbandono ? sign * 1 : 0,

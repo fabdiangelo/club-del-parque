@@ -3,7 +3,7 @@ import DBConnection from "../ports/DBConnection.js";
 export class CategoriaRepository {
   constructor() {
     this.db = new DBConnection();
-    this.collection = "categorias";
+    this.collection = "rankingCategorias";
   }
 
   /** Always return top-level id and numeric orden */

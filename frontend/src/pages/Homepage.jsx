@@ -5,6 +5,7 @@ import NavbarBlanco from "../components/NavbarBlanco";
 import logoUrl from "../assets/Logo.svg";
 import "../styles/Home.css";
 import RichTextEditor from "../components/RichTextEditor";
+import { useAuth } from "../contexts/AuthProvider";
 
 // === Canchas photos
 import img1 from "../assets/CanchasTenisPadel/1.jpg";
@@ -141,7 +142,7 @@ export default function Home() {
 
 
  
-
+  const { user } = useAuth();
 
 
   // Lightbox state
@@ -200,9 +201,11 @@ export default function Home() {
               <Link to="/campeonatos" style={{backgroundColor: 'var(--primario)', padding: '10px 20px', cursor: 'pointer'}} className="py-2 text-white rounded w-full text-center">
                 Ver Campeonatos
               </Link>
-              <Link to="/register" style={{backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)'}} className="py-2 text-black rounded">
-                Registrarse
-              </Link>
+              {!user &&
+                <Link to="/register" style={{backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)'}} className="py-2 text-black rounded">
+                  Registrarse
+                </Link>
+              }
             </div>
 
            
