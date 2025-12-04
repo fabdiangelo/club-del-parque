@@ -1,7 +1,7 @@
 import { login } from './functions/login.cy';
 
 describe('Dashboard Tests', () => {
-  it('should display basic stuff', () => {
+  it('it should let register a new user and ask for a federation', () => {
     const email = `test_${Date.now()}@example.com`;
 
     cy.visit(Cypress.env('CYPRESS_URL') + '/register');

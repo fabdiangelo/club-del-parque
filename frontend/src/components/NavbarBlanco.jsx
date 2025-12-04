@@ -274,7 +274,7 @@ export default function NavbarBlanco({ transparent = false }) {
                   justifyContent: "center",
                   backgroundColor: "red",
                   cursor: "pointer",
-                  padding: "10px 30px",
+                  padding: "10px 20px",
                   borderRadius: "8px",
                   color: "white",
                 }}

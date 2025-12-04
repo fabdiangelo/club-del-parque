@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { MessageSquare } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import NavbarBlanco from '../components/NavbarBlanco';
 import '../styles/Partido.css';
 import { useAuth } from '../contexts/AuthProvider';
 import Navbar from '../components/Navbar';
-
+import { useNavigate } from 'react-router-dom';
 const Partido = () => {
+    const navigate = useNavigate()
     const { id } = useParams();
     const [esDobles, setEsDobles] = useState(false);
     const [partido, setPartido] = useState(null);
@@ -954,6 +956,43 @@ useEffect(() => {
                         )
                     }
 
+
+{
+    comprobarSiUserEsJugador() && (
+        <div className='text-center my-5 intro-text'>
+            <p>O inicia un chat para coordinar fechas</p>
+            <button
+                style={{
+                    cursor: 'pointer',
+                    marginTop: '10px',
+                    padding: '10px 20px',
+                    backgroundColor: 'var(--primario)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                }}
+                onClick={() => {
+                    // Buscar el id del usuario contrincante
+                    let contrincanteId = null;
+                    if (usuariosParticipantes && usuariosParticipantes.length > 0) {
+                        // Si el usuario actual es el primero, el contrincante es el segundo, y viceversa
+                        if (user?.uid === usuariosParticipantes[0]?.id || user?.id === usuariosParticipantes[0]?.id) {
+                            contrincanteId = usuariosParticipantes[1]?.id;
+                        } else {
+                            contrincanteId = usuariosParticipantes[0]?.id;
+                        }
+                    }
+                    console.log("Navegando al chat con el contrincante:", contrincanteId);
+                    if (contrincanteId) {
+                        navigate(`/chats/${contrincanteId}`);
+                    }
+                }}
+            >
+                <MessageSquare />
+            </button>
+        </div>
+    ) 
+}
                     
 
 

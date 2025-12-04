@@ -48,8 +48,7 @@ export class RankingCategoriaRepository {
         (c) =>
           L(c.temporadaID) === L(temporadaID) &&
           L(c.deporte) === L(deporte) &&
-          L(c.tipoDePartido) === L(tipoDePartido) &&
-          (filtroId == null ? c.filtroId == null : L(c.filtroId) === L(filtroId))
+          L(c.tipoDePartido) === L(tipoDePartido)
       )
       .sort(
         (a, b) => a.orden - b.orden || String(a.nombre).localeCompare(b.nombre)

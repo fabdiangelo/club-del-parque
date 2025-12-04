@@ -15,11 +15,11 @@ export class CrearPartido {
 
     // Si ya viene con ganadores definidos al crear, aplicar ranking
     if (Array.isArray(partidoData.ganadores)) {
-      await applyOnCreate(
-        { ...partidoData, id: newId || partidoData.id },
-        puntosGanador,
-        puntosPerdedor
-      );
+      // await applyOnCreate(
+      //   { ...partidoData, id: newId || partidoData.id },
+      //   puntosGanador,
+      //   puntosPerdedor
+      // );
     }
 
     return newId;

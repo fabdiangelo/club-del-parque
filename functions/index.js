@@ -125,7 +125,7 @@ app.post("/usuarios/noti-tokens", (req, res) => UsuarioController.agregarNotiTok
 app.get("/usuarios/federados", (req, res) => UsuarioController.getAllFederados(req, res));
 app.post("/federados/precarga", (req, res) => UsuarioController.precarga(req, res));
 app.get("/federados/:id", (req, res) => UsuarioController.getFederadoById(req, res));
-app.patch("/federados/:id/categoria", (req, res) => UsuarioController.cambiarCategoriaFederado(req, res));
+app.post("/federados/:id/categoria", (req, res) => UsuarioController.cambiarCategoriaFederado(req, res));
 
 
 // Categorías

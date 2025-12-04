@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import NavbarBlanco from "../components/NavbarBlanco";
 import logoUrl from "../assets/Logo.svg";
 import "../styles/Home.css";
+import RichTextEditor from "../components/RichTextEditor";
+import { useAuth } from "../contexts/AuthProvider";
 import { noticias as noticiasData } from "../data/noticias";
 
 // === Canchas photos
@@ -161,13 +163,11 @@ export default function Home() {
               >
                 Ver Campeonatos
               </Link>
-              <Link
-                to="/register"
-                style={{ backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)' }}
-                className="py-2 text-black rounded"
-              >
-                Registrarse
-              </Link>
+              {!user &&
+                <Link to="/register" style={{backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)'}} className="py-2 text-black rounded">
+                  Registrarse
+                </Link>
+              }
             </div>
           </div>
 

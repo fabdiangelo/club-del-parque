@@ -11,7 +11,6 @@ export default class Campeonato {
     dobles,
     esTenis,
     temporadaID = null,
-    tipoDePartido = null,
     deporte = null,
     puntosPorPosicion = null
   ) {
@@ -34,7 +33,6 @@ export default class Campeonato {
       (this.federadosCampeonatoIDs = []);
     this.etapasIDs = [];
     this.temporadaID = temporadaID;
-    this.tipoDePartido = tipoDePartido;
     this.deporte = deporte ? String(deporte).toLowerCase() : null;
     this.puntosPorPosicion = puntosPorPosicion || null;
     // Reglamentos (opcional)
@@ -57,7 +55,6 @@ export default class Campeonato {
       federadosCampeonatoIDs: this.federadosCampeonatoIDs,
       etapasIDs: this.etapasIDs,
       temporadaID: this.temporadaID,
-      tipoDePartido: this.tipoDePartido,
       deporte: this.deporte,
       puntosPorPosicion: this.puntosPorPosicion,
       reglamentoUrl: this.reglamentoUrl || null,

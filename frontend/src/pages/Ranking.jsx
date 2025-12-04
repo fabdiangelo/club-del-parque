@@ -121,16 +121,62 @@ export default function Rankings() {
   // dictionaries
   const { user } = useAuth();
   const isAdmin = user?.rol === "administrador";
-  const [deportes, setDeportes] = useState([]);
-  const [filtros, setFiltros] = useState([]);
+  const [deportes, setDeportes] = useState([{"id":"padel","nombre":"Pádel"},{"id":"tenis","nombre":"Tenis"}]);
+  const [filtros, setFiltros] = useState([
+    {
+      "id": 1,
+      "modalidad": {
+          "nombre": "doble"
+      },
+      "genero": {
+          "nombre": "masculino"
+      }
+    },
+    {
+      "id": 2,
+      "modalidad": {
+          "nombre": "single"
+      },
+      "genero": {
+          "nombre": "femenino"
+      },
+    },
+    {
+      "id": 3,
+      "modalidad": {
+          "nombre": "doble"
+      },
+      "genero": {
+          "nombre": "mixto"
+      },
+    },
+    {
+      "id": 4,
+      "modalidad": {
+          "nombre": "single"
+      },
+      "genero": {
+          "nombre": "masculino"
+      },
+    },
+    {
+      "id": 5,
+      "modalidad": {
+          "nombre": "doble"
+      },
+      "genero": {
+          "nombre": "femenino"
+      },
+    }
+]);
   const [temporadas, setTemporadas] = useState([]);
   const [federados, setFederados] = useState([]);
 
   // UI selections
-  const [sportOptions, setSportOptions] = useState([]);
-  const [sport, setSport] = useState("");
+  const [sportOptions, setSportOptions] = useState(["Tenis", "Pádel"]);
+  const [sport, setSport] = useState("Tenis");
   const [season, setSeason] = useState("");
-  const [selectedFiltroId, setSelectedFiltroId] = useState(""); // required
+  const [selectedFiltroId, setSelectedFiltroId] = useState("4"); // required
   const [query, setQuery] = useState("");
 
   // data
@@ -155,37 +201,26 @@ export default function Rankings() {
   const [busy, setBusy] = useState(false);
   const [rkLocalOrder, setRkLocalOrder] = useState([]); // ids en orden (mejor→peor)
 
+  // Sincronizar orden de categorías cada vez que se abre el gestor
+  useEffect(() => {
+    if (showManager) {
+      setRkLocalOrder(rkCategorias.map(c => c.id));
+    }
+  }, [showManager, rkCategorias]);
+
+
   /* boot (load dictionaries + federados so we can resolve names) */
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [deps, filts, ts, fed] = await Promise.all([
-          fetchJSON("/deportes"),
-          fetchJSON("/filtros"),
+        const [ts, fed] = await Promise.all([
           fetchJSON("/temporadas"),
           fetchJSON("/usuarios/federados"),
         ]);
         if (cancelled) return;
 
-        const depsNorm = Array.isArray(deps)
-          ? deps.map((d) => ({
-              id: String(d.id || "").toLowerCase(),
-              nombre: titleCase(d.nombre || d.id || ""),
-            }))
-          : [];
-        setDeportes(depsNorm);
-        setSportOptions(depsNorm.map((d) => d.nombre));
-        if (!sport && depsNorm.length) setSport(depsNorm[0].nombre);
 
-        const filtsNorm = Array.isArray(filts)
-          ? filts.map((f) => ({
-              ...f,
-              modalidad: { nombre: String(f?.modalidad?.nombre || "").toLowerCase() },
-              genero: { nombre: String(f?.genero?.nombre || "").toLowerCase() },
-            }))
-          : [];
-        setFiltros(filtsNorm);
         if (!selectedFiltroId && filtsNorm.length)
           setSelectedFiltroId(String(filtsNorm[0].id));
 
@@ -218,79 +253,57 @@ export default function Rankings() {
   /* derived scope */
   const scope = useMemo(() => {
     const t = temporadas.find((tt) => tt._name === season);
-    const filtro = filtros.find((f) => String(f.id) === String(selectedFiltroId));
     return {
-      temporadaID: t?.id || null,
+      temporadaID: t?.id || "",
       deporte: uiSportToApi(sport),
-      tipoDePartido: filtro ? tipoFromFiltro(filtro) : null,
-      filtroId: selectedFiltroId || null,
-      filtroLabel: filtro ? buildFilterLabel(filtro) : "",
+      tipoDePartido: tipoFromFiltro(filtros.find(f => String(f.id) === String(selectedFiltroId))) || "singles",
+      filtroId: selectedFiltroId || ""
     };
   }, [temporadas, season, sport, filtros, selectedFiltroId]);
 
-  /* ranking-categorías for scope */
+  /* load leaderboard and categories for scope */
   useEffect(() => {
-    const loadRankingCategorias = async () => {
+    setLoading(true);
+    setErr("");
+    const fetchLeaderboardAndCategorias = async () => {
       try {
-        if (!scope.temporadaID || !scope.tipoDePartido) {
-          setRkCategorias([]);
-          setRkLocalOrder([]);
-          return;
+        // Determinar el género del filtro seleccionado
+        let genero = "";
+        const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+        if (filtro && filtro.genero && filtro.genero.nombre) {
+          genero = filtro.genero.nombre;
         }
-        const qs = new URLSearchParams({
-          temporadaID: scope.temporadaID,
-          deporte: scope.deporte,
-          tipoDePartido: scope.tipoDePartido,
-        });
-        if (scope.filtroId != null) qs.set("filtroId", scope.filtroId);
-        const rows = await fetchJSON(`/ranking-categorias?${qs.toString()}`);
-        const list = Array.isArray(rows) ? rows : [];
-        list.sort(
-          (a, b) =>
-            a.orden - b.orden ||
-            String(a?.nombre || "").localeCompare(String(b?.nombre || ""))
-        );
-        setRkCategorias(list);
-        setRkLocalOrder(list.map((c) => c.id));
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    loadRankingCategorias();
-  }, [scope.temporadaID, scope.deporte, scope.tipoDePartido, scope.filtroId]);
-
-  /* load leaderboard for scope */
-  useEffect(() => {
-    let cancelled = false;
-    async function loadRankings() {
-      const { temporadaID, deporte, tipoDePartido, filtroId } = scope;
-      if (!temporadaID || !deporte || !tipoDePartido || !filtroId) {
-        setRankingsRaw([]);
-        return;
-      }
-      setLoading(true);
-      setErr("");
-      try {
         const params = new URLSearchParams({
-          temporadaID,
-          deporte,
-          tipoDePartido,
-          filtroId: String(filtroId),
+          temporadaID: scope.temporadaID || "",
+          tipoDePartido: scope.tipoDePartido || "",
+          deporte: scope.deporte || "",
           leaderboard: "true",
+          filtroId: scope.filtroId || "",
+          genero: genero || ""
         });
-        const rk = await fetchJSON(`/rankings?${params.toString()}`);
-        if (!cancelled) setRankingsRaw(Array.isArray(rk) ? rk : []);
+        const rows = await fetchJSON(`/rankings?${params.toString()}`);
+        setRankingsRaw(Array.isArray(rows) ? rows : []);
+        // Cargar categorías asociadas al scope actual
+        const catParams = new URLSearchParams({
+          temporadaID: scope.temporadaID || "",
+          deporte: scope.deporte || "",
+          tipoDePartido: scope.tipoDePartido || "",
+          filtroId: scope.filtroId || ""
+        });
+        const catRes = await fetchJSON(`/ranking-categorias?${catParams.toString()}`);
+        setRkCategorias(Array.isArray(catRes) ? catRes : []);
       } catch (e) {
-        if (!cancelled) setErr(normalizeError(e));
+        setErr(normalizeError(e));
+        setRankingsRaw([]);
+        setRkCategorias([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
-    }
-    if (scope.temporadaID && scope.filtroId && scope.tipoDePartido) loadRankings();
-    return () => {
-      cancelled = true;
     };
-  }, [scope]);
+    fetchLeaderboardAndCategorias();
+  }, [scope, filtros, selectedFiltroId]);
+
+  // ...existing code...
 
   /* maps */
   const nameById = useMemo(() => {
@@ -393,6 +406,11 @@ export default function Rankings() {
   const reloadRankings = async () => {
     const { temporadaID, deporte, tipoDePartido, filtroId } = scope;
     if (!temporadaID || !deporte || !tipoDePartido || !filtroId) return;
+    let genero = "";
+    const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+    if (filtro && filtro.genero && filtro.genero.nombre) {
+      genero = filtro.genero.nombre;
+    }
     try {
       const params = new URLSearchParams({
         temporadaID,
@@ -400,11 +418,25 @@ export default function Rankings() {
         tipoDePartido,
         filtroId: String(filtroId),
         leaderboard: "true",
+        genero: genero || ""
       });
       const rk = await fetchJSON(`/rankings?${params.toString()}`);
       setRankingsRaw(Array.isArray(rk) ? rk : []);
+      // Cargar categorías asociadas al scope actual
+      const catParams = new URLSearchParams({
+        temporadaID,
+        deporte,
+        tipoDePartido,
+        filtroId: String(filtroId)
+      });
+      const catRes = await fetchJSON(`/ranking-categorias?${catParams.toString()}`);
+      const cats = Array.isArray(catRes) ? catRes : [];
+      setRkCategorias(cats);
+      setRkLocalOrder(cats.map(c => c.id));
     } catch {
       setRankingsRaw([]);
+      setRkCategorias([]);
+      setRkLocalOrder([]);
     }
   };
 
@@ -431,15 +463,22 @@ export default function Rankings() {
     if (!usuarioID) return alert("Elegí un federado");
     if (!scope.temporadaID || !scope.tipoDePartido || !scope.filtroId)
       return alert("Falta seleccionar temporada/filtro/tipo.");
+    // Deducir género del filtro seleccionado
+    let genero = "";
+    const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+    if (filtro && filtro.genero && filtro.genero.nombre) {
+      genero = filtro.genero.nombre;
+    }
     try {
       await fetchJSON(`/federados/${encodeURIComponent(usuarioID)}/categoria`, {
-        method: "PATCH",
+        method: "POST",
         body: JSON.stringify({
           categoriaId: assignCategoriaId || null,
           temporadaID: scope.temporadaID,
           deporte: scope.deporte,
           tipoDePartido: scope.tipoDePartido,
           filtroId: scope.filtroId ?? null,
+          genero: genero || "",
           puntos:
             assignPoints === "" || assignPoints === null
               ? undefined
@@ -461,12 +500,19 @@ export default function Rankings() {
     if (!nm) return alert("Nombre obligatorio");
     if (!Number.isInteger(cap) || cap < 4) return alert("Capacidad inválida");
     setBusy(true);
+    // Deducir género del filtro seleccionado
+    let genero = "";
+    const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+    if (filtro && filtro.genero && filtro.genero.nombre) {
+      genero = filtro.genero.nombre;
+    }
     try {
       const body = {
         temporadaID: scope.temporadaID,
         deporte: scope.deporte,
         tipoDePartido: scope.tipoDePartido,
         filtroId: scope.filtroId,
+        genero: genero || "",
         nombre: nm,
         capacidad: cap,
       };
@@ -831,17 +877,39 @@ export default function Rankings() {
                   onChange={(e) => setAssignUserId(e.target.value)}
                 >
                   <option value="">— Elegí un federado —</option>
-                  {(federados || []).map((u, i) => {
-                    const id = u.id || u.uid || u.email || String(i);
-                    const name = displayNameFromFederado(u) || id;
-                    return (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    );
-                  })}
+                  {(federados || [])
+                    .filter((u) => {
+                      // Filtrar por género del filtro actual
+                      const filtro = filtros.find((f) => String(f.id) === String(selectedFiltroId));
+                      if (!filtro || !filtro.genero?.nombre) return true;
+                      const gen = (u.genero || u.sexo || "").toLowerCase();
+                      const filtroGen = (filtro.genero.nombre || "").toLowerCase();
+                      if (filtroGen === "mixto") return true;
+                      return gen === filtroGen;
+                    })
+                    .map((u, i) => {
+                      const id = u.id || u.uid || u.email || String(i);
+                      const name = displayNameFromFederado(u) || id;
+                      return (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      );
+                    })}
                 </select>
                 {loadingFederados && <small className="text-neutral-600">Cargando federados…</small>}
+                {/* Mostrar ranking actual si existe */}
+                {assignUserId && (() => {
+                  // Buscar ranking actual del federado en el scope
+                  const rk = rankingsRaw.find(r => String(r.usuarioID) === String(assignUserId));
+                  if (!rk) return null;
+                  return (
+                    <div className="mt-2 text-xs text-neutral-700 bg-neutral-100 rounded p-2">
+                      <b>Ranking actual:</b> Categoría: {rk.categoriaId ? (rkCategorias.find(c => c.id === rk.categoriaId)?.nombre || rk.categoriaId) : "Sin categoría"},
+                      Puntos: {rk.puntos}, PG: {rk.partidosGanados}, PP: {rk.partidosPerdidos}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="grid gap-1">

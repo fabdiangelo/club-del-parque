@@ -14,9 +14,10 @@ const N = (v, d = 0) => {
 
 const normalizeTipo = (tipo) => {
   const t = L(tipo);
-  if (t === "singles" || t === "single") return "singles";
-  if (t === "dobles" || t === "double" || t === "doubles" || t === "doble") return "dobles";
-  throw new Error("tipoDePartido inválido (singles|dobles)");
+  if (["singles", "single", "s", "sin", "individual"].includes(t)) return "singles";
+  if (["dobles", "double", "doubles", "doble", "d", "duo", "pareja"].includes(t)) return "dobles";
+  if (["eliminacion", "roundrobin"].includes(t)) return t;
+  throw new Error(`tipoDePartido inválido (singles|dobles|eliminacion|roundrobin): recibido '${tipo}'`);
 };
 
 const normalizeDeporte = (dep) => {
@@ -35,8 +36,7 @@ const validateCategoriaScope = async ({ categoriaId, temporadaID, deporte, tipoD
   const sameScope =
     S(cat.temporadaID) === S(temporadaID) &&
     L(cat.deporte) === L(deporte) &&
-    L(cat.tipoDePartido) === normalizeTipo(tipoDePartido) &&
-    (cat.filtroId == null ? filtroId == null : S(cat.filtroId) === S(filtroId));
+    L(cat.tipoDePartido) === normalizeTipo(tipoDePartido)
 
   if (!sameScope) throw new Error("categoriaId pertenece a otro scope");
   return cat;
@@ -99,15 +99,17 @@ export default {
     tipoDePartido,
     filtroId = null,
     categoriaId,
-    puntos,                 // <- NEW: absolute overwrite if provided
+    puntos,
+    genero,
+    partidosGanados = 0,
+    partidosPerdidos = 0,
+    partidosAbandonados = 0,
   }) {
     if (!S(federadoId) || !S(temporadaID) || !S(tipoDePartido)) {
       throw new Error("Faltan campos obligatorios: federadoId, temporadaID, tipoDePartido");
     }
-
     const tipo = normalizeTipo(tipoDePartido);
     const dep = normalizeDeporte(deporte);
-
     await validateCategoriaScope({
       categoriaId,
       temporadaID,
@@ -115,33 +117,48 @@ export default {
       tipoDePartido: tipo,
       filtroId,
     });
-
-    const existing = await repo.getByUsuarioTemporadaTipo(
-      S(federadoId),
-      S(temporadaID),
+    // Buscar ranking por ID determinista (único por scope)
+    // Normalizar deporte a minúsculas para evitar duplicados por casing
+    const deporteNorm = dep ? dep.toLowerCase() : null;
+    // Eliminar filtroId del scope para evitar duplicados innecesarios
+    const id = [
+      "rk",
+      L(temporadaID),
+      L(federadoId),
       tipo,
-      dep || undefined,
-      filtroId != null ? String(filtroId) : undefined
-    );
-
+      deporteNorm ? deporteNorm : "nodep"
+    ].join("|");
     const now = new Date().toISOString();
-
+    // Eliminar rankings legacy y rankings con IDs distintos al determinista ANTES de crear/actualizar
+    const allRankings = await repo.getAll();
+    for (const r of allRankings) {
+      if (
+        S(r.usuarioID) === S(federadoId) &&
+        S(r.temporadaID) === S(temporadaID) &&
+        (deporteNorm ? L(r.deporte) === deporteNorm : true) &&
+        tipo === normalizeTipo(r.tipoDePartido) &&
+        r.id !== id
+      ) {
+        await repo.delete(r.id);
+      }
+    }
+    let existing = await repo.findById(id);
     if (existing) {
+      // Actualiza el ranking existente, conservando stats si no se pasan explícitamente
       const patch = {
         categoriaId: categoriaId ?? null,
         updatedAt: now,
+        puntos: puntos !== undefined ? N(puntos, 0) : existing.puntos,
+        partidosGanados: typeof partidosGanados === "number" ? partidosGanados : existing.partidosGanados,
+        partidosPerdidos: typeof partidosPerdidos === "number" ? partidosPerdidos : existing.partidosPerdidos,
+        partidosAbandonados: typeof partidosAbandonados === "number" ? partidosAbandonados : existing.partidosAbandonados,
       };
-      if (puntos !== undefined) {
-        patch.puntos = N(puntos, 0);        // <- overwrite points
-        // (Opcional) reset counters si querés realmente “desde cero”:
-        // patch.partidosGanados = 0;
-        // patch.partidosPerdidos = 0;
-        // patch.partidosAbandonados = 0;
+      if (genero !== undefined) {
+        patch.genero = genero;
       }
-      await repo.update(existing.id, patch);
-      return repo.findById(existing.id);
+      await repo.update(id, patch);
+      return await repo.findById(id);
     }
-
     // Crear con puntos explícitos si vienen; si no, usar tu default lógico
     const initialPoints =
       puntos !== undefined
@@ -155,32 +172,22 @@ export default {
                 categoriaIdActual: categoriaId,
               })
             : 0);
-
-    const id = buildDeterministicId({
-      temporadaID,
-      usuarioID: federadoId,
-      tipoDePartido: tipo,
-      deporte: dep,
-      filtroId,
-    });
-
     const doc = {
       id,
       temporadaID: S(temporadaID),
       usuarioID: S(federadoId),
       tipoDePartido: tipo,
-      deporte: dep,
+      deporte: deporteNorm,
       puntos: initialPoints,
       categoriaId: categoriaId ?? null,
-      filtroId: filtroId ?? null,
       filtrosSnapshot: null,
-      partidosGanados: 0,
-      partidosPerdidos: 0,
-      partidosAbandonados: 0,
+      partidosGanados: typeof partidosGanados === "number" ? partidosGanados : 0,
+      partidosPerdidos: typeof partidosPerdidos === "number" ? partidosPerdidos : 0,
+      partidosAbandonados: typeof partidosAbandonados === "number" ? partidosAbandonados : 0,
       createdAt: now,
       updatedAt: now,
+      genero: genero ?? null,
     };
-
     await repo.save(doc);
     return doc;
   },

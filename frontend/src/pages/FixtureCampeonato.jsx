@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Trophy, MessageSquare, Crown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy, Crown, CalendarSearch } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
@@ -259,7 +259,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                             className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
                             title="Ir al partido"
                           >
-                            <MessageSquare className="w-4 h-4" />
+                            <CalendarSearch className="w-4 h-4" />
                           </button>
                         )}
                         <span className="w-12 text-center text-sm">{jugador.gj || ''} | {jugador.gp || ''}</span>
@@ -293,7 +293,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                             className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
                             title="Ir al partido"
                           >
-                            <MessageSquare className="w-4 h-4" />
+                            <CalendarSearch className="w-4 h-4" />
                           </button>
                         )}
                         <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
@@ -462,7 +462,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                               className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
                               title="Ir al partido"
                             >
-                              <MessageSquare className="w-4 h-4" />
+                              <CalendarSearch className="w-4 h-4" />
                             </button>
                           )}
                         </div>
@@ -499,7 +499,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                               className="ml-2 bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg"
                               title="Ir al partido"
                             >
-                              <MessageSquare className="w-4 h-4" />
+                              <CalendarSearch className="w-4 h-4" />
                             </button>
                           )}
                         </div>
