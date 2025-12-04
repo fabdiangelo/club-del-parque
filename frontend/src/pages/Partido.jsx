@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import NavbarBlanco from '../components/NavbarBlanco';
 import '../styles/Partido.css';
 import { useAuth } from '../contexts/AuthProvider';
-import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 const Partido = () => {
     const navigate = useNavigate()

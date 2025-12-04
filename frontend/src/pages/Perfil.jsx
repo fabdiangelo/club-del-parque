@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 import SinSesion from "../components/SinSesion.jsx";
@@ -112,7 +112,7 @@ export default function Perfil() {
   <div className="min-h-screen bg-white flex items-center justify-center">
     <NavbarBlanco />
     <div className="max-w-3xl w-full">
-      <div className="card bg-white shadow-xl border rounded-lg">
+      <div className="card bg-white shadow-xl border rounded-lg mt-20">
         <div className="card-body">
           <div className="flex items-center gap-4">
             <div className="avatar">
@@ -292,7 +292,22 @@ export default function Perfil() {
           </div>
         </div>
       )}
-    </div>
+    {/* Sección de reportes */}
+    <section className="card bg-white shadow-xl border rounded-lg py-10 mt-10 mb-10">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-2xl font-bold mb-2 text-gray-800">¿Tienes algún problema?</h2>
+        <p className="mb-4 text-gray-700">Envíanos tu reporte y te ayudaremos lo antes posible.</p>
+        <Link
+        style={{ backgroundColor: 'var(--primario)', padding: '10px 20px', cursor: 'pointer' }}
+        className="py-2 text-white rounded w-full text-center"
+        to="/reportes"
+        // className="inline-block bg-primario text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-primario-dark transition"
+        >
+          Ir a reportes
+        </Link>
+      </div>
+    </section>
+          </div>
   </div>
 );
 }

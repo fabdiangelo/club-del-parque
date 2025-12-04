@@ -55,7 +55,7 @@ class InscribirFederado {
     const yaInscripto = Array.isArray(existentes) ? existentes.find(x => x.campeonatoID === campeonatoId) : null;
     if (yaInscripto) throw new Error('El federado ya está inscripto en este campeonato');
 
-    // Validar requisitosParticipacion (género, edad, ranking (comentado))
+    // Validar requisitosParticipacion (género, edad, ranking)
     const requisitos = campeonato.requisitosParticipacion || {};
     if (requisitos.genero && requisitos.genero !== 'ambos') {
       if (!federado.genero || federado.genero.toLowerCase() !== requisitos.genero.toLowerCase()) {
@@ -71,8 +71,43 @@ class InscribirFederado {
       if (requisitos.edadDesde && edad < requisitos.edadDesde) throw new Error('El federado no cumple con la edad mínima');
       if (requisitos.edadHasta && edad > requisitos.edadHasta) throw new Error('El federado no cumple con la edad máxima');
     }
-    // Ranking validación pendiente - comentada por ahora
-    // if (requisitos.rankingDesde || requisitos.rankingHasta) { ... }
+    // Validación de ranking
+    if (requisitos.rankingDesde || requisitos.rankingHasta) {
+      // Obtener rankings del federado desde la DB
+      const { RankingRepository } = await import("../../infraestructure/adapters/RankingRepository.js");
+      const rankingRepo = new RankingRepository();
+      // Determinar los valores a comparar
+      const genero = requisitos.genero && requisitos.genero !== 'ambos' ? requisitos.genero.toLowerCase() : (federado.genero ? federado.genero.toLowerCase() : undefined);
+      const tipoDePartido = campeonato.dobles ? 'dobles' : 'singles';
+      const temporada = campeonato.temporada;
+      const deporte = campeonato.deporte;
+      // Buscar rankings del usuario que coincidan en tipo, deporte, temporada
+      const rankings = await rankingRepo.getByUsuario(uid);
+      const rankingValido = rankings.find(rk => {
+        if (!rk) return false;
+        // Coincidencia de género (si aplica)
+        if (genero && rk.genero && rk.genero.toLowerCase() !== genero.toLowerCase()) return false;
+        // Coincidencia de tipoDePartido
+        if (rk.tipoDePartido.toLowerCase() !== tipoDePartido.toLowerCase()) return false;
+        // Coincidencia de temporada
+        if (temporada && rk.temporadaID !== temporada) return false;
+        // Coincidencia de deporte
+        if (deporte && rk.deporte.toLowerCase() !== deporte.toLowerCase()) return false;
+        // Si pasa todos los filtros, es válido
+        return true;
+      });
+      if (!rankingValido) {
+        throw new Error('El federado no tiene ranking válido para este campeonato');
+      }
+      // Validar el valor del ranking (campo puede ser "valor" o "puntos")
+      const valorRanking = typeof rankingValido.valor !== 'undefined' ? rankingValido.valor : rankingValido.puntos;
+      if (requisitos.rankingDesde && valorRanking < requisitos.rankingDesde) {
+        throw new Error('El federado no cumple con el ranking mínimo');
+      }
+      if (requisitos.rankingHasta && valorRanking > requisitos.rankingHasta) {
+        throw new Error('El federado no cumple con el ranking máximo');
+      }
+    }
 
   // 3) Verificar cupos disponibles en el campeonato (cada inscripción corresponde a un federado)
   const inscritos = Array.isArray(campeonato.federadosCampeonatoIDs) ? campeonato.federadosCampeonatoIDs.length : 0;

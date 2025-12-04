@@ -238,7 +238,7 @@ export default function EditarPerfil() {
               </div>
 
               {/* Preferencias */}
-              <div className="p-4 bg-white rounded-lg border shadow-sm">
+              {/* <div className="p-4 bg-white rounded-lg border shadow-sm">
                 <h3 className="font-medium mb-3">Preferencias</h3>
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -324,7 +324,7 @@ export default function EditarPerfil() {
                     <div>{success}</div>
                   </div>
                 )}
-              </div>
+              </div> */}
             </form>
           </div>
         </div>

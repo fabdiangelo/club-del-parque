@@ -313,11 +313,17 @@ export default function CrearCampeonato() {
 
   async function consultarCantidadFederados() {
     try {
+      const requisitos = form.requisitosParticipacion || {};
       const params = new URLSearchParams();
-      params.append('genero', form.requisitosParticipacion.genero || 'ambos');
-      if (form.requisitosParticipacion.edadDesde) params.append('edadDesde', form.requisitosParticipacion.edadDesde);
-      if (form.requisitosParticipacion.edadHasta) params.append('edadHasta', form.requisitosParticipacion.edadHasta);
-      const res = await fetch(`${API_BASE}/campeonatos/federados/count?${params.toString()}`, { credentials: 'include' });
+      params.append('genero', requisitos.genero || 'ambos');
+      if (requisitos.edadDesde !== '') params.append('edadDesde', requisitos.edadDesde);
+      if (requisitos.edadHasta !== '') params.append('edadHasta', requisitos.edadHasta);
+      if (requisitos.rankingDesde !== '') params.append('rankingDesde', requisitos.rankingDesde);
+      if (requisitos.rankingHasta !== '') params.append('rankingHasta', requisitos.rankingHasta);
+      params.append('tipoDePartido', form.dobles ? 'dobles' : 'singles');
+      params.append('temporada', form.temporadaID || form.temporada || '');
+      params.append('deporte', form.esTenis ? 'tenis' : 'padel');
+      const res = await fetch(`${API_BASE}/campeonatos-federados/contar?${params.toString()}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Error consultando cantidad');
       const data = await res.json();
       setContadorFederados(data.cantidad);

@@ -90,7 +90,7 @@ export default function NavbarBlanco({ transparent = false }) {
       role="banner"
       style={{ left: "0" }}
     >
-      <nav className="mx-auto w-full max-w-6xl h-20 md:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <nav className="mx-auto w-full max-w-6xl h-20 md:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between" style={{zIndex:"999"}}>
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
           <img
             src={logoUrl}
@@ -152,7 +152,7 @@ export default function NavbarBlanco({ transparent = false }) {
               </li>
             )}
 
-            {user && user?.rol === "administrador" && (
+            {user && (user?.rol === "administrador" || user?.rol === "federado") && (
               <li>
                 <NavLink
                   to="/ranking"
@@ -164,19 +164,6 @@ export default function NavbarBlanco({ transparent = false }) {
                 </NavLink>
               </li>
             )}
-
-
-
-            <li>
-              <NavLink
-                to="/reportes"
-                className={({ isActive }) =>
-                  `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
-                }
-              >
-                Reportes
-              </NavLink>
-            </li>
 
             {user && (
               <li>

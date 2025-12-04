@@ -108,6 +108,7 @@ export default function Home() {
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const { user } = useAuth();
 
   // lightbox keyboard handlers
   useEffect(() => {
@@ -310,6 +311,23 @@ export default function Home() {
               );
             })()}
           </div>
+        </div>
+      </section>
+
+
+      {/* Sección de reportes */}
+      <section className="bg-gray-100 py-10 mt-10">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold mb-2 text-gray-800">¿Tienes algún problema?</h2>
+          <p className="mb-4 text-gray-700">Envíanos tu reporte y te ayudaremos lo antes posible.</p>
+          <Link
+          style={{ backgroundColor: 'var(--primario)', padding: '10px 20px', cursor: 'pointer' }}
+                className="py-2 text-white rounded w-full text-center"
+            to="/reportes"
+            // className="inline-block bg-primario text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-primario-dark transition"
+          >
+            Ir a reportes
+          </Link>
         </div>
       </section>
 

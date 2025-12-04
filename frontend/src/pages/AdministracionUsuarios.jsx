@@ -342,7 +342,7 @@ const AdministracionUsuarios = () => {
         {/* Header */}
         <div className="mb-8" style={{ marginTop: '4rem', zIndex: 1 }}>
           <div className="flex items-center justify-between mb-6 mt-10" style={{display: 'inline'}}>
-            <h1 className="text-3xl font-bold text-white" >
+            <h1 className="text-3xl font-bold" >
               USUARIOS ({usuarios.length})
               <RefreshCw className="ml-4" style={{ color: '#4AC0E4', display:'inline' }} onClick={fetchData} disabled={loading}/>
             </h1>
@@ -453,9 +453,9 @@ const AdministracionUsuarios = () => {
                           )}
 
                           {/* Delete */}
-                          <button className="btn btn-sm btn-error ml-2" onClick={() => setModalEliminacion(usuario.id)}>
+                          {/* <button className="btn btn-sm btn-error ml-2" onClick={() => setModalEliminacion(usuario.id)}>
                             <Trash2 className="w-4 h-4 mr-2 inline" /> Eliminar
-                          </button>
+                          </button> */}
                         </td>
                       </tr>
                     );

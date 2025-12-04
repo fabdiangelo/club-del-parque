@@ -17,7 +17,7 @@ class ContarFederadosPorRequisitos {
     this.repo = new FederadoRepository();
   }
 
-  async execute({ genero, edadMin, edadMax }) {
+  async execute({ genero, edadMin, edadMax, rankingDesde, rankingHasta, tipoDePartido, temporada, deporte }) {
     // Normalize params: prefer edadDesde/edadHasta (or edadMin/edadMax) and support string numbers
     const params = { genero };
     // Accept multiple naming conventions
@@ -41,6 +41,41 @@ class ContarFederadosPorRequisitos {
         if (typeof params.edadHasta === 'number' && age > params.edadHasta) return false;
         return true;
       });
+    }
+
+    // Si hay requisitos de ranking, filtrar federados por ranking válido
+    if (typeof rankingDesde !== 'undefined' || typeof rankingHasta !== 'undefined') {
+      const { RankingRepository } = await import("../../infraestructure/adapters/RankingRepository.js");
+      const rankingRepo = new RankingRepository();
+      // tipoDePartido: normalizar a 'singles' o 'dobles'
+      const tipo = (typeof tipoDePartido === 'string' && tipoDePartido.toLowerCase() === 'dobles') ? 'dobles' : 'singles';
+      const temp = temporada;
+      const dep = deporte;
+      // Filtrar federados que tengan ranking válido
+      const federadosConRanking = [];
+      for (const f of filtered) {
+        const rankings = await rankingRepo.getByUsuario(f.id);
+        const rankingValido = rankings.find(rk => {
+          if (!rk) return false;
+          // Coincidencia de género (si aplica)
+          if (params.genero && rk.genero && rk.genero.toLowerCase() !== params.genero.toLowerCase()) return false;
+          // Coincidencia de tipoDePartido
+          if (rk.tipoDePartido.toLowerCase() !== tipo.toLowerCase()) return false;
+          // Coincidencia de temporada
+          if (temp && rk.temporadaID !== temp) return false;
+          // Coincidencia de deporte
+          if (dep && rk.deporte.toLowerCase() !== dep.toLowerCase()) return false;
+          // Si pasa todos los filtros, es válido
+          return true;
+        });
+        if (!rankingValido) continue;
+        // Validar el valor del ranking (campo puede ser "valor" o "puntos")
+        const valorRanking = typeof rankingValido.valor !== 'undefined' ? rankingValido.valor : rankingValido.puntos;
+        if (typeof rankingDesde !== 'undefined' && valorRanking < rankingDesde) continue;
+        if (typeof rankingHasta !== 'undefined' && valorRanking > rankingHasta) continue;
+        federadosConRanking.push(f);
+      }
+      return federadosConRanking.length;
     }
     return filtered.length;
   }

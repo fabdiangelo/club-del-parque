@@ -219,7 +219,7 @@ app.get("/campeonatos", (req, res) => CampeonatosController.getAllCampeonatos(re
 app.get("/campeonato/:id", (req, res) => CampeonatosController.getCampeonatoById(req, res));
 app.put('/campeonato/:id', (req, res) => CampeonatosController.editarCampeonato(req, res));
 app.post("/campeonatos", (req, res) => CampeonatosController.crear(req, res));
-app.get("/campeonatos/federados/count", (req, res) => CampeonatosFederadosController.contar(req, res));
+app.get("/campeonatos-federados/contar", (req, res) => CampeonatosFederadosController.contar(req, res));
 
 // Procesar inicio de campeonato (expirar invitaciones, combinar grupos, descalificar solitarios)
 app.post('/campeonato/:id/procesar-inicio', (req, res) => CampeonatosController.procesarInicio(req, res));

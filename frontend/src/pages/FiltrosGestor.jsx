@@ -1,6 +1,6 @@
 // src/pages/FiltrosGestor.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import {
   Plus,
   Search,
@@ -550,7 +550,7 @@ export default function FiltrosGestor() {
       <div className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Navbar />
+        <NavbarBlanco />
 
         {/* Header */}
         <header className="w-full">

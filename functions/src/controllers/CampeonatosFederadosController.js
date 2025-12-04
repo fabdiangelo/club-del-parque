@@ -11,6 +11,11 @@ class CampeonatosFederadosController {
         genero: q.genero || 'ambos',
         edadDesde: typeof q.edadDesde !== 'undefined' && q.edadDesde !== '' ? Number(q.edadDesde) : undefined,
         edadHasta: typeof q.edadHasta !== 'undefined' && q.edadHasta !== '' ? Number(q.edadHasta) : undefined,
+        rankingDesde: typeof q.rankingDesde !== 'undefined' && q.rankingDesde !== '' ? Number(q.rankingDesde) : undefined,
+        rankingHasta: typeof q.rankingHasta !== 'undefined' && q.rankingHasta !== '' ? Number(q.rankingHasta) : undefined,
+        tipoDePartido: q.tipoDePartido || undefined,
+        temporada: q.temporada || undefined,
+        deporte: q.deporte || undefined,
       };
       const cant = await ContarFederadosPorRequisitos.execute(payload);
       return res.json({ cantidad: cant });

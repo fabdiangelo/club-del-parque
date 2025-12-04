@@ -1,6 +1,6 @@
 // src/pages/CategoriasGestor.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
+import NavbarBlanco from "../components/NavbarBlanco";
 import {
   Plus,
   Search,
@@ -248,7 +248,7 @@ async function saveOrder() {
       <div className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Navbar />
+        <NavbarBlanco />
 
         <header className="w-full">
           <div

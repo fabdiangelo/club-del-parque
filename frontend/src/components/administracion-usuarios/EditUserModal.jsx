@@ -97,7 +97,7 @@ export default function EditUserModal({ open, usuario, onCancel, onSave }) {
           </div>
 
           {/* Preferencias section */}
-          <div className="md:col-span-2">
+          {/* <div className="md:col-span-2">
             <h4 className="font-medium">Preferencias</h4>
             <div className="flex items-center justify-between mt-2">
               <div>
@@ -143,7 +143,7 @@ export default function EditUserModal({ open, usuario, onCancel, onSave }) {
               <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancelar</button>
               <button type="submit" className="btn btn-primary">Guardar</button>
             </div>
-          </div>
+          </div> */}
         </form>
       </div>
       <form method="dialog" className="modal-backdrop">
