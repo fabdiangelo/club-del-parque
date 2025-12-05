@@ -33,7 +33,7 @@ function CrearAdmin() {
     console.log("Registrando usuario:", formData);
 
     try {
-      const ok = await register("api/administrador/register", formData);
+      const ok = await register(`${import.meta.env.VITE_BACKEND_URL}/api/administrador/register`, formData);
       if (!ok) {
         throw new Error(error || "Error en el registro");
       }
@@ -47,7 +47,7 @@ function CrearAdmin() {
         nacimiento: "",
         genero: "",
       });
-      navigate("/");
+      navigate("/administracion");
     } catch (err) {
       console.log(err);
     } finally {
