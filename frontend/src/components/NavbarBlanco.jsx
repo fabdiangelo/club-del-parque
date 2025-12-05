@@ -165,6 +165,23 @@ export default function NavbarBlanco({ transparent = false }) {
               </li>
             )}
 
+            {
+              user && user.rol != "administrador" && (
+ <li>
+              <NavLink
+                to="/reportes"
+                className={({ isActive }) =>
+                  `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
+                }
+              >
+                Reportes
+              </NavLink>
+            </li>
+
+              )
+            }
+
+           
             {user && (
               <li>
                 <NavLink

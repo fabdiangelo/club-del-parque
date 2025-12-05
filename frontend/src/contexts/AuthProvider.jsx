@@ -3,8 +3,6 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
-  // You don't need API_URL when using Vite proxy; leaving it in case you switch to direct calls.
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/club-del-parque-68530/us-central1";
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +25,9 @@ export default function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(toApi("/auth/me"), {
+      // Use Vite-provided API URL in production, otherwise use relative /api path
+      const API_URL = import.meta.env.VITE_BACKEND_URL || "";
+      const res = await fetch(API_URL + "/api/auth/me", {
         method: "GET",
         credentials: "include",
         headers: { Accept: "application/json" },
@@ -62,11 +62,11 @@ export default function AuthProvider({ children }) {
   }, [fetchMe]);
 
   const register = useCallback(
-    async (path = "/auth/register", body = {}) => {
+    async (path = import.meta.env.VITE_BACKEND_URL + "/api/auth/register", body = {}) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(toApi(path), {
+        const res = await fetch(path, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -91,11 +91,11 @@ export default function AuthProvider({ children }) {
   );
 
   const login = useCallback(
-    async (path = "/auth/login", body = {}) => {
+    async (path = import.meta.env.VITE_BACKEND_URL + "/api/auth/login", body = {}) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(toApi(path), {
+        const res = await fetch(path, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -120,11 +120,11 @@ export default function AuthProvider({ children }) {
   );
 
   const logout = useCallback(
-    async (path = "/auth/logout") => {
+    async (path = import.meta.env.VITE_BACKEND_URL + "/api/auth/logout") => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(toApi(path), {
+        const res = await fetch(path, {
           method: "POST",
           credentials: "include",
         });

@@ -179,8 +179,9 @@ class ReporteController {
       res.cookie("session", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 2 * 60 * 60 * 1000, // 2h
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 2 * 60 * 60 * 1000,
+        path: "/",
       });
 
       return res.json(msg);

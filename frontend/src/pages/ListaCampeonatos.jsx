@@ -15,7 +15,7 @@ export default function ListaCampeonatos() {
       setLoading(true);
       setFetchError("");
       try {
-        const res = await fetch('/api/campeonatos');
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/campeonatos`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setCampeonatos(Array.isArray(data) ? data : []);
