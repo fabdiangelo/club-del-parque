@@ -213,7 +213,7 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
             <div className="p-6">
               <div className="flex text-sm font-semibold mb-3 px-3 text-cyan-300">
                 <span className="flex-1">Jugador</span>
-                <span className="w-12 text-center">G | P</span>
+                  <span className="w-20 text-center">G | P</span>
                 <span className="w-16 text-center">Puntos</span>
               </div>
               {grupo.jugadores?.sort((a, b) => b.puntos - a.puntos).map((jugador, jIdx) => (
@@ -262,7 +262,9 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                             <CalendarSearch className="w-4 h-4" />
                           </button>
                         )}
-                        <span className="w-12 text-center text-sm">{jugador.gj || ''} | {jugador.gp || ''}</span>
+                          <span className="w-20 text-center text-sm">
+                            {jugador.ganados ?? jugador.gj ?? 0} | {jugador.perdidos ?? jugador.gp ?? 0}
+                          </span>
                         <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos || ''}</span>
                       </div>
                     ) : jugador.id ? (
@@ -296,7 +298,9 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                             <CalendarSearch className="w-4 h-4" />
                           </button>
                         )}
-                        <span className="w-12 text-center text-sm">{jugador.gj} | {jugador.gp}</span>
+                          <span className="w-20 text-center text-sm">
+                            {jugador.ganados ?? jugador.gj ?? 0} | {jugador.perdidos ?? jugador.gp ?? 0}
+                          </span>
                         <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos}</span>
                       </div>
                     ) : new Date(fechaInicio) > new Date() ? (

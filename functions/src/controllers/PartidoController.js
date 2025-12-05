@@ -65,6 +65,72 @@ class PartidoController {
   }
 
 
+    async getRankingsByPartido(req, res) {
+      const { id } = req.params;
+      try {
+        // 1. Obtener partido
+        const partido = await this.getPartidoByIdUseCase.execute(id);
+        if (!partido) {
+          return res.status(404).json({ error: 'Partido no encontrado' });
+        }
+        console.log("Etapa de Partido encontrado:", partido.etapa);
+        // 2. Extraer contexto
+        const temporadaID = partido.temporadaID;
+        let tipoDePartido = null;
+        let deporte = null;
+        let genero = null;
+        let filtroId = null;
+        // Si el partido tiene etapa, buscar genero/filtroId y tipoDePartido desde la etapa/campeonato
+        if (partido.etapa) {
+          try {
+            const { EtapaRepository } = await import('../infraestructure/adapters/EtapaRepository.js');
+            const etapaRepo = new EtapaRepository();
+            const etapa = await etapaRepo.findById(partido.etapa);
+            console.log("Etapa encontrada para partido:", etapa);
+            if (etapa) {
+              // Buscar campeonato para obtener tipoDePartido
+              try {
+                const { CampeonatoRepository } = await import('../infraestructure/adapters/CampeonatoRepository.js');
+                const campRepo = new CampeonatoRepository();
+                const campeonato = await campRepo.findById(etapa.campeonatoID);
+                console.log("Campeonato encontrado para etapa:", campeonato);
+                if (campeonato) {
+                  genero = campeonato.genero || null;
+                  deporte = campeonato.deporte || null;
+                  tipoDePartido = campeonato.dobles ? 'dobles' : 'singles';
+                }
+              } catch (err){ console.log("Error al obtener campeonato para etapa:", err); }
+            }
+          } catch {}
+        }
+        // 3. Obtener rankings de cada jugador
+        const { RankingRepository } = await import('../infraestructure/adapters/RankingRepository.js');
+        const rankingRepo = new RankingRepository();
+        const jugadores = Array.isArray(partido.jugadores) ? partido.jugadores : [];
+        const results = [];
+        console.log("Jugadores:", jugadores);
+        console.log("Contexto para rankings: temporadaID=", temporadaID, " tipoDePartido=", tipoDePartido, " deporte=", deporte, " genero=", genero, " filtroId=", filtroId);
+        for (const jugadorID of jugadores) {
+          // Buscar ranking por usuario y contexto
+          const rk = await rankingRepo.getByUsuarioTemporadaTipo(
+            jugadorID.trim(),
+            temporadaID,
+            tipoDePartido,
+            deporte,
+          );
+          // Si hay género, filtrar por género si el ranking lo tiene
+          let ranking = rk;
+          if (rk && genero && rk.genero && rk.genero !== genero) {
+            ranking = null;
+          }
+          results.push({ jugadorID, ranking });
+        }
+        return res.json({ ok: true, rankings: results });
+      } catch (error) {
+        console.error('Error al obtener rankings por partido:', error);
+        return res.status(500).json({ error: 'Error interno del servidor', mensaje: String(error?.message || '') });
+      }
+    }
   // GET /partidos
   async getAllPartidos(req, res) {
     try {
