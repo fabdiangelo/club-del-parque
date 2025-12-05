@@ -19,7 +19,7 @@ export default function FixtureCampeonato() {
   async function load() {
     try {
       setLoading(true);
-      const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/campeonato/${id}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         // Calcular fechas de inicio y fin para cada etapa en cadena

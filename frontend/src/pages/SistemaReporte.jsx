@@ -40,7 +40,7 @@ const SistemaReporte = () => {
         console.log('Enviando:', formInfo);
 
         try {
-            const response = await fetch(`api/reportes`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

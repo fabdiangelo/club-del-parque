@@ -21,7 +21,7 @@ function PerfilReservas() {
 
     const confirmarReserva = async () => {
         try {
-            const response = await fetch(`/api/reservas/${id}/confirmar`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}/confirmar`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ function PerfilReservas() {
 
     const rechazarReserva = async () => {
         try {
-            const response = await fetch(`/api/reservas/${id}/rechazar`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}/rechazar`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ function PerfilReservas() {
 
     const habilitarReserva = async () => {
         try {
-            const response = await fetch(`/api/reservas/${id}/habilitar`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}/habilitar`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ function PerfilReservas() {
 
     const deshabilitarReserva = async () => {
         try {   
-            const response = await fetch(`/api/reservas/${id}/deshabilitar`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}/deshabilitar`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ function PerfilReservas() {
 
     const fetchReserva = async () => {
         try {
-            const response = await fetch(`/api/reservas/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}`, {
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -157,7 +157,7 @@ function PerfilReservas() {
                 const jugadoresData = await Promise.all(
                     data.jugadoresIDS.map(async (jugadorId) => {
                         try {
-                            const res = await fetch(`/api/federados/${jugadorId}`, {
+                            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/federados/${jugadorId}`, {
                                 credentials: 'include'
                             });
                             return res.ok ? await res.json() : null;
@@ -180,7 +180,7 @@ function PerfilReservas() {
 
     const fetchCanchas = async () => {
         try {
-            const response = await fetch('/api/canchas', {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
                 credentials: 'include'
             });
             if (response.ok) {

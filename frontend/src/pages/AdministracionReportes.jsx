@@ -23,7 +23,7 @@ const AdministracionReportes = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      let reportesRes = await fetch('/api/reportes', { credentials: 'include' });
+      let reportesRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes`, { credentials: 'include' });
       if (reportesRes.status === 401) {
         setIsUnauthorized(true);
         setLoading(false);
@@ -64,7 +64,7 @@ const AdministracionReportes = () => {
 
   const validarFederacion = async (idReporte, planId) => {
     try {
-      const res = await fetch(`/api/usuarios/validar-federacion/${idReporte}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/validar-federacion/${idReporte}`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -83,7 +83,7 @@ const AdministracionReportes = () => {
 
   const marcarComoNoResuelto = async (idReporte) => {
     try {
-      const res = await fetch(`/api/reportes/marcar-resuelto/${idReporte}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes/marcar-resuelto/${idReporte}`, {
         method: 'PUT',
         credentials: 'include'
       });

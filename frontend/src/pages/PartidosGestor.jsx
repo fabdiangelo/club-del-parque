@@ -72,7 +72,7 @@ export default function PartidosGestor() {
   const [, setErr] = useState("");
 
   const fetchJSON = async (path, opts = {}) => {
-    const res = await fetch(toApi(path), {
+    const res = await fetch(path, {
       headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
       cache: "no-store",
       ...opts,
@@ -89,10 +89,10 @@ export default function PartidosGestor() {
       setErr("");
       try {
         const [ts, cs, fs, ps] = await Promise.all([
-          fetchJSON("/temporadas"),
-          fetchJSON("/canchas"),
-          fetchJSON("/usuarios/federados"),
-          fetchJSON("/partidos"),
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`),
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`),
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`),
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/partidos`),
         ]);
         if (cancelled) return;
         setTemporadas(ts || []);
@@ -171,7 +171,7 @@ export default function PartidosGestor() {
       setLoading(true);
       setErr("");
       await Promise.all(
-        ids.map((id) => fetchJSON(`/partidos/${id}`, { method: "DELETE" }))
+        ids.map((id) => fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}`, { method: "DELETE" }))
       );
       await reloadPartidos();
       setSelected(new Set());
@@ -200,12 +200,12 @@ export default function PartidosGestor() {
       setLoading(true);
       setErr("");
       if (isEdit) {
-        await fetchJSON(`/partidos/${draft.id}`, {
+        await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${draft.id}`, {
           method: "PUT",
           body: JSON.stringify(payload),
         });
       } else {
-        await fetchJSON(`/partidos`, {
+        await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/partidos`, {
           method: "POST",
           body: JSON.stringify(payload),
         });
@@ -234,7 +234,7 @@ export default function PartidosGestor() {
     try {
       setLoading(true);
       setErr("");
-      await fetchJSON(`/partidos/${p.id}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${p.id}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
@@ -252,7 +252,7 @@ export default function PartidosGestor() {
     try {
       setLoading(true);
       setErr("");
-      const ps = await fetchJSON("/partidos");
+      const ps = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/partidos`);
       setPartidos(Array.isArray(ps) ? ps.reverse() : []);
     } catch (e) {
       setToast(normalizeError(e));
@@ -285,11 +285,11 @@ export default function PartidosGestor() {
 
   // --- Reload helpers unitarios ---
   const reloadTemporadas = async () => {
-    const ts = await fetchJSON("/temporadas");
+    const ts = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`);
     setTemporadas(ts || []);
   };
   const reloadCanchas = async () => {
-    const cs = await fetchJSON("/canchas");
+    const cs = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`);
     setCanchas(cs || []);
   };
 
@@ -345,7 +345,7 @@ const precargarTemporadas = async () => {
       // canchas
       await Promise.all(
         DEFAULT_CANCHAS.map((c) =>
-          fetchJSON("/canchas", {
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
             method: "POST",
             body: JSON.stringify(c),
           })
@@ -355,7 +355,7 @@ const precargarTemporadas = async () => {
       // temporadas
       await Promise.all(
         DEFAULT_TEMPORADAS.map((t) =>
-          fetchJSON("/temporadas", {
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`, {
             method: "POST",
             body: JSON.stringify({
               nombre: t.nombre,

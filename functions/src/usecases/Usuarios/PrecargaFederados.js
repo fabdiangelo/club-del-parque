@@ -8,20 +8,20 @@ import { FederadoRepository } from "../../infraestructure/adapters/FederadoRepos
 
 // Lista de nombres y apellidos realistas (32)
 const maleNames = [
-  "Mateo","Lucas","Matías","Diego","Joaquín","Samuel","Emiliano","Thiago",
-  "Federico","Nicolás","Bruno","Santiago","Facundo","Agustín","Martín","Tomás"
+  "Mateo", "Lucas", "Matías", "Diego", "Joaquín", "Samuel", "Emiliano", "Thiago",
+  "Federico", "Nicolás", "Bruno", "Santiago", "Facundo", "Agustín", "Martín", "Tomás"
 ];
 
 const femaleNames = [
-  "Sofía","Valentina","Isabella","Camila","María","Victoria","Antonella","Lucía",
-  "Martina","Amanda","Gabriela","Julia","Florencia","Agustina","Carolina","Paula"
+  "Sofía", "Valentina", "Isabella", "Camila", "María", "Victoria", "Antonella", "Lucía",
+  "Martina", "Amanda", "Gabriela", "Julia", "Florencia", "Agustina", "Carolina", "Paula"
 ];
 
 const apellidos = [
-  "González","Rodríguez","Gómez","Fernández","López","Martínez","Sánchez","Pérez",
-  "Romero","Torres","Ruiz","Flores","Vega","Rossi","Alvarez","Silva",
-  "Morales","Herrera","Molina","Ortiz","Ibarra","Costa","Díaz","Navarro",
-  "García","Cáceres","Benítez","Ramos","Luna","Suárez","Córdoba","Medina"
+  "González", "Rodríguez", "Gómez", "Fernández", "López", "Martínez", "Sánchez", "Pérez",
+  "Romero", "Torres", "Ruiz", "Flores", "Vega", "Rossi", "Alvarez", "Silva",
+  "Morales", "Herrera", "Molina", "Ortiz", "Ibarra", "Costa", "Díaz", "Navarro",
+  "García", "Cáceres", "Benítez", "Ramos", "Luna", "Suárez", "Córdoba", "Medina"
 ];
 
 class PrecargaFederados {
@@ -141,7 +141,7 @@ class PrecargaFederados {
   }
 }
 
-export default new PrecargaFederados();
+export default PrecargaFederados;
 
 function randomDate(start, end) {
   const s = start.getTime();

@@ -22,7 +22,6 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Footer from "../components/Footer";
-import { useAuth } from "../contexts/AuthProvider";
 
 // Small CSS for our custom Leaflet divIcon + lightbox
 if (typeof document !== "undefined" && !document.getElementById("club-custom-css")) {

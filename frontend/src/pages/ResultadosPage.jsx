@@ -26,13 +26,13 @@ export default function ResultadosPage() {
         const federadoId = user?.id;
 
         if (federadoId) {
-          const res = await fetch(toApi(`/partidos/jugador/${federadoId}`), { credentials: 'include', cache: 'no-store' });
+          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/jugador/${federadoId}`, { credentials: 'include', cache: 'no-store' });
           if (res.ok) {
             partidoList = await res.json();
           }
         } else {
           // Si no existe id de federado, fallback a la ruta por jugador
-          const res = await fetch(toApi(`/partidos/jugador/${user.uid}`), { credentials: 'include', cache: 'no-store' });
+          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/jugador/${user.uid}`, { credentials: 'include', cache: 'no-store' });
           if (res.ok) partidoList = await res.json();
         }
 

@@ -37,9 +37,8 @@ const CREATE_WARNING =
   "⚠️ Aviso: si salís de esta página después de crear, no vas a poder borrar desde aquí.\n\n¿Querés continuar?";
 const confirmCreate = () => window.confirm(CREATE_WARNING);
 
-const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
 const fetchJSON = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(path, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     cache: "no-store",
     ...opts,
@@ -162,7 +161,7 @@ export default function FiltrosGestor() {
   async function loadModalidades() {
     setModLoading(true);
     try {
-      const data = await fetchJSON("/modalidades");
+      const data = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/modalidades`);
       const list = Array.isArray(data) ? data : [];
       setModalidades(list);
       if (!modNombre && list.length) setModNombre(list[0]?.nombre || "");
@@ -177,7 +176,7 @@ export default function FiltrosGestor() {
   async function loadGeneros() {
     setGenLoading(true);
     try {
-      const data = await fetchJSON("/generos");
+      const data = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/generos`);
       const list = Array.isArray(data) ? data : [];
       setGeneros(list);
       if (!genNombre && list.length) setGenNombre(list[0]?.nombre || "");
@@ -192,7 +191,7 @@ export default function FiltrosGestor() {
   async function loadDeportes() {
     setDepLoading(true);
     try {
-      const data = await fetchJSON("/deportes");
+      const data = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/deportes`);
       setDeportes(Array.isArray(data) ? data : []);
     } catch (e) {
       setGlobalErr((p) => p || normalizeError(e));
@@ -204,7 +203,7 @@ export default function FiltrosGestor() {
     setFLoading(true);
     setFErr("");
     try {
-      const data = await fetchJSON("/filtros");
+      const data = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/filtros`);
       setFiltros(Array.isArray(data) ? data : []);
     } catch (e) {
       setFErr(normalizeError(e));
@@ -231,7 +230,7 @@ export default function FiltrosGestor() {
     }
   }
   async function ensureDefaultFiltros() {
-    const existing = await fetchJSON("/filtros");
+    const existing = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/filtros`);
     const have = new Set(
       (existing || []).map(
         (f) =>
@@ -297,7 +296,7 @@ export default function FiltrosGestor() {
     if (!nombre) return setGlobalErr("Completá el nombre de la modalidad.");
     if (!confirmCreate()) return;
     try {
-      await fetchJSON("/modalidades", {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/modalidades`, {
         method: "POST",
         body: JSON.stringify({ nombre }),
       });
@@ -316,7 +315,7 @@ export default function FiltrosGestor() {
     const ok = window.confirm(`Eliminar modalidad "${nombre}"?`);
     if (!ok) return;
     try {
-      await fetchJSON(`/modalidades/${encodeURIComponent(nombre)}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/modalidades/${encodeURIComponent(nombre)}`, {
         method: "DELETE",
       });
       createdRef.current.modalidades.delete(String(nombre));
@@ -333,7 +332,7 @@ export default function FiltrosGestor() {
     if (!nombre) return setGlobalErr("Completá el nombre del género.");
     if (!confirmCreate()) return;
     try {
-      await fetchJSON("/generos", {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/generos`, {
         method: "POST",
         body: JSON.stringify({ nombre }),
       });
@@ -352,7 +351,7 @@ export default function FiltrosGestor() {
     const ok = window.confirm(`Eliminar género "${nombre}"?`);
     if (!ok) return;
     try {
-      await fetchJSON(`/generos/${encodeURIComponent(nombre)}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/generos/${encodeURIComponent(nombre)}`, {
         method: "DELETE",
       });
       createdRef.current.generos.delete(String(nombre));
@@ -373,7 +372,7 @@ export default function FiltrosGestor() {
       return setGlobalErr("ID inválido (slug: a-z, 0-9, guión).");
     if (!confirmCreate()) return;
     try {
-      await fetchJSON("/deportes", {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/deportes`, {
         method: "POST",
         body: JSON.stringify({ id, nombre }),
       });
@@ -393,7 +392,7 @@ export default function FiltrosGestor() {
     const ok = window.confirm(`Eliminar deporte "${id}"?`);
     if (!ok) return;
     try {
-      await fetchJSON(`/deportes/${encodeURIComponent(id)}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/deportes/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
       createdRef.current.deportes.delete(String(id));
@@ -423,7 +422,7 @@ export default function FiltrosGestor() {
         pesoMin: fNew.pesoMin !== "" ? Number(fNew.pesoMin) : null,
         pesoMax: fNew.pesoMax !== "" ? Number(fNew.pesoMax) : null,
       };
-      const created = await fetchJSON("/filtros", {
+      const created = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/filtros`, {
         method: "POST",
         body: JSON.stringify(body),
       });
@@ -467,7 +466,7 @@ export default function FiltrosGestor() {
         pesoMin: fEdit.pesoMin !== "" ? Number(fEdit.pesoMin) : null,
         pesoMax: fEdit.pesoMax !== "" ? Number(fEdit.pesoMax) : null,
       };
-      await fetchJSON(`/filtros/${encodeURIComponent(editId)}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/filtros/${encodeURIComponent(editId)}`, {
         method: "PATCH",
         body: JSON.stringify(body),
       });
@@ -487,7 +486,7 @@ export default function FiltrosGestor() {
     const ok = window.confirm("¿Eliminar filtro?");
     if (!ok) return;
     try {
-      await fetchJSON(`/filtros/${encodeURIComponent(id)}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/filtros/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
       createdRef.current.filtros.delete(String(id));

@@ -5,12 +5,11 @@ import { Plus, Search, X, Trash2, RefreshCw, Eye, Loader2 } from "lucide-react";
 import bgImg from "../assets/RankingsBackground.png"; // reutilizamos el mismo fondo para coherencia visual
 
 const NAVBAR_OFFSET_REM = 5;
-const SPORTS = ["Tenis", "Padel"]; // mismos labels que Rankings
+const SPORTS = ["Tenis", "Padel"]; 
 
-/* ------------------------- HTTP helpers (mismo estilo que Rankings) ------------------------- */
-const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
+
 const fetchJSON = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(path, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     cache: "no-store",
     ...opts,
@@ -91,7 +90,7 @@ export default function CanchasGestor() {
     setLoading(true);
     setErr("");
     try {
-      const data = await fetchJSON("/canchas");
+      const data = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`);
       setCanchas(Array.isArray(data) ? data : []);
     } catch (e) {
       setErr(normalizeError(e));
@@ -111,7 +110,7 @@ export default function CanchasGestor() {
     setCreating(true);
     setErr("");
     try {
-      await fetchJSON("/canchas", { method: "POST", body: JSON.stringify({ nombre: nombre.trim(), deporte }) });
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, { method: "POST", body: JSON.stringify({ nombre: nombre.trim(), deporte }) });
       setNombre("");
       setDeporte(SPORTS[0]);
       await loadAll();
@@ -127,7 +126,7 @@ export default function CanchasGestor() {
     const ok = window.confirm("¿Eliminar la cancha? Esta acción no se puede deshacer.");
     if (!ok) return;
     try {
-      await fetchJSON(`/canchas/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/canchas/${encodeURIComponent(id)}`, { method: "DELETE" });
       await loadAll();
     } catch (e) {
       setErr(normalizeError(e));
@@ -140,7 +139,7 @@ export default function CanchasGestor() {
     setDetail(null);
     setDetailLoading(true);
     try {
-      const data = await fetchJSON(`/canchas/${encodeURIComponent(id)}`);
+      const data = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/canchas/${encodeURIComponent(id)}`);
       setDetail(data);
     } catch (e) {
       setErr(normalizeError(e));
