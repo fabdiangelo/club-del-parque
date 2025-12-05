@@ -75,7 +75,7 @@ const Partido = () => {
 
     const fetchAllReservas = async() => {
         try {
-            const response = await fetch(`/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } });
             if (!response.ok) {
                 throw new Error(`Error en la solicitud: ${response.statusText}`);
             }
@@ -92,7 +92,7 @@ const Partido = () => {
 
     const fetchReserva = async () => {
         try {
-            const response = await fetch(`/api/reservas/partido/${id}`, { credentials: 'include' });
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/partido/${id}`, { credentials: 'include' });
             if (!response.ok) {
                 throw new Error(`Error en la solicitud: ${response.statusText}`);
             }
@@ -120,7 +120,7 @@ const Partido = () => {
     console.log("Aceptar propuesta", propuestaId, "partido.id:", partido?.id, "route id:", id);
 
         try {
-            const response = await fetch(`/api/partidos/${idPartido}/confirmar-horario`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${idPartido}/confirmar-horario`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ const Partido = () => {
 
 
     try {
-        const response = await fetch(`/api/reservas`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -209,10 +209,10 @@ useEffect(() => {
     setLoading(true);
     setError('');
     Promise.all([
-        fetch(`/api/partidos/${id}`, { credentials: 'include' }),
-        fetch('/api/usuarios'),
-        fetch(`/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } }),
-        fetch(`/api/partidos/${id}/rankings`, { credentials: 'include' })
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}`, { credentials: 'include' }),
+        fetch('${import.meta.env.VITE_BACKEND_URL}/api/usuarios'),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } }),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}/rankings`, { credentials: 'include' })
     ])
     .then(async ([partidoRes, usuariosRes, reservasRes, rankingsRes]) => {
         if (!partidoRes.ok || !usuariosRes.ok || !reservasRes.ok || !rankingsRes.ok) throw new Error('Error al cargar datos');
@@ -340,7 +340,7 @@ useEffect(() => {
             const fetchTemporada = async () => {
                 console.log("Fetch temporada llamado para temporadaID:", partido?.temporadaID);
                 try {
-                    const response = await fetch(`/api/temporadas/${partido?.temporadaID}`, { credentials: 'include' });
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas/${partido?.temporadaID}`, { credentials: 'include' });
                     if (!response.ok) throw new Error("Error al obtener la temporada");
                     const data = await response.json();
                     console.log("Temporada obtenida:", data);
@@ -356,7 +356,7 @@ useEffect(() => {
             const fetchCancha = async () => {
                 console.log("Fetch cancha llamado para canchaID:", partido?.canchaID);
                 try {
-                    const response = await fetch(`/api/canchas/${partido?.canchaID}`, { credentials: 'include' });
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas/${partido?.canchaID}`, { credentials: 'include' });
                     if (!response.ok) throw new Error("Error al obtener la cancha");
                     const data = await response.json();
                     console.log("Cancha obtenida:", data);
@@ -578,7 +578,7 @@ useEffect(() => {
             }));
             console.log("disponibilidad usuario", disponibilidadesConUsuario);
 
-            const res = await fetch(`/api/partidos/${id}/disponibilidad`, {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}/disponibilidad`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -595,7 +595,7 @@ useEffect(() => {
                 setHoraInicio('');
                 setHoraFin('');
                 // Refetch partido para actualizar disponibilidades
-                fetch(`/api/partidos/${id}`, { credentials: 'include' })
+                fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}`, { credentials: 'include' })
                     .then(r => r.json())
                     .then(data => setPartido(data));
             }, 1800);

@@ -13,10 +13,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-/* ---------------- utils ---------------- */
-const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
 const fetchJSON = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(path, {
     headers: {
       "Content-Type": "application/json",
       ...(opts.headers || {}),
@@ -56,8 +54,8 @@ export default function AsignarCategoriaFederado() {
     setErr("");
     try {
       const [feds, cats] = await Promise.all([
-        fetchJSON("/usuarios/federados"),
-        fetchJSON("/categorias"),
+        fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`),
+        fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`),
       ]);
 
       const catsSorted = (Array.isArray(cats) ? cats : [])
@@ -125,7 +123,7 @@ export default function AsignarCategoriaFederado() {
     setSavingId(federadoId);
     setErr("");
     try {
-      await fetchJSON(`/federados/${encodeURIComponent(federadoId)}/categoria`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/federados/${encodeURIComponent(federadoId)}/categoria`, {
         method: "PATCH",
         body: JSON.stringify({ categoriaId }),
       });

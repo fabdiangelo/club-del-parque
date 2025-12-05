@@ -106,9 +106,10 @@ const TennisIcon = L.divIcon({
 
 export default function Home() {
   // Lightbox state
+  const { user } = useAuth();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const { user } = useAuth();
+  const [noticias, setNoticias] = useState([]);
 
   // lightbox keyboard handlers
   useEffect(() => {
@@ -123,6 +124,22 @@ export default function Home() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [lightboxOpen]);
+
+  const fetchNoticias = async () => {
+    const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/noticias");
+    const data = await response.json();
+    console.log("Noticias fetched:", data);
+    if (!response.ok) {
+      console.log("Error fetching noticias");
+      return;
+    }
+    setNoticias(data);
+  }
+
+  useEffect(() => {
+    fetchNoticias();
+
+  }, []);
 
   return (
     <>
@@ -164,11 +181,32 @@ export default function Home() {
               >
                 Ver Campeonatos
               </Link>
-              {!user &&
-                <Link to="/register" style={{backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)'}} className="py-2 text-black rounded">
+
+              {!user ? (
+                <Link
+                  to="/register"
+                  style={{ backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)' }}
+                  className="py-2 text-black rounded"
+                >
                   Registrarse
                 </Link>
-              }
+              ) : user?.rol === "administrador" ? (
+                <Link
+                  to="/administracion"
+                  style={{ backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)' }}
+                  className="py-2 text-black rounded"
+                >
+                  Administración
+                </Link>
+              ) : (
+                <Link
+                  to="/perfil"
+                  style={{ backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)' }}
+                  className="py-2 text-black rounded"
+                >
+                  Perfil
+                </Link>
+              )}
             </div>
           </div>
 
@@ -268,48 +306,92 @@ export default function Home() {
 
           {/* Sección de Noticias */}
           <div className="mt-20">
-            <h3 className="text-3xl font-bold mb-6 text-center" style={{ color: "var(--neutro)" }}>
-              Noticias
+            <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: "var(--neutro)" }}>
+              Últimas Noticias
             </h3>
 
-            {/* Preparar lista segura (más recientes primero) */}
-            {(() => {
-              const list = Array.isArray(noticiasData) ? [...noticiasData].reverse().slice(0, 3) : [];
-              if (!list || list.length === 0) {
-                return (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600 mb-4">No hay noticias publicadas por el momento.</p>
-                    <Link to="/noticias" className="inline-block bg-primario text-white px-4 py-2 rounded">
-                      Ver Noticias
-                    </Link>
-                  </div>
-                );
-              }
+            {noticias && noticias.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {noticias.slice(0, 3).map((noticia) => {
+                    const firstImg =
+                      (Array.isArray(noticia.imagenes) && noticia.imagenes[0]?.imageUrl) ||
+                      noticia.imagenUrl ||
+                      null;
+                    const fecha = noticia.fechaCreacion
+                      ? new Date(noticia.fechaCreacion).toLocaleDateString()
+                      : "—";
 
-              return (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {list.map((n) => (
-                    <article key={n.id} className="bg-white rounded-2xl shadow p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h4 className="text-lg font-semibold mb-2" style={{ color: "var(--neutro)" }}>{n.titulo}</h4>
-                          <p className="text-sm text-gray-500 mb-3">{n.fecha}</p>
-                          <p className="text-gray-700 mb-4">{n.resumen}</p>
-                          <div className="mt-auto">
-                            <Link
-                              to={`/noticias/${n.id}`}
-                              className="text-primario font-semibold hover:underline"
-                            >
-                              Leer más
-                            </Link>
-                          </div>
+                    return (
+                      <Link
+                        key={noticia.id}
+                        to={`/noticias/${noticia.id}`}
+                        className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+                      >
+                        {/* Imagen */}
+                        <div className="relative aspect-video overflow-hidden bg-gray-100">
+                          {firstImg ? (
+                            <img
+                              src={firstImg}
+                              alt={noticia.titulo}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
+                              <span className="text-gray-400 text-4xl">📰</span>
+                            </div>
+                          )}
+                          {/* Badge de tipo */}
+                          {noticia.tipo && (
+                            <div className="absolute top-3 right-3 bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                              {noticia.tipo}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </article>
-                  ))}
+
+                        {/* Contenido */}
+                        <div className="p-5">
+                          <p className="text-xs uppercase text-gray-500 font-semibold">
+                            {fecha}
+                          </p>
+                          <h3 className="text-lg font-bold mt-2 text-gray-900 line-clamp-2 group-hover:text-blue-600 transition">
+                            {noticia.titulo}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                            {noticia.mdContent
+                              ? noticia.mdContent.substring(0, 100).replace(/[#*_`\[\]]/g, "") + "..."
+                              : "Sin descripción"}
+                          </p>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-5 pb-5">
+                          <button className="text-blue-600 font-semibold text-sm hover:text-blue-700 transition">
+                            Leer más →
+                          </button>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
-              );
-            })()}
+
+                {/* Botón para ver todas */}
+                <div className="flex justify-center">
+                  <Link
+                    to="/noticias"
+                    className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                    style={{ backgroundColor: "var(--primario)" }}
+                  >
+                    Ver Todas las Noticias
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No hay noticias disponibles en este momento.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

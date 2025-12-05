@@ -78,7 +78,7 @@ export default function CrearCampeonato() {
 
   const fetchTemporadas = async () => {
     try {
-      const res = await fetch(`${API_BASE}/temporadas`, { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`, { credentials: 'include' });
       if (!res.ok) throw new Error('Error fetching temporadas');
       const data = await res.json();
       setTemporada(data || null);
@@ -136,7 +136,7 @@ export default function CrearCampeonato() {
   async function fetchFormatos() {
     setLoadingFormatos(true);
     try {
-      const res = await fetch(`${API_BASE}/formatos`, { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/formatos`, { credentials: 'include' });
       if (!res.ok) throw new Error('Error fetching formatos');
       const data = await res.json();
       setFormatos(data || []);
@@ -149,7 +149,7 @@ export default function CrearCampeonato() {
 
   async function fetchFormatosEtapas() {
     try {
-      const res = await fetch(`${API_BASE}/formatos/etapas`, { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/formatos/etapas`, { credentials: 'include' });
       if (!res.ok) throw new Error('Error fetching formatos etapas');
       const data = await res.json();
       setFormatosEtapas(data || []);
@@ -162,7 +162,7 @@ export default function CrearCampeonato() {
     setPrecargaLoading(true);
     setPrecargaError(null);
     try {
-      const res = await fetch(`${API_BASE}/formatos/precarga`, { method: 'POST', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/formatos/precarga`, { method: 'POST', credentials: 'include' });
       if (!res.ok) throw new Error('Error al precargar formatos');
       await fetchFormatos();
       await fetchFormatosEtapas();
@@ -348,7 +348,7 @@ export default function CrearCampeonato() {
       const payload = { ...editingFormato };
       const method = payload.id ? 'PUT' : 'POST';
       const idSegment = payload.id ? `/${payload.id}` : '';
-      const res = await fetch(`${API_BASE}/formatos${idSegment}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/formatos${idSegment}`, {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -381,7 +381,7 @@ export default function CrearCampeonato() {
       const payload = { ...editingEtapa };
       const method = payload.id ? 'PUT' : 'POST';
       const idSegment = payload.id ? `/${payload.id}` : '';
-      const res = await fetch(`${API_BASE}/formatos/etapas${idSegment}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/formatos/etapas${idSegment}`, {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

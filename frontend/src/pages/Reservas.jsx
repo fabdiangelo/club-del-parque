@@ -64,7 +64,7 @@ const Reservas = () => {
 
     const deshabilitarReserva = async (id) => {
         try {   
-            const response = await fetch(`/api/reservas/${id}/deshabilitar`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}/deshabilitar`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ const Reservas = () => {
             setReservasHabilitadas([]);
             setReservasDeshabilitadas([]);
             
-            const response = await fetch(`api/reservas`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ const Reservas = () => {
             console.log("NUEVA RESERVA", reservaLimpia);
             console.log("DATOS DEL FORMULARIO", dataForm);
 
-            const response = await fetch(`api/reservas`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -232,7 +232,7 @@ const Reservas = () => {
 
     const fetchCanchas = async () => {
         try {
-            const response = await fetch(`api/canchas`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
@@ -252,7 +252,7 @@ const Reservas = () => {
     const editarReserva = async (reservaEditada) => {
         try {
 
-            const response = await fetch(`api/reservas/${reservaEditada.id}`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${reservaEditada.id}`, {
                 method: 'PUT',
                 headers: 'Content-Type: application/json',
                 credentials: 'include'
@@ -284,7 +284,7 @@ const Reservas = () => {
 
         try {
 
-            const response = await fetch(`api/reservas/${id}/confirmar`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}/confirmar`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -313,7 +313,7 @@ const Reservas = () => {
 
         try {
 
-            const response = await fetch(`api/reservas/${id}/rechazar`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas/${id}/rechazar`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -339,7 +339,7 @@ const Reservas = () => {
 
     const fetchUsuarios = async () => {
         try {
-            const response = await fetch(`api/usuarios`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios`, {
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',

@@ -57,7 +57,7 @@ export default function Noticias() {
       setLoading(true);
       setFetchError("");
       try {
-        const res = await fetch(NOTICIAS_ENDPOINT, { cache: "no-store" });
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!isCancelled) setNoticias(Array.isArray(data) ? data : []);
@@ -120,9 +120,8 @@ export default function Noticias() {
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className={`btn btn-sm ${
-                  activeFilter === f ? "btn-primary" : "btn-outline"
-                }`}
+                className={`btn btn-sm ${activeFilter === f ? "btn-primary" : "btn-outline"
+                  }`}
               >
                 {f}
               </button>

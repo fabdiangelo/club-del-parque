@@ -219,12 +219,12 @@ export default function NoticiaDetalle() {
       setFetchError("");
       setReady(false);
       try {
-        const r = await fetch(`${NOTICIAS_ENDPOINT}/${id}`, { cache: "no-store" });
+        const r = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias/${id}`, { cache: "no-store" });
         if (r.ok) {
           const d = await r.json();
           if (!cancelled) setNoticia(d || null);
         } else {
-          const rList = await fetch(NOTICIAS_ENDPOINT, { cache: "no-store" });
+          const rList = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias`, { cache: "no-store" });
           if (!rList.ok) throw new Error(`HTTP ${rList.status}`);
           const list = await rList.json();
           if (!cancelled) {
@@ -254,7 +254,7 @@ export default function NoticiaDetalle() {
     async function loadRel() {
       if (!noticia) return;
       try {
-        const rList = await fetch(NOTICIAS_ENDPOINT, { cache: "no-store" });
+        const rList = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias`, { cache: "no-store" });
         if (!rList.ok) return;
         const list = await rList.json();
         if (!cancelled && Array.isArray(list)) {

@@ -19,9 +19,8 @@ import bgImg from "../assets/RankingsBackground.png";
 const NAVBAR_OFFSET_REM = 5;
 const CAPACIDADES = [4, 8, 16, 32, 64, 128, 256];
 
-const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
 const fetchJSON = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(path, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     cache: "no-store",
     ...opts,
@@ -91,7 +90,7 @@ export default function CategoriasGestor() {
     setLoading(true);
     setErr("");
     try {
-      const data = await fetchJSON("/categorias");
+      const data = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`);
       const list = Array.isArray(data) ? data : [];
       list.forEach((c) => {
         c.capacidad = Number(c.capacidad);
@@ -124,7 +123,7 @@ export default function CategoriasGestor() {
     setCreating(true);
     setErr("");
     try {
-      await fetchJSON("/categorias", {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`, {
         method: "POST",
         body: JSON.stringify({ nombre: nm, capacidad: cap }),
       });
@@ -145,7 +144,7 @@ export default function CategoriasGestor() {
     );
     if (!ok) return;
     try {
-      await fetchJSON(`/categorias/${encodeURIComponent(id)}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/categorias/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
       await loadAll();
@@ -185,7 +184,7 @@ async function saveOrder() {
       throw new Error("No hay IDs válidos para guardar el orden.");
     }
 
-    await fetchJSON("/categorias/orden", {
+    await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/categorias/orden`, {
       method: "PATCH",
       body: JSON.stringify(realIds),
     });
@@ -216,7 +215,7 @@ async function saveOrder() {
     setSavingRow(true);
     setErr("");
     try {
-      await fetchJSON(`/categorias/${encodeURIComponent(id)}`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/categorias/${encodeURIComponent(id)}`, {
         method: "PATCH",
         body: JSON.stringify({ nombre: nm, capacidad: cap }),
       });

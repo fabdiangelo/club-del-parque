@@ -34,31 +34,6 @@ import DeporteController from "./src/controllers/DeporteController.js";
 import FiltrosController from "./src/controllers/FiltrosController.js";
 
 
-/* ---------------- Boot logs ---------------- */
-console.log(
-  "[boot] GCLOUD_PROJECT =",
-  process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT
-);
-console.log(
-  "[boot] GCLOUD_STORAGE_BUCKET =",
-  process.env.GCLOUD_STORAGE_BUCKET || "(unset)"
-);
-console.log(
-  "[boot] STORAGE_EMULATOR_HOST =",
-  process.env.STORAGE_EMULATOR_HOST || "(unset)"
-);
-
-/* ---------------- Global fn settings ---------------- */
-// setGlobalOptions({
-//   maxInstances: 10,
-//   timeoutSeconds: 180,
-//   memory: "512MB",
-// });
-
-/* ---------------- Boot logs (sanity) ---------------- */
-console.log("[boot] GCLOUD_PROJECT =", process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
-console.log("[boot] GCLOUD_STORAGE_BUCKET =", process.env.GCLOUD_STORAGE_BUCKET || "(unset)");
-console.log("[boot] STORAGE_EMULATOR_HOST =", process.env.STORAGE_EMULATOR_HOST || "(unset)");
 
 /* ---------------- PDFs ---------------- */
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50 MB
@@ -66,24 +41,20 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX
 
 
 /* ---------------- App + CORS ---------------- */
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = "https://club-del-parque-8ec2a.web.app";
 const app = express();
 
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: ['http://localhost:5173', FRONTEND_URL],
     credentials: true, // allow credentials so browser can send cookies when frontend uses credentials: 'include'
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   })
 );
 app.options("*", cors());
-
-// Parse cookies early so handlers (including the upload handler) can read session cookie
 app.use(cookieParser());
 
-// Register reglamento upload route BEFORE body parser so multer receives raw multipart stream
-// Add a tiny logger for headers/length and listen for aborted connections to help debug truncation issues
 app.post(
   '/campeonato/:id/reglamento',
   (req, res, next) => {

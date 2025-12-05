@@ -12,8 +12,15 @@ export default function NavbarBlanco({ transparent = false }) {
   const { notiCount } = useNotification();
 
   const [isScrolled, setIsScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false); // Estado para el menú hamburguesa
+  const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Roles
+  const isLogged = !!user;
+  const isAdmin = user?.rol === "administrador";
+  const isFederado = user?.rol === "federado";
+  const isRegistradoNoFederado = isLogged && !isAdmin && !isFederado;
+  const isVisitante = !isLogged;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,7 +64,6 @@ export default function NavbarBlanco({ transparent = false }) {
     }
   };
 
-
   // Texto y estados de los items
   const navTextColor = isMobile
     ? "text-black/90 hover:text-black"
@@ -90,7 +96,10 @@ export default function NavbarBlanco({ transparent = false }) {
       role="banner"
       style={{ left: "0" }}
     >
-      <nav className="mx-auto w-full max-w-6xl h-20 md:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between" style={{zIndex:"999"}}>
+      <nav
+        className="mx-auto w-full max-w-6xl h-20 md:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between"
+        style={{ zIndex: "999" }}
+      >
         <Link to="/" aria-label="Inicio" className="flex items-center gap-2">
           <img
             src={logoUrl}
@@ -124,27 +133,51 @@ export default function NavbarBlanco({ transparent = false }) {
 
         {/* Menú principal */}
         <div
-          className={`${menuOpen ? "block" : "hidden"} md:flex flex-col md:flex-row items-center gap-4 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
+          className={`${
+            menuOpen ? "block" : "hidden"
+          } md:flex flex-col md:flex-row items-center gap-4 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
         >
           <ul className="flex flex-col md:flex-row items-center gap-3 md:gap-6 px-4 md:px-0 text-center w-full md:w-auto justify-center">
+            {/* INICIO – todos */}
             <li>
               <NavLink
                 to="/"
                 end
                 className={({ isActive }) =>
-                  `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
+                  `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${
+                    isActive ? activeItem : ""
+                  }`
                 }
               >
                 Inicio
               </NavLink>
             </li>
 
-            {user && (
+            {/* NOTICIAS – visitante, registrado no federado, federado (no admin para no tocar navbar admin) */}
+            {(isVisitante || isRegistradoNoFederado || isFederado) && (
+              <li>
+                <NavLink
+                  to="/noticias"
+                  className={({ isActive }) =>
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${
+                      isActive ? activeItem : ""
+                    }`
+                  }
+                >
+                  Noticias
+                </NavLink>
+              </li>
+            )}
+
+            {/* CAMPEONATOS – federado + admin (admin queda igual que antes) */}
+            {isLogged && (isFederado || isAdmin) && (
               <li>
                 <NavLink
                   to="/campeonatos"
                   className={({ isActive }) =>
-                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${
+                      isActive ? activeItem : ""
+                    }`
                   }
                 >
                   Campeonatos
@@ -152,12 +185,15 @@ export default function NavbarBlanco({ transparent = false }) {
               </li>
             )}
 
-            {user && (user?.rol === "administrador" || user?.rol === "federado") && (
+            {/* RANKING – todos los usuarios logueados (admin ya lo tenía) */}
+            {isLogged && (
               <li>
                 <NavLink
                   to="/ranking"
                   className={({ isActive }) =>
-                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${
+                      isActive ? activeItem : ""
+                    }`
                   }
                 >
                   Ranking
@@ -165,12 +201,15 @@ export default function NavbarBlanco({ transparent = false }) {
               </li>
             )}
 
-            {user && (
+            {/* RESULTADOS – federado + admin (admin queda igual; se lo sacamos al no federado) */}
+            {isLogged && (isFederado || isAdmin) && (
               <li>
                 <NavLink
                   to="/resultados"
                   className={({ isActive }) =>
-                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${
+                      isActive ? activeItem : ""
+                    }`
                   }
                 >
                   Resultados
@@ -178,12 +217,15 @@ export default function NavbarBlanco({ transparent = false }) {
               </li>
             )}
 
-            {user?.rol === "administrador" && (
+            {/* ADMINISTRACIÓN – igual que antes, solo admin */}
+            {isAdmin && (
               <li>
                 <NavLink
                   to="/administracion"
                   className={({ isActive }) =>
-                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${isActive ? activeItem : ""}`
+                    `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${
+                      isActive ? activeItem : ""
+                    }`
                   }
                 >
                   Administración
@@ -192,49 +234,63 @@ export default function NavbarBlanco({ transparent = false }) {
             )}
           </ul>
 
-          {user ? (
+          {/* Zona derecha: iconos / perfil / login */}
+          {isLogged ? (
             <div className="flex flex-col md:flex-row items-center gap-4 px-4 md:px-0 w-full md:w-auto justify-center">
-              <div style={{ position: "relative", display: "inline-block" }}>
-                <svg
-                  style={{ cursor: "pointer" }}
-                  onClick={() => navigate("/chats")}
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="size-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
-                  />
-                </svg>
-                {notiCount > 0 && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "-6px",
-                      right: "-6px",
-                      background: "#0D8ABC",
-                      color: "#fff",
-                      borderRadius: "50%",
-                      padding: "1px 4px",
-                      fontSize: "0.7em",
-                      fontWeight: 700,
-                      zIndex: 0,
-                      minWidth: "10px",
-                      textAlign: "center",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                    }}
+              {/* CHAT – federado + admin (no disponible para registrados no federados) */}
+              {(isFederado || isAdmin) && (
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <svg
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate("/chats")}
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="size-6"
                   >
-                    {notiCount}
-                  </span>
-                )}
-              </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
+                    />
+                  </svg>
+                  {notiCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "-6px",
+                        right: "-6px",
+                        background: "#0D8ABC",
+                        color: "#fff",
+                        borderRadius: "50%",
+                        padding: "1px 4px",
+                        fontSize: "0.7em",
+                        fontWeight: 700,
+                        zIndex: 0,
+                        minWidth: "10px",
+                        textAlign: "center",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+                      }}
+                    >
+                      {notiCount}
+                    </span>
+                  )}
+                </div>
+              )}
 
-              <BellDropdown color={isMobile ? "black" : transparent ? (isScrolled ? "black" : "white") : "black"} />
+              <BellDropdown
+                color={
+                  isMobile
+                    ? "black"
+                    : transparent
+                    ? isScrolled
+                      ? "black"
+                      : "white"
+                    : "black"
+                }
+              />
 
               <button
                 style={{
@@ -265,7 +321,7 @@ export default function NavbarBlanco({ transparent = false }) {
                   borderRadius: "8px",
                   color: "white",
                 }}
-                onClick={() => handleLogout()}
+                onClick={handleLogout}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -284,22 +340,26 @@ export default function NavbarBlanco({ transparent = false }) {
               </button>
             </div>
           ) : (
-            <Link
-              to="/login"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                justifyContent: "center",
-                backgroundColor: "var(--primario)",
-                cursor: "pointer",
-                padding: "10px 30px",
-                borderRadius: "8px",
-                color: "white",
-              }}
-            >
-              Login
-            </Link>
+            <div className="flex flex-col md:flex-row items-center gap-3 px-4 md:px-0 w-full md:w-auto justify-center">
+              <Link
+                to="/login"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  justifyContent: "center",
+                  backgroundColor: "var(--primario)",
+                  cursor: "pointer",
+                  padding: "10px 30px",
+                  borderRadius: "8px",
+                  color: "white",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Login
+              </Link>
+              
+            </div>
           )}
         </div>
       </nav>

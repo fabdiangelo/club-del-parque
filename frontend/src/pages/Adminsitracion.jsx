@@ -7,6 +7,7 @@ import GraficoGauge from "../components/GraficoGauge";
 import ReporteDisputaPartidoModal from "../components/administracion-reportes/ReporteDisputaPartidoModal";
 
 import { useAuth } from "../contexts/AuthProvider";
+import { Link } from "react-router-dom";
 import {
   Flame,
   Server,
@@ -16,6 +17,12 @@ import {
   CheckCircle,
   Clock,
   Calendar,
+  Newspaper,
+  Award,
+  Trophy,
+  BarChart3,
+  Plus,
+  Eye,
 } from "lucide-react";
 import Reservas from "./Reservas";
 
@@ -46,7 +53,7 @@ const Administracion = () => {
     try {
       setLoading(true);
       // Obtener métricas
-      let metricasRes = await fetch("/api/infraestructura/metricas", {
+      let metricasRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/infraestructura/metricas`, {
         credentials: "include",
       });
       if (metricasRes.status === 401) {
@@ -57,7 +64,7 @@ const Administracion = () => {
       const metricasData = await metricasRes.json();
       setMetricas(metricasData);
       // Obtener todos los reportes
-      let reportesRes = await fetch("/api/reportes/sin-resolver", {
+      let reportesRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes/sin-resolver`, {
         credentials: "include",
       });
       if (reportesRes.status === 401) {
@@ -70,7 +77,7 @@ const Administracion = () => {
         setReportes(reportesData);
       }
       // Obtener cantidad de usuarios
-      let usuariosRes = await fetch("/api/usuarios/cantidad", {
+      let usuariosRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/cantidad`, {
         credentials: "include",
       });
       if (usuariosRes.status === 401) {
@@ -90,7 +97,7 @@ const Administracion = () => {
 
   const marcarComoResuelto = async (idReporte) => {
     try {
-      const res = await fetch(`/api/reportes/marcar-resuelto/${idReporte}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes/marcar-resuelto/${idReporte}`, {
         method: "PUT",
         credentials: "include",
       });
@@ -110,7 +117,7 @@ const Administracion = () => {
 
   const validarFederacion = async (idReporte, planId) => {
     try {
-      const res = await fetch(`/api/usuarios/validar-federacion/${idReporte}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/validar-federacion/${idReporte}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -129,7 +136,7 @@ const Administracion = () => {
 
   const marcarComoNoResuelto = async (idReporte) => {
     try {
-      const res = await fetch(`/api/reportes/marcar-resuelto/${idReporte}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes/marcar-resuelto/${idReporte}`, {
         method: "PUT",
         credentials: "include",
       });
@@ -153,7 +160,7 @@ const Administracion = () => {
 
   const negarFederacion = async (idReporte) => {
     try {
-      const res = await fetch(`/api/usuarios/negar-federacion/${idReporte}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/negar-federacion/${idReporte}`, {
         method: "PUT",
         credentials: "include",
       });
@@ -297,7 +304,118 @@ const Administracion = () => {
         </div>
         {ventana === "administracion" ? (
           <>
+            <div>
+                <h2 className="text-3xl font-bold">Bienvenido, {user.nombre}!</h2>
+                
+                {/* Sección de Atajos Rápidos */}
+                <div className="mt-8 mb-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Atajos Rápidos</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    
+                    {/* Crear Temporada */}
+                    <Link
+                      to="/temporadas"
+                      className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                          <Calendar className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg">Temporadas</h4>
+                          <p className="text-sm opacity-90">Crear/ver temporadas</p>
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Crear Noticia */}
+                    <Link
+                      to="/crear-noticia"
+                      className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                          <Plus className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg">Nueva Noticia</h4>
+                          <p className="text-sm opacity-90">Crear noticia</p>
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Ver Noticias */}
+                    <Link
+                      to="/noticias"
+                      className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                          <Newspaper className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg">Noticias</h4>
+                          <p className="text-sm opacity-90">Ver todas las noticias</p>
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Rankings */}
+                    <Link
+                      to="/ranking"
+                      className="group bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                          <Trophy className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg">Rankings</h4>
+                          <p className="text-sm opacity-90">Ver rankings</p>
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Resultados */}
+                    <Link
+                      to="/resultados"
+                      className="group bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                          <BarChart3 className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg">Resultados</h4>
+                          <p className="text-sm opacity-90">Ver resultados</p>
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Gestionar Campeonatos */}
+                    <Link
+                      to="/crear-campeonato"
+                      className="group bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                          <Award className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg">Campeonatos</h4>
+                          <p className="text-sm opacity-90">Crear campeonato</p>
+                        </div>
+                      </div>
+                    </Link>
+
+                  </div>
+                </div>
+            </div>
+
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+              
+              
+              
               <h2 className="text-xl font-semibold mb-2">
                 Gasto Total del Mes
               </h2>

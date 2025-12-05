@@ -8,14 +8,14 @@ import NavbarBlanco from '../components/NavbarBlanco.jsx';
 
 
 const Chats = () => {
-  
+
   const scrollRef = useRef(null);
 
   const [chats, setChats] = useState([])
   const [searchTerm, setSearchTerm] = useState("");
   const [chatSeleccionado, setChatSeleccionado] = useState(null);
   const [chatSeleccionadoId, setChatSeleccionadoId] = useState(null);
-  
+
   const [mensajesChat, setMensajesChat] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [usuarios, setUsuarios] = useState([]);
@@ -41,7 +41,7 @@ const Chats = () => {
   const { id: routeUserId } = useParams();
   const pendingCreationsRef = useRef(new Set());
 
-  const generarReservaPartido = async() => {
+  const generarReservaPartido = async () => {
 
     console.log("Generando reserva para el partido el día", fechaPartido, "a ser cobrado a", quienPaga);
 
@@ -102,7 +102,7 @@ const Chats = () => {
     });
     const ultimoRef = ref(dbRT, `chats/${chatSeleccionado.id}/ultimoMensaje`);
     await set(ultimoRef, { autor: user, contenido: contenidoMensaje, timestamp: Date.now() });
-    
+
     setShowModalPartido(false);
   }
 
@@ -120,60 +120,60 @@ const Chats = () => {
     });
     const ultimoRef = ref(dbRT, `chats/${chatId}/ultimoMensaje`);
     await set(ultimoRef, { autor: user, contenido: nuevoMensaje.trim(), timestamp: Date.now() });
-    
+
     setNuevoMensaje('');
   };
 
 
-  const enviarReporte = async(e) => {
+  const enviarReporte = async (e) => {
 
-        const formInfo = {
-            tipo: 'reporte_jugador',
-            motivo: "Se reporta al usuario con mail: " + (chatSeleccionado.participantes.filter(p => p.uid !== user.uid).map(p => p.email) || "Desconocido"),
-            descripcion: textoReporte,
-            estado: 'pendiente',
-            mailUsuario: user ? user.email : 'anónimo',
-            leido: false
-        }
-
-
-        try {
-            const response = await fetch(`api/reportes`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formInfo),
-            });
-
-            console.log('Response status:', response.status);
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Error al enviar el reporte');
-            }
-
-            const data = await response.json();
-            console.log('Success:', data);
-
-            setMensaje('Reporte enviado con éxito');
-            setTipoMensaje('success');
-            
-
-            setTextoReporte('');
-
-        } catch (error) {
-            console.error('Error:', error);
-            
-            setMensaje(error.message);
-            setTipoMensaje('error');
-        }
-
-
-        setTimeout(() => {
-            setMensaje(null);
-        }, 3000);
+    const formInfo = {
+      tipo: 'reporte_jugador',
+      motivo: "Se reporta al usuario con mail: " + (chatSeleccionado.participantes.filter(p => p.uid !== user.uid).map(p => p.email) || "Desconocido"),
+      descripcion: textoReporte,
+      estado: 'pendiente',
+      mailUsuario: user ? user.email : 'anónimo',
+      leido: false
     }
+
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formInfo),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar el reporte');
+      }
+
+      const data = await response.json();
+      console.log('Success:', data);
+
+      setMensaje('Reporte enviado con éxito');
+      setTipoMensaje('success');
+
+
+      setTextoReporte('');
+
+    } catch (error) {
+      console.error('Error:', error);
+
+      setMensaje(error.message);
+      setTipoMensaje('error');
+    }
+
+
+    setTimeout(() => {
+      setMensaje(null);
+    }, 3000);
+  }
 
 
 
@@ -184,7 +184,7 @@ const Chats = () => {
       mensajesListenerRef.current = null;
     }
 
-   
+
 
 
     const response = ref(dbRT, `chats/${chatId}`);
@@ -393,7 +393,7 @@ const Chats = () => {
         }
       }
 
-      const usuarioRes = await fetch(`/api/usuario/${otherUserId}`, { credentials: 'include' });
+      const usuarioRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${otherUserId}`, { credentials: 'include' });
       if (!usuarioRes.ok) {
         console.warn('No se pudo obtener info del usuario', otherUserId);
         return;
@@ -452,7 +452,7 @@ const Chats = () => {
         pendingCreationsRef.current.delete(otherUserId);
         if (weSetLock) localStorage.removeItem(lockKey);
       }
-      
+
 
     } catch (error) {
       console.error('Error al abrir o crear chat por userId', error);
@@ -460,13 +460,13 @@ const Chats = () => {
   }
 
   const cargarUsuarios = async () => {
- 
+
     try {
-      const response = await fetch("/api/usuarios", {
-      method: "GET",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" }
-    });
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios`, {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
       if (!response.ok) {
         console.log(response.text())
         throw new Error("Error cargando usuarios");
@@ -476,7 +476,7 @@ const Chats = () => {
       const dataFiltrada = data.map((d) => {
 
         if (d.id != user?.uid) {
-          return { ...d, uid: d.id }; 
+          return { ...d, uid: d.id };
         }
       }).filter(Boolean);
 
@@ -488,7 +488,7 @@ const Chats = () => {
         }
         chats.map((c) => {
           if (c.participantes[0]?.uid === user.uid && c.participantes[1]?.uid === d.id ||
-              c.participantes[0]?.uid === d.id && c.participantes[1]?.uid === user.uid) {
+            c.participantes[0]?.uid === d.id && c.participantes[1]?.uid === user.uid) {
             return null;
           }
           return d;
@@ -506,13 +506,13 @@ const Chats = () => {
   }, [user]);
 
   useEffect(() => {
-  if (scrollRef.current) {
-    scrollRef.current.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth"
-    });
-  }
-}, [chatSeleccionado, mensajesChat]);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  }, [chatSeleccionado, mensajesChat]);
 
 
 
@@ -568,14 +568,14 @@ const Chats = () => {
   }, [routeUserId, user]);
 
 
-useEffect(() => {
-  return () => {
-    if (mensajesListenerRef.current) {
-      mensajesListenerRef.current();
-      mensajesListenerRef.current = null;
-    }
-  };
-}, []);
+  useEffect(() => {
+    return () => {
+      if (mensajesListenerRef.current) {
+        mensajesListenerRef.current();
+        mensajesListenerRef.current = null;
+      }
+    };
+  }, []);
 
 
   return (
@@ -583,48 +583,48 @@ useEffect(() => {
       <NavbarBlanco />
 
       {alertaReserva && (
-  <div
-    role="alert"
-    className={`alert alert-${tipoMensajeReserva === 'success' ? 'success' : 'error'}`}
-    style={{
-      position: "fixed",
-      left: "32px",
-      bottom: "32px",
-      zIndex: 9999,
-      minWidth: "300px",
-      boxShadow: "0 2px 12px rgba(0,0,0,0.18)"
-    }}
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tipoMensajeReserva === 'success'
-        ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        : "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"} />
-    </svg>
-    <span>{mensajeReserva}</span>
-  </div>
-)}
+        <div
+          role="alert"
+          className={`alert alert-${tipoMensajeReserva === 'success' ? 'success' : 'error'}`}
+          style={{
+            position: "fixed",
+            left: "32px",
+            bottom: "32px",
+            zIndex: 9999,
+            minWidth: "300px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.18)"
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tipoMensajeReserva === 'success'
+              ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              : "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+          </svg>
+          <span>{mensajeReserva}</span>
+        </div>
+      )}
 
       {mensaje && (
-  <div
-    role="alert"
-    className={`alert alert-${tipoMensaje === 'success' ? 'success' : 'error'}`}
-    style={{
-      position: "fixed",
-      left: "32px",
-      bottom: "32px",
-      zIndex: 9999,
-      minWidth: "300px",
-      boxShadow: "0 2px 12px rgba(0,0,0,0.18)"
-    }}
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tipoMensaje === 'success'
-        ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        : "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"} />
-    </svg>
-    <span>{mensaje}</span>
-  </div>
-)}
+        <div
+          role="alert"
+          className={`alert alert-${tipoMensaje === 'success' ? 'success' : 'error'}`}
+          style={{
+            position: "fixed",
+            left: "32px",
+            bottom: "32px",
+            zIndex: 9999,
+            minWidth: "300px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.18)"
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tipoMensaje === 'success'
+              ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              : "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+          </svg>
+          <span>{mensaje}</span>
+        </div>
+      )}
 
       {showModalPartido && (
         <div style={{
@@ -650,12 +650,12 @@ useEffect(() => {
             overflowY: "auto",
             position: "relative"
           }}>
-            <div style={{ display: "flex",gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
+            <div style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
               <label>Fecha y hora</label>
               <input className='input' value={fechaPartido} type="datetime-local" onChange={(e) => setFechaPartido(e.target.value)} />
             </div>
 
-            <div style={{ display: "flex",gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
+            <div style={{ display: "flex", gap: "16px", alignItems: "center", marginBottom: "16px", justifyContent: 'space-between' }}>
               <label>Será cobrado a</label>
               <select className='input' value={quienPaga} onChange={(e) => setQuienPaga(e.target.value)}>
                 {chatSeleccionado && chatSeleccionado.participantes.map((p) => (
@@ -664,12 +664,12 @@ useEffect(() => {
               </select>
 
 
-            
+
             </div>
 
-            <div style={{display: 'flex', gap: '4px', alignItems: 'center', marginBottom: '5px'}}>
-                <button style={{color: 'white', backgroundColor: 'green', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer'}} onClick={() => generarReservaPartido()}>Enviar</button>
-                <button style={{color: 'white', backgroundColor: 'red', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', ':hover': {backgroundColor: 'white'}}} onClick={() => setShowModalPartido(false)}>Cancelar</button>
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginBottom: '5px' }}>
+              <button style={{ color: 'white', backgroundColor: 'green', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => generarReservaPartido()}>Enviar</button>
+              <button style={{ color: 'white', backgroundColor: 'red', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', ':hover': { backgroundColor: 'white' } }} onClick={() => setShowModalPartido(false)}>Cancelar</button>
 
 
             </div>
@@ -720,7 +720,7 @@ useEffect(() => {
               ×
             </button>
             <div style={{ maxHeight: "100vh", overflowY: "auto", marginTop: '30px' }}>
-              <textarea style={{height: '200px', width: '400px', resize: 'none'}} className='input' placeholder='Escribe tu reporte aquí...' value={textoReporte} onChange={(e) => setTextoReporte(e.target.value)} />
+              <textarea style={{ height: '200px', width: '400px', resize: 'none' }} className='input' placeholder='Escribe tu reporte aquí...' value={textoReporte} onChange={(e) => setTextoReporte(e.target.value)} />
             </div>
             <button
               style={{
@@ -894,7 +894,7 @@ useEffect(() => {
               style={{
                 width: "100%",
                 padding: "8px",
-                marginBottom: "8px",  
+                marginBottom: "8px",
                 borderRadius: "8px",
                 border: "1px solid #e0e0e0",
                 fontSize: "1em"
@@ -918,10 +918,10 @@ useEffect(() => {
                 />
                 <h2 style={{ fontWeight: 600, fontSize: "1.4rem", marginBottom: '8px' }}>{usuarioInfo.nombre} {usuarioInfo.apellido || ''}</h2>
 
-                
+
                 <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                  <p style={{textAlign: 'center'}}>Ranking: </p>
-                  <p style={{textAlign: 'left'}}>{usuarioInfo.ranking || '-'}</p>
+                  <p style={{ textAlign: 'center' }}>Ranking: </p>
+                  <p style={{ textAlign: 'left' }}>{usuarioInfo.ranking || '-'}</p>
                 </div>
                 <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
                   <span>Categoría: </span>
@@ -941,31 +941,31 @@ useEffect(() => {
                 </div>
 
 
-                <div style={{display: 'flex', gap: '12px'}}>
-<button
-                  style={{
-                    background: "#0D8ABC",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "8px 16px",
-                    fontWeight: 600,
-                    fontSize: "1em",
-                    cursor: "pointer"
-                  }}
-                  onClick={() => setVerUsuario(false)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-</svg>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    style={{
+                      background: "#0D8ABC",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "8px 16px",
+                      fontWeight: 600,
+                      fontSize: "1em",
+                      cursor: "pointer"
+                    }}
+                    onClick={() => setVerUsuario(false)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                    </svg>
 
-                </button>
+                  </button>
 
-                <button style={{backgroundColor: 'var(--neutro)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 600, fontSize: '1em', cursor: 'pointer'}} onClick={() => setShowModalPartido(true)}>Proponer partido</button>
+                  <button style={{ backgroundColor: 'var(--neutro)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 600, fontSize: '1em', cursor: 'pointer' }} onClick={() => setShowModalPartido(true)}>Proponer partido</button>
 
                 </div>
 
-                
+
               </div>
             ) : chats.length === 0 ? (
               <p style={{ color: "#888" }}>No tienes chats aún.</p>

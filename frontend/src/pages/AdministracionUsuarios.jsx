@@ -35,7 +35,7 @@ const AdministracionUsuarios = () => {
     try {
       setLoading(true);
 
-      const usuariosRes = await fetch('/api/usuarios', { credentials: 'include' });
+      const usuariosRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios`, { credentials: 'include' });
       if (usuariosRes.status === 401) {
         setIsUnauthorized(true);
         setLoading(false);
@@ -43,7 +43,7 @@ const AdministracionUsuarios = () => {
       }
       const baseUsuarios = await usuariosRes.json();
 
-      const federadosRes = await fetch('/api/usuarios/federados', { credentials: 'include' });
+      const federadosRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`, { credentials: 'include' });
       let listaFederados = [];
       if (federadosRes.ok) {
         listaFederados = await federadosRes.json();
@@ -121,7 +121,7 @@ const AdministracionUsuarios = () => {
   const bloquearUsuario = async (id) => {
     setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/usuario/${id}/bloqueo`, { method: 'PUT', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${id}/bloqueo`, { method: 'PUT', credentials: 'include' });
       if (res.status === 401) {
         setIsUnauthorized(true);
         return;
@@ -139,7 +139,7 @@ const AdministracionUsuarios = () => {
   const desbloquearUsuario = async (id) => {
     setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/usuario/${id}/bloqueo`, { method: 'PUT', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${id}/bloqueo`, { method: 'PUT', credentials: 'include' });
       if (res.status === 401) {
         setIsUnauthorized(true);
         return;
@@ -157,7 +157,7 @@ const AdministracionUsuarios = () => {
   const eliminarUsuario = async (id) => {
     setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/usuario/${id}/eliminacion`, { method: 'PUT', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${id}/eliminacion`, { method: 'PUT', credentials: 'include' });
       if (res.status === 401) {
         setIsUnauthorized(true);
         return;
@@ -175,7 +175,7 @@ const AdministracionUsuarios = () => {
   const saveEditedUser = async (id, payload) => {
     setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/usuario/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

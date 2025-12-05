@@ -39,7 +39,7 @@ function Registro() {
     console.log("Registrando usuario:", formData);
 
     try {
-      const ok = await register("api/auth/register", formData)
+      const ok = await register(import.meta.env.VITE_BACKEND_URL + "/api/auth/register", formData)
       if (!ok) {
         throw new Error(ok || "Error en el registro");
       }

@@ -37,7 +37,7 @@ export default function EditarPerfil() {
   const fetchUser = async () => {
       setLoadingUser(true);
       try {
-        const res = await fetch(`/api/usuario/${user.uid}`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${user.uid}`, {
           credentials: "include",
         });
         if (res.status === 204 || res.status === 401) {
@@ -130,7 +130,7 @@ export default function EditarPerfil() {
       // only send password if provided
       if (form.password && form.password.trim()) payload.password = form.password;
 
-      const res = await fetch(`/api/usuario/${user.uid}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${user.uid}`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

@@ -24,7 +24,7 @@ const normalizeError = (e) => {
 };
 
 const fetchJSON = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api${path}`, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     credentials: "include",
     cache: "no-store",
@@ -36,7 +36,7 @@ const fetchJSON = async (path, opts = {}) => {
 };
 
 const fetchJSONorNull = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api${path}`, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     credentials: "include",
     cache: "no-store",
@@ -72,7 +72,7 @@ async function pushNotiFor(uid, payload) {
   });
 }
 async function notificarAcuerdoPartido(jugadoresUids = [], partidoId, resumen) {
-  try{
+  try {
 
     if (!Array.isArray(jugadoresUids) || jugadoresUids.length === 0) return;
     console.log(partidoId)
@@ -83,8 +83,8 @@ async function notificarAcuerdoPartido(jugadoresUids = [], partidoId, resumen) {
       partidoId,
     };
     await Promise.all(jugadoresUids.map((uid) => pushNotiFor(uid, payload)));
-  }catch (e){
-    
+  } catch (e) {
+
   }
 }
 
@@ -149,9 +149,8 @@ function TeamCard({
 
   return (
     <div
-      className={`relative flex flex-col gap-4 rounded-3xl p-6 shadow-lg bg-white border border-neutral-200 transition-all duration-300 ${
-        selected ? "ring-2 ring-primary scale-[1.01]" : "hover:shadow-xl"
-      } ${disabled ? "opacity-70" : ""}`}
+      className={`relative flex flex-col gap-4 rounded-3xl p-6 shadow-lg bg-white border border-neutral-200 transition-all duration-300 ${selected ? "ring-2 ring-primary scale-[1.01]" : "hover:shadow-xl"
+        } ${disabled ? "opacity-70" : ""}`}
     >
       <div className="absolute -top-3 -left-3 flex items-center gap-2">
         <span className="badge badge-primary badge-lg">{title}</span>
@@ -178,16 +177,15 @@ function TeamCard({
               {players.length === 1
                 ? "Singles"
                 : players.length === 2
-                ? "Doubles"
-                : "Equipo"}
+                  ? "Doubles"
+                  : "Equipo"}
             </p>
           </div>
         </div>
 
         <label
-          className={`cursor-pointer flex items-center gap-2 ${
-            disabled ? "pointer-events-none opacity-60" : ""
-          }`}
+          className={`cursor-pointer flex items-center gap-2 ${disabled ? "pointer-events-none opacity-60" : ""
+            }`}
         >
           <input
             type="radio"
@@ -449,7 +447,7 @@ export default function AcuerdoResultado() {
     );
   }, [user]);
 
-  
+
   // federados map y helpers de nombre
   const fedMap = useMemo(
     () => new Map(federados.map((f) => [f.id, f])),
@@ -482,30 +480,30 @@ export default function AcuerdoResultado() {
     }
     return [];
   }, [partido, jugadoresIds]);
-    
-    const equipoBIds = useMemo(() => {
-      if (partido?.jugador2Id) return [partido.jugador2Id];
-      const eB = partido?.equipoB || partido?.jugadoresB || partido?.equipo2 || partido?.jugador2 || partido?.equipoVisitante;
-      if (Array.isArray(eB) && eB.length) return eB.map((x) => (typeof x === "object" ? x.id : x));
-      if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
-        return [jugadoresIds[1]].filter(Boolean);
-      }
-      return [];
-    }, [partido, jugadoresIds]);
-    
-    // Compose player display objects: if partido incluye nombre, use it; otherwise resolve from federados
-    const equipoA = useMemo(() => {
-      if (!partido) return equipoAIds.map(resolvePlayer);
-      if (partido.jugador1Id) return [{ id: partido.jugador1Id, nombre: partido.jugador1Nombre }];
-      return equipoAIds.map(resolvePlayer);
-    }, [partido, equipoAIds, fedMap]);
 
-    const equipoB = useMemo(() => {
-      if (!partido) return equipoBIds.map(resolvePlayer);
-      if (partido.jugador2Id) return [{ id: partido.jugador2Id, nombre: partido.jugador2Nombre }];
-      return equipoBIds.map(resolvePlayer);
-    }, [partido, equipoBIds, fedMap]);
-  
+  const equipoBIds = useMemo(() => {
+    if (partido?.jugador2Id) return [partido.jugador2Id];
+    const eB = partido?.equipoB || partido?.jugadoresB || partido?.equipo2 || partido?.jugador2 || partido?.equipoVisitante;
+    if (Array.isArray(eB) && eB.length) return eB.map((x) => (typeof x === "object" ? x.id : x));
+    if (Array.isArray(jugadoresIds) && jugadoresIds.length >= 2) {
+      return [jugadoresIds[1]].filter(Boolean);
+    }
+    return [];
+  }, [partido, jugadoresIds]);
+
+  // Compose player display objects: if partido incluye nombre, use it; otherwise resolve from federados
+  const equipoA = useMemo(() => {
+    if (!partido) return equipoAIds.map(resolvePlayer);
+    if (partido.jugador1Id) return [{ id: partido.jugador1Id, nombre: partido.jugador1Nombre }];
+    return equipoAIds.map(resolvePlayer);
+  }, [partido, equipoAIds, fedMap]);
+
+  const equipoB = useMemo(() => {
+    if (!partido) return equipoBIds.map(resolvePlayer);
+    if (partido.jugador2Id) return [{ id: partido.jugador2Id, nombre: partido.jugador2Nombre }];
+    return equipoBIds.map(resolvePlayer);
+  }, [partido, equipoBIds, fedMap]);
+
   const soyJugador = useMemo(() => {
     const uid = user?.uid || user?.id;
     if (!uid) return false;
@@ -816,10 +814,10 @@ export default function AcuerdoResultado() {
   const statusKey = yaFinalizado
     ? "finalizado"
     : partido?.estadoResultado === "en_disputa"
-    ? "disputa"
-    : propuestaPendiente
-    ? "por_confirmar"
-    : "pendiente";
+      ? "disputa"
+      : propuestaPendiente
+        ? "por_confirmar"
+        : "pendiente";
 
   return (
     <div className="min-h-screen bg-base-200">

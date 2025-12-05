@@ -1,5 +1,9 @@
 {
   "projects": {
-    "default": "club-del-parque-68530"
-  }
+    "default": "club-del-parque-68530",
+    "clubdelparque": "club-del-parque-8ec2a",
+    "prod": "club-del-parque-8ec2a"
+  },
+  "targets": {},
+  "etags": {}
 }

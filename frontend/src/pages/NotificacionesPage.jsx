@@ -173,7 +173,7 @@ export default function NotificationsPage() {
     if (!user?.uid || !noti) return;
     const campeonatoId = noti.campeonatoId || (noti.href && noti.href.split('/').pop());
     try {
-      const res = await fetch(`/api/federado-campeonato/${campeonatoId}/invitacion/aceptar`, { method: 'PUT', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/federado-campeonato/${campeonatoId}/invitacion/aceptar`, { method: 'PUT', credentials: 'include' });
       if (res.ok) {
         // mark backend notification as read
         await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), { leido: true });
@@ -185,7 +185,7 @@ export default function NotificationsPage() {
     if (!user?.uid || !noti) return;
     const campeonatoId = noti.campeonatoId || (noti.href && noti.href.split('/').pop());
     try {
-      const res = await fetch(`/api/federado-campeonato/${campeonatoId}/invitacion/rechazar`, { method: 'PUT', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/federado-campeonato/${campeonatoId}/invitacion/rechazar`, { method: 'PUT', credentials: 'include' });
       if (res.ok) {
         await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), { leido: true });
       }

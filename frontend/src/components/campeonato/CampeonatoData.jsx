@@ -61,7 +61,7 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
     try {
       setProcesando(true)
       // If campeonato is doubles, optionally include inviteeUid in the POST body
-      let url = `/api/federado-campeonato/${id}/${user.uid}`;
+      let url = `${import.meta.env.VITE_BACKEND_URL}/api/federado-campeonato/${id}/${user.uid}`;
       const opts = {
         method: 'POST',
         credentials: 'include'
@@ -99,7 +99,7 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
         fin: dateFin,
       };
 
-      const res = await fetch(`/api/campeonato/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/campeonato/${id}`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -170,7 +170,7 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
                     window.open(reglamentoUrl, '_blank');
                     return;
                   }
-                  const res = await fetch(`/api/campeonato/${id}`, { credentials: 'include' });
+                  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/campeonato/${id}`, { credentials: 'include' });
                   if (!res.ok) return alert('No se pudo obtener información del campeonato');
                   const data = await res.json();
                   const url = data?.reglamentoUrl || data?.reglamentoURL || null;

@@ -39,39 +39,39 @@ import { getToken, onMessage } from "firebase/messaging";
 import { useEffect } from "react";
 
 function App() {
-  const {user} = useAuth();
+  const { user } = useAuth();
 
 
   useEffect(() => {
-		const requestPermission = async () => {
-		const permission = await Notification.requestPermission();
-		if (permission === 'granted') {
-		const token = await getToken(messaging, { 
-		vapidKey: 'BDCSL7Fj7jfxuhR7jPVnLkUiIADoL3kyqsdymO2cMPqEU9JlE2V6ypmOMou3PS6bdPFN9aUNyTHwMrRfXb5O4ls' 
-		});
+    const requestPermission = async () => {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        const token = await getToken(messaging, {
+          vapidKey: import.meta.env.VITE_VAPID_KEY
+        });
 
-		if (!user) return; 
-		const response = await fetch('/api/usuarios/noti-tokens', {
-		method: 'POST',
-		headers: {
-		'Content-Type': 'application/json',
-		},
-		credentials: 'include',
-		body: JSON.stringify({
-		uid: user.uid,
-		token: token,
-		}),
-		});
+        if (!user) return;
+        const response = await fetch(import.meta.env.VITE_BACKEND_URL + '/api/usuarios/noti-tokens', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            uid: user.uid,
+            token: token,
+          }),
+        });
 
-		if (!response.ok) return console.error(response.statusText);
-		}
-		};
+        if (!response.ok) return console.error(response.statusText);
+      }
+    };
 
-		if (user) {
-		requestPermission();
-		}
+    if (user) {
+      requestPermission();
+    }
 
-  
+
 
   }, [user]);
 
@@ -266,8 +266,8 @@ function App() {
           </RoleProtectedRoute>
         }
       />
-      <Route 
-        path="/gestor-filtros" 
+      <Route
+        path="/gestor-filtros"
         element={
           <RoleProtectedRoute
             requiredRoles={"administrador"}
@@ -276,10 +276,10 @@ function App() {
           >
             <FiltrosGestor />
           </RoleProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/canchas" 
+      <Route
+        path="/canchas"
         element={
           <RoleProtectedRoute
             requiredRoles={"administrador"}
@@ -288,7 +288,7 @@ function App() {
           >
             <CanchasGestor />
           </RoleProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/administracion"

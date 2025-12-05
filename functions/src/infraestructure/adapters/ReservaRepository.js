@@ -129,7 +129,7 @@ export class ReservaRepository {
             } else {
                 // If a canchaId was provided, validate it's free
                 if (hasConflictForCancha(chosenCanchaId)) {
-                    throw new Error('La cancha solicitada no está disponible en ese horario');
+                    throw new Error('Ya existe una reserva para la misma cancha en el mismo rango de tiempo');
                 }
                 // fetch cancha object (if exists)
                 try {
@@ -137,6 +137,11 @@ export class ReservaRepository {
                 } catch (e) {
                     chosenCancha = null;
                 }
+            }
+
+            // If caller explicitly requested a canchaId but it does not exist, fail fast
+            if (canchaId && typeof canchaId === 'string' && canchaId.trim() !== '' && !chosenCancha) {
+                throw new Error("La cancha asociada no existe");
             }
 
             if ( !jugadoresIDS || jugadoresIDS.length < 2 || !quienPaga || !autor || !fechaHora || !duracion) {
@@ -196,7 +201,28 @@ export class ReservaRepository {
                 const quienPagaExistsFederado = await this.db.getItem("federados", quienPaga);
                 const quienPagaExistsAdmin = await this.db.getItem("administradores", quienPaga);
 
-                const allAdmins = await this.db.getAllItems("administradores");
+                // Retrieve admins and normalize to an array so tests/mocks and real DB both work
+                const rawAdmins = await this.db.getAllItems("administradores");
+                let allAdmins = [];
+                if (Array.isArray(rawAdmins)) {
+                    allAdmins = rawAdmins;
+                } else if (rawAdmins && Array.isArray(rawAdmins.items)) {
+                    allAdmins = rawAdmins.items;
+                } else if (rawAdmins && Array.isArray(rawAdmins.docs)) {
+                    // If a QuerySnapshot-like object: map docs to plain objects when possible
+                    try {
+                        allAdmins = rawAdmins.docs.map(d => (d && d.data ? { id: d.id, ...d.data() } : d));
+                    } catch (e) {
+                        allAdmins = [];
+                    }
+                } else {
+                    // Fallback: attempt to iterate if it's iterable
+                    try {
+                        allAdmins = Array.from(rawAdmins || []);
+                    } catch (e) {
+                        allAdmins = [];
+                    }
+                }
 
                 for (const admin of allAdmins) {
                     console.log("Verificando admin:", admin);

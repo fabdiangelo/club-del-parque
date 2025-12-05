@@ -5,10 +5,9 @@ import { Crown, Search, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthProvider";
 
 
-/* ------------------------------- utils ------------------------------- */
-const toApi = (p) => (p.startsWith("/api/") ? p : `/api${p}`);
+
 const fetchJSON = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(path, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     cache: "no-store",
     ...opts,
@@ -215,8 +214,8 @@ export default function Rankings() {
     (async () => {
       try {
         const [ts, fed] = await Promise.all([
-          fetchJSON("/temporadas"),
-          fetchJSON("/usuarios/federados"),
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`),
+          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`),
         ]);
         if (cancelled) return;
 
@@ -281,7 +280,7 @@ export default function Rankings() {
           filtroId: scope.filtroId || "",
           genero: genero || ""
         });
-        const rows = await fetchJSON(`/rankings?${params.toString()}`);
+      const rows = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/rankings?${params.toString()}`);
         setRankingsRaw(Array.isArray(rows) ? rows : []);
         // Cargar categorías asociadas al scope actual
         const catParams = new URLSearchParams({
@@ -290,7 +289,7 @@ export default function Rankings() {
           tipoDePartido: scope.tipoDePartido || "",
           filtroId: scope.filtroId || ""
         });
-        const catRes = await fetchJSON(`/ranking-categorias?${catParams.toString()}`);
+        const catRes = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${catParams.toString()}`);
         setRkCategorias(Array.isArray(catRes) ? catRes : []);
       } catch (e) {
         setErr(normalizeError(e));
@@ -420,7 +419,7 @@ export default function Rankings() {
         leaderboard: "true",
         genero: genero || ""
       });
-      const rk = await fetchJSON(`/rankings?${params.toString()}`);
+      const rk = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/rankings?${params.toString()}`);
       setRankingsRaw(Array.isArray(rk) ? rk : []);
       // Cargar categorías asociadas al scope actual
       const catParams = new URLSearchParams({
@@ -429,7 +428,7 @@ export default function Rankings() {
         tipoDePartido,
         filtroId: String(filtroId)
       });
-      const catRes = await fetchJSON(`/ranking-categorias?${catParams.toString()}`);
+      const catRes = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${catParams.toString()}`);
       const cats = Array.isArray(catRes) ? catRes : [];
       setRkCategorias(cats);
       setRkLocalOrder(cats.map(c => c.id));
@@ -447,7 +446,7 @@ export default function Rankings() {
     if (!federados.length) {
       setLoadingFederados(true);
       try {
-        const fs = await fetchJSON("/usuarios/federados");
+        const fs = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`);
         setFederados(Array.isArray(fs) ? fs : []);
       } catch (e) {
         alert(normalizeError(e));
@@ -470,7 +469,7 @@ export default function Rankings() {
       genero = filtro.genero.nombre;
     }
     try {
-      await fetchJSON(`/federados/${encodeURIComponent(usuarioID)}/categoria`, {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/federados/${encodeURIComponent(usuarioID)}/categoria`, {
         method: "POST",
         body: JSON.stringify({
           categoriaId: assignCategoriaId || null,
@@ -516,7 +515,7 @@ export default function Rankings() {
         nombre: nm,
         capacidad: cap,
       };
-      await fetchJSON("/ranking-categorias", {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias`, {
         method: "POST",
         body: JSON.stringify(body),
       });
@@ -528,7 +527,7 @@ export default function Rankings() {
         tipoDePartido: scope.tipoDePartido,
       });
       if (scope.filtroId != null) qs.set("filtroId", scope.filtroId);
-      const rows = await fetchJSON(`/ranking-categorias?${qs.toString()}`);
+      const rows = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${qs.toString()}`);
       const list = Array.isArray(rows) ? rows : [];
       list.sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre));
       setRkCategorias(list);
@@ -561,7 +560,7 @@ export default function Rankings() {
   const saveRkOrder = async () => {
     if (!scope.temporadaID || !scope.tipoDePartido) return;
     try {
-      await fetchJSON("/ranking-categorias/orden", {
+      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias/orden`, {
         method: "PATCH",
         body: JSON.stringify({
           temporadaID: scope.temporadaID,
@@ -577,7 +576,7 @@ export default function Rankings() {
         tipoDePartido: scope.tipoDePartido,
       });
       if (scope.filtroId != null) qs.set("filtroId", scope.filtroId);
-      const rows = await fetchJSON(`/ranking-categorias?${qs.toString()}`);
+      const rows = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${qs.toString()}`);
       const list = Array.isArray(rows) ? rows : [];
       list.sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre));
       setRkCategorias(list);

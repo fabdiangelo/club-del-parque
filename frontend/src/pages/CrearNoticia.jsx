@@ -87,12 +87,11 @@ export default function CrearNoticia() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /* ---------------- API ---------------- */
   const fetchNoticias = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/noticias`);
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias`);
       if (!res.ok) throw new Error(`GET /noticias ${res.status}`);
       setNoticias(await res.json());
     } catch (e) {
@@ -106,7 +105,7 @@ export default function CrearNoticia() {
     setBusyId(id);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/noticias/${id}`);
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias/${id}`);
       if (!res.ok) throw new Error(`GET /noticias/${id} ${res.status}`);
       setSelected(await res.json());
     } catch (e) {
@@ -143,7 +142,7 @@ export default function CrearNoticia() {
         }))
       ),
     };
-    const res = await fetch(`${API_BASE}/noticias/${noticiaId}/imagenes-json`, {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias/${noticiaId}/imagenes-json`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -153,7 +152,7 @@ export default function CrearNoticia() {
   }
 
   async function removeImageByPath(noticiaId, imagePath) {
-    const url = new URL(`${API_BASE}/noticias/${encodeURIComponent(noticiaId)}/imagenes`);
+    const url = new URL(`${import.meta.env.VITE_BACKEND_URL}/api/noticias/${encodeURIComponent(noticiaId)}/imagenes`);
     url.searchParams.set("imagePath", imagePath);
     const res = await fetch(url.toString(), { method: "DELETE" });
     if (!res.ok) throw new Error(`DELETE /noticias/${noticiaId}/imagenes ${res.status} ${await safeText(res)}`);
@@ -172,7 +171,7 @@ export default function CrearNoticia() {
         tipo: field(form.tipo),
         mdContent: normalizeMarkdown(field(form.mdContent)),
       };
-      const res = await fetch(`${API_BASE}/noticias`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -203,7 +202,7 @@ export default function CrearNoticia() {
         tipo: field(edit.tipo),
         mdContent: normalizeMarkdown(field(edit.mdContent)),
       };
-      const res = await fetch(`${API_BASE}/noticias/${edit.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias/${edit.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -225,7 +224,7 @@ export default function CrearNoticia() {
     if (!confirm("¿Eliminar esta noticia?")) return;
     setBusyId(id);
     try {
-      const res = await fetch(`${API_BASE}/noticias/${id}`, { method: "DELETE" });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/noticias/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`DELETE /noticias/${id} ${res.status}`);
       await fetchNoticias();
       if (selected?.id === id) setSelected(null);

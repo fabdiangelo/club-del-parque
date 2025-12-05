@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: `http://127.0.0.1:5001/${PROJECT}/${REGION}/${FUNC}`,
+        target: `https://us-central1-club-del-parque-8ec2a.cloudfunctions.net`,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''), 
@@ -22,7 +22,7 @@ export default defineConfig({
   preview: {
     proxy: {
       '/api': {
-        target: `http://127.0.0.1:5001/${PROJECT}/${REGION}/${FUNC}`,
+        target: `https://us-central1-club-del-parque-8ec2a.cloudfunctions.net`,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

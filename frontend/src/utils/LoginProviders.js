@@ -8,25 +8,27 @@ import {
   linkWithCredential,
 } from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDUm2HjqeRufuyFS9SbvDCXJhQycDUPnjI",
-  authDomain: "club-del-parque-68530.firebaseapp.com",
-  databaseURL: "https://club-del-parque-68530-default-rtdb.firebaseio.com",
-  projectId: "club-del-parque-68530",
-  storageBucket: "club-del-parque-68530.firebasestorage.app",
-  messagingSenderId: "1014072531120",
-  appId: "1:1014072531120:web:0feab3ffb7b85876ef0375",
-  measurementId: "G-Q8TJD5C0ZM"
-};
-
 export const auth = getAuth(app);
-connectAuthEmulator(auth, "http://localhost:9099");
+
+// Connect to Auth emulator only when explicitly enabled via env var.
+// Set VITE_USE_AUTH_EMULATOR=true and VITE_AUTH_EMULATOR_URL=http://localhost:9099 in frontend/.env
+const useAuthEmu = import.meta.env.VITE_USE_AUTH_EMULATOR === 'true';
+const authEmuUrl = import.meta.env.VITE_AUTH_EMULATOR_URL || 'http://localhost:9099';
+if (useAuthEmu) {
+  try {
+    connectAuthEmulator(auth, authEmuUrl);
+    console.log('Connected to Auth emulator at', authEmuUrl);
+  } catch (e) {
+    console.warn('Failed to connect to Auth emulator', e);
+  }
+}
+
 export const loginAndSendToBackend = async (email, password) => {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const user = cred.user;
   const idToken = await user.getIdToken();
 
-  const response = await fetch("api/auth/login", {
+  const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
