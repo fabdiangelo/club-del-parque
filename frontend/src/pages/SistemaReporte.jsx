@@ -84,7 +84,7 @@ const SistemaReporte = () => {
 
             <div className="flex flex-col justify-center items-center min-h-screen gap-4 px-4">
                 <h1 className="text-5xl font-bold text-center" style={{ 'color': 'var(--neutro)' }}>
-                    SISTEMA DE REPORTES
+                    Sistema de reportes
                 </h1>
                 <p style={{ 'color': 'gray', 'marginTop': '20px' }} className="text-center">
                     Si notaste algún problema en la web, por favor haznoslo saber. Lo solucionaremos a la brevedad.

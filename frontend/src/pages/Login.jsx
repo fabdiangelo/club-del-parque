@@ -184,8 +184,6 @@ function Login() {
             <p onClick={() => navigate("/register")} style={{ fontSize: '14px', cursor: 'pointer', color: 'blue' }}>¿No tienes una cuenta? <Link disabled={loading} to='/register' className="">Registrarse</Link></p>
           </div>
 
-          <button className="btn btn-primary" onClick={() => handlePrecarga()}>PRECARGAR</button>
-
         </div>
       </div>
       <Footer />
