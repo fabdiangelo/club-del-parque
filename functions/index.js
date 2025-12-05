@@ -217,6 +217,7 @@ app.get("/chats/prueba", (req, res) => ChatController.prueba(req, res));
 
 // Partidos
 app.get("/partidos/:id", (req, res) => PartidoController.getPartidoById(req, res));
+app.get("/partidos/:id/rankings", (req, res) => PartidoController.getRankingsByPartido(req, res));
 app.put("/partidos/:id", (req, res) => PartidoController.editarPartido(req, res));
 app.post("/partidos", (req, res) => PartidoController.crearPartido(req, res));
 app.get("/partidos", (req, res) => PartidoController.getAllPartidos(req, res));

@@ -127,12 +127,6 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
 
   const ups = [];
 
-  // Obtener género del partido
-  const genero = partido.genero ?? null;
-
-  // Si el género es null, no crear ningún ranking
-  if (genero == null) return;
-
   // Ganadores → +3 y +1 ganado
   for (const uid of winners) {
     ups.push(
@@ -141,7 +135,6 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
         temporadaID: String(temporadaID),
         tipoDePartido,
         deporte,
-        genero,
         delta: sign * win,
         deltaGanados: sign * 1,
       })
@@ -165,7 +158,6 @@ async function applyPointsForPartido(partido, puntosGanador, puntosPerdedor, sig
         temporadaID: String(temporadaID),
         tipoDePartido,
         deporte,
-        genero,
         delta: sign * losePoints,
         deltaPerdidos: isAbandono ? 0 : sign * 1,
         deltaAbandonados: isAbandono ? sign * 1 : 0,

@@ -38,6 +38,9 @@ const Partido = () => {
     const [reserva, setReserva] = useState(null);
     const [propuestaAceptada, setPropuestaAceptada] = useState(null);
 
+    // Rankings de los jugadores
+    const [rankingsJugadores, setRankingsJugadores] = useState([]);
+
     const getUserById = (userId) => {
         return usuarios.find(u => u.id === userId || u.uid === userId || u.email === userId);
     }
@@ -207,14 +210,17 @@ useEffect(() => {
     setError('');
     Promise.all([
         fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}`, { credentials: 'include' }),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios`),
+        fetch('${import.meta.env.VITE_BACKEND_URL}/api/usuarios'),
         fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } }),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}/rankings`, { credentials: 'include' })
     ])
-    .then(async ([partidoRes, usuariosRes, reservasRes]) => {
-        if (!partidoRes.ok || !usuariosRes.ok || !reservasRes.ok) throw new Error('Error al cargar datos');
+    .then(async ([partidoRes, usuariosRes, reservasRes, rankingsRes]) => {
+        if (!partidoRes.ok || !usuariosRes.ok || !reservasRes.ok || !rankingsRes.ok) throw new Error('Error al cargar datos');
         setPartido(await partidoRes.json());
         setUsuarios(await usuariosRes.json());
         setReservas(await reservasRes.json());
+        const rankingsData = await rankingsRes.json();
+        setRankingsJugadores(Array.isArray(rankingsData.rankings) ? rankingsData.rankings : []);
         setLoading(false);
     })
     .catch(e => {
@@ -234,8 +240,20 @@ useEffect(() => {
             if (jugadoresIds.length >= 2) {
                 jugadoresIds.forEach((id, idx) => {
                     const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
-                    if (found) participantes.push(found);
-                    else participantes.push({ id, nombre: getNombreForId(id) || `Jugador ${idx + 1}` });
+                    // Buscar ranking para este jugador
+                    const rankingObj = rankingsJugadores.find(r => r.jugadorID === id);
+                    const ranking = rankingObj?.ranking || null;
+                    participantes.push({
+                        ...found,
+                        id,
+                        nombre: getNombreForId(id) || `Jugador ${idx + 1}`,
+                        ranking: ranking?.puntos ?? 'N/A',
+                        categoria: ranking?.categoriaId ?? 'N/A',
+                        partidosGanados: ranking?.partidosGanados ?? '0',
+                        partidosPerdidos: ranking?.partidosPerdidos ?? '0',
+                        mejorPosicionTorneo: ranking?.mejorPosicionTorneo ?? 'N/A',
+                        estado: ranking?.estado ?? 'N/A',
+                    });
                 });
             } else {
                 // 2) Try jugador1 / jugador2 arrays (could be for dobles)
@@ -243,31 +261,48 @@ useEffect(() => {
                     // flatten both arrays
                     const combined = [...partido.jugador1, ...partido.jugador2];
                     combined.forEach((j, idx) => {
+                        let id = '';
                         if (typeof j === 'string') {
-                            const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === j || u?.id === j);
-                            if (found) participantes.push(found);
-                            else participantes.push({ id: j, nombre: getNombreForId(j) || `Jugador ${idx + 1}` });
+                            id = j;
                         } else if (typeof j === 'object') {
-                            const id = j.id || j.uid || j.usuarioId || '';
-                            const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
-                            if (found) participantes.push(found);
-                            else participantes.push({ id, nombre: j.nombre || j.name || getNombreForId(id) || `Jugador ${idx + 1}` });
+                            id = j.id || j.uid || j.usuarioId || '';
                         }
+                        const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
+                        const rankingObj = rankingsJugadores.find(r => r.jugadorID === id);
+                        const ranking = rankingObj?.ranking || null;
+                        participantes.push({
+                            ...found,
+                            id,
+                            nombre: j.nombre || j.name || getNombreForId(id) || `Jugador ${idx + 1}`,
+                            ranking: ranking?.puntos ?? 'N/A',
+                            categoria: ranking?.categoriaId ?? 'N/A',
+                            partidosGanados: ranking?.partidosGanados ?? '0',
+                            partidosPerdidos: ranking?.partidosPerdidos ?? '0',
+                            mejorPosicionTorneo: ranking?.mejorPosicionTorneo ?? 'N/A',
+                            estado: ranking?.estado ?? 'N/A',
+                        });
                     });
                 } else if (partido.jugador1Id || partido.jugador2Id) {
                     // 3) Individual id fields present
                     const id1 = partido.jugador1Id || partido.jugador1?.[0] || '';
                     const id2 = partido.jugador2Id || partido.jugador2?.[0] || '';
-                    if (id1) {
-                        const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id1 || u?.id === id1);
-                        if (found) participantes.push(found);
-                        else participantes.push({ id: id1, nombre: partido.jugador1Nombre || getNombreForId(id1) || 'Jugador 1' });
-                    }
-                    if (id2) {
-                        const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id2 || u?.id === id2);
-                        if (found) participantes.push(found);
-                        else participantes.push({ id: id2, nombre: partido.jugador2Nombre || getNombreForId(id2) || 'Jugador 2' });
-                    }
+                    [id1, id2].forEach((id, idx) => {
+                        if (!id) return;
+                        const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
+                        const rankingObj = rankingsJugadores.find(r => r.jugadorID === id);
+                        const ranking = rankingObj?.ranking || null;
+                        participantes.push({
+                            ...found,
+                            id,
+                            nombre: idx === 0 ? (partido.jugador1Nombre || getNombreForId(id) || 'Jugador 1') : (partido.jugador2Nombre || getNombreForId(id) || 'Jugador 2'),
+                            ranking: ranking?.puntos ?? 'N/A',
+                            categoria: ranking?.categoriaId ?? 'N/A',
+                            partidosGanados: ranking?.partidosGanados ?? '0',
+                            partidosPerdidos: ranking?.partidosPerdidos ?? '0',
+                            mejorPosicionTorneo: ranking?.mejorPosicionTorneo ?? 'N/A',
+                            estado: ranking?.estado ?? 'N/A',
+                        });
+                    });
                 } else if (Array.isArray(partido.equipoLocal) || Array.isArray(partido.equipoVisitante)) {
                     // 4) Equipo arrays (could be objects or ids)
                     const local = partido.equipoLocal || [];
@@ -276,17 +311,26 @@ useEffect(() => {
                     const visitIds = normalizeIds(visit);
                     [...localIds, ...visitIds].forEach((id, idx) => {
                         const found = usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id);
-                        if (found) participantes.push(found);
-                        else participantes.push({ id, nombre: getNombreForId(id) || `Jugador ${idx + 1}` });
+                        const rankingObj = rankingsJugadores.find(r => r.jugadorID === id);
+                        const ranking = rankingObj?.ranking || null;
+                        participantes.push({
+                            ...found,
+                            id,
+                            nombre: getNombreForId(id) || `Jugador ${idx + 1}`,
+                            ranking: ranking?.puntos ?? 'N/A',
+                            categoria: ranking?.categoriaId ?? 'N/A',
+                            partidosGanados: ranking?.partidosGanados ?? '0',
+                            partidosPerdidos: ranking?.partidosPerdidos ?? '0',
+                            mejorPosicionTorneo: ranking?.mejorPosicionTorneo ?? 'N/A',
+                            estado: ranking?.estado ?? 'N/A',
+                        });
                     });
                 }
             }
-
             // Ensure at least two placeholders exist for singles view
             while (participantes.length < 2) {
-                participantes.push({ id: '', nombre: participantes.length === 0 ? 'Jugador 1' : 'Jugador 2' });
+                participantes.push({ id: '', nombre: participantes.length === 0 ? 'Jugador 1' : 'Jugador 2', ranking: 'N/A', categoria: 'N/A', partidosGanados: '0', partidosPerdidos: '0', mejorPosicionTorneo: 'N/A', estado: 'N/A' });
             }
-
             setUsuariosParticipantes(participantes);
             console.log("Usuarios participantes (reconstruidos):", participantes);
         }
@@ -1016,23 +1060,15 @@ useEffect(() => {
                                     </div>
                                     <div className="stat-item">
                                         <span className="stat-label">Categoría:</span>
-                                        <span className="stat-value">{usuariosParticipantes[0]?.categoria || 'N/A'}</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.categoria ? usuariosParticipantes[0]?.categoria.split('|')[4]?.toUpperCase() || 'N/A' : 'N/A'}</span>
                                     </div>
                                     <div className="stat-item">
                                         <span className="stat-label">Partidos Ganados:</span>
-                                        <span className="stat-value">{usuariosParticipantes[0]?.partidosOficialesGanados || '0'}</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.partidosGanados || '0'}</span>
                                     </div>
                                     <div className="stat-item">
                                         <span className="stat-label">Partidos Perdidos:</span>
-                                        <span className="stat-value">{usuariosParticipantes[0]?.partidosOficialesPerdidos || '0'}</span>
-                                    </div>
-                                    <div className="stat-item">
-                                        <span className="stat-label">Mejor Posición:</span>
-                                        <span className="stat-value">{usuariosParticipantes[0]?.mejorPosicionTorneo || 'N/A'}</span>
-                                    </div>
-                                    <div className="stat-item">
-                                        <span className="stat-label">Estado:</span>
-                                        <span className="stat-value">{usuariosParticipantes[0]?.estado || 'N/A'}</span>
+                                        <span className="stat-value">{usuariosParticipantes[0]?.partidosPerdidos || '0'}</span>
                                     </div>
                                 </div>
 
@@ -1060,23 +1096,15 @@ useEffect(() => {
                                     </div>
                                     <div className="stat-item">
                                         <span className="stat-label">Categoría:</span>
-                                        <span className="stat-value">{usuariosParticipantes[1]?.categoria || 'N/A'}</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.categoria ? usuariosParticipantes[1]?.categoria.split('|')[4]?.toUpperCase() || 'N/A' : 'N/A'}</span>
                                     </div>
                                     <div className="stat-item">
                                         <span className="stat-label">Partidos Ganados:</span>
-                                        <span className="stat-value">{usuariosParticipantes[1]?.partidosOficialesGanados || '0'}</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.partidosGanados || '0'}</span>
                                     </div>
                                     <div className="stat-item">
                                         <span className="stat-label">Partidos Perdidos:</span>
-                                        <span className="stat-value">{usuariosParticipantes[1]?.partidosOficialesPerdidos || '0'}</span>
-                                    </div>
-                                    <div className="stat-item">
-                                        <span className="stat-label">Mejor Posición:</span>
-                                        <span className="stat-value">{usuariosParticipantes[1]?.mejorPosicionTorneo || 'N/A'}</span>
-                                    </div>
-                                    <div className="stat-item">
-                                        <span className="stat-label">Estado:</span>
-                                        <span className="stat-value">{usuariosParticipantes[1]?.estado || 'N/A'}</span>
+                                        <span className="stat-value">{usuariosParticipantes[1]?.partidosPerdidos || '0'}</span>
                                     </div>
                                 </div>
                             </div>
