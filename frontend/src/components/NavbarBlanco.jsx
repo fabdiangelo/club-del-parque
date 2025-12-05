@@ -138,21 +138,7 @@ export default function NavbarBlanco({ transparent = false }) {
           } md:flex flex-col md:flex-row items-center gap-4 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
         >
           <ul className="flex flex-col md:flex-row items-center gap-3 md:gap-6 px-4 md:px-0 text-center w-full md:w-auto justify-center">
-            {/* INICIO – todos */}
-            <li>
-              <NavLink
-                to="/"
-                end
-                className={({ isActive }) =>
-                  `px-4 py-3 text-sm font-normal transition text-center w-full md:w-auto ${navTextColor} ${
-                    isActive ? activeItem : ""
-                  }`
-                }
-              >
-                Inicio
-              </NavLink>
-            </li>
-
+          
             {/* NOTICIAS – visitante, registrado no federado, federado (no admin para no tocar navbar admin) */}
             {(isVisitante || isRegistradoNoFederado || isFederado) && (
               <li>

@@ -8,7 +8,7 @@ const projectId =
 
 const storageBucket =
   process.env.GCLOUD_STORAGE_BUCKET ||
-  `${projectId}.appspot.com`;
+  `club-del-parque-8ec2a.firebasestorage.app`;
 
 const databaseURL =
   process.env.FIREBASE_DATABASE_URL ||

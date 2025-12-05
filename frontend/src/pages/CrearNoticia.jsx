@@ -10,7 +10,7 @@ import rehypeRaw from "rehype-raw";
 
 /* ---------------- CONFIG ---------------- */
 const API_BASE =
-  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_BACKEND_URL ||
   "http://127.0.0.1:5001/club-del-parque-8ec2a/us-central1/api";
 
 /* ---------------- HELPERS ---------------- */

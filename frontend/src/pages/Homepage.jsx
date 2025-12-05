@@ -6,7 +6,6 @@ import logoUrl from "../assets/Logo.svg";
 import "../styles/Home.css";
 import RichTextEditor from "../components/RichTextEditor";
 import { useAuth } from "../contexts/AuthProvider";
-import { noticias as noticiasData } from "../data/noticias";
 
 // === Canchas photos
 import img1 from "../assets/CanchasTenisPadel/1.jpg";
@@ -24,7 +23,10 @@ import "leaflet/dist/leaflet.css";
 import Footer from "../components/Footer";
 
 // Small CSS for our custom Leaflet divIcon + lightbox
-if (typeof document !== "undefined" && !document.getElementById("club-custom-css")) {
+if (
+  typeof document !== "undefined" &&
+  !document.getElementById("club-custom-css")
+) {
   const style = document.createElement("style");
   style.id = "club-custom-css";
   style.innerHTML = `
@@ -77,7 +79,10 @@ if (typeof document !== "undefined" && !document.getElementById("club-custom-css
 const BRAND_CYAN = "#22d3ee";
 
 // Inyectar @font-face para Amsterdam Four si no existe
-if (typeof document !== "undefined" && !document.getElementById("amsterdam-four-font")) {
+if (
+  typeof document !== "undefined" &&
+  !document.getElementById("amsterdam-four-font")
+) {
   const style = document.createElement("style");
   style.id = "amsterdam-four-font";
   style.innerHTML = `
@@ -119,14 +124,18 @@ export default function Home() {
       if (e.key === "ArrowRight")
         setPhotoIndex((i) => (i + 1) % CANCHAS_IMAGES.length);
       if (e.key === "ArrowLeft")
-        setPhotoIndex((i) => (i + CANCHAS_IMAGES.length - 1) % CANCHAS_IMAGES.length);
+        setPhotoIndex(
+          (i) => (i + CANCHAS_IMAGES.length - 1) % CANCHAS_IMAGES.length
+        );
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [lightboxOpen]);
 
   const fetchNoticias = async () => {
-    const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/noticias");
+    const response = await fetch(
+      import.meta.env.VITE_BACKEND_URL + "/api/noticias"
+    );
     const data = await response.json();
     console.log("Noticias fetched:", data);
     if (!response.ok) {
@@ -134,12 +143,42 @@ export default function Home() {
       return;
     }
     setNoticias(data);
-  }
+  };
 
   useEffect(() => {
     fetchNoticias();
-
   }, []);
+  function repairMarkdownLinks(md = "") {
+    if (!md) return "";
+    md = md.replace(/\r\n?/g, "\n");
+    return md.replace(/\[([^\]]+)]\(([^)]+)\)/g, (m, text, destRaw) => {
+      const titleMatch = destRaw.match(/\s+"([^"]*)"(\s*)$/);
+      if (titleMatch) {
+        const urlPart = destRaw.slice(0, titleMatch.index).replace(/\s+/g, "");
+        const title = titleMatch[1].replace(/"/g, '\\"');
+        return `[${text}](${urlPart} "${title}")`;
+      }
+      const cleaned = destRaw.replace(/\s+/g, "");
+      return `[${text}](${cleaned})`;
+    });
+  }
+
+  function getMdSummaryPlain(md = "", maxLen = 50) {
+    if (!md) return "Sin descripción";
+
+    const fixed = repairMarkdownLinks(md);
+
+    let txt = fixed
+      .replace(/!\[[^\]]*]\([^)]*\)/g, "") // remove images ![...](...)
+      .replace(/\[([^\]]+)]\([^)]*\)/g, "$1") // links [text](url) -> "text"
+      .replace(/<\/?[^>]+(>|$)/g, "") // strip HTML tags
+      .replace(/[#*_`~>]/g, "") // markdown symbols
+      .replace(/\s+/g, " ") // collapse whitespace
+      .trim();
+
+    if (txt.length <= maxLen) return txt;
+    return txt.slice(0, maxLen) + "…";
+  }
 
   return (
     <>
@@ -157,11 +196,18 @@ export default function Home() {
         }}
       >
         <div className="relative z-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 grid grid-cols-1 md:grid-cols-2 gap-15 items-center w-full text-center md:text-left">
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              alignItems: "center",
+            }}
+          >
             <h1
               className="font-serif text-4xl sm:text-5xl lg:text-7xl italic tracking-wide mb-6"
               style={{
-                textAlign: 'center',
+                textAlign: "center",
                 color: BRAND_CYAN,
                 fontFamily: "Amsterdam Four, serif",
                 letterSpacing: "0.04em",
@@ -176,7 +222,11 @@ export default function Home() {
             <div className="mt-10 flex gap-4">
               <Link
                 to="/campeonatos"
-                style={{ backgroundColor: 'var(--primario)', padding: '10px 20px', cursor: 'pointer' }}
+                style={{
+                  backgroundColor: "var(--primario)",
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                }}
                 className="py-2 text-white rounded w-full text-center"
               >
                 Ver Campeonatos
@@ -185,7 +235,12 @@ export default function Home() {
               {!user ? (
                 <Link
                   to="/register"
-                  style={{ backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)' }}
+                  style={{
+                    backgroundColor: "white",
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    border: "1px solid var(--primario)",
+                  }}
                   className="py-2 text-black rounded"
                 >
                   Registrarse
@@ -193,7 +248,12 @@ export default function Home() {
               ) : user?.rol === "administrador" ? (
                 <Link
                   to="/administracion"
-                  style={{ backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)' }}
+                  style={{
+                    backgroundColor: "white",
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    border: "1px solid var(--primario)",
+                  }}
                   className="py-2 text-black rounded"
                 >
                   Administración
@@ -201,7 +261,12 @@ export default function Home() {
               ) : (
                 <Link
                   to="/perfil"
-                  style={{ backgroundColor: 'white', padding: '10px 20px', cursor: 'pointer', border: '1px solid var(--primario)' }}
+                  style={{
+                    backgroundColor: "white",
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    border: "1px solid var(--primario)",
+                  }}
                   className="py-2 text-black rounded"
                 >
                   Perfil
@@ -225,13 +290,16 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Título */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4" style={{ color: "var(--neutro)" }}>
+            <h2
+              className="text-4xl font-bold mb-4"
+              style={{ color: "var(--neutro)" }}
+            >
               Nuestras Instalaciones
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Canchas de tenis y pádel en un entorno natural y acogedor en el corazón de San José de Mayo.
+              Canchas de tenis y pádel en un entorno natural y acogedor en el
+              corazón de San José de Mayo.
             </p>
-
           </div>
           {/* Mapa */}
           <div className="mb-16">
@@ -260,7 +328,9 @@ export default function Home() {
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-2xl">📍</span>
                   <div>
-                    <p className="text-gray-800 font-semibold">Parque José Enrique Rodó</p>
+                    <p className="text-gray-800 font-semibold">
+                      Parque José Enrique Rodó
+                    </p>
                     <p className="text-gray-600">San José de Mayo, Uruguay</p>
                   </div>
                 </div>
@@ -270,7 +340,10 @@ export default function Home() {
 
           {/* Galería de Fotos */}
           <div>
-            <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: "var(--neutro)" }}>
+            <h3
+              className="text-3xl font-bold mb-8 text-center"
+              style={{ color: "var(--neutro)" }}
+            >
               Galería de Fotos
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -294,8 +367,19 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="bg-white/90 backdrop-blur-sm rounded-full p-4 transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-gray-800"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -306,7 +390,10 @@ export default function Home() {
 
           {/* Sección de Noticias */}
           <div className="mt-20">
-            <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: "var(--neutro)" }}>
+            <h3
+              className="text-3xl font-bold mb-8 text-center"
+              style={{ color: "var(--neutro)" }}
+            >
               Últimas Noticias
             </h3>
 
@@ -315,12 +402,15 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   {noticias.slice(0, 3).map((noticia) => {
                     const firstImg =
-                      (Array.isArray(noticia.imagenes) && noticia.imagenes[0]?.imageUrl) ||
+                      (Array.isArray(noticia.imagenes) &&
+                        noticia.imagenes[0]?.imageUrl) ||
                       noticia.imagenUrl ||
                       null;
                     const fecha = noticia.fechaCreacion
                       ? new Date(noticia.fechaCreacion).toLocaleDateString()
                       : "—";
+
+                    const resumen = getMdSummaryPlain(noticia.mdContent, 50); // ← 50 chars, plain text
 
                     return (
                       <Link
@@ -342,7 +432,6 @@ export default function Home() {
                               <span className="text-gray-400 text-4xl">📰</span>
                             </div>
                           )}
-                          {/* Badge de tipo */}
                           {noticia.tipo && (
                             <div className="absolute top-3 right-3 bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
                               {noticia.tipo}
@@ -358,11 +447,17 @@ export default function Home() {
                           <h3 className="text-lg font-bold mt-2 text-gray-900 line-clamp-2 group-hover:text-blue-600 transition">
                             {noticia.titulo}
                           </h3>
-                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                            {noticia.mdContent
-                              ? noticia.mdContent.substring(0, 100).replace(/[#*_`\[\]]/g, "") + "..."
-                              : "Sin descripción"}
-                          </p>
+
+                          <div className="mt-2 text-sm text-gray-600 overflow-hidden">
+                            <RichTextEditor
+                              valueMarkdown={resumen} // ← only 50 chars of plain text
+                              readOnly
+                              hideToolbar
+                              transparent
+                              autoHeight
+                              className="!rounded-none !border-0 !p-0 [&_.ql-editor]:p-0 [&_.ql-editor]:text-sm [&_.ql-editor]:text-gray-600"
+                            />
+                          </div>
                         </div>
 
                         {/* Footer */}
@@ -389,22 +484,31 @@ export default function Home() {
               </>
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No hay noticias disponibles en este momento.</p>
+                <p className="text-gray-500 text-lg">
+                  No hay noticias disponibles en este momento.
+                </p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-
       {/* Sección de reportes */}
       <section className="bg-gray-100 py-10 mt-10">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-2 text-gray-800">¿Tienes algún problema?</h2>
-          <p className="mb-4 text-gray-700">Envíanos tu reporte y te ayudaremos lo antes posible.</p>
+          <h2 className="text-2xl font-bold mb-2 text-gray-800">
+            ¿Tienes algún problema?
+          </h2>
+          <p className="mb-4 text-gray-700">
+            Envíanos tu reporte y te ayudaremos lo antes posible.
+          </p>
           <Link
-          style={{ backgroundColor: 'var(--primario)', padding: '10px 20px', cursor: 'pointer' }}
-                className="py-2 text-white rounded w-full text-center"
+            style={{
+              backgroundColor: "var(--primario)",
+              padding: "10px 20px",
+              cursor: "pointer",
+            }}
+            className="py-2 text-white rounded w-full text-center"
             to="/reportes"
             // className="inline-block bg-primario text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-primario-dark transition"
           >
@@ -413,7 +517,7 @@ export default function Home() {
         </div>
       </section>
 
-      <Footer/>
+      <Footer />
 
       {/* LIGHTBOX */}
       {lightboxOpen && (
@@ -424,11 +528,16 @@ export default function Home() {
           aria-modal="true"
         >
           <div className="LightboxContent" onClick={(e) => e.stopPropagation()}>
-            <img src={CANCHAS_IMAGES[photoIndex]} alt={`Foto ${photoIndex + 1}`} />
+            <img
+              src={CANCHAS_IMAGES[photoIndex]}
+              alt={`Foto ${photoIndex + 1}`}
+            />
             <button
               className="LightboxBtn LightboxPrev"
               onClick={() =>
-                setPhotoIndex((i) => (i + CANCHAS_IMAGES.length - 1) % CANCHAS_IMAGES.length)
+                setPhotoIndex(
+                  (i) => (i + CANCHAS_IMAGES.length - 1) % CANCHAS_IMAGES.length
+                )
               }
               aria-label="Anterior"
             >
@@ -436,7 +545,9 @@ export default function Home() {
             </button>
             <button
               className="LightboxBtn LightboxNext"
-              onClick={() => setPhotoIndex((i) => (i + 1) % CANCHAS_IMAGES.length)}
+              onClick={() =>
+                setPhotoIndex((i) => (i + 1) % CANCHAS_IMAGES.length)
+              }
               aria-label="Siguiente"
             >
               ›
