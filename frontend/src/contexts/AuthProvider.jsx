@@ -78,7 +78,11 @@ export default function AuthProvider({ children }) {
           throw new Error(txt || `Register failed: ${res.status}`);
         }
 
-        await fetchMe();
+        // Get user data from response instead of calling fetchMe()
+        // This avoids cross-domain cookie timing issues in production
+        const userData = await res.json();
+        setUser(userData);
+        setLoading(false);
         return true;
       } catch (err) {
         console.error("register error:", err);
@@ -87,7 +91,7 @@ export default function AuthProvider({ children }) {
         return false;
       }
     },
-    [fetchMe]
+    []
   );
 
   const login = useCallback(
@@ -107,7 +111,12 @@ export default function AuthProvider({ children }) {
           throw new Error(txt || `Login failed: ${res.status}`);
         }
 
-        await fetchMe();
+        // Get user data from response instead of calling fetchMe()
+        // This avoids cross-domain cookie timing issues in production
+        const responseData = await res.json();
+        const userData = responseData.user || responseData;
+        setUser(userData);
+        setLoading(false);
         return true;
       } catch (err) {
         console.error("login error:", err);
@@ -116,7 +125,7 @@ export default function AuthProvider({ children }) {
         return false;
       }
     },
-    [fetchMe]
+    []
   );
 
   const logout = useCallback(
@@ -135,7 +144,6 @@ export default function AuthProvider({ children }) {
         }
 
         setUser(null);
-        await fetchMe();
         setLoading(false);
 
         return true;
@@ -146,7 +154,7 @@ export default function AuthProvider({ children }) {
         return false;
       }
     },
-    [fetchMe]
+    []
   );
 
   const value = {
