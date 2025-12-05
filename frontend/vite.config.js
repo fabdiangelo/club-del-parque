@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 
-const PROJECT = 'club-del-parque-68530'
+const PROJECT = 'club-del-parque-8ec2a'
 const REGION  = 'us-central1'  
 const FUNC    = 'api'
 

@@ -3,8 +3,8 @@ importScripts("https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-com
 
 firebase.initializeApp({
   apiKey: "AIzaSyDUm2HjqeRufuyFS9SbvDCXJhQycDUPnjI",
-  authDomain: "club-del-parque-68530.firebaseapp.com",
-  projectId: "club-del-parque-68530",
+  authDomain: "club-del-parque-8ec2a.firebaseapp.com",
+  projectId: "club-del-parque-8ec2a",
   messagingSenderId: "1014072531120",
   appId: "1:1014072531120:web:0feab3ffb7b85876ef0375",
 });

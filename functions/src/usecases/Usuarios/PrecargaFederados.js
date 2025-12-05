@@ -141,7 +141,7 @@ class PrecargaFederados {
   }
 }
 
-export default PrecargaFederados;
+export default new PrecargaFederados();
 
 function randomDate(start, end) {
   const s = start.getTime();
