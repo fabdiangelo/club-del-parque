@@ -168,8 +168,7 @@ export default function NavbarBlanco({ transparent = false }) {
               </li>
             )}
 
-            {/* RANKING – todos los usuarios logueados (admin ya lo tenía) */}
-            {isLogged && (
+            {isLogged  && (isFederado || isAdmin) && (
               <li>
                 <NavLink
                   to="/ranking"
