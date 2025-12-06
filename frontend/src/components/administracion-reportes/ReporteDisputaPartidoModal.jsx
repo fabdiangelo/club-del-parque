@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-const toApi = (p) => (p?.startsWith("/api/") ? p : `/api${p}`);
-
 const fetchJSON = async (path, opts = {}) => {
-  const res = await fetch(toApi(path), {
+  const res = await fetch(path, {
     headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
     credentials: "include",
     cache: "no-store",
@@ -63,7 +61,7 @@ export default function ReporteDisputaPartidoModal({
       if (!reporte?.mailUsuario) return;
       try {
         const u = await fetchJSON(
-          `/usuarios/byMail/${encodeURIComponent(reporte.mailUsuario)}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/usuarios/byMail/${encodeURIComponent(reporte.mailUsuario)}`
         );
         setReportador(u);
       } catch {
@@ -164,68 +162,68 @@ export default function ReporteDisputaPartidoModal({
       .join(" / ");
   }, [equipoBIds, fedMap]);
 
-const resolverConflicto = async () => {
-  if (!partidoId) return;
+  const resolverConflicto = async () => {
+    if (!partidoId) return;
 
-  const resultado = (resultadoInput || "").trim();
-  if (!resultado) {
-    alert("Debés escribir el resultado final (por ej. 6-4, 7-6(7-4)).");
-    return;
-  }
-
-  const ganadores = winner === "A" ? equipoAIds : equipoBIds;
-  if (!ganadores?.length) {
-    alert("No se detectaron jugadores en el equipo ganador.");
-    return;
-  }
-
-  setSaving(true);
-  setError("");
-  try {
-    // 1) fijar ganadores
-    await fetchJSON(`/partidos/${partidoId}/ganadores`, {
-      method: "POST",
-      body: JSON.stringify({ ganadores }),
-    });
-
-    await fetchJSON(`/partidos/${partidoId}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        resultado,
-        estado: "finalizado",
-        estadoResultado: "confirmado",
-        disputaResuelta: true,
-        disputaFechaResuelta: new Date().toISOString(),
-        propuestaResultado: null,
-      }),
-    });
-
-    await onResuelto?.(reporte.id);
-    alert("Disputa resuelta, resultado actualizado y reporte marcado como resuelto.");
-  } catch (e) {
-    try {
-      const obj = JSON.parse(String(e?.message ?? e));
-      setError(obj?.mensaje || obj?.error || String(e));
-    } catch {
-      setError(String(e?.message ?? e));
+    const resultado = (resultadoInput || "").trim();
+    if (!resultado) {
+      alert("Debés escribir el resultado final (por ej. 6-4, 7-6(7-4)).");
+      return;
     }
-  } finally {
-    setSaving(false);
-  }
-};
+
+    const ganadores = winner === "A" ? equipoAIds : equipoBIds;
+    if (!ganadores?.length) {
+      alert("No se detectaron jugadores en el equipo ganador.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      // 1) fijar ganadores
+      await fetchJSON(`/partidos/${partidoId}/ganadores`, {
+        method: "POST",
+        body: JSON.stringify({ ganadores }),
+      });
+
+      await fetchJSON(`/partidos/${partidoId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          resultado,
+          estado: "finalizado",
+          estadoResultado: "confirmado",
+          disputaResuelta: true,
+          disputaFechaResuelta: new Date().toISOString(),
+          propuestaResultado: null,
+        }),
+      });
+
+      await onResuelto?.(reporte.id);
+      alert("Disputa resuelta, resultado actualizado y reporte marcado como resuelto.");
+    } catch (e) {
+      try {
+        const obj = JSON.parse(String(e?.message ?? e));
+        setError(obj?.mensaje || obj?.error || String(e));
+      } catch {
+        setError(String(e?.message ?? e));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
 
 
   const handleClose = () => onClose?.();
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={handleClose}>
+    <div className="fixed inset-0 grid place-items-center bg-black/60 p-4" style={{ zIndex: 1000 }} onClick={handleClose}>
       <div
         className="max-w-3xl w-full rounded-2xl bg-white text-neutral-900 border border-neutral-200 shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Disputa de resultado</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'white' }}>Disputa de resultado</h3>
           <button className="btn btn-ghost btn-sm" onClick={handleClose} title="Cerrar">
             Cerrar
           </button>

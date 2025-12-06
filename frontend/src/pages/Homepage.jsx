@@ -195,15 +195,8 @@ export default function Home() {
           position: "relative",
         }}
       >
-        <div className="relative z-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 grid grid-cols-1 md:grid-cols-2 gap-15 items-center w-full text-center md:text-left">
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              alignItems: "center",
-            }}
-          >
+        <div className="relative z-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-20 lg:pb-28 grid grid-cols-1 md:grid-cols-2 gap-15 items-center w-full text-center md:text-left ">
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
             <h1
               className="font-serif text-4xl sm:text-5xl lg:text-7xl italic tracking-wide mb-6"
               style={{
@@ -503,14 +496,10 @@ export default function Home() {
             Envíanos tu reporte y te ayudaremos lo antes posible.
           </p>
           <Link
-            style={{
-              backgroundColor: "var(--primario)",
-              padding: "10px 20px",
-              cursor: "pointer",
-            }}
+            style={{ backgroundColor: 'var(--primario)', padding: '10px 20px', cursor: 'pointer' }}
             className="py-2 text-white rounded w-full text-center"
             to="/reportes"
-            // className="inline-block bg-primario text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-primario-dark transition"
+          // className="inline-block bg-primario text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-primario-dark transition"
           >
             Ir a reportes
           </Link>

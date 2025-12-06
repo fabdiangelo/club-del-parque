@@ -20,7 +20,7 @@ export default function useTemporadas() {
     setLoading(true);
     setError("");
     try {
-      const list = await fetchJson(toApi("/temporadas"));
+      const list = await fetchJson(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`);
       // Aseguramos array
       setItems(Array.isArray(list) ? list : []);
     } catch (e) {
@@ -38,7 +38,7 @@ export default function useTemporadas() {
       setLoading(true);
       setError("");
       try {
-        await fetchJson(toApi("/temporadas"), {
+        await fetchJson(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -66,7 +66,7 @@ export default function useTemporadas() {
       setLoading(true);
       setError("");
       try {
-        const url = toApi(`/temporadas/${encodeURIComponent(id)}`);
+        const url = `${import.meta.env.VITE_BACKEND_URL}/api/temporadas/${encodeURIComponent(id)}`;
         const r = await fetch(url, { method: "DELETE", credentials: "include" });
         if (!r.ok && r.status !== 204) {
           const txt = await r.text().catch(() => "");

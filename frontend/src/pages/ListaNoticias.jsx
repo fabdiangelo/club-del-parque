@@ -101,7 +101,7 @@ export default function Noticias() {
       <NavbarBlanco />
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-gray-200">
+      <section className="relative overflow-hidden border-b border-gray-200" style={{ marginTop: '3rem', zIndex: 1 }}>
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
             Noticias

@@ -24,15 +24,51 @@ function sanitizeFileName(name = "uploaded") {
   return name.replace(/[^a-z0-9._-]+/gi, "_");
 }
 
+// Singleton instance
+let instance = null;
+
 export default class StorageConnection {
   constructor({ storage = defaultStorage, bucketName } = {}) {
+    // Return existing instance if already created
+    if (instance) {
+      return instance;
+    }
+
     if (!storage) throw new Error("StorageConnection: `storage` is required");
-    const name =
-      bucketName ||
+
+    // Try multiple sources for bucket name
+    let name = bucketName ||
       process.env.GCLOUD_STORAGE_BUCKET ||
-      storage.app?.options?.storageBucket ||
-      "demo-bucket";
-    this.bucket = storage.bucket(name);
+      storage.app?.options?.storageBucket;
+
+    // If no bucket name found, try to get from app
+    if (!name) {
+      const projectId = storage.app?.options?.projectId || process.env.GCLOUD_PROJECT;
+      if (projectId && projectId !== "demo-project") {
+        // Try the newer Firebase Storage domain first
+        name = `${projectId}.firebasestorage.app`;
+      } else {
+        name = "demo-bucket";
+      }
+    }
+
+    console.log("[StorageConnection] Initializing singleton with bucket:", name);
+    console.log("[StorageConnection] Project ID:", storage.app?.options?.projectId);
+    console.log("[StorageConnection] Is Emulator:", isEmulator());
+
+    try {
+      this.bucket = storage.bucket(name);
+      console.log("[StorageConnection] Bucket initialized successfully:", this.bucket.name);
+    } catch (error) {
+      console.error("[StorageConnection] Error initializing bucket:", error.message);
+      // Fallback: try without specifying bucket name (uses default)
+      console.log("[StorageConnection] Attempting to use default bucket...");
+      this.bucket = storage.bucket();
+      console.log("[StorageConnection] Using default bucket:", this.bucket.name);
+    }
+
+    // Store singleton instance
+    instance = this;
   }
 
   async uploadBuffer(buffer, destinationPath, contentType = "application/octet-stream") {
@@ -66,7 +102,7 @@ export default class StorageConnection {
 
   async delete(storagePath) {
     if (!storagePath) return;
-    try { await this.bucket.file(storagePath).delete({ ignoreNotFound: true }); } catch {}
+    try { await this.bucket.file(storagePath).delete({ ignoreNotFound: true }); } catch { }
   }
 
   buildDestination(baseDir, id, fileName) {

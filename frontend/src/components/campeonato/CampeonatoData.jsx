@@ -278,10 +278,15 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
               )}
             </div>
           }
-          {conRedireccion && (
-            <Link to={`/campeonato/${id}`} className="btn btn-outline w-100 w-full mt-4" style={{padding: '10px 30px', borderRadius: '5px' }}>VER MÁS</Link>
-          )}
+          <div style={{ marginTop: '20px' }}>
+
+            {conRedireccion && (
+              <Link to={`/campeonato/${id}`} className="w-100 w-full mt-4" style={{ padding: '10px 30px', borderRadius: '5px', border: '1px solid var(--primario)', color: 'var(--primario)', backgroundColor: 'white', marginTop: '200px' }}>VER MÁS</Link>
+            )}
+          </div>
+
         </div>
+
       </div>
     </div >
 

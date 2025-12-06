@@ -4,7 +4,7 @@ import ReporteDefaultModal from '../components/administracion-reportes/ReporteDe
 import SoloAdmin from '../components/SoloAdmin';
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import { useAuth } from '../contexts/AuthProvider';
-import { Users, AlertCircle, CheckCircle, Clock, Calendar  } from 'lucide-react';
+import { Users, AlertCircle, CheckCircle, Clock, Calendar } from 'lucide-react';
 
 const AdministracionReportes = () => {
   const { user } = useAuth();
@@ -30,7 +30,7 @@ const AdministracionReportes = () => {
         return;
       }
       const reportesData = await reportesRes.json();
-      if(reportesData.length > 0){
+      if (reportesData.length > 0) {
         setReportes(reportesData);
         setReportesNoLeidos(reportesData.filter(r => r.estado !== 'resuelto').length);
       }
@@ -52,7 +52,7 @@ const AdministracionReportes = () => {
         setModalReporte(null);
         return;
       }
-      setReportes(reportes.map(reporte => 
+      setReportes(reportes.map(reporte =>
         reporte.id === idReporte ? { ...reporte, estado: 'resuelto' } : reporte
       ));
       setReportesNoLeidos(reportesNoLeidos > 0 ? reportesNoLeidos - 1 : 0);
@@ -92,7 +92,7 @@ const AdministracionReportes = () => {
         setModalReporte(null);
         return;
       }
-      setReportes(reportes.map(reporte => 
+      setReportes(reportes.map(reporte =>
         reporte.id === idReporte ? { ...reporte, estado: 'pendiente' } : reporte
       ));
       setReportesNoLeidos(reportesNoLeidos + 1);
@@ -142,7 +142,7 @@ const AdministracionReportes = () => {
   }
   if (!user || user.rol !== 'administrador') {
     console.log(user)
-    return ( <SoloAdmin /> );
+    return (<SoloAdmin />);
   }
   if (loading) {
     return (
@@ -160,7 +160,7 @@ const AdministracionReportes = () => {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
           <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
           <p className="text-red-800 text-center">{error}</p>
-          <button 
+          <button
             onClick={fetchData}
             className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
           >
@@ -172,131 +172,233 @@ const AdministracionReportes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-white p-4 md:p-8 relative overflow-hidden">
       <div className="overflow-hidden"
         style={{
           backgroundImage: "url('/FondoAdmin.svg')",
           width: '100vw',
-          height: (25 + reportes.length * 5) + 'rem',
+          height: '100vh',
           backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
-          position: 'absolute',
+          backgroundPosition: 'center',
+          position: 'fixed',
           bottom: 0,
           left: 0,
+          zIndex: -1,
         }}
       ></div>
       <NavbarBlanco />
-      <div className="max-w-7xl mx-auto relative" style={{ marginTop: '3rem', zIndex: 1 }}>
+      <div className="max-w-7xl mx-auto relative " style={{ marginTop: '5rem', zIndex: 1 }}>
         {/* Header */}
-        <div className="mb-8" style={{ marginTop: '4rem', zIndex: 1 }}>
-          <div className="flex items-center justify-between mb-6 mt-10">
-            <h1 className="text-3xl font-bold text-white">TICKETS ({reportes.length})</h1>
+        <div className="mb-8 mt-8 md:mt-16">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              TICKETS ({reportes.length})
+            </h1>
             {reportesNoLeidos > 0 && (
-              <span className="badge badge-error badge-lg">{reportesNoLeidos} sin leer</span>
+              <span className="inline-flex items-center px-4 py-2 rounded-full bg-red-500 text-white font-semibold text-sm">
+                {reportesNoLeidos} sin resolver
+              </span>
             )}
           </div>
+          <p className="text-gray-600 text-sm md:text-base">
+            Gestión de todos los tickets y reportes del sistema.
+          </p>
         </div>
-        <div className="bg-gray-800 rounded-lg shadow-lg p-8">
-          {/* Tickets/Reportes */}
-          <div className="mb-8">
-            <div className="overflow-x-auto flex flex-col justify-center">
-              <table className="table w-full">
-                <thead>
-                  <tr className="text-gray-300">
-                    <th>Datos</th>
-                    <th>Mensaje</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportes?.map((reporte) => {
-                    const TipoIcon = getTipoIcon(reporte.tipo);
-                    const reporteProps = {
-                      ...reporte,
-                      icon: TipoIcon
-                    };
-                    return (
-                      <tr key={reporte.id} className={`text-white ${reporte.estado == 'resuelto' ? 'opacity-50' : ''}`}>
-                        <td>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTipoColor(reporte.tipo)} flex items-center gap-1`}>
-                              <TipoIcon className="w-3 h-3" />
-                              {reporte.tipo}
+
+        <div className="bg-gray-800 rounded-lg shadow-lg p-4 md:p-8">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="table w-full">
+              <thead>
+                <tr className="text-gray-300">
+                  <th>Datos</th>
+                  <th>Mensaje</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reportes?.map((reporte) => {
+                  const TipoIcon = getTipoIcon(reporte.tipo);
+                  const reporteProps = {
+                    ...reporte,
+                    icon: TipoIcon
+                  };
+                  return (
+                    <tr key={reporte.id} className={`text-white ${reporte.estado == 'resuelto' ? 'opacity-50' : ''}`}>
+                      <td>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTipoColor(reporte.tipo)} flex items-center gap-1`}>
+                            <TipoIcon className="w-3 h-3" />
+                            {reporte.tipo}
+                          </span>
+                          {reporte.estado == 'resuelto' && (
+                            <span className="flex items-center gap-1 text-xs text-green-600">
+                              <CheckCircle className="w-3 h-3" />
+                              Resuelto
                             </span>
-                            {reporte.estado == 'resuelto' && (
-                              <span className="flex items-center gap-1 text-xs text-green-600">
-                                <CheckCircle className="w-3 h-3" />
-                                Resuelto
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" style={{ color: '#4AC0E4' }} />
-                            {new Date(reporte.fecha).toLocaleDateString()}
-                          </div>
-                        </td>
-                        <td className="text-white max-w-md">
-                          <p className="truncate">{reporte.motivo}</p>
-                          <p className="text-xs text-gray-400">{reporte.mailUsuario}</p>
-                        </td>
-                        <td>
-                          {reporte.estado == 'resuelto' ? (
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" style={{ color: '#4AC0E4' }} />
+                          {new Date(reporte.fecha).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="text-white max-w-md">
+                        <p className="truncate">{reporte.motivo}</p>
+                        <p className="text-xs text-gray-400">{reporte.mailUsuario}</p>
+                      </td>
+                      <td>
+                        {reporte.estado == 'resuelto' ? (
+                          <button
+                            onClick={() => marcarComoNoResuelto(reporte.id)}
+                            className="btn btn-sm"
+                            style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+                          >
+                            DESMARCAR
+                          </button>
+                        ) : (
+                          <>
                             <button
-                              onClick={() => marcarComoNoResuelto(reporte.id)}
                               className="btn btn-sm"
                               style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+                              onClick={() => setModalReporte(reporte.id)}
                             >
-                              DESMARCAR
+                              VER MÁS
                             </button>
-                          ) : (
-                            <>
-                              <button
-                                className="btn btn-sm"
-                                style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
-                                onClick={() => setModalReporte(reporte.id)}
-                              >
-                                VER MÁS
-                              </button>
-                              {modalReporte === reporte.id && (
-                                reporte.tipo === 'solicitud_federacion' ? (
-                                  <ReporteFederacionModal
-                                    reporte={reporteProps}
-                                    onValidar={validarFederacion}
-                                    onNegar={negarFederacion}
-                                    onClose={() => setModalReporte(null)}
-                                  />
-                                ) : (
-                                  <ReporteDefaultModal
-                                    reporte={reporteProps}
-                                    onResuelto={marcarComoResuelto}
-                                    onClose={() => setModalReporte(null)}
-                                  />
-                                )
-                              )}
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {reportes.length === 0 && (
-                    <tr>
-                      <td colSpan="3" className="text-center text-gray-400 py-4">
-                        No se han encontrado reportes.
+                            {modalReporte === reporte.id && (
+                              reporte.tipo === 'solicitud_federacion' ? (
+                                <ReporteFederacionModal
+                                  reporte={reporteProps}
+                                  className="z-[300]"
+                                  onValidar={validarFederacion}
+                                  onNegar={negarFederacion}
+                                  onClose={() => setModalReporte(null)}
+                                />
+                              ) : (
+                                <ReporteDefaultModal
+                                  className="z-[300]"
+                                  reporte={reporteProps}
+                                  onResuelto={marcarComoResuelto}
+                                  onClose={() => setModalReporte(null)}
+                                />
+                              )
+                            )}
+                          </>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-              <button
-                onClick={() => window.location.href = '/administracion'}
-                className="btn btn-lg mt-4"
-                style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
-              >
-                VOLVER AL PANEL ADMINISTRACIÓN
-              </button>
-            </div>
+                  );
+                })}
+                {reportes.length === 0 && (
+                  <tr>
+                    <td colSpan="3" className="text-center text-gray-400 py-8">
+                      No se han encontrado reportes.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {reportes?.map((reporte) => {
+              const TipoIcon = getTipoIcon(reporte.tipo);
+              const reporteProps = {
+                ...reporte,
+                icon: TipoIcon
+              };
+              return (
+                <div
+                  key={reporte.id}
+                  className={`bg-gray-700 rounded-lg p-4 space-y-3 ${reporte.estado == 'resuelto' ? 'opacity-60' : ''}`}
+                >
+                  {/* Tipo y Estado */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTipoColor(reporte.tipo)} flex items-center gap-1`}>
+                      <TipoIcon className="w-3 h-3" />
+                      {reporte.tipo}
+                    </span>
+                    {reporte.estado == 'resuelto' && (
+                      <span className="flex items-center gap-1 text-xs text-green-600">
+                        <CheckCircle className="w-3 h-3" />
+                        Resuelto
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Fecha */}
+                  <div className="flex items-center gap-2 text-white">
+                    <Calendar className="w-4 h-4" style={{ color: '#4AC0E4' }} />
+                    <span className="text-sm">{new Date(reporte.fecha).toLocaleDateString()}</span>
+                  </div>
+
+                  {/* Mensaje */}
+                  <div className="text-white">
+                    <p className="text-sm mb-1">{reporte.motivo}</p>
+                    <p className="text-xs text-gray-400">{reporte.mailUsuario}</p>
+                  </div>
+
+                  {/* Acción */}
+                  <div className="pt-2">
+                    {reporte.estado == 'resuelto' ? (
+                      <button
+                        onClick={() => marcarComoNoResuelto(reporte.id)}
+                        className="btn btn-sm w-full"
+                        style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+                      >
+                        DESMARCAR
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          className="btn btn-sm w-full"
+                          style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white' }}
+                          onClick={() => setModalReporte(reporte.id)}
+                        >
+                          VER MÁS
+                        </button>
+                        {modalReporte === reporte.id && (
+                          reporte.tipo === 'solicitud_federacion' ? (
+                            <ReporteFederacionModal
+                              reporte={reporteProps}
+                              className="z-[300]"
+                              onValidar={validarFederacion}
+                              onNegar={negarFederacion}
+                              onClose={() => setModalReporte(null)}
+                            />
+                          ) : (
+                            <ReporteDefaultModal
+                              className="z-[300]"
+                              reporte={reporteProps}
+                              onResuelto={marcarComoResuelto}
+                              onClose={() => setModalReporte(null)}
+                            />
+                          )
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {reportes.length === 0 && (
+              <div className="text-center text-gray-400 py-12 bg-gray-700 rounded-lg">
+                <AlertCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No se han encontrado reportes.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Botón volver */}
+          <button
+            onClick={() => window.location.href = '/administracion'}
+            className="btn btn-lg mt-6 w-full md:w-auto"
+            style={{ backgroundColor: '#4AC0E4', borderColor: '#4AC0E4', color: 'white', fontSize: '16px' }}
+          >
+            VOLVER AL PANEL ADMINISTRACIÓN
+          </button>
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ export default function FederarUsuarioModal({ open, usuario, onClose, onFederar 
   const fetchPlanes = async () => {
     try {
       setLoadingPlanes(true);
-      const res = await fetch('/api/planes', { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/planes`, { credentials: 'include' });
       if (!res.ok) throw new Error('Error al obtener los planes');
       const data = await res.json();
       setPlanes(data);
@@ -32,7 +32,7 @@ export default function FederarUsuarioModal({ open, usuario, onClose, onFederar 
     setPrecargaLoading(true);
     setPrecargaError(null);
     try {
-      const res = await fetch('/api/planes/precarga', { method: 'POST', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/planes/precarga`, { method: 'POST', credentials: 'include' });
       if (!res.ok) throw new Error('Error al precargar los planes');
       await fetchPlanes();
     } catch (err) {

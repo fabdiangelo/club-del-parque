@@ -271,15 +271,15 @@ const Administracion = () => {
             {ventana === "administracion"
               ? "Panel de Administración"
               : ventana === "tickets"
-              ? "Tickets y Usuarios"
-              : "Reservas"}
+                ? "Tickets y Usuarios"
+                : "Reservas"}
           </h1>
           <p className="text-gray-600">
             {ventana === "administracion"
               ? "Monitoreo de consumo y reportes de Firebase"
               : ventana === "tickets"
-              ? "Gestión de tickets y usuarios del sistema."
-              : "Gestión de reservas de canchas."}
+                ? "Gestión de tickets y usuarios del sistema."
+                : "Gestión de reservas de canchas."}
           </p>
         </div>
         <div className="mb-8" style={{ display: "flex", gap: "1rem" }}>
@@ -287,11 +287,10 @@ const Administracion = () => {
             return (
               <button
                 key={b.nombre}
-                className={`py-2 px-4 rounded-full ${
-                  botonActivo === b.ventana
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-800"
-                }`}
+                className={`py-2 px-4 rounded-full ${botonActivo === b.ventana
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-800"
+                  }`}
                 onClick={() => {
                   setVentana(b.ventana);
                   setBotonActivo(b.ventana);
@@ -305,117 +304,117 @@ const Administracion = () => {
         {ventana === "administracion" ? (
           <>
             <div>
-                <h2 className="text-3xl font-bold">Bienvenido, {user.nombre}!</h2>
-                
-                {/* Sección de Atajos Rápidos */}
-                <div className="mt-8 mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Atajos Rápidos</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    
-                    {/* Crear Temporada */}
-                    <Link
-                      to="/temporadas"
-                      className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                          <Calendar className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg">Temporadas</h4>
-                          <p className="text-sm opacity-90">Crear/ver temporadas</p>
-                        </div>
-                      </div>
-                    </Link>
+              <h2 className="text-3xl font-bold">Bienvenido, {user.nombre}!</h2>
 
-                    {/* Crear Noticia */}
-                    <Link
-                      to="/crear-noticia"
-                      className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                          <Plus className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg">Nueva Noticia</h4>
-                          <p className="text-sm opacity-90">Crear noticia</p>
-                        </div>
-                      </div>
-                    </Link>
+              {/* Sección de Atajos Rápidos */}
+              <div className="mt-8 mb-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Atajos Rápidos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                    {/* Ver Noticias */}
-                    <Link
-                      to="/noticias"
-                      className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                          <Newspaper className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg">Noticias</h4>
-                          <p className="text-sm opacity-90">Ver todas las noticias</p>
-                        </div>
+                  {/* Crear Temporada */}
+                  <Link
+                    to="/temporadas"
+                    className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                        <Calendar className="w-6 h-6" />
                       </div>
-                    </Link>
-
-                    {/* Rankings */}
-                    <Link
-                      to="/ranking"
-                      className="group bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                          <Trophy className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg">Rankings</h4>
-                          <p className="text-sm opacity-90">Ver rankings</p>
-                        </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">Temporadas</h4>
+                        <p className="text-sm opacity-90">Crear/ver temporadas</p>
                       </div>
-                    </Link>
+                    </div>
+                  </Link>
 
-                    {/* Resultados */}
-                    <Link
-                      to="/resultados"
-                      className="group bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                          <BarChart3 className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg">Resultados</h4>
-                          <p className="text-sm opacity-90">Ver resultados</p>
-                        </div>
+                  {/* Crear Noticia */}
+                  <Link
+                    to="/crear-noticia"
+                    className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                        <Plus className="w-6 h-6" />
                       </div>
-                    </Link>
-
-                    {/* Gestionar Campeonatos */}
-                    <Link
-                      to="/crear-campeonato"
-                      className="group bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                          <Award className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg">Campeonatos</h4>
-                          <p className="text-sm opacity-90">Crear campeonato</p>
-                        </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">Nueva Noticia</h4>
+                        <p className="text-sm opacity-90">Crear noticia</p>
                       </div>
-                    </Link>
+                    </div>
+                  </Link>
 
-                  </div>
+                  {/* Ver Noticias */}
+                  <Link
+                    to="/noticias"
+                    className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                        <Newspaper className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">Noticias</h4>
+                        <p className="text-sm opacity-90">Ver todas las noticias</p>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Rankings */}
+                  <Link
+                    to="/ranking"
+                    className="group bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                        <Trophy className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">Rankings</h4>
+                        <p className="text-sm opacity-90">Ver rankings</p>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Resultados */}
+                  <Link
+                    to="/resultados"
+                    className="group bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                        <BarChart3 className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">Resultados</h4>
+                        <p className="text-sm opacity-90">Ver resultados</p>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Gestionar Campeonatos */}
+                  <Link
+                    to="/crear-campeonato"
+                    className="group bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                        <Award className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-lg">Campeonatos</h4>
+                        <p className="text-sm opacity-90">Crear campeonato</p>
+                      </div>
+                    </div>
+                  </Link>
+
                 </div>
+              </div>
             </div>
 
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 mb-8 text-white">
-              
-              
-              
+
+
+
               <h2 className="text-xl font-semibold mb-2">
                 Gasto Total del Mes
               </h2>
@@ -512,16 +511,17 @@ const Administracion = () => {
           </>
         ) : ventana === "tickets" ? (
           <>
-            <div className="bg-gray-800 rounded-lg shadow-lg p-8">
+            <div className="bg-gray-800 rounded-lg shadow-lg p-4 md:p-8">
               {/* Tickets/Reportes */}
               <div className="mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-3xl font-bold text-white">
+                <div className="flex items-center justify-between mb-6 mt-8 md:mt-0">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white">
                     TICKETS ({reportes.length})
                   </h2>
                 </div>
 
-                <div className="overflow-x-auto flex flex-col justify-center">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="table w-full">
                     <thead>
                       <tr className="text-gray-300">
@@ -540,9 +540,8 @@ const Administracion = () => {
                         return (
                           <tr
                             key={reporte.id}
-                            className={`text-white ${
-                              reporte.estado == "resuelto" ? "opacity-50" : ""
-                            }`}
+                            className={`text-white ${reporte.estado == "resuelto" ? "opacity-50" : ""
+                              }`}
                           >
                             <td>
                               <div className="flex items-center gap-2 mb-2">
@@ -644,37 +643,146 @@ const Administracion = () => {
                       )}
                     </tbody>
                   </table>
-                  <button
-                    onClick={() =>
-                      (window.location.href = "/administracion/reportes")
-                    }
-                    className="btn btn-lg mt-4"
-                    style={{
-                      backgroundColor: "#4AC0E4",
-                      borderColor: "#4AC0E4",
-                      color: "white",
-                    }}
-                  >
-                    VER TODOS LOS TICKETS
-                  </button>
                 </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {reportes?.filter(r => r.estado !== "resuelto").map((reporte) => {
+                    const TipoIcon = getTipoIcon(reporte.tipo);
+                    const reporteProps = {
+                      ...reporte,
+                      icon: TipoIcon,
+                    };
+                    return (
+                      <div
+                        key={reporte.id}
+                        className="bg-gray-700 rounded-lg p-4 space-y-3"
+                      >
+                        {/* Tipo y Estado */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${getTipoColor(
+                              reporte.tipo
+                            )} flex items-center gap-1`}
+                          >
+                            <TipoIcon className="w-3 h-3" />
+                            {reporte.tipo}
+                          </span>
+                          {reporte.estado == "resuelto" && (
+                            <span className="flex items-center gap-1 text-xs text-green-600">
+                              <CheckCircle className="w-3 h-3" />
+                              Resuelto
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Fecha */}
+                        <div className="flex items-center gap-2 text-white">
+                          <Calendar className="w-4 h-4" style={{ color: "#4AC0E4" }} />
+                          <span className="text-sm">{new Date(reporte.fecha).toLocaleDateString()}</span>
+                        </div>
+
+                        {/* Mensaje */}
+                        <div className="text-white">
+                          <p className="text-sm mb-1">{reporte.motivo}</p>
+                          <p className="text-xs text-gray-400">{reporte.mailUsuario}</p>
+                        </div>
+
+                        {/* Acción */}
+                        <div className="pt-2">
+                          {reporte.estado == "resuelto" ? (
+                            <button
+                              onClick={() => marcarComoNoResuelto(reporte.id)}
+                              className="btn btn-sm w-full"
+                              style={{
+                                backgroundColor: "#4AC0E4",
+                                borderColor: "#4AC0E4",
+                                color: "white",
+                              }}
+                            >
+                              DESMARCAR
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                className="btn btn-sm w-full"
+                                style={{
+                                  backgroundColor: "#4AC0E4",
+                                  borderColor: "#4AC0E4",
+                                  color: "white",
+                                }}
+                                onClick={() => setModalReporte(reporte.id)}
+                              >
+                                VER MÁS
+                              </button>
+                              {modalReporte === reporte.id &&
+                                (reporte.tipo === "solicitud_federacion" ? (
+                                  <ReporteFederacionModal
+                                    reporte={reporteProps}
+                                    onValidar={validarFederacion}
+                                    onNegar={negarFederacion}
+                                    onClose={() => setModalReporte(null)}
+                                  />
+                                ) : reporte.tipo === "disputa_resultado" ? (
+                                  <ReporteDisputaPartidoModal
+                                    reporte={reporteProps}
+                                    onResuelto={async (idRep) => {
+                                      await marcarComoResuelto(idRep);
+                                    }}
+                                    onClose={() => setModalReporte(null)}
+                                  />
+                                ) : (
+                                  <ReporteDefaultModal
+                                    reporte={reporteProps}
+                                    onResuelto={marcarComoResuelto}
+                                    onClose={() => setModalReporte(null)}
+                                  />
+                                ))}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {reportes.length === 0 && (
+                    <div className="text-center text-gray-400 py-8">
+                      No hay tickets o reportes sin atender.
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() =>
+                    (window.location.href = "/administracion/reportes")
+                  }
+                  className="btn btn-lg mt-4 w-full md:w-auto"
+                  style={{
+                    fontSize: '16px',
+                    backgroundColor: "#4AC0E4",
+                    borderColor: "#4AC0E4",
+                    color: "white",
+                  }}
+                >
+                  VER TODOS LOS TICKETS
+                </button>
               </div>
 
+
               {/* Usuarios */}
-              <div className="border-t border-gray-700 pt-8">
-                <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Users className="w-6 h-6" style={{ color: "#4AC0E4" }} />
+              <div className="border-t border-gray-700 pt-8 mt-8 md:mt-0">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2 mt-8 md:mt-0">
+                  <Users className="w-5 h-5 md:w-6 md:h-6" style={{ color: "#4AC0E4" }} />
                   USUARIOS
                   <span
-                    className="text-5xl font-bold ml-3"
+                    className="text-4xl md:text-5xl font-bold ml-3"
                     style={{ color: "#4AC0E4" }}
                   >
                     {cantidadUsuarios}
                   </span>
                 </h2>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <p className="text-gray-400 text-2xl">
+                    <p className="text-gray-400 text-lg">
                       Usuarios Federados:{" "}
                       <span
                         className="text-xl font-semibold"
@@ -689,11 +797,12 @@ const Administracion = () => {
                     onClick={() =>
                       (window.location.href = "/administracion/usuarios")
                     }
-                    className="btn btn-lg"
+                    className="btn btn-lg w-full md:w-auto"
                     style={{
                       backgroundColor: "#4AC0E4",
                       borderColor: "#4AC0E4",
                       color: "white",
+                      fontSize: '16px',
                     }}
                   >
                     ADMINISTRAR USUARIOS

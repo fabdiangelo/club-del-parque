@@ -55,7 +55,7 @@ export default function TemporadasPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-white text-slate-900">
-      
+
       <div className="fixed inset-0 z-0 bg-white/70 backdrop-blur-sm pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
@@ -66,7 +66,7 @@ export default function TemporadasPage() {
             className="mx-auto max-w-7xl px-6 lg:px-8"
             style={{ paddingTop: `${NAVBAR_OFFSET_REM}rem`, paddingBottom: "1.25rem" }}
           >
-            
+
             <p className="mt-3 text-slate-600"></p>
           </div>
         </header>

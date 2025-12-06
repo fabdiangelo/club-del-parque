@@ -10,7 +10,7 @@ const ReporteFederacionModal = ({ reporte, onValidar, onNegar, onClose }) => {
   const fetchPlanes = async () => {
     try {
       setLoadingPlanes(true);
-      const res = await fetch('/api/planes', { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/planes`, { credentials: 'include' });
       if (!res.ok) throw new Error('Error al obtener los planes');
       const data = await res.json();
       setPlanes(data);
@@ -28,7 +28,7 @@ const ReporteFederacionModal = ({ reporte, onValidar, onNegar, onClose }) => {
     setPrecargaLoading(true);
     setPrecargaError(null);
     try {
-      const res = await fetch('/api/planes/precarga', { method: 'POST', credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/planes/precarga`, { method: 'POST', credentials: 'include' });
       if (!res.ok) throw new Error('Error al precargar los planes');
       await fetchPlanes();
     } catch (err) {
@@ -37,9 +37,9 @@ const ReporteFederacionModal = ({ reporte, onValidar, onNegar, onClose }) => {
     setPrecargaLoading(false);
   };
   return (
-    <dialog id="modal-reporte" className="modal modal-open">
+    <dialog id="modal-reporte" className="modal modal-open" style={{ zIndex: 50 }}>
       <div className="modal-box">
-        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+        <h3 className="font-bold text-lg mb-2 flex items-center gap-2" style={{ color: 'white' }}>
           {reporte.icon && <reporte.icon className="w-5 h-5" />}
           {reporte.tipo}
         </h3>

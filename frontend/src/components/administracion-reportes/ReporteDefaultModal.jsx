@@ -2,9 +2,9 @@ import React from 'react';
 
 const ReporteDefaultModal = ({ reporte, onResuelto, onClose }) => {
   return (
-    <dialog id="modal-reporte" className="modal modal-open">
+    <dialog id="modal-reporte" className="modal modal-open" style={{ zIndex: 1000 }}>
       <div className="modal-box">
-        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+        <h3 className="font-bold text-lg mb-2 flex items-center gap-2" style={{ color: 'white' }}>
           {reporte.icon && <reporte.icon className="w-5 h-5" />}
           {reporte.tipo}
         </h3>
