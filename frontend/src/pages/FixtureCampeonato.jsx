@@ -274,8 +274,8 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                         <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                           {jugador.nombre ? jugador.nombre.charAt(0) : '?'}
                         </div>
-                        <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
-                        {user && jugador.id !== user.uid && grupo.jugadores.filter(j => j.id == user.uid).length > 0 && (
+                        <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user?.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
+                        {user && jugador.id !== user?.uid && grupo.jugadores.filter(j => j.id == user?.uid).length > 0 && (
                           <button
                             onClick={() => {
                               const slotIndex = jIdx;
@@ -363,16 +363,16 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
 
               <div className="relative w-full" style={{ paddingTop: `${offsetInicial}px` }}>
                 {ronda.partidos.map((partido, pIdx) => {
-                  const esParticipante = user && (partido.jugador1Id === user.uid || partido.jugador2Id === user.uid || (Array.isArray(partido?.jugador1) && partido?.jugador1?.some(j => j.id == user.uid)) || (Array.isArray(partido?.jugador2) && partido?.jugador2?.some(j => j.id == user.uid)));
+                  const esParticipante = user && (partido.jugador1Id === user?.uid || partido.jugador2Id === user?.uid || (Array.isArray(partido?.jugador1) && partido?.jugador1?.some(j => j.id == user?.uid)) || (Array.isArray(partido?.jugador2) && partido?.jugador2?.some(j => j.id == user?.uid)));
                   let oponenteId = null;
                   if (esParticipante) {
                     if (partido.jugador1Id === user?.uid)
                       oponenteId = partido.jugador2Id
                     if (partido.jugador2Id === user?.uid)
                       oponenteId = partido.jugador1Id
-                    if (partido?.jugador1?.some(j => j.id == user.uid))
+                    if (partido?.jugador1?.some(j => j.id == user?.uid))
                       oponenteId = Array.isArray(partido?.jugador2) ? partido?.jugador2[0]?.id : partido?.jugador2?.id
-                    if (partido?.jugador2?.some(j => j.id == user.uid))
+                    if (partido?.jugador2?.some(j => j.id == user?.uid))
                       oponenteId = Array.isArray(partido?.jugador1) ? partido?.jugador1[0]?.id : partido?.jugador1?.id
                   }
 
@@ -458,7 +458,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                           ) : (
                             <span className="text-sm text-black ml-2" style={{ position: 'absolute', marginTop: '3.5rem', right: '1rem' }}>Sin agendar</span>
                           )}
-                          {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador1) ? partido.jugador1.map(p => p.id).find(id => id !== user.uid) : partido.jugador1Id) && (
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador1) ? partido.jugador1.map(p => p.id).find(id => id !== user?.uid) : partido.jugador1Id) && (
                             <button
                               onClick={() => {
                                 navigate(`/partido/${partido.id}`);
@@ -493,7 +493,7 @@ const FaseEliminacion = ({ rondas = [], fechaInicio, duracion, etapaId, dobles }
                           {partido.puntaje2 !== undefined && (
                             <span className="font-bold text-black text-lg ml-2">{partido.puntaje2}</span>
                           )}
-                          {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador2) ? partido.jugador2.map(p => p.id).find(id => id !== user.uid) : partido.jugador2Id) && (
+                          {partido.estado === 'pendiente' && esParticipante && oponenteId == (Array.isArray(partido.jugador2) ? partido.jugador2.map(p => p.id).find(id => id !== user?.uid) : partido.jugador2Id) && (
                             <button
                               onClick={() => {
                                 if (etapaId && ronda && partido && partido.id) {
