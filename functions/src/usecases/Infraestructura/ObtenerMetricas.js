@@ -1,59 +1,96 @@
+
+
+import { MetricServiceClient } from '@google-cloud/monitoring';
+
 class ObtenerMetricas {
   async execute() {
-    // Estos son valores de ejemplo. En producción, deberías obtenerlos de:
-    // 1. Firebase Usage API
-    // 2. Google Cloud Monitoring API
-    // 3. Firebase Admin SDK para contadores personalizados
-    
+    // Configura tu PROJECT_ID aquí o usa process.env.GCLOUD_PROJECT
+    const projectId = process.env.GCLOUD_PROJECT || 'TU_PROJECT_ID';
+    const client = new MetricServiceClient();
+
+    // Fechas del periodo actual (mes en curso)
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Helper para formatear fechas a RFC3339
+    const toRFC3339 = (date) => date.toISOString();
+
+    // Consulta invocaciones de Cloud Functions
+    const [cloudFunctionsResponse] = await client.listTimeSeries({
+      name: client.projectPath(projectId),
+      filter: 'metric.type="cloudfunctions.googleapis.com/function/execution_count"',
+      interval: {
+        startTime: { seconds: Math.floor(startOfMonth.getTime() / 1000) },
+        endTime: { seconds: Math.floor(now.getTime() / 1000) }
+      },
+      aggregation: {
+        alignmentPeriod: { seconds: 60 * 60 * 24 }, // 1 día
+        perSeriesAligner: 'ALIGN_SUM',
+        crossSeriesReducer: 'REDUCE_SUM',
+        groupByFields: ['resource.label.function_name']
+      },
+      view: 'FULL'
+    });
+
+    // Suma total de invocaciones en el mes
+    let invocaciones = 0;
+    if (cloudFunctionsResponse.length > 0) {
+      for (const serie of cloudFunctionsResponse) {
+        for (const point of serie.points) {
+          invocaciones += point.value.int64Value ? Number(point.value.int64Value) : 0;
+        }
+      }
+    }
+
+    // Consulta almacenamiento de Firestore
+    const [firestoreStorageResponse] = await client.listTimeSeries({
+      name: client.projectPath(projectId),
+      filter: 'metric.type="firestore.googleapis.com/database/storage/bytes_used"',
+      interval: {
+        startTime: { seconds: Math.floor(startOfMonth.getTime() / 1000) },
+        endTime: { seconds: Math.floor(now.getTime() / 1000) }
+      },
+      aggregation: {
+        alignmentPeriod: { seconds: 60 * 60 * 24 },
+        perSeriesAligner: 'ALIGN_MAX',
+        crossSeriesReducer: 'REDUCE_MAX',
+      },
+      view: 'FULL'
+    });
+
+    let firestoreStorageGB = 0;
+    if (firestoreStorageResponse.length > 0) {
+      // Toma el valor máximo del mes
+      const maxPoint = firestoreStorageResponse[0].points[0];
+      if (maxPoint && maxPoint.value && maxPoint.value.int64Value) {
+        firestoreStorageGB = Number(maxPoint.value.int64Value) / (1024 ** 3);
+      }
+    }
+
+    // Límite de capa gratuita (ajusta según tu plan)
+    const limiteInvocaciones = 2000000; // 2M invocaciones/mes
+    const limiteFirestoreGB = 1; // 1 GB
+
     const metricas = {
       cloudFunctions: {
-        usado: 125000, // Invocaciones usadas
-        limite: 200000, // Límite de capa gratuita (2M invocaciones)
-        porcentaje: 62.5,
-        costo: 0.00 // Aún en capa gratuita
-      },
-      hosting: {
-        usado: 8.5, // GB transferidos
-        limite: 10, // Límite de capa gratuita (10 GB/mes)
-        porcentaje: 85,
-        costo: 0.00
+        usado: invocaciones,
+        limite: limiteInvocaciones,
+        porcentaje: Math.round((invocaciones / limiteInvocaciones) * 10000) / 100,
+        costo: 0.0 // No calculado aquí
       },
       firestore: {
-        lecturas: {
-          usado: 35000,
-          limite: 50000, // 50K lecturas/día
-          porcentaje: 70
-        },
-        escrituras: {
-          usado: 15000,
-          limite: 20000, // 20K escrituras/día
-          porcentaje: 75
-        },
-        eliminaciones: {
-          usado: 8000,
-          limite: 20000,
-          porcentaje: 40
-        },
         almacenamiento: {
-          usado: 0.8, // GB
-          limite: 1, // 1 GB
-          porcentaje: 80
+          usado: Math.round(firestoreStorageGB * 100) / 100, // 2 decimales
+          limite: limiteFirestoreGB,
+          porcentaje: Math.round((firestoreStorageGB / limiteFirestoreGB) * 10000) / 100
         },
-        costo: 0.00
+        costo: 0.0 // No calculado aquí
       },
-      gastoTotal: 0.00, // Gastos totales del mes
       periodo: {
-        inicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
-        fin: new Date().toISOString()
+        inicio: toRFC3339(startOfMonth),
+        fin: toRFC3339(now)
       }
     };
-
-    // En producción, calcularías el porcentaje promedio de Firestore
-    metricas.firestore.porcentajePromedio = 
-      (metricas.firestore.lecturas.porcentaje + 
-       metricas.firestore.escrituras.porcentaje + 
-       metricas.firestore.eliminaciones.porcentaje + 
-       metricas.firestore.almacenamiento.porcentaje) / 4;
 
     return metricas;
   }

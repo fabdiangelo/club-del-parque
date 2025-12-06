@@ -15,7 +15,7 @@ describe('Dashboard Tests', () => {
 
     cy.get('input[name="nombre"]').type(nombre);
     cy.get('textarea[name="descripcion"]').type('Descripcion del campeonato');
-    cy.get('select[name="req.genero"]').select('femenino');
+    cy.get('select[name="req.genero"]').select('Femenino');
     cy.get('select[name="formatoCampeonatoID"]').select('completo-8');
     cy.get('input[name="inicio"]').type('2026-01-01');
     cy.get('input[placeholder="Cant. grupos"]').type('2');
@@ -23,14 +23,15 @@ describe('Dashboard Tests', () => {
     cy.get('input[placeholder="Duración (días)').first().type('14');
     cy.get('input[placeholder="Jugadores al finalizar').eq(1).type('1');
     cy.get('input[placeholder="Duración (días)').eq(1).type('14');
-    cy.get('select[name="temporadaID"] option').eq(1).then(option => {
+    cy.get('select[name="temporadaID"] option').filter((i, el) => el.value).first().then(option => {
       cy.get('select[name="temporadaID"]').select(option.val())
     })
-
+    cy.wait(500);
 
     cy.intercept('POST', '/api/campeonatos').as('crearCampeonato');
     cy.get('button[type="submit"]').click();
     cy.wait('@crearCampeonato').its('response.statusCode').should('eq', 200);
+    cy.wait(1000);
   });
 
   it('should let inscribe all federated users', () => {

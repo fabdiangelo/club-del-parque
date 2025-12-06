@@ -69,6 +69,7 @@ dist/
 
 # dotenv environment variables file
 .env
+service-account.json
 
 # dataconnect generated files
 .dataconnect

@@ -106,7 +106,7 @@ export default function FixtureCampeonato() {
   return (
     <div className="min-h-screen bg-white p-2 md:p-8 mt-14">
       <NavbarBlanco />
-      <div className="max-w-2xl mx-auto mb-8">
+      <div className="max-w-2xl mx-auto mb-8 mt-10">
         <CampeonatoData
           id={id}
           nombre={campeonato?.nombre}
