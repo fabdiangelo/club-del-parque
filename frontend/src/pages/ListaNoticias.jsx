@@ -246,20 +246,34 @@ export default function Noticias() {
                     key={n.id}
                     className="w-[85vw] max-w-5xl bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
                   >
-                    <div className="flex h-40 flex-col sm:flex-row">
+                      <div className="flex flex-col sm:flex-row">
                       {/* Imagen lateral */}
-                      {firstImg ? (
-                        <div className="sm:w-1/3 w-full h-32 sm:h-full overflow-hidden">
-                          <img
-                            src={firstImg}
-                            alt={n?.titulo || "Noticia"}
-                            className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
-                            loading="lazy"
+                        {firstImg ? (
+                          <div
+                            className="sm:w-1/3 w-full overflow-hidden"
+                            style={{
+                              height: 'clamp(160px, 40vw, 240px)',
+                              minHeight: '160px',
+                              maxHeight: '320px',
+                            }}
+                          >
+                            <img
+                              src={firstImg}
+                              alt={n?.titulo || "Noticia"}
+                              className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className="sm:w-1/3 w-full bg-gradient-to-br from-gray-100 to-gray-200"
+                            style={{
+                              height: 'clamp(160px, 40vw, 240px)',
+                              minHeight: '160px',
+                              maxHeight: '320px',
+                            }}
                           />
-                        </div>
-                      ) : (
-                        <div className="sm:w-1/3 w-full h-32 sm:h-full bg-gradient-to-br from-gray-100 to-gray-200" />
-                      )}
+                        )}
 
                       {/* Contenido */}
                       <div className="flex-1 flex flex-col justify-between p-4">

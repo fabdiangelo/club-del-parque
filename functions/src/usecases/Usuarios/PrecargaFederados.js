@@ -36,12 +36,13 @@ class PrecargaFederados {
   async execute() {
     try {
       for (let i = 1; i <= 32; i++) {
-        const email = `${i}@fed`;
+        const email = `${i}@fed.com`;
 
-        const isMale = i % 2 === 0;
+        // Del 1 al 16: mujeres, del 17 al 32: hombres
+        const isMale = i > 16;
         const nombre = isMale
-          ? maleNames[(i / 2 - 1) % maleNames.length]
-          : femaleNames[((i - 1) / 2) % femaleNames.length];
+          ? maleNames[(i - 17) % maleNames.length]
+          : femaleNames[(i - 1) % femaleNames.length];
         const apellido = apellidos[(i - 1) % apellidos.length];
         const genero = isMale ? "Masculino" : "Femenino";
         const nacimiento = randomDate(

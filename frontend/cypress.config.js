@@ -5,7 +5,7 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       // implement node event listeners here
     },
-    baseUrl: 'https://club-del-parque-8ec2a.web.app/',
+    baseUrl: 'https://club-del-parque-8ec2a.web.app',
     projectId: 'dqqw7q',
     viewportWidth: 1280,
     viewportHeight: 720,
@@ -24,9 +24,9 @@ module.exports = defineConfig({
       runMode: 0,
     },
     env: {
-      CYPRESS_URL: 'http://localhost:5173',
-      CYPRESS_ADMIN_EMAIL: 'admin@admin',
-      CYPRESS_ADMIN_PASSWORD: 'Q1w2e3r4!',
+      CYPRESS_URL: 'https://club-del-parque-8ec2a.web.app',
+      CYPRESS_ADMIN_EMAIL: 'admin23@gmail.com',
+      CYPRESS_ADMIN_PASSWORD: 'Admin123!',
       CYPRESS_USER_EMAIL: 'user@user',
       CYPRESS_USER_PASSWORD: 'Q1w2e3r4!',
       CYPRESS_FED_EMAIL: '1@fed',

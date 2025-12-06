@@ -34,52 +34,50 @@ describe('Dashboard Tests', () => {
   });
 
   it('should let inscribe all federated users', () => {
-    inscribirACampeonato('1@fed', 'Q1w2e3r4!', nombre);
-    inscribirACampeonato('5@fed', 'Q1w2e3r4!', nombre);
-    inscribirACampeonato('7@fed', 'Q1w2e3r4!', nombre);
-    inscribirACampeonato('31@fed', 'Q1w2e3r4!', nombre);
-    inscribirACampeonato('29@fed', 'Q1w2e3r4!', nombre);
-    inscribirACampeonato('11@fed', 'Q1w2e3r4!', nombre);
-    inscribirACampeonato('25@fed', 'Q1w2e3r4!', nombre);
-    inscribirACampeonato('27@fed', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('1@fed.com', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('2@fed.com', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('3@fed.com', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('4@fed.com', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('5@fed.com', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('6@fed.com', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('7@fed.com', 'Q1w2e3r4!', nombre);
+    inscribirACampeonato('8@fed.com', 'Q1w2e3r4!', nombre);
   });
 
   it('should let book matches', () => {
-    generarPartidosRoundRobin('1@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosRoundRobin('5@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosRoundRobin('7@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosRoundRobin('31@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosRoundRobin('29@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosRoundRobin('11@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosRoundRobin('25@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosRoundRobin('27@fed', 'Q1w2e3r4!', nombre);
+    generarPartidosRoundRobin('1@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosRoundRobin('2@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosRoundRobin('3@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosRoundRobin('5@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosRoundRobin('6@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosRoundRobin('7@fed.com', 'Q1w2e3r4!', nombre);
   });
   
   it('should let resolve matches', () => {
-    resolverPartidos('1@fed', 'Q1w2e3r4!');
-    resolverPartidos('5@fed', 'Q1w2e3r4!');
-    resolverPartidos('7@fed', 'Q1w2e3r4!');
-    resolverPartidos('31@fed', 'Q1w2e3r4!');
-    resolverPartidos('29@fed', 'Q1w2e3r4!');
-    resolverPartidos('11@fed', 'Q1w2e3r4!');
-    resolverPartidos('25@fed', 'Q1w2e3r4!');
-    resolverPartidos('27@fed', 'Q1w2e3r4!');
+    resolverPartidos('1@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('2@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('3@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('4@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('5@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('6@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('7@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('8@fed.com', 'Q1w2e3r4!');
 });
 
   it('should let end championship', () => {
-    generarPartidosEliminacion('1@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosEliminacion('5@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosEliminacion('29@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosEliminacion('11@fed', 'Q1w2e3r4!', nombre);
+    generarPartidosEliminacion('1@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosEliminacion('2@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosEliminacion('5@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosEliminacion('6@fed.com', 'Q1w2e3r4!', nombre);
+    
+    resolverPartidos('1@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('2@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('5@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('6@fed.com', 'Q1w2e3r4!');
 
-    resolverPartidos('1@fed', 'Q1w2e3r4!');
-    resolverPartidos('5@fed', 'Q1w2e3r4!');
-    resolverPartidos('29@fed', 'Q1w2e3r4!');
-    resolverPartidos('11@fed', 'Q1w2e3r4!');
-
-    generarPartidosEliminacion('1@fed', 'Q1w2e3r4!', nombre);
-    generarPartidosEliminacion('29@fed', 'Q1w2e3r4!', nombre);
-    resolverPartidos('1@fed', 'Q1w2e3r4!');
-    resolverPartidos('29@fed', 'Q1w2e3r4!');
+    generarPartidosEliminacion('1@fed.com', 'Q1w2e3r4!', nombre);
+    generarPartidosEliminacion('5@fed.com', 'Q1w2e3r4!', nombre);
+    resolverPartidos('1@fed.com', 'Q1w2e3r4!');
+    resolverPartidos('5@fed.com', 'Q1w2e3r4!');
   });
 });

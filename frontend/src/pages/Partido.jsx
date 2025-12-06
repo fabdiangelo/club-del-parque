@@ -210,7 +210,7 @@ useEffect(() => {
     setError('');
     Promise.all([
         fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}`, { credentials: 'include' }),
-        fetch('${import.meta.env.VITE_BACKEND_URL}/api/usuarios'),
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } }),
         fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, { credentials: 'include', method: 'GET', headers: { 'Content-Type': 'application/json' } }),
         fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}/rankings`, { credentials: 'include' })
     ])
@@ -647,7 +647,7 @@ useEffect(() => {
 
 
 
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: 'clamp(20px, 5vw, 50px)', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
+                    <div className="equipos-vs-flex" style={{ display: 'flex', flexDirection: 'row', gap: 'clamp(20px, 5vw, 50px)', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
                         {/* Equipo 1 - viene de la izquierda */}
                         <div className="player-circle-left">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
@@ -679,7 +679,7 @@ useEffect(() => {
                                 </p>
                             </div>
                         </div>
-                        <div className="vs-text" style={{fontSize: 'clamp(1.5rem, 5vw, 2rem)'}}>VS</div>
+                        <div className="vs-text" style={{fontSize: 'clamp(1.5rem, 5vw, 2rem)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%'}}>VS</div>
 
                         <div className="player-circle-right">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
@@ -809,7 +809,30 @@ useEffect(() => {
 
 
 
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: 'clamp(20px, 5vw, 50px)', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
+                    <div className="equipos-vs-flex" style={{ display: 'flex', flexDirection: 'row', gap: 'clamp(20px, 5vw, 50px)', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
+                        <style>
+                        {`
+                            @media (max-width: 600px) {
+                                .equipos-vs-flex {
+                                    flex-direction: column !important;
+                                    gap: 16px !important;
+                                    align-items: stretch !important;
+                                }
+                                .player-circle-left, .player-circle-right {
+                                    width: 100% !important;
+                                    display: flex;
+                                    justify-content: center;
+                                }
+                                .vs-text {
+                                    margin: 12px 0 !important;
+                                    display: flex !important;
+                                    align-items: center !important;
+                                    justify-content: center !important;
+                                    width: 100% !important;
+                                }
+                            }
+                        `}
+                        </style>
                         <div className="player-circle-left">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
