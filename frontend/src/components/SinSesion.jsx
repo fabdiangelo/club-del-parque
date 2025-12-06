@@ -4,8 +4,8 @@ export default function SinSesion() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200 p-6">
-      <div className="card w-full max-w-md bg-base-100 shadow-md">
+    <div className="min-h-screen flex items-center justify-center bg-base-200 p-6 bg-white">
+      <div className="card w-full max-w-md bg-base-100 bg-white">
         <div className="card-body text-center">
           <h2 className="card-title">No hay sesión activa</h2>
           <p>Inicia sesión para ver los detalles de esta página.</p>

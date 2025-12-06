@@ -90,7 +90,7 @@ function App() {
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
       <Route path="/partido/:id" element={<Partido />} />
 
-      {/* Rutas Usuarios (cualquier usuario autenticado) */}
+      {/* Rutas Usuarios (cualquier usuario autenticado) */} 
       <Route
         path="/perfil"
         element={
@@ -146,7 +146,7 @@ function App() {
           </RoleProtectedRoute>
         }
       />
-      <Route path="/gestor-categorias" element={<CategoriasGestor />} />
+      {/*<Route path="/gestor-categorias" element={<CategoriasGestor />} />*/}
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/perfil/editar" element={<EditarPerfil />} />
       <Route path="/chats" element={<Chats />} />

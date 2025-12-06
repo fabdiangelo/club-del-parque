@@ -97,36 +97,35 @@ export default function Noticias() {
 
   return (
     <div
-  data-theme="light"
-  className="min-h-dvh w-full bg-gradient-to-b from-gray-100 via-gray-100 to-gray-200 text-gray-800 flex flex-col pt-16 md:pt-20"
->
-
-      {/* Navbar blanca */}
+      data-theme="light"
+      // Más suave: fondo neutro con leve gradiente gris-azulado
+      className="min-h-dvh w-full bg-gradient-to-b from-slate-50 via-slate-50 to-slate-100 text-slate-800 flex flex-col pt-16 md:pt-20"
+    >
       <NavbarBlanco />
 
-      {/* Hero mejorado, pero manteniendo paleta clara */}
-      <section className="relative overflow-hidden border-b border-gray-200 bg-gray-100">
-        <div className="pointer-events-none absolute inset-0 opacity-40">
-          <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 blur-3xl" />
-          <div className="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 blur-3xl" />
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-slate-200 bg-white">
+        {/* halos más suaves y un poco azules */}
+        <div className="pointer-events-none absolute inset-0 opacity-50">
+          <div className="absolute -top-24 -right-20 w-72 h-72 rounded-full bg-gradient-to-br from-sky-50 via-sky-100 to-slate-100 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-gradient-to-br from-slate-50 via-sky-50 to-slate-100 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-8 py-14 lg:py-20 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900">
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8 py-14 lg:py-20 flex flex-col items-center gap-4 text-center">
+          <div className="max-w-2xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900">
               Noticias
             </h1>
-            <p className="mt-4 max-w-2xl text-gray-600 text-sm md:text-base">
-              Las novedades más recientes del club en un solo
-              lugar.
+            <p className="mt-4 max-w-2xl mx-auto text-slate-600 text-sm md:text-base">
+              Las novedades más recientes del club en un solo lugar.
             </p>
           </div>
 
           {user?.rol == "administrador" && (
-            <div className="mt-4 md:mt-0 flex md:justify-end">
+            <div className="mt-4 flex justify-center">
               <Link
                 to="/crear-noticia"
-                className="btn border-none shadow-sm hover:shadow-md transition-shadow duration-150 bg-sky-500"
+                className="btn border-none shadow-sm hover:shadow-md transition-shadow duration-150 bg-gradient-to-r from-sky-500 to-cyan-400"
                 style={{
                   color: "white",
                 }}
@@ -139,9 +138,10 @@ export default function Noticias() {
       </section>
 
       {/* Contenido principal */}
-      <section className="flex-1 pb-20 bg-gray-200">
+      {/* Azul MUCHO más sutil, con gradiente y mezcla con gris */}
+      <section className="flex-1 pb-20 bg-gradient-to-b from-sky-50 via-slate-50 to-sky-100/60">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8">
-          {/* Filtros: apariencia de pills centrados */}
+          {/* Filtros */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div className="flex flex-wrap gap-2 md:gap-3">
               {dataFilters.map((f) => {
@@ -152,8 +152,9 @@ export default function Noticias() {
                     onClick={() => setActiveFilter(f)}
                     className={`btn btn-sm rounded-full border text-xs md:text-sm px-4 transition-all duration-150 ${
                       isActive
-                        ? "text-gray-900 shadow-sm bg-sky-200"
-                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50 "
+                        ? // pill activa más clarita
+                          "text-sky-900 bg-sky-100/90 border-sky-200 shadow-sm"
+                        : "bg-white/80 text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                     style={
                       isActive
@@ -169,10 +170,8 @@ export default function Noticias() {
               })}
             </div>
 
-            {/* Pequeño contador de noticias visibles */}
-            <p className="text-xs md:text-sm text-gray-500">
-              {" "}
-              <span className="font-semibold text-gray-700">
+            <p className="text-xs md:text-sm text-slate-500">
+              <span className="font-semibold text-slate-700">
                 {filteredNoticias.length}
               </span>{" "}
               noticia{filteredNoticias.length === 1 ? "" : "s"}
@@ -182,13 +181,12 @@ export default function Noticias() {
           {/* Estados de carga / error */}
           {loading && (
             <div className="mt-4 space-y-3">
-              <p className="text-sm text-gray-500">Cargando noticias…</p>
-              {/* Skeletons simples para cards */}
+              <p className="text-sm text-slate-500">Cargando noticias…</p>
               <div className="flex flex-col items-center gap-3">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="w-[85vw] max-w-5xl h-40 rounded-xl bg-gray-200/80 border border-gray-200/70 shadow-sm animate-pulse"
+                    className="w-[85vw] max-w-5xl h-40 rounded-xl bg-slate-200/70 border border-slate-200/60 shadow-sm animate-pulse"
                   />
                 ))}
               </div>
@@ -210,10 +208,10 @@ export default function Noticias() {
           {showEmptyState ? (
             <div className="w-full py-16 grid place-items-center">
               <div className="text-center">
-                <p className="text-2xl font-extrabold text-gray-800">
+                <p className="text-2xl font-extrabold text-slate-800">
                   No hay noticias
                 </p>
-                <p className="mt-2 text-sm text-gray-500 max-w-md">
+                <p className="mt-2 text-sm text-slate-500 max-w-md">
                   Cuando haya novedades del club, torneos o rankings, las vas a
                   ver acá mismo.
                 </p>
@@ -244,76 +242,73 @@ export default function Noticias() {
                 return (
                   <article
                     key={n.id}
-                    className="w-[85vw] max-w-5xl bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
+                    className="w-[85vw] max-w-5xl bg-white/95 backdrop-blur-sm border border-slate-200 shadow-sm rounded-xl overflow-hidden transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
                   >
-                      <div className="flex flex-col sm:flex-row">
+                    <div className="flex flex-col sm:flex-row">
                       {/* Imagen lateral */}
-                        {firstImg ? (
-                          <div
-                            className="sm:w-1/3 w-full overflow-hidden"
-                            style={{
-                              height: 'clamp(160px, 40vw, 240px)',
-                              minHeight: '160px',
-                              maxHeight: '320px',
-                            }}
-                          >
-                            <img
-                              src={firstImg}
-                              alt={n?.titulo || "Noticia"}
-                              className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
-                              loading="lazy"
-                            />
-                          </div>
-                        ) : (
-                          <div
-                            className="sm:w-1/3 w-full bg-gradient-to-br from-gray-100 to-gray-200"
-                            style={{
-                              height: 'clamp(160px, 40vw, 240px)',
-                              minHeight: '160px',
-                              maxHeight: '320px',
-                            }}
+                      {firstImg ? (
+                        <div
+                          className="sm:w-1/3 w-full overflow-hidden"
+                          style={{
+                            height: "clamp(160px, 40vw, 240px)",
+                            minHeight: "160px",
+                            maxHeight: "320px",
+                          }}
+                        >
+                          <img
+                            src={firstImg}
+                            alt={n?.titulo || "Noticia"}
+                            className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
+                            loading="lazy"
                           />
-                        )}
+                        </div>
+                      ) : (
+                        <div
+                          className="sm:w-1/3 w-full bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100"
+                          style={{
+                            height: "clamp(160px, 40vw, 240px)",
+                            minHeight: "160px",
+                            maxHeight: "320px",
+                          }}
+                        />
+                      )}
 
                       {/* Contenido */}
                       <div className="flex-1 flex flex-col justify-between p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
-                            <span className="text-[11px] uppercase tracking-wide text-gray-500">
+                            <span className="text-[11px] uppercase tracking-wide text-slate-500">
                               {fecha}
                             </span>
-                            <h2 className="font-semibold text-base md:text-lg text-gray-900 line-clamp-2">
+                            <h2 className="font-semibold text-base md:text-lg text-slate-900 line-clamp-2">
                               {n?.titulo || "Título"}
                             </h2>
                           </div>
 
-                          {/* Chip de tipo si existe */}
                           {n?.tipo && (
-                            <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-[10px] uppercase tracking-wide text-gray-600">
+                            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] uppercase tracking-wide text-slate-600">
                               {n.tipo}
                             </span>
                           )}
                         </div>
 
-                        <div className="mt-2 text-xs md:text-sm text-gray-600 line-clamp-2 overflow-hidden">
+                        <div className="mt-2 text-xs md:text-sm text-slate-600 line-clamp-2 overflow-hidden">
                           <RichTextEditor
                             valueMarkdown={resumen}
                             readOnly
                             hideToolbar
                             transparent
                             autoHeight
-                            className="!rounded-none !border-0 !p-0 [&_.ql-editor]:p-0 [&_.ql-editor]:text-xs md:[&_.ql-editor]:text-sm [&_.ql-editor]:text-gray-600"
+                            className="!rounded-none !border-0 !p-0 [&_.ql-editor]:p-0 [&_.ql-editor]:text-xs md:[&_.ql-editor]:text-sm [&_.ql-editor]:text-slate-600"
                           />
                         </div>
 
                         <div className="mt-3 flex justify-between items-center">
-
                           <Link
                             to={`/noticias/${n.id}`}
-                            className="btn btn-xs shadow-sm hover:shadow-md transition-shadow duration-150 bg-sky-200"
+                            className="btn btn-s transition-all duration-150 bg-neutral-100 hover:bg-sky-100/90"
                             style={{
-                              color: "black",
-                              borderColor: "var(--primario)",
+                              color: "black"
                             }}
                           >
                             Leer más

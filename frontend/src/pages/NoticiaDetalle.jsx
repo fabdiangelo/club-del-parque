@@ -376,9 +376,9 @@ export default function NoticiaDetalle() {
       <section className="pb-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="rounded-2xl p-6 border border-neutral-200 bg-white">
-            <h3 className="text-xl font-semibold text-neutral-900">Relacionadas</h3>
+            <h3 className="text-xl font-semibold text-neutral-900">Noticias recientes</h3>
             {relacionadas.length === 0 ? (
-              <p className="mt-2 text-neutral-600">Sin noticias relacionadas.</p>
+              <p className="mt-2 text-neutral-600">Sin noticias recientes.</p>
             ) : (
               <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {relacionadas.map((rel) => {
