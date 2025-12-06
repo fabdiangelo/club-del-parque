@@ -197,7 +197,7 @@ export default function EditarPerfil() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* GRID: DATOS (left) / PREFERENCIAS (right) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-10 p-5">
                 {/* DATOS */}
                 <div className="p-3 bg-white rounded-md border">
                   <h3 className="text-sm font-semibold mb-2">Datos</h3>
@@ -271,7 +271,7 @@ export default function EditarPerfil() {
                 </div>
 
                 {/* PREFERENCIAS */}
-                <div className="p-3 bg-white rounded-md border">
+                {/* <div className="p-3 bg-white rounded-md border">
                   <h3 className="text-sm font-semibold mb-2">Preferencias</h3>
 
                   <div className="flex items-center justify-between mb-2">
@@ -362,8 +362,8 @@ export default function EditarPerfil() {
                       <option value="dark">Oscuro</option>
                     </select>
                   </div>
-                </div>
-              </div>
+                </div>*/}
+              </div> 
 
               {/* BOTONES + MENSAJES */}
               <div className="flex flex-col gap-2 items-end">
