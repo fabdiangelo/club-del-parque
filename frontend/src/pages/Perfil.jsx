@@ -147,7 +147,8 @@ export default function Perfil() {
 
             <div className="flex gap-2 mt-4">
               <button
-                style={{ padding: '10px 30px', backgroundColor: 'white', color: 'var(--primario)', borderRadius: '8px', border: '1px solid var(--primario)', cursor: 'pointer' }}
+              className="bg-sky-500 text-white"
+                style={{ padding: '10px 30px', borderRadius: '8px', border: '1px solid var(--primario)', cursor: 'pointer' }}
                 onClick={() => navigate("/perfil/editar")}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">

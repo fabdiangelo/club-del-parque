@@ -97,9 +97,10 @@ export default function Noticias() {
 
   return (
     <div
-      data-theme="light"
-      className="min-h-dvh w-full bg-gradient-to-b from-gray-100 via-gray-100 to-gray-200 text-gray-800 flex flex-col"
-    >
+  data-theme="light"
+  className="min-h-dvh w-full bg-gradient-to-b from-gray-100 via-gray-100 to-gray-200 text-gray-800 flex flex-col pt-16 md:pt-20"
+>
+
       {/* Navbar blanca */}
       <NavbarBlanco />
 
@@ -116,7 +117,7 @@ export default function Noticias() {
               Noticias
             </h1>
             <p className="mt-4 max-w-2xl text-gray-600 text-sm md:text-base">
-              Las novedades más recientes del club, torneos y ranking en un solo
+              Las novedades más recientes del club en un solo
               lugar.
             </p>
           </div>

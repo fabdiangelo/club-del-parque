@@ -148,6 +148,7 @@ export default function Home() {
   useEffect(() => {
     fetchNoticias();
   }, []);
+
   function repairMarkdownLinks(md = "") {
     if (!md) return "";
     md = md.replace(/\r\n?/g, "\n");
@@ -196,7 +197,14 @@ export default function Home() {
         }}
       >
         <div className="relative z-2 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-20 lg:pb-28 grid grid-cols-1 md:grid-cols-2 gap-15 items-center w-full text-center md:text-left ">
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              alignItems: "center",
+            }}
+          >
             <h1
               className="font-serif text-4xl sm:text-5xl lg:text-7xl italic tracking-wide mb-6"
               style={{
@@ -294,8 +302,10 @@ export default function Home() {
               corazón de San José de Mayo.
             </p>
           </div>
-          {/* Mapa */}
-          <div className="mb-16">
+
+          {/* Mapa + Galería en una sola sección */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-16">
+            {/* Mapa (izquierda) */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
               <div className="h-[450px] w-full">
                 <MapContainer
@@ -329,55 +339,55 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Galería de Fotos */}
-          <div>
-            <h3
-              className="text-3xl font-bold mb-8 text-center"
-              style={{ color: "var(--neutro)" }}
-            >
-              Galería de Fotos
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {CANCHAS_IMAGES.map((src, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    setPhotoIndex(i);
-                    setLightboxOpen(true);
-                  }}
-                  className="group relative aspect-video rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-blue-300"
-                  aria-label={`Ver foto ${i + 1}`}
-                >
-                  <img
-                    src={src}
-                    alt={`Cancha ${i + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="bg-white/90 backdrop-blur-sm rounded-full p-4 transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-8 w-8 text-gray-800"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                        />
-                      </svg>
+            {/* Galería de Fotos (derecha) */}
+            <div>
+              <h3
+                className="text-2xl font-bold mb-8 text-center lg:text-center"
+                style={{ color: "var(--neutro)" }}
+              >
+                Galería de Fotos
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {CANCHAS_IMAGES.map((src, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setPhotoIndex(i);
+                      setLightboxOpen(true);
+                    }}
+                    className="group relative aspect-video rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                    aria-label={`Ver foto ${i + 1}`}
+                  >
+                    <img
+                      src={src}
+                      alt={`Cancha ${i + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-full p-4 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-8 w-8 text-gray-800"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -468,10 +478,9 @@ export default function Home() {
                 <div className="flex justify-center">
                   <Link
                     to="/noticias"
-                    className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-300"
-                    style={{ backgroundColor: "var(--primario)" }}
+                    className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-300"
                   >
-                    Ver Todas las Noticias
+                    Ver todas las noticias
                   </Link>
                 </div>
               </>
@@ -496,10 +505,9 @@ export default function Home() {
             Envíanos tu reporte y te ayudaremos lo antes posible.
           </p>
           <Link
-            style={{ backgroundColor: 'var(--primario)', padding: '10px 20px', cursor: 'pointer' }}
-            className="py-2 text-white rounded w-full text-center"
+            style={{ padding: "10px 20px", cursor: "pointer" }}
+            className="py-2 text-white rounded w-full text-center bg-red-400"
             to="/reportes"
-          // className="inline-block bg-primario text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-primario-dark transition"
           >
             Ir a reportes
           </Link>

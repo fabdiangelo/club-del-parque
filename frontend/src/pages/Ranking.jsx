@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 import { Crown, Search, X } from "lucide-react";
+import rankingBg from "../assets/CanchasTenisPadel/2.jpg";
 import { useAuth } from "../contexts/AuthProvider";
 
 
@@ -83,25 +84,32 @@ const renderHighlightedName = (name, q) => {
   );
 };
 
-/* Cute animated header title (puremente estético) */
 function AnimatedTitle({ text, className, style }) {
   return (
     <>
       <style>{`
         @keyframes subtleGlow {
-          0%, 30%, 50% { color: #0f172a; text-shadow: none; }
-          20% {
-            color: #1f2937;
-            text-shadow: 0 0 6px rgba(255,255,255,.35);
+          0%, 10%, 20% { text-shadow: 0 0 0 rgba(0,0,0,0.9); }
+          10% {
           }
         }
-        .glow-letter:hover { animation-play-state: paused; }
+        .ranking-letter {
+          color: #1d1a1aff;
+        }
+        .ranking-letter:hover {
+          animation-play-state: paused;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ranking-letter {
+            animation: none !important;
+          }
+        }
       `}</style>
       <span className={className} style={style}>
         {text.split("").map((ch, i) => (
           <span
             key={i}
-            className="glow-letter inline-block"
+            className="ranking-letter inline-block"
             style={{
               animation: "subtleGlow 18s ease-in-out infinite",
               animationDelay: `${i * 0.12}s`,
@@ -114,6 +122,7 @@ function AnimatedTitle({ text, className, style }) {
     </>
   );
 }
+
 
 /* ------------------------------- page ------------------------------- */
 export default function Rankings() {
@@ -589,30 +598,46 @@ export default function Rankings() {
 
   /* ------------------------------- render ------------------------------- */
   return (
-    <div className="relative min-h-screen w-full text-neutral-900">
-      {/* Fondo gradiente animado */}
-      <style>{`
-        @keyframes moveGradient {
-          0% { background-position: 0% 0%; }
-          25% { background-position: 100% 0%; }
-          50% { background-position: 100% 100%; }
-          75% { background-position: 0% 100%; }
-          100% { background-position: 0% 0%; }
-        }
-      `}</style>
-      <div
-        aria-hidden
-        className="fixed inset-0 z-0"
-        style={{
-          background:
-            "linear-gradient(120deg, #f8fafc, #e0f2fe, #fef9c3, #e9d5ff, #f8fafc)",
-          backgroundSize: "400% 400%",
-          animation: "moveGradient 40s ease-in-out infinite",
-        }}
-      />
-      {/* capa de brillo muy sutil */}
-      <div className="fixed inset-0 z-0 pointer-events-none bg-white/30 backdrop-blur-[1px]" />
+  <div className="relative min-h-screen w-full text-neutral-900">
+    {/* Fondo con foto + colores muy sutiles */}
+    <style>{`
+      @keyframes moveGradient {
+        0% { background-position: 0% 0%; }
+        25% { background-position: 100% 0%; }
+        50% { background-position: 100% 100%; }
+        75% { background-position: 0% 100%; }
+        100% { background-position: 0% 0%; }
+      }
+    `}</style>
 
+    {/* Foto de fondo */}
+<div
+  aria-hidden
+  className="fixed inset-0 z-0 pointer-events-none"
+>
+  <div
+    className="w-full h-full bg-cover bg-center"
+    style={{
+      backgroundImage: `url(${rankingBg})`,
+      backgroundAttachment: "fixed",
+      filter: "blur(10px)",
+      transform: "scale(1.06)", // evita bordes duros del blur
+    }}
+  />
+</div>
+
+    {/* Colores muy suaves encima de la foto */}
+    <div
+      aria-hidden
+      className="fixed inset-0 z-0"
+      style={{
+        background:
+          "linear-gradient(120deg, rgba(56,189,248,0.18), rgba(251,191,36,0.16), rgba(147,51,234,0.16))",
+        backgroundSize: "400% 400%",
+        animation: "moveGradient 40s ease-in-out infinite",
+        mixBlendMode: "soft-light",
+      }}
+    />
       <div className="relative z-10 flex min-h-screen flex-col">
         <NavbarBlanco />
 

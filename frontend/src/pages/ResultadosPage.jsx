@@ -26,29 +26,33 @@ export default function ResultadosPage() {
         const federadoId = user?.id;
 
         if (federadoId) {
-          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/jugador/${federadoId}`, { credentials: 'include', cache: 'no-store' });
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/api/partidos/jugador/${federadoId}`,
+            { credentials: "include", cache: "no-store" }
+          );
           if (res.ok) {
             partidoList = await res.json();
           }
         } else {
           // Si no existe id de federado, fallback a la ruta por jugador
-          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/jugador/${user.uid}`, { credentials: 'include', cache: 'no-store' });
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/api/partidos/jugador/${user.uid}`,
+            { credentials: "include", cache: "no-store" }
+          );
           if (res.ok) partidoList = await res.json();
         }
 
         // Filtrar solo los partidos que tengan oponente definido (ambos lados con jugadores)
         const hasOpponent = (p) => {
           if (!p) return false;
-          const leftPopulated = (
+          const leftPopulated =
             (Array.isArray(p.equipoLocal) && p.equipoLocal.length > 0) ||
             (Array.isArray(p.jugador1) && p.jugador1.length > 0) ||
-            Boolean(p.jugador1Id)
-          );
-          const rightPopulated = (
+            Boolean(p.jugador1Id);
+          const rightPopulated =
             (Array.isArray(p.equipoVisitante) && p.equipoVisitante.length > 0) ||
             (Array.isArray(p.jugador2) && p.jugador2.length > 0) ||
-            Boolean(p.jugador2Id)
-          );
+            Boolean(p.jugador2Id);
           return leftPopulated && rightPopulated;
         };
 
@@ -69,16 +73,17 @@ export default function ResultadosPage() {
     <div className="min-h-screen flex flex-col bg-white text-gray-900 w-full">
       <NavbarBlanco transparent={false} />
       <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
-        <h1 className="text-3xl font-extrabold text-gray-900">
-          Acuerdo de Resultados
+        {/* TÍTULO CENTRADO */}
+        <h1 className="text-3xl font-extrabold text-gray-900 text-center">
+          Acuerdo de resultados
         </h1>
 
         {loading ? (
-          <div className="mt-6 text-gray-600">Cargando partidos…</div>
+          <div className="mt-6 text-gray-600 text-center">Cargando partidos…</div>
         ) : err ? (
-          <div className="mt-6 text-red-600 font-semibold">{err}</div>
+          <div className="mt-6 text-red-600 font-semibold text-center">{err}</div>
         ) : partidos.length === 0 ? (
-          <p className="mt-8 text-2xl font-extrabold text-gray-700">
+          <p className="mt-8 text-2xl font-extrabold text-gray-700 text-center">
             No tienes partidos pendientes de resultado
           </p>
         ) : (
@@ -86,11 +91,14 @@ export default function ResultadosPage() {
             <table className="table-auto w-full border border-gray-200 shadow-sm rounded-xl bg-white">
               <thead className="bg-gray-100 text-gray-700">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Fecha</th>
-                  <th className="px-4 py-3 text-left font-semibold">Etapa</th>
-                  <th className="px-4 py-3 text-left font-semibold">Tipo</th>
-                  <th className="px-4 py-3 text-left font-semibold">Contrincante</th>
-                  <th className="px-4 py-3 text-left font-semibold">Acciones</th>
+                  {/* HEADERS CENTRADOS */}
+                  <th className="px-4 py-3 text-center font-semibold">Fecha</th>
+                  <th className="px-4 py-3 text-center font-semibold">Etapa</th>
+                  <th className="px-4 py-3 text-center font-semibold">Tipo</th>
+                  <th className="px-4 py-3 text-center font-semibold">
+                    Contrincante
+                  </th>
+                  <th className="px-4 py-3 text-center font-semibold">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -98,46 +106,82 @@ export default function ResultadosPage() {
                   const key = String(p?.id || p?._id || p?.uid || idx);
 
                   // Fecha: si existe una propuesta aceptada usar su fecha, sino "Por definir"
-                  const propuestaAceptada = (p?.disponibilidades?.propuestas || []).find(pr => pr.aceptada || pr.aceptada === true);
-                  const fechaStr = propuestaAceptada && propuestaAceptada.fechaHoraInicio
-                    ? new Date(propuestaAceptada.fechaHoraInicio).toLocaleString()
-                    : 'Por definir';
-
+                  const propuestaAceptada = (
+                    p?.disponibilidades?.propuestas || []
+                  ).find((pr) => pr.aceptada || pr.aceptada === true);
+                  const fechaStr =
+                    propuestaAceptada && propuestaAceptada.fechaHoraInicio
+                      ? new Date(
+                          propuestaAceptada.fechaHoraInicio
+                        ).toLocaleString()
+                      : "Por definir";
 
                   // Determine which side is opponent of current user
-                  const leftNames = (Array.isArray(p.jugador2Nombre) ? p.jugador2Nombre : [p.jugador2Nombre]);
-                  const rightNames = (Array.isArray(p.jugador1Nombre) ? p.jugador1Nombre : [p.jugador1Nombre]);
+                  const leftNames = Array.isArray(p.jugador2Nombre)
+                    ? p.jugador2Nombre
+                    : [p.jugador2Nombre];
+                  const rightNames = Array.isArray(p.jugador1Nombre)
+                    ? p.jugador1Nombre
+                    : [p.jugador1Nombre];
 
                   let opponentNames = [];
                   if (leftNames.includes(user?.nombre)) opponentNames = rightNames;
-                  else if (rightNames.includes(user?.nombre)) opponentNames = leftNames;
+                  else if (rightNames.includes(user?.nombre))
+                    opponentNames = leftNames;
                   else {
                     // if uid not found, pick right by default
                     opponentNames = rightNames.length ? rightNames : leftNames;
                   }
 
-                  const opponentDisplay = opponentNames.length ? opponentNames.join(' & ') : '—';
+                  const opponentDisplay = opponentNames.length
+                    ? opponentNames.join(" & ")
+                    : "—";
 
-                  const tieneFecha = propuestaAceptada && propuestaAceptada.fechaHoraInicio;
+                  const tieneFecha =
+                    propuestaAceptada && propuestaAceptada.fechaHoraInicio;
 
                   return (
                     <tr
                       key={key}
                       className="hover:bg-gray-50 transition-colors duration-150"
                     >
-                      <td className="px-4 py-3 text-gray-900">{fechaStr}</td>
-                      <td className="px-4 py-3 text-gray-900">{p?.etapa || '—'}</td>
-                      <td className="px-4 py-3 text-gray-900">{p?.tipoPartido || '—'}</td>
-                      <td className="px-4 py-3 text-gray-900">{opponentDisplay}</td>
-                      <td className="px-4 py-3">
-                        {
-                        p.estado == "finalizado" && p.estadoResultado == "confirmado" ? (
-                          <Link to={`/partido/${p?.id || p?._id}`} className="btn btn-success btn-sm normal-case">Finalizado</Link>
-                        )
-                        : tieneFecha ? (
-                          <Link to={`/partidos/${p?.id}/acuerdo`} title="Ir al partido" className="btn btn-primary btn-sm normal-case">Proponer / Confirmar</Link>
+                      {/* CELDAS CENTRADAS */}
+                      <td className="px-4 py-3 text-gray-900 text-center">
+                        {fechaStr}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900 text-center">
+                        {p?.etapa || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900 text-center">
+                        {p?.tipoPartido || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900 text-center">
+                        {opponentDisplay}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {p.estado == "finalizado" &&
+                        p.estadoResultado == "confirmado" ? (
+                          <Link
+                            to={`/partido/${p?.id || p?._id}`}
+                            className="btn btn-success btn-sm normal-case"
+                          >
+                            Finalizado
+                          </Link>
+                        ) : tieneFecha ? (
+                          <Link
+                            to={`/partidos/${p?.id}/acuerdo`}
+                            title="Ir al partido"
+                            className="btn btn-primary btn-sm normal-case"
+                          >
+                            Proponer / Confirmar
+                          </Link>
                         ) : (
-                          <Link to={`/partido/${p?.id || p?._id}`} className="btn btn-secondary btn-sm normal-case">Agendar</Link>
+                          <Link
+                            to={`/partido/${p?.id || p?._id}`}
+                            className="btn btn-secondary btn-sm normal-case"
+                          >
+                            Agendar
+                          </Link>
                         )}
                       </td>
                     </tr>

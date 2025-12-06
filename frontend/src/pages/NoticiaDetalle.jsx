@@ -123,80 +123,83 @@ function Carousel({ images, title }) {
   if (!images?.length) return null;
   const cur = images[idx];
 
-  return (
-    <div className="mt-8 lg:-mx-6 xl:-mx-8">
-      <div
-        className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl select-none border border-neutral-200 bg-neutral-100/60"
-        {...swipe}
-      >
-        <img
-          key={cur.src}
-          src={cur.src}
-          alt={title || "Imagen"}
-          className="h-full w-full object-cover"
-          style={{ opacity: fade ? 1 : 0, transition: "opacity 400ms ease" }}
-          loading="eager"
-        />
-
-        {images.length > 1 && (
-          <>
-            <button
-              onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
-              aria-label="Anterior"
-              title="Anterior"
-            >
-              ‹
-            </button>
-            <button
-              onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
-              aria-label="Siguiente"
-              title="Siguiente"
-            >
-              ›
-            </button>
-          </>
-        )}
-
-        {images.length > 1 && (
-          <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
-            {images.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => go(i)}
-                className={`h-2 w-2 rounded-full ${i === idx ? "bg-neutral-900" : "bg-neutral-500/60"}`}
-                aria-label={`Ir a imagen ${i + 1}`}
-                title={`Imagen ${i + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+return (
+  <div className="mt-0">
+    <div
+      className="relative aspect-[16/9] w-full overflow-hidden select-none bg-neutral-100/60"
+      {...swipe}
+    >
+      <img
+        key={cur.src}
+        src={cur.src}
+        alt={title || "Imagen"}
+        className="h-full w-full object-cover"
+        style={{ opacity: fade ? 1 : 0, transition: "opacity 400ms ease" }}
+        loading="eager"
+      />
 
       {images.length > 1 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:-mx-6 xl:-mx-8 px-1">
-          {images.map((im, i) => (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
+            aria-label="Anterior"
+            title="Anterior"
+          >
+            ‹
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
+            aria-label="Siguiente"
+            title="Siguiente"
+          >
+            ›
+          </button>
+        </>
+      )}
+
+      {images.length > 1 && (
+        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
+          {images.map((_, i) => (
             <button
-              key={im.src + i}
+              key={i}
               onClick={() => go(i)}
-              className={`relative h-16 w-24 flex-none overflow-hidden rounded-xl border ${
-                i === idx ? "border-neutral-600" : "border-neutral-200"
+              className={`h-2 w-2 rounded-full ${
+                i === idx ? "bg-neutral-900" : "bg-neutral-500/60"
               }`}
+              aria-label={`Ir a imagen ${i + 1}`}
               title={`Imagen ${i + 1}`}
-            >
-              <img
-                src={im.src}
-                alt={`${title || "Imagen"} ${i + 1}`}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-            </button>
+            />
           ))}
         </div>
       )}
     </div>
-  );
+
+    {images.length > 1 && (
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-3 px-6">
+        {images.map((im, i) => (
+          <button
+            key={im.src + i}
+            onClick={() => go(i)}
+            className={`relative h-16 w-24 flex-none overflow-hidden rounded-xl border ${
+              i === idx ? "border-neutral-600" : "border-neutral-200"
+            }`}
+            title={`Imagen ${i + 1}`}
+          >
+            <img
+              src={im.src}
+              alt={`${title || "Imagen"} ${i + 1}`}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
 }
 
 /* Page */
@@ -320,10 +323,9 @@ export default function NoticiaDetalle() {
   }
 
   return (
-    <div className="min-h-dvh w-full flex flex-col text-neutral-900 bg-gray-100">
-      <NavbarBlanco />
-<br/>
-      <section className="relative">
+<div className="min-h-dvh w-full flex flex-col text-neutral-900 bg-gray-100 pt-20">
+  <NavbarBlanco />
+  <section className="relative">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-10 md:py-14">
           <Link
             to="/noticias"
@@ -332,37 +334,41 @@ export default function NoticiaDetalle() {
             ← Volver a Noticias
           </Link>
 
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-xs uppercase tracking-wider text-neutral-500">{fmtDate(noticia.fechaCreacion)}</p>
-          </div>
-          <h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
-            {noticia.titulo || "Título"}
-          </h1>
-
-<div className="mt-6 max-w-4xl mx-auto">
-  <Carousel images={images} title={noticia?.titulo} />
+<div className="flex items-center justify-center">
+  <p className="text-xs uppercase tracking-wider text-neutral-500 text-center">
+    {fmtDate(noticia.fechaCreacion)}
+  </p>
 </div>
-          {/* Contenido ancho cómodo, sin sidebar */}
-          <div
-            className="mt-8 transition-opacity duration-700"
-            style={{ opacity: ready ? 1 : 0 }}
-          >
-<article
-  className="rounded-2xl border border-neutral-200 bg-white"
->
-  <div className="p-6">
-    <RichTextEditor
-      valueMarkdown={mdForView || "*Sin contenido*"}
-      readOnly
-      hideToolbar
-      transparent
-      autoHeight
-      className="!rounded-none !overflow-visible w-full"
-    />
-  </div>
-</article>
+<h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 text-center">
+  {noticia.titulo || "Título"}
+</h1>
 
-          </div>
+
+<div
+  className="mt-8 transition-opacity duration-700"
+  style={{ opacity: ready ? 1 : 0 }}
+>
+  <article className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
+    {/* Imagen / carrusel dentro de la tarjeta */}
+    <div className="w-full">
+      <Carousel images={images} title={noticia?.titulo} />
+    </div>
+
+    {/* Texto dentro de la misma tarjeta */}
+    <div className="p-6">
+      <RichTextEditor
+        valueMarkdown={mdForView || "*Sin contenido*"}
+        readOnly
+        hideToolbar
+        transparent
+        autoHeight
+        className="!rounded-none !overflow-visible w-full"
+      />
+    </div>
+  </article>
+</div>
+
+
         </div>
       </section>
 

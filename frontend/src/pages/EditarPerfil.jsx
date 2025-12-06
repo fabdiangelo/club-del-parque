@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthProvider";
-import NavbarBlanco from '../components/NavbarBlanco.jsx';
+import NavbarBlanco from "../components/NavbarBlanco.jsx";
 
 export default function EditarPerfil() {
   const { user, loading } = useAuth();
   const [loadingUser, setLoadingUser] = useState(true);
+
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
@@ -35,62 +36,69 @@ export default function EditarPerfil() {
   const navigate = useNavigate();
 
   const fetchUser = async () => {
-      setLoadingUser(true);
-      try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${user.uid}`, {
+    setLoadingUser(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${user.uid}`,
+        {
           credentials: "include",
-        });
-        if (res.status === 204 || res.status === 401) {
-          setLoadingUser(false);
-          return;
         }
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(`Unexpected /usuario response: ${res.status} ${txt}`);
-        }
-        const data = await res.json();
-        console.log("fetched user data:", data);
-
-        setForm((prev) => ({
-          ...prev,
-          nombre: data.nombre || user.nombre || "",
-          apellido: data.apellido || "",
-          email: data.email || user.email || "",
-          estado: data.estado || "activo",
-          nacimiento: data.nacimiento || "",
-          genero: data.genero || "",
-          rol: data.rol || "usuario",
-        }));
-
-        const p = data?.preferencias || prefs || {};
-        setPrefs((prev) => ({
-          ...prev,
-          mail: typeof p.mail !== "undefined" ? p.mail : prev.mail,
-          whatsapp: typeof p.whatsapp !== "undefined" ? p.whatsapp : prev.whatsapp,
-          tipos: {
-            noticias: p.tipos ? !!p.tipos.noticias : prev.tipos.noticias,
-            campeonatos: p.tipos ? !!p.tipos.campeonatos : prev.tipos.campeonatos,
-            solicitudes: p.tipos ? !!p.tipos.solicitudes : prev.tipos.solicitudes,
-          },
-          tema: p.tema || prev.tema,
-        }));
-
+      );
+      if (res.status === 204 || res.status === 401) {
         setLoadingUser(false);
-      } catch (err) {
-        console.error("fetchUser error:", err);
-        setError(err.message || String(err));
-        setLoadingUser(false);
+        return;
       }
-    };
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Unexpected /usuario response: ${res.status} ${txt}`);
+      }
+      const data = await res.json();
+      console.log("fetched user data:", data);
+
+      setForm((prev) => ({
+        ...prev,
+        nombre: data.nombre || user.nombre || "",
+        apellido: data.apellido || "",
+        email: data.email || user.email || "",
+        estado: data.estado || "activo",
+        nacimiento: data.nacimiento || "",
+        genero: data.genero || "",
+        rol: data.rol || "usuario",
+      }));
+
+      const p = data?.preferencias || prefs || {};
+      setPrefs((prev) => ({
+        ...prev,
+        mail: typeof p.mail !== "undefined" ? p.mail : prev.mail,
+        whatsapp:
+          typeof p.whatsapp !== "undefined" ? p.whatsapp : prev.whatsapp,
+        tipos: {
+          noticias: p.tipos ? !!p.tipos.noticias : prev.tipos.noticias,
+          campeonatos: p.tipos
+            ? !!p.tipos.campeonatos
+            : prev.tipos.campeonatos,
+          solicitudes: p.tipos
+            ? !!p.tipos.solicitudes
+            : prev.tipos.solicitudes,
+        },
+        tema: p.tema || prev.tema,
+      }));
+
+      setLoadingUser(false);
+    } catch (err) {
+      console.error("fetchUser error:", err);
+      setError(err.message || String(err));
+      setLoadingUser(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
       setLoadingUser(false);
       return;
     }
-
-    
     fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleChange = (e) => {
@@ -103,7 +111,10 @@ export default function EditarPerfil() {
   };
 
   const handleTipoToggle = (tipo) => {
-    setPrefs((prev) => ({ ...prev, tipos: { ...prev.tipos, [tipo]: !prev.tipos[tipo] } }));
+    setPrefs((prev) => ({
+      ...prev,
+      tipos: { ...prev.tipos, [tipo]: !prev.tipos[tipo] },
+    }));
   };
 
   const handleTemaChange = (e) => {
@@ -127,15 +138,19 @@ export default function EditarPerfil() {
         preferencias: prefs,
         rol: form.rol,
       };
-      // only send password if provided
-      if (form.password && form.password.trim()) payload.password = form.password;
+      if (form.password && form.password.trim()) {
+        payload.password = form.password;
+      }
 
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/${user.uid}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${user.uid}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!res.ok) {
         const txt = await res.text();
@@ -143,7 +158,6 @@ export default function EditarPerfil() {
       }
 
       setSuccess("Perfil actualizado correctamente");
-      
       fetchUser();
     } catch (err) {
       console.error("update error:", err);
@@ -155,151 +169,215 @@ export default function EditarPerfil() {
 
   if (loading || loadingUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200 bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
-          <p className="mt-4 text-lg">Cargando datos del perfil...</p>
+          <div className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full border-primary border-t-transparent"></div>
+          <p className="mt-3 text-sm">Cargando datos del perfil...</p>
         </div>
       </div>
     );
   }
 
   if (!user) {
-    return (<div className="min-h-screen flex items-center justify-center"> <p>No autenticado</p> </div>);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>No autenticado</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
+    <div className="min-h-screen bg-white">
       <NavbarBlanco />
-      <div className="max-w-4xl w-full">
-        <div className="card bg-white shadow-xl border rounded-lg">
-          <div className="card-body">
-            <h2 className="text-2xl font-semibold mb-4">Editar perfil</h2>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Datos */}
-              <div className="p-4 bg-white rounded-lg border shadow-sm">
-                <h3 className="font-medium mb-3">Datos</h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm">Nombre</label>
+      {/* similar spacing to Perfil card */}
+      <div className="max-w-3xl w-full mx-auto px-3 pt-24 pb-10">
+        <div className="card bg-white shadow-md border rounded-lg">
+          <div className="card-body p-4">
+            <h2 className="text-xl font-semibold mb-3">Editar perfil</h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* GRID: DATOS (left) / PREFERENCIAS (right) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* DATOS */}
+                <div className="p-3 bg-white rounded-md border">
+                  <h3 className="text-sm font-semibold mb-2">Datos</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs mb-1">Nombre</label>
+                      <input
+                        name="nombre"
+                        value={form.nombre}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">Apellido</label>
+                      <input
+                        name="apellido"
+                        value={form.apellido}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">Email</label>
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">
+                        Contraseña (opcional)
+                      </label>
+                      <input
+                        name="password"
+                        type="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                        placeholder="Dejar vacío para no cambiar"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">Estado</label>
+                      <select
+                        name="estado"
+                        value={form.estado}
+                        onChange={handleChange}
+                        className="select select-bordered select-sm w-full"
+                      >
+                        <option value="activo">activo</option>
+                        <option value="inactivo">inactivo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1">Nacimiento</label>
+                      <input
+                        name="nacimiento"
+                        type="date"
+                        value={form.nacimiento || ""}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* PREFERENCIAS */}
+                <div className="p-3 bg-white rounded-md border">
+                  <h3 className="text-sm font-semibold mb-2">Preferencias</h3>
+
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-xs font-medium">
+                        Notificaciones por email
+                      </p>
+                      <p className="text-[10px] opacity-70">
+                        Recibir notificaciones vía correo electrónico
+                      </p>
+                    </div>
                     <input
-                      name="nombre"
-                      value={form.nombre}
-                      onChange={handleChange}
-                      className="input input-bordered w-full"
-                      required
+                      type="checkbox"
+                      checked={prefs.mail}
+                      onChange={() => handlePrefToggle("mail")}
+                      className="toggle toggle-sm"
+                      style={{ backgroundColor: "var(--primario)" }}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm">Apellido</label>
+
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-xs font-medium">
+                        Notificaciones por WhatsApp
+                      </p>
+                      <p className="text-[10px] opacity-70">
+                        Recibir notificaciones vía WhatsApp
+                      </p>
+                    </div>
                     <input
-                      name="apellido"
-                      value={form.apellido}
-                      onChange={handleChange}
-                      className="input input-bordered w-full"
+                      type="checkbox"
+                      checked={prefs.whatsapp}
+                      onChange={() => handlePrefToggle("whatsapp")}
+                      className="toggle toggle-sm"
+                      style={{ backgroundColor: "var(--primario)" }}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm">Email</label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      className="input input-bordered w-full"
-                      required
-                    />
+
+                  <div className="mb-2">
+                    <p className="text-xs font-medium mb-1">
+                      Tipos de notificaciones
+                    </p>
+                    <div className="flex flex-col gap-1 mt-1">
+                      <label className="label cursor-pointer p-0 gap-2">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary checkbox-sm"
+                          checked={prefs.tipos.noticias}
+                          onChange={() => handleTipoToggle("noticias")}
+                        />
+                        <span className="label-text text-xs">Noticias</span>
+                      </label>
+
+                      <label className="label cursor-pointer p-0 gap-2">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary checkbox-sm"
+                          checked={prefs.tipos.campeonatos}
+                          onChange={() => handleTipoToggle("campeonatos")}
+                        />
+                        <span className="label-text text-xs">
+                          Nuevos campeonatos
+                        </span>
+                      </label>
+
+                      <label className="label cursor-pointer p-0 gap-2">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary checkbox-sm"
+                          checked={prefs.tipos.solicitudes}
+                          onChange={() => handleTipoToggle("solicitudes")}
+                        />
+                        <span className="label-text text-xs">
+                          Solicitudes de partidos
+                        </span>
+                      </label>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm" >Estado</label>
+
+                  <div className="mb-1">
+                    <p className="text-xs font-medium mb-1">Tema</p>
                     <select
-                      name="estado"
-                      value={form.estado}
-                      onChange={handleChange}
-                      className="input input-bordered w-full"
+                      value={prefs.tema}
+                      onChange={handleTemaChange}
+                      className="select select-bordered select-sm w-full max-w-xs"
                     >
-                      <option value="activo">activo</option>
-                      <option value="inactivo">inactivo</option>
+                      <option value="light">Claro</option>
+                      <option value="dark">Oscuro</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm">Nacimiento</label>
-                    <input
-                      name="nacimiento"
-                      type="date"
-                      value={form.nacimiento || ""}
-                      onChange={handleChange}
-                      className="input input-bordered w-full"
-                    />
-                  </div>
-                  
                 </div>
               </div>
 
-              {/* Preferencias */}
-              {/* <div className="p-4 bg-white rounded-lg border shadow-sm">
-                <h3 className="font-medium mb-3">Preferencias</h3>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-sm font-medium">Notificaciones por email</p>
-                    <p className="text-xs opacity-70">Recibir notificaciones vía correo electrónico</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={prefs.mail}
-                    onChange={() => handlePrefToggle("mail")}
-                    className="toggle" style={{backgroundColor: 'var(--primario)'}}
-                  />
-                </div>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-sm font-medium">Notificaciones por WhatsApp</p>
-                    <p className="text-xs opacity-70">Recibir notificaciones vía WhatsApp</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={prefs.whatsapp}
-                    onChange={() => handlePrefToggle("whatsapp")}
-                   className="toggle" style={{backgroundColor: 'var(--primario)'}}
-                  />
-                </div>
-                <div className="mb-3">
-                  <p className="text-sm font-medium">Tipos de notificaciones</p>
-                  <div className="flex flex-col gap-2 mt-2">
-                    <label className="label cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary mr-2"
-                        checked={prefs.tipos.noticias}
-                        onChange={() => handleTipoToggle("noticias")}
-                      />
-                      <span className="label-text">Noticias</span>
-                    </label>
-                    <label className="label cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary mr-2"
-                        checked={prefs.tipos.campeonatos}
-                        onChange={() => handleTipoToggle("campeonatos")}
-                      />
-                      <span className="label-text">Nuevos campeonatos</span>
-                    </label>
-                    <label className="label cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary mr-2"
-                        checked={prefs.tipos.solicitudes}
-                        onChange={() => handleTipoToggle("solicitudes")}
-                      />
-                      <span className="label-text">Solicitudes de partidos</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="mt-4 flex gap-2 justify-end">
+              {/* BOTONES + MENSAJES */}
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    style={{padding: '10px 20px', color: 'white', backgroundColor: 'var(--neutro)', borderRadius: '8px', cursor: 'pointer'}}
+                    style={{
+                      padding: "6px 14px",
+                      fontSize: "12px",
+                      color: "white",
+                      backgroundColor: "var(--neutro)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
                     onClick={() => navigate("/perfil")}
                     disabled={saving}
                   >
@@ -307,24 +385,31 @@ export default function EditarPerfil() {
                   </button>
                   <button
                     type="submit"
-                    style={{padding: '10px 20px', color: 'white', backgroundColor: 'var(--primario)', borderRadius: '8px', cursor: 'pointer'}}
-                    
+                    style={{
+                      padding: "6px 14px",
+                      fontSize: "12px",
+                      color: "white",
+                      backgroundColor: "var(--primario)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
                     disabled={saving}
                   >
                     {saving ? "Guardando..." : "Guardar cambios"}
                   </button>
                 </div>
+
                 {error && (
-                  <div className="mt-3 alert alert-error">
+                  <div className="mt-1 alert alert-error w-full py-2 text-xs">
                     <div>{error}</div>
                   </div>
                 )}
                 {success && (
-                  <div className="mt-3 alert alert-success">
+                  <div className="mt-1 alert alert-success w-full py-2 text-xs">
                     <div>{success}</div>
                   </div>
                 )}
-              </div> */}
+              </div>
             </form>
           </div>
         </div>

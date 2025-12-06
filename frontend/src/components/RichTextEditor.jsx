@@ -93,6 +93,40 @@ turndown.addRule("quillAlignClassOrStyle", {
     return `<${wrapTag} align="${align}">${innerHtml}</${wrapTag}>`;
   },
 });
+function applyFormatOnWholeWords(quill, format, range) {
+  if (!quill || !range) return;
+
+  const fullText = quill.getText(0, quill.getLength());
+  if (!fullText || !fullText.length) return;
+
+  let start = range.index;
+  let end = range.index + range.length;
+
+  // If nothing is selected, treat cursor position as a zero-length selection
+  if (range.length === 0) {
+    start = end = range.index;
+  }
+
+  // Expand to word boundaries: stop at whitespace (space, newline, etc.)
+  while (start > 0 && !/\s/.test(fullText.charAt(start - 1))) {
+    start--;
+  }
+  while (end < fullText.length && !/\s/.test(fullText.charAt(end))) {
+    end++;
+  }
+
+  // Cursor is sitting on whitespace or outside any word
+  if (start === end) return;
+
+  const length = end - start;
+
+  // Toggle the format for the whole word span
+  const current = quill.getFormat(start, length);
+  const isActive = !!current[format];
+
+  quill.formatText(start, length, format, !isActive, "user");
+  quill.setSelection(start, length, "silent");
+}
 
 /* ---------------- List normalization (conservadora) ---------------- */
 function normalizeMarkdownLists(md = "") {
@@ -160,61 +194,98 @@ export default function RichTextEditor({
   const debounceTimerRef = useRef(null);
   const isApplyingExternalChangeRef = useRef(false);
 
-  const modules = useMemo(
-    () => ({
-      toolbar: hideToolbar
-        ? false
-        : {
-            container: [
-              [{ header: [1, 2, 3, false] }],
-              ["bold", "italic", "underline"],
-              [{ list: "ordered" }, { list: "bullet" }],
-              ["link", "image"],
-              ["code-block"],
-              [{ align: [] }],
-              ["clean"],
-            ],
-            handlers: {
-              link: function (value) {
-                const quill = quillRef.current?.getEditor?.();
-                if (!quill) return;
-                const range = quill.getSelection(true);
-                if (value) {
-                  const url = window.prompt("URL del enlace:")?.trim();
-                  if (url && isProbablyUrl(url)) {
-                    if (range && range.length) {
-                      quill.format("link", url);
-                    } else {
-                      quill.insertText(range.index, url, "link", url, "user");
-                      quill.setSelection(range.index + url.length, 0);
-                    }
-                  } else if (url) {
-                    window.alert("URL inválida. Debe comenzar con http(s)://");
+const modules = useMemo(
+  () => ({
+    toolbar: hideToolbar
+      ? false
+      : {
+          container: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link", "image"],
+            ["code-block"],
+            [{ align: [] }],
+            ["clean"],
+          ],
+          handlers: {
+            bold: function () {
+              const quill = quillRef.current?.getEditor?.();
+              if (!quill) return;
+              const range = quill.getSelection(true);
+              applyFormatOnWholeWords(quill, "bold", range);
+            },
+            italic: function () {
+              const quill = quillRef.current?.getEditor?.();
+              if (!quill) return;
+              const range = quill.getSelection(true);
+              applyFormatOnWholeWords(quill, "italic", range);
+            },
+            link: function (value) {
+              const quill = quillRef.current?.getEditor?.();
+              if (!quill) return;
+              const range = quill.getSelection(true);
+              if (value) {
+                const url = window.prompt("URL del enlace:")?.trim();
+                if (url && isProbablyUrl(url)) {
+                  if (range && range.length) {
+                    quill.format("link", url);
+                  } else {
+                    quill.insertText(range.index, url, "link", url, "user");
+                    quill.setSelection(range.index + url.length, 0);
                   }
-                } else {
-                  quill.format("link", false);
-                }
-              },
-              image: function () {
-                const quill = quillRef.current?.getEditor?.();
-                if (!quill) return;
-                const url = window.prompt("URL de la imagen:")?.trim();
-                if (!url) return;
-                if (!isProbablyUrl(url)) {
+                } else if (url) {
                   window.alert("URL inválida. Debe comenzar con http(s)://");
-                  return;
                 }
-                const index = quill.getSelection(true)?.index ?? quill.getLength();
-                quill.insertEmbed(index, "image", url, "user");
-                quill.setSelection(index + 1, 0);
-              },
+              } else {
+                quill.format("link", false);
+              }
+            },
+            image: function () {
+              const quill = quillRef.current?.getEditor?.();
+              if (!quill) return;
+              const url = window.prompt("URL de la imagen:")?.trim();
+              if (!url) return;
+              if (!isProbablyUrl(url)) {
+                window.alert("URL inválida. Debe comenzar con http(s)://");
+                return;
+              }
+              const index = quill.getSelection(true)?.index ?? quill.getLength();
+              quill.insertEmbed(index, "image", url, "user");
+              quill.setSelection(index + 1, 0);
             },
           },
-      clipboard: { matchVisual: true },
-      history: { delay: 400, maxStack: 200, userOnly: true },
-    }),
-    [hideToolbar]
-  );
+        },
+    clipboard: { matchVisual: true },
+    history: { delay: 400, maxStack: 200, userOnly: true },
+
+    // ⬇⬇ NEW: override keyboard shortcuts (Ctrl/Cmd+B, Ctrl/Cmd+I)
+    keyboard: {
+      bindings: {
+        bold: {
+          key: "b",
+          shortKey: true,
+          handler(range, context) {
+            const quill = quillRef.current?.getEditor?.();
+            if (!quill) return;
+            applyFormatOnWholeWords(quill, "bold", range);
+          },
+        },
+        italic: {
+          key: "i",
+          shortKey: true,
+          handler(range, context) {
+            const quill = quillRef.current?.getEditor?.();
+            if (!quill) return;
+            applyFormatOnWholeWords(quill, "italic", range);
+          },
+        },
+      },
+    },
+  }),
+  [hideToolbar]
+);
+
 
   const formats = useMemo(
     () => ["header", "bold", "italic", "underline", "list", "bullet", "link", "image", "code-block", "align"],
