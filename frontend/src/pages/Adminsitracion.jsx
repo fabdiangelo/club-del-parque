@@ -242,7 +242,7 @@ const Administracion = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-white p-4 md:p-8 relative overflow-hidden">
       <div
         className="overflow-hidden"
         style={{
@@ -282,24 +282,34 @@ const Administracion = () => {
                 : "Gestión de reservas de canchas."}
           </p>
         </div>
-        <div className="mb-8" style={{ display: "flex", gap: "1rem" }}>
-          {botones.map((b) => {
-            return (
-              <button
-                key={b.nombre}
-                className={`py-2 px-4 rounded-full ${botonActivo === b.ventana
+        <div
+          className="mb-8 flex flex-wrap gap-2 md:gap-4"
+          style={{
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: '0.5rem',
+          }}
+        >
+          {botones.map((b) => (
+            <button
+              key={b.nombre}
+              className={`flex-1 min-w-[100px] max-w-[160px] py-2 px-4 rounded-full text-sm md:text-base whitespace-nowrap ${
+                botonActivo === b.ventana
                   ? "bg-blue-500 text-white"
                   : "bg-gray-200 text-gray-800"
-                  }`}
-                onClick={() => {
-                  setVentana(b.ventana);
-                  setBotonActivo(b.ventana);
-                }}
-              >
-                {b.nombre}
-              </button>
-            );
-          })}
+              }`}
+              onClick={() => {
+                setVentana(b.ventana);
+                setBotonActivo(b.ventana);
+              }}
+              style={{
+                maxWidth: '160px',
+                flexBasis: '0',
+              }}
+            >
+              {b.nombre}
+            </button>
+          ))}
         </div>
         {ventana === "administracion" ? (
           <>
