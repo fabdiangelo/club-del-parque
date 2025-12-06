@@ -320,14 +320,14 @@ export default function NoticiaDetalle() {
   }
 
   return (
-    <div className="min-h-dvh w-full flex flex-col text-neutral-900" style={{ backgroundColor: PAGE_BG }}>
+    <div className="min-h-dvh w-full flex flex-col text-neutral-900 bg-gray-100">
       <NavbarBlanco />
-
+<br/>
       <section className="relative">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-10 md:py-14">
           <Link
             to="/noticias"
-            className="mb-6 inline-block rounded-full px-4 py-1.5 text-sm border border-neutral-200 hover:bg-neutral-50"
+            className="mb-6 inline-block rounded-full px-4 py-1.5 text-sm border border-neutral-200 hover:bg-neutral-200 bg-neutral-100"
           >
             ← Volver a Noticias
           </Link>
@@ -339,39 +339,29 @@ export default function NoticiaDetalle() {
             {noticia.titulo || "Título"}
           </h1>
 
-          <Carousel images={images} title={noticia?.titulo} />
-
+<div className="mt-6 max-w-4xl mx-auto">
+  <Carousel images={images} title={noticia?.titulo} />
+</div>
           {/* Contenido ancho cómodo, sin sidebar */}
           <div
             className="mt-8 transition-opacity duration-700"
             style={{ opacity: ready ? 1 : 0 }}
           >
-            <article className="rounded-2xl p-6 border border-neutral-200" style={{ backgroundColor: CARD_BG }}>
-              <div
-                className="
-                  prose prose-lg md:prose-xl max-w-[85ch]
-                  prose-headings:text-neutral-900
-                  prose-p:text-neutral-800
-                  prose-strong:text-neutral-900
-                  prose-blockquote:text-neutral-700
-                  prose-li:text-neutral-800
-                  prose-a:text-sky-700 hover:prose-a:text-sky-600
-                  prose-img:rounded-xl prose-img:mx-auto
-                  prose-code:text-neutral-900
-                  leading-relaxed
-                "
-                style={{ overflowWrap: "anywhere", wordBreak: "break-word", marginInline: "auto" }}
-              >
-                <RichTextEditor
-                  valueMarkdown={mdForView || "*Sin contenido*"}
-                  readOnly
-                  hideToolbar
-                  transparent
-                  autoHeight
-                  className="!rounded-none !overflow-visible"
-                />
-              </div>
-            </article>
+<article
+  className="rounded-2xl border border-neutral-200 bg-white"
+>
+  <div className="p-6">
+    <RichTextEditor
+      valueMarkdown={mdForView || "*Sin contenido*"}
+      readOnly
+      hideToolbar
+      transparent
+      autoHeight
+      className="!rounded-none !overflow-visible w-full"
+    />
+  </div>
+</article>
+
           </div>
         </div>
       </section>
