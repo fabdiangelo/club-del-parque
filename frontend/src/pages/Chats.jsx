@@ -551,56 +551,68 @@ const Chats = () => {
       console.error("Error al abrir o crear chat por userId", error);
     }
   };
+const dedupeByUser = (list) => {
+  const map = new Map();
+  list.forEach((u) => {
+    const key =
+      (u.uid && `uid:${u.uid}`) ||
+      (u.email && `email:${String(u.email).toLowerCase()}`) ||
+      (u.id && `id:${u.id}`);
 
-  const cargarUsuarios = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuarios`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      if (!response.ok) {
-        console.log(response.text());
-        throw new Error("Error cargando usuarios");
-      }
-
-      const data = await response.json();
-      const dataFiltrada = data
-        .map((d) => {
-          if (d.id != user?.uid) {
-            return { ...d, uid: d.id };
-          }
-        })
-        .filter(Boolean);
-
-      const noRepetirChats = dataFiltrada
-        .map((d) => {
-          console.log(chats);
-
-          if (!chats || chats.length === 0) {
-            return d;
-          }
-          chats.map((c) => {
-            if (
-              (c.participantes[0]?.uid === user.uid &&
-                c.participantes[1]?.uid === d.id) ||
-              (c.participantes[0]?.uid === d.id &&
-                c.participantes[1]?.uid === user.uid)
-            ) {
-              return null;
-            }
-            return d;
-          });
-        })
-        .filter(Boolean);
-      setUsuarios(noRepetirChats);
-    } catch (error) {
-      throw error;
+    if (!key) return;
+    if (!map.has(key)) {
+      map.set(key, u);
     }
-  };
+  });
+  return Array.from(map.values());
+};
+
+const cargarUsuarios = async () => {
+  if (!user?.uid) return;
+
+  try {
+    const API_URL = import.meta.env.VITE_BACKEND_URL;
+
+    const res = await fetch(`${API_URL}/api/usuarios/federados`, {
+      method: "GET",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) {
+      console.error("Error cargando federados/admins:", await res.text());
+      return;
+    }
+
+    const data = await res.json();
+
+    // 1) dedupe por uid/email/id
+    const dataDeduped = dedupeByUser(data);
+
+    // 2) no mostrarme a mí
+    const candidatos = dataDeduped
+      .filter((u) => u.id !== user.uid && u.uid !== user.uid)
+      .map((u) => ({ ...u, uid: u.uid || u.id }));
+
+    // 3) opcional: no mostrar gente con la que ya tengo chat
+    const sinChat = candidatos.filter((u) => {
+      return !chats.some((c) => {
+        if (!c.participantes) return false;
+        const p1 = c.participantes[0]?.uid;
+        const p2 = c.participantes[1]?.uid;
+        return (
+          (p1 === user.uid && p2 === u.uid) ||
+          (p2 === user.uid && p1 === u.uid)
+        );
+      });
+    });
+
+    setUsuarios(sinChat);
+  } catch (error) {
+    console.error("Error cargando usuarios/federados:", error);
+  }
+};
+
 
   useEffect(() => {
     if (!user?.uid) return;
