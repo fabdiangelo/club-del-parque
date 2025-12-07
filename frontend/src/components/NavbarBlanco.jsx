@@ -268,7 +268,7 @@ export default function NavbarBlanco({ transparent = false }) {
                       : transparent
                         ? isScrolled
                           ? "black"
-                          : "black"
+                          : "white"
                         : "black"
                   }
                 />
