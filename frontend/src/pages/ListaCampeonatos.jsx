@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthProvider";
 import { Link } from "react-router-dom";
+import Footer from "../components/Footer";
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
 import CampeonatoData from "../components/campeonato/CampeonatoData";
 
@@ -28,6 +29,17 @@ export default function ListaCampeonatos() {
     load();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
+          <p className="mt-4 text-lg">Cargando campeonatos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-dvh w-full bg-base-200 text-base-content flex flex-col bg-white">
       <NavbarBlanco />
@@ -47,9 +59,7 @@ export default function ListaCampeonatos() {
 
 
 
-          {loading && (
-            <p style={{ color: 'black' }} className="mt-4 text-sm opacity-70">Cargando campeonatos…</p>
-          )}
+
           {fetchError && !loading && (
             <p className="mt-4 text-sm text-error" style={{ color: 'black' }}>
               No se pudieron cargar los campeonatos ({fetchError}).
@@ -86,6 +96,9 @@ export default function ListaCampeonatos() {
           )}
         </div>
       </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

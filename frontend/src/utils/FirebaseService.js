@@ -1,16 +1,16 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, connectDatabaseEmulator } from "firebase/database";
-import {getMessaging} from "firebase/messaging";
+import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB4NP1YYRd_Ubt8UIhCRkHEnlbmk5kVouI",
-  authDomain: "club-del-parque-8ec2a.firebaseapp.com",
-  databaseURL: "https://club-del-parque-8ec2a-default-rtdb.firebaseio.com",
-  projectId: "club-del-parque-8ec2a",
-  storageBucket: "club-del-parque-8ec2a.firebasestorage.app",
-  messagingSenderId: "92425973252",
-  appId: "1:92425973252:web:b2c14417addd27874f8f51",
-  measurementId: "G-J59F487H2N"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 

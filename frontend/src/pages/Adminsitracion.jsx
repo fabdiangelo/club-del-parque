@@ -216,10 +216,10 @@ const Administracion = () => {
   }
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
+          <p className="mt-4 text-lg">Cargando dashboard...</p>
         </div>
       </div>
     );
@@ -293,11 +293,10 @@ const Administracion = () => {
           {botones.map((b) => (
             <button
               key={b.nombre}
-              className={`flex-1 min-w-[100px] max-w-[160px] py-2 px-4 rounded-full text-sm md:text-base whitespace-nowrap ${
-                botonActivo === b.ventana
+              className={`flex-1 min-w-[100px] max-w-[160px] py-2 px-4 rounded-full text-sm md:text-base whitespace-nowrap ${botonActivo === b.ventana
                   ? "bg-blue-500 text-white"
                   : "bg-gray-200 text-gray-800"
-              }`}
+                }`}
               onClick={() => {
                 setVentana(b.ventana);
                 setBotonActivo(b.ventana);
