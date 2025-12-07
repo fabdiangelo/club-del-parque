@@ -17,10 +17,14 @@ export default class CerrarCampeonatoYAsignarPuntos {
 
   puntos(camp, pos) {
     const tabla = camp?.puntosPorPosicion || DEFAULT_TABLA;
-    if (tabla?.[String(pos)] != null) return Number(tabla[String(pos)]);
-    const posiciones = Object.keys(DEFAULT_TABLA).map(Number).sort((a, b) => a - b);
+    const posStr = String(pos);
+    if (Object.prototype.hasOwnProperty.call(tabla, posStr)) {
+      return Number(tabla[posStr]);
+    }
+    // Si la posición es mayor al máximo definido, usar el último valor de la tabla
+    const posiciones = Object.keys(tabla).map(Number).sort((a, b) => a - b);
     if (posiciones.length && Number(pos) > Math.max(...posiciones)) {
-      return Number(DEFAULT_TABLA[posiciones[posiciones.length - 1]]) || 0;
+      return Number(tabla[String(posiciones[posiciones.length - 1])]) || 0;
     }
     return 0;
   }
@@ -166,13 +170,13 @@ export default class CerrarCampeonatoYAsignarPuntos {
         (r.genero ? String(r.genero).toLowerCase() === String(genero).toLowerCase() : true)
       );
       let prevPuntos = ranking ? ranking.puntos : 0;
-      let nuevoPuntos = prevPuntos + pts;
       // Calcular partidos ganados/perdidos en el campeonato
       const ganados = partidosStats[fc.federadoID]?.ganados || 0;
       const perdidos = partidosStats[fc.federadoID]?.perdidos || 0;
       if (ranking) {
         const nuevosGanados = (ranking.partidosGanados || 0) + ganados;
         const nuevosPerdidos = (ranking.partidosPerdidos || 0) + perdidos;
+        const nuevoPuntos = prevPuntos + pts;
         await repo.update(ranking.id, {
           puntos: nuevoPuntos,
           partidosGanados: nuevosGanados,
@@ -218,7 +222,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
             deporte: camp.deporte,
             genero,
             tipoDePartido,
-            puntos: nuevoPuntos,
+            puntos: pts, // CORREGIDO: usar pts directamente
             partidosGanados: ganados,
             partidosPerdidos: perdidos,
             partidosAbandonados: 0,
@@ -226,7 +230,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
             updatedAt: new Date().toISOString(),
           };
           await repo.save(model);
-          console.log(`[Ranking] Jugador ${fc.federadoID} (${genero}) creado: ${nuevoPuntos} puntos, ganados: ${ganados}, perdidos: ${perdidos}. [${tipoDePartido}]`);
+          console.log(`[Ranking] Jugador ${fc.federadoID} (${genero}) creado: ${pts} puntos, ganados: ${ganados}, perdidos: ${perdidos}. [${tipoDePartido}]`);
         }
       }
     }

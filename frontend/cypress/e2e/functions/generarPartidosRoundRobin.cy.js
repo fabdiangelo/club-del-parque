@@ -25,7 +25,7 @@ export const generarPartidosRoundRobin = (email = '', contraseña = '', nombre, 
     .contains('VER MÁS')
     .click({ force: true });
   cy.wait('@getCampeonato', { timeout: 40000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
-  cy.wait(20000);
+  cy.wait(10000);
 
   cy.get('body', { timeout: 60000 }).then($body => {
     const botones = $body.find('button[title="Ir al partido"]');
@@ -41,7 +41,7 @@ export const generarPartidosRoundRobin = (email = '', contraseña = '', nombre, 
       cy.url({ timeout: 60000 }).should('include', '/partido/');
       cy.wait('@getReservas', { timeout: 60000 });
 
-      cy.wait(30000);
+      cy.wait(15000);
       cy.get('body', { timeout: 60000 }).then($body2 => {
         const existeGenerarPropuesta = $body2.text().includes('Generar Propuesta');
         const existeAceptarPropuesta = $body2.text().includes('Aceptar Propuesta');

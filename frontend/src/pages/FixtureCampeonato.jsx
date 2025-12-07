@@ -186,88 +186,89 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
 
   const userGrupo = grupos?.find(grupo =>
     grupo.jugadores?.some(jugador => (
-      // Support dobles: jugador may be an equipo with players array
       (jugador?.id && jugador.id === user?.uid) ||
-      (Array.isArray(jugador?.players) && jugador.players.some(p => p.id === user?.uid)) ||
-      jugador?.id === user?.uid
+      (Array.isArray(jugador?.players) && jugador.players.some(p => p.id === user?.uid))
     ))
   );
 
   return (
-    < >
-    
-
-      <h3 style={{ zIndex: '30', width: '100%', marginTop: '', position: 'sticky', top: '3rem' }} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
-        Round Robin
-        <br />
-        <label className='label'>
-          {new Date(fechaInicio).toLocaleDateString()} - {fechaFinEtapa.toLocaleDateString()}
-        </label>
-      </h3>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {grupos?.map((grupo, idx) => (
-          <div key={idx} className="bg-gray-800 text-white rounded-xl shadow-xl overflow-hidden">
-            <div className="bg'white px-6 py-4">
-              <h3 className="text-xl font-bold " style={{ color: 'var(--primario)' }}>{grupo.nombre}</h3>
-            </div>
-            <div className="p-6">
-              <div className="flex text-sm font-semibold mb-3 px-3 text-cyan-300">
-                <span className="flex-1">Jugador</span>
-                  <span className="w-20 text-center">G | P</span>
-                <span className="w-16 text-center">Puntos</span>
+      <>
+        <h3 style={{ zIndex: '30', width: '100%', marginTop: '', position: 'sticky', top: '3rem' }} className="bg-white text-center font-bold text-gray-800 text-lg uppercase tracking-wide sticky bg-white z-10 pb-8 pt-8">
+          Round Robin
+          <br />
+          <label className='label'>
+            {new Date(fechaInicio).toLocaleDateString()} - {fechaFinEtapa.toLocaleDateString()}
+          </label>
+        </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {grupos?.map((grupo, idx) => (
+            <div key={idx} className="bg-gray-800 text-white rounded-xl shadow-xl overflow-hidden">
+              <div className="bg'white px-6 py-4">
+                <h3 className="text-xl font-bold " style={{ color: 'var(--primario)' }}>{grupo.nombre}</h3>
               </div>
-              {grupo.jugadores?.sort((a, b) => b.puntos - a.puntos).map((jugador, jIdx) => (
-                <div key={jIdx}>
-                  {jugador ? (
-                    // If dobles, jugador may be an equipo with players array
-                    Array.isArray(jugador.players) ? (
-                      <div className={(jugador.players.some(p => p.id === user?.uid) ? "hover:bg-gray-500 bg-gray-600 " : "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}>
-                        <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                          {(jugador.players[0]?.nombre || jugador.players[1]?.nombre || '?').charAt(0)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-white truncate">
-                            {dobles ?
-                              jugador.players.map((p, idx) => (
-                                <span key={idx}>{p?.nombre || 'Por definir'}{idx === 0 && dobles ? ' / ' : ''}</span>
-                              ))
-                              :
-                              <span key={idx}>{jugador.players[0]?.nombre || 'Por definir'}</span>
-                            }
-                            {jugador.players.some(p => p.id === user?.uid) && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}
+              <div className="p-6">
+                <div className="flex text-sm font-semibold mb-3 px-3 text-cyan-300">
+                  <span className="flex-1">Jugador</span>
+                  <span className="w-20 text-center">G | P</span>
+                  <span className="w-16 text-center">Puntos</span>
+                </div>
+                {grupo.jugadores?.sort((a, b) => b.puntos - a.puntos).map((jugador, jIdx) => (
+                  <div key={jIdx}>
+                    {jugador ? (
+                      // Si dobles, jugador es equipo con players array
+                      Array.isArray(jugador.players) ? (
+                        <div className={(jugador.players.every(p => p?.id) && jugador.players.some(p => p.id === user?.uid) ? "hover:bg-gray-500 bg-gray-600 " : "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}>
+                          <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                            {(jugador.players[0]?.nombre || jugador.players[1]?.nombre || '?').charAt(0)}
                           </div>
-                        </div>
-                        {user && !jugador.players.some(p => p.id === user?.uid) && grupo.jugadores.some(j => Array.isArray(j.players) && j.players.some(p => p.id === user?.uid)) && (
-                          <button
-                            onClick={() => {
-                              // Navegar a la página del partido donde participa este equipo con el usuario.
-                              const slotIndex = jIdx;
-                              // encontrar slot del usuario en el mismo grupo
-                              const userSlotIndex = (grupo.jugadores || []).findIndex(s => Array.isArray(s.players) ? s.players.some(p => p.id === user?.uid) : s.id === user?.uid);
-                              // Preferir partido donde el otro lado incluye el usuario
-                              let found = null;
-                              if (userSlotIndex !== -1) {
-                                found = (grupo.partidos || []).find(p => (p.jugador1Index === slotIndex && p.jugador2Index === userSlotIndex) || (p.jugador2Index === slotIndex && p.jugador1Index === userSlotIndex));
+                          <div className="flex-1">
+                            <div className="font-medium text-white truncate flex items-center">
+                              {dobles ?
+                                jugador.players.map((p, idx) => (
+                                  <span key={idx} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    {p?.nombre || 'Por definir'}{idx === 0 && dobles ? ' / ' : ''}
+                                  </span>
+                                ))
+                                :
+                                <span key={jIdx}>{jugador.players[0]?.nombre || 'Por definir'}</span>
                               }
-                              // fallback: cualquier partido que incluya el slot
-                              if (!found) found = (grupo.partidos || []).find(p => p.jugador1Index === slotIndex || p.jugador2Index === slotIndex);
-                              if (found && etapaId) {
-                                const fullId = `${etapaId}-${grupo.id}-${found.id}`;
-                                navigate(`/partido/${fullId}`);
-                              }
-                            }}
-                            className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
-                            title="Ir al partido"
-                          >
-                            <CalendarSearch className="w-4 h-4" />
-                          </button>
-                        )}
+                              {jugador.players.some(p => p.id === user?.uid) && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}
+                              {/* Mostrar botón solo junto al equipo rival contra el que el usuario debe jugar */}
+                              {user && dobles && Array.isArray(jugador.players) && jugador.players.every(pp => pp?.id) && !jugador.players.some(pp => pp.id === user?.uid) && (
+                                (() => {
+                                  // Buscar el equipo propio
+                                  const miEquipoIdx = grupo.jugadores.findIndex(eq => Array.isArray(eq.players) && eq.players.every(p => p?.id) && eq.players.some(p => p.id === user?.uid));
+                                  if (miEquipoIdx === -1) return null;
+                                  // Buscar partido entre este equipo y el equipo propio
+                                  const partido = (grupo.partidos || []).find(p =>
+                                    (p.jugador1Index === miEquipoIdx && p.jugador2Index === jIdx) ||
+                                    (p.jugador2Index === miEquipoIdx && p.jugador1Index === jIdx)
+                                  );
+                                  if (partido) {
+                                    return (
+                                      <button
+                                        onClick={() => {
+                                          navigate(`/partido/${partido.id}`);
+                                        }}
+                                        className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
+                                        title="Ir al partido"
+                                      >
+                                        <CalendarSearch className="w-4 h-4" />
+                                      </button>
+                                    );
+                                  }
+                                  return null;
+                                })()
+                              )}
+                            </div>
+                          </div>
+                          {/* ...existing code for stats and points... */}
                           <span className="w-20 text-center text-sm">
                             {jugador.ganados ?? jugador.gj ?? 0} | {jugador.perdidos ?? jugador.gp ?? 0}
                           </span>
-                        <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos || ''}</span>
-                      </div>
-                    ) : jugador.id ? (
+                          <span className="w-16 text-center font-bold text-cyan-400">{jugador.puntos || ''}</span>
+                        </div>
+                      ) : jugador.id ? (
                       <div
                         className={(jugador?.id == user?.uid ? "hover:bg-gray-500 bg-gray-600 " : "hover:bg-gray-600 bg-gray-700 ") + "flex items-center rounded-lg px-3 py-3 mb-2 transition-colors"}
                       >
@@ -276,27 +277,32 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
                         </div>
                         <span className="flex-1 font-medium">{jugador.nombre} {jugador.id == user?.uid && (<span className='text-cyan-500 ml-2 font-bold'>Tú</span>)}</span>
                         {user && jugador.id !== user?.uid && grupo.jugadores.filter(j => j.id == user?.uid).length > 0 && (
-                          <button
-                            onClick={() => {
-                              const slotIndex = jIdx;
-                              const userSlotIndex = (grupo.jugadores || []).findIndex(s => Array.isArray(s.players) ? s.players.some(p => p.id === user?.uid) : s.id === user?.uid);
-                              let found = null;
-                              if (userSlotIndex !== -1) {
-                                found = (grupo.partidos || []).find(p => (p.jugador1Index === slotIndex && p.jugador2Index === userSlotIndex) || (p.jugador2Index === slotIndex && p.jugador1Index === userSlotIndex));
-                              }
-                              if (!found) {
-                                // legacy: match by explicit jugador1Id/jugador2Id
-                                found = (grupo.partidos || []).find(p => p.jugador1Index === slotIndex || p.jugador2Index === slotIndex || (p.jugador1Id === jugador.id || p.jugador2Id === jugador.id));
-                              }
-                              if (found && etapaId) {
-                                navigate(`/partido/${found.id}`);
-                              }
-                            }}
-                            className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
-                            title="Ir al partido"
-                          >
-                            <CalendarSearch className="w-4 h-4" />
-                          </button>
+                          (() => {
+                            const slotIndex = jIdx;
+                            const userSlotIndex = (grupo.jugadores || []).findIndex(s => Array.isArray(s.players) ? s.players.some(p => p.id === user?.uid) : s.id === user?.uid);
+                            let found = null;
+                            if (userSlotIndex !== -1) {
+                              found = (grupo.partidos || []).find(p => (p.jugador1Index === slotIndex && p.jugador2Index === userSlotIndex) || (p.jugador2Index === slotIndex && p.jugador1Index === userSlotIndex));
+                            }
+                            if (!found) {
+                              found = (grupo.partidos || []).find(p => p.jugador1Index === slotIndex || p.jugador2Index === slotIndex || (p.jugador1Id === jugador.id || p.jugador2Id === jugador.id));
+                            }
+                            // Solo mostrar si ambos jugadores están definidos
+                            if (found && etapaId && jugador.id && grupo.jugadores[userSlotIndex]?.id) {
+                              return (
+                                <button
+                                  onClick={() => {
+                                    navigate(`/partido/${found.id}`);
+                                  }}
+                                  className="ml-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg"
+                                  title="Ir al partido"
+                                >
+                                  <CalendarSearch className="w-4 h-4" />
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()
                         )}
                           <span className="w-20 text-center text-sm">
                             {jugador.ganados ?? jugador.gj ?? 0} | {jugador.perdidos ?? jugador.gp ?? 0}

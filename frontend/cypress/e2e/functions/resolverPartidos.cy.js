@@ -32,7 +32,7 @@ export const resolverPartidos = (email = '', contraseña = '') => {
       cy.wrap(links[i], { timeout: 40000 }).click({ force: true });
       cy.wait('@getPartido', { timeout: 40000 });
       cy.url({ timeout: 40000 }).should('include', '/partidos/');
-      cy.wait(40000);
+      cy.wait(30000);
 
       cy.get('body', { timeout: 60000 }).then($body => {
         const existeProponer = $body.text().includes('Proponer resultado');
@@ -46,7 +46,7 @@ export const resolverPartidos = (email = '', contraseña = '') => {
           cy.go('back');
           cy.url({ timeout: 40000 }).should('include', '/resultados');
           cy.wait('@getPartidos', { timeout: 40000 });
-          cy.wait(30000);
+          cy.wait(1000);
           procesar(i + 1);
 
         } else if (existeAceptar){
@@ -57,13 +57,13 @@ export const resolverPartidos = (email = '', contraseña = '') => {
           cy.go('back');
           cy.url({ timeout: 40000 }).should('include', '/resultados');
           cy.wait('@getPartidos', { timeout: 40000 });
-          cy.wait(30000);
+          cy.wait(1000);
           procesar(i);
         } else {
           cy.go('back');
           cy.url({ timeout: 40000 }).should('include', '/resultados');
           cy.wait('@getPartidos', { timeout: 40000 });
-          cy.wait(30000);
+          cy.wait(1000);
           procesar(i + 1);
         }
       });

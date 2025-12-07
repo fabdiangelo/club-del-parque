@@ -45,6 +45,34 @@ const Partido = () => {
         return usuarios.find(u => u.id === userId || u.uid === userId || u.email === userId);
     }
 
+    const getEquipo = (key) => {
+        if (!partido) return [];
+        let arr = partido[key];
+        if (!arr) return [];
+        if (!Array.isArray(arr)) arr = [arr];
+        return arr.map(j => {
+            if (typeof j === 'object' && j.nombre) return j;
+            const id = typeof j === 'string' ? j : (j?.id || j?.uid || j?.usuarioId || '');
+            return usuarios.find(u => (u?.uid || u?.id || u?.email) === id || u?.id === id) || { id };
+        });
+    };
+
+    const displayEquipo = (key) => {
+        const equipo = getEquipo(key);
+        return equipo.map(j => j?.nombre || j?.displayName || j?.email || 'Por definir').join(' / ');
+    };
+
+    // Helper para mostrar nombre de jugador (objeto o id)
+    const displayName = (elem) => {
+        if (!elem) return '';
+        if (typeof elem === 'object' && elem.nombre) return elem.nombre;
+        if (typeof elem === 'string') {
+            const u = usuarios.find(u => (u?.uid || u?.id || u?.email) === elem || u?.id === elem);
+            return u?.nombre || u?.displayName || u?.email || elem;
+        }
+        return '';
+    };
+
     // Normalize an array that can contain either string ids or objects like { id, nombre }
     const normalizeIds = (arr) => {
         if (!Array.isArray(arr)) return [];
@@ -62,16 +90,16 @@ const Partido = () => {
         return u?.nombre || u?.name || u?.displayName || u?.nombreCompleto || '';
     }
 
-    // Given an element that may be an id string or an object, resolve a display name
-    const displayName = (elem) => {
-        if (!elem) return '';
-        if (typeof elem === 'string') return getNombreForId(elem) || elem;
-        if (typeof elem === 'object') {
-            const id = elem.id || elem.uid || elem.usuarioId || '';
-            return elem.nombre || elem.name || getNombreForId(id) || id;
-        }
-        return String(elem);
-    }
+    // // Given an element that may be an id string or an object, resolve a display name
+    // const displayName = (elem) => {
+    //     if (!elem) return '';
+    //     if (typeof elem === 'string') return getNombreForId(elem) || elem;
+    //     if (typeof elem === 'object') {
+    //         const id = elem.id || elem.uid || elem.usuarioId || '';
+    //         return elem.nombre || elem.name || getNombreForId(id) || id;
+    //     }
+    //     return String(elem);
+    // }
 
     const fetchAllReservas = async() => {
         try {
@@ -518,6 +546,8 @@ useEffect(() => {
         if (!partido || !user) return false;
         const userId = user?.uid || user?.id || '';
         const jugadorIds = normalizeIds(partido.jugadores);
+        console.log("Comprobando si user es jugador:", userId, jugadorIds);
+        console.log("Partido:", jugadorIds.includes(userId));
         if (jugadorIds.includes(userId)) return true;
         // check jugador1Id / jugador2Id
         if (partido.jugador1Id && partido.jugador1Id === userId) return true;
@@ -647,8 +677,8 @@ useEffect(() => {
 
 
 
-                    <div className="equipos-vs-flex" style={{ display: 'flex', flexDirection: 'row', gap: 'clamp(20px, 5vw, 50px)', alignItems: 'center', flex: 1, justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
-                        {/* Equipo 1 - viene de la izquierda */}
+                    <div className="equipos-vs-flex custom-equipos-row">
+                        {/* Equipo Azul */}
                         <div className="player-circle-left">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
@@ -660,7 +690,7 @@ useEffect(() => {
                                         overflow: 'hidden',
                                         border: '3px solid #0D8ABC',
                                         background: 'linear-gradient(135deg, #0D8ABC, #1e90ff)',
-                                        boxShadow: '0 8px 25px rgba(13, 138, 188, 0.3)',
+                                        boxShadow: '0 8px 25px rgba(0, 138, 188, 0.3)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -671,16 +701,16 @@ useEffect(() => {
                                         padding: '10px'
                                     }}
                                 >
-                                    <div>{displayName(partido?.equipoLocal?.[0]) || 'Jugador 1'}</div>
-                                    <div>{displayName(partido?.equipoLocal?.[1]) || 'Jugador 2'}</div>
+                                    {getEquipo('equipoLocal').map((j, idx) => <div key={idx}>{displayName(j)}</div>)}
                                 </div>
                                 <p className="player-info" style={{ fontSize: 'clamp(0.9rem, 2vw, 1.3rem)', fontWeight: 'bold', color: '#333' }}>
                                     Equipo Azul
                                 </p>
                             </div>
                         </div>
-                        <div className="vs-text" style={{fontSize: 'clamp(1.5rem, 5vw, 2rem)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%'}}>VS</div>
-
+                        {/* VS */}
+                        <div className="vs-text" style={{fontSize: 'clamp(1.5rem, 5vw, 2rem)', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px'}}>VS</div>
+                        {/* Equipo Rojo */}
                         <div className="player-circle-right">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
@@ -703,8 +733,7 @@ useEffect(() => {
                                         padding: '10px'
                                     }}
                                 >
-                                    <div>{displayName(partido?.equipoVisitante?.[0]) || 'Jugador 3'}</div>
-                                    <div>{displayName(partido?.equipoVisitante?.[1]) || 'Jugador 4'}</div>
+                                    {getEquipo('equipoVisitante').map((j, idx) => <div key={idx}>{displayName(j)}</div>)}
                                 </div>
                                 <p className="player-info" style={{ fontSize: 'clamp(0.9rem, 2vw, 1.3rem)', fontWeight: 'bold', color: '#333' }}>
                                     Equipo Rojo
@@ -712,6 +741,90 @@ useEffect(() => {
                             </div>
                         </div>
                     </div>
+                    <style>{`
+                        .custom-equipos-row {
+                            display: flex;
+                            flex-direction: row;
+                            gap: clamp(20px, 5vw, 50px);
+                            align-items: center;
+                            flex: 1;
+                            justify-content: center;
+                            width: 100%;
+                            flex-wrap: wrap;
+                        }
+                        @media (max-width: 600px) {
+                            .custom-equipos-row {
+                                flex-direction: column !important;
+                                gap: 16px !important;
+                                align-items: stretch !important;
+                            }
+                            .player-circle-left, .player-circle-right {
+                                width: 100% !important;
+                                display: flex;
+                                justify-content: center;
+                            }
+                            .vs-text {
+                                margin: 12px 0 !important;
+                                display: flex !important;
+                                align-items: center !important;
+                                justify-content: center !important;
+                                width: 100% !important;
+                            }
+                        }
+                    `}</style>
+                    <br />
+                    {/* Mostrar mensaje y botón si no hay propuestas y el usuario es jugador (dobles) */}
+                    {(!partido?.disponibilidades?.propuestas || partido.disponibilidades.propuestas.length === 0) && comprobarSiUserEsJugador() && (
+                        <div className='text-center my-5 intro-text'>
+                            <p>Todavía no se ha generado ninguna propuesta.</p>
+                            <button
+                                style={{
+                                    cursor: 'pointer',
+                                    marginTop: '10px',
+                                    padding: '10px 20px',
+                                    backgroundColor: 'var(--primario)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                }}
+                                onClick={() => setModalReserva(true)}
+                            >
+                                Generar Propuesta
+                            </button>
+                        </div>
+                    )}
+                    {/* Botón de chat para dobles */}
+                    {comprobarSiUserEsJugador() && (
+                        <div className='text-center my-5 intro-text'>
+                            <p>O inicia un chat para coordinar fechas</p>
+                            <button
+                                style={{
+                                    cursor: 'pointer',
+                                    marginTop: '10px',
+                                    padding: '10px 20px',
+                                    backgroundColor: 'var(--primario)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                }}
+                                onClick={() => {
+                                    let contrincanteId = null;
+                                    if (usuariosParticipantes && usuariosParticipantes.length > 0) {
+                                        if (user?.uid === usuariosParticipantes[0]?.id || user?.id === usuariosParticipantes[0]?.id) {
+                                            contrincanteId = usuariosParticipantes[1]?.id;
+                                        } else {
+                                            contrincanteId = usuariosParticipantes[0]?.id;
+                                        }
+                                    }
+                                    if (contrincanteId) {
+                                        navigate(`/chats/${contrincanteId}`);
+                                    }
+                                }}
+                            >
+                                <MessageSquare />
+                            </button>
+                        </div>
+                    )}
 
 
                     {/* Panel de estadísticas para dobles */}
@@ -844,7 +957,7 @@ useEffect(() => {
                                         overflow: 'hidden',
                                         border: '3px solid #0D8ABC',
                                         background: 'linear-gradient(135deg, #0D8ABC, #1e90ff)',
-                                        boxShadow: '0 8px 25px rgba(13, 138, 188, 0.3)',
+                                        boxShadow: '0 8px 25px rgba(0, 138, 188, 0.3)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -892,6 +1005,64 @@ useEffect(() => {
                         </div>
                     </div>
 
+                    {/* Sección propuesta/chat en fila separada */}
+                    {partido && esDobles && (
+  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '32px', gap: '16px' }}>
+    {((!partido?.disponibilidades?.propuestas || partido.disponibilidades.propuestas.length === 0) && comprobarSiUserEsJugador()) && (
+      <div className='text-center intro-text'>
+        <p>Todavía no se ha generado ninguna propuesta.</p>
+        <button
+          style={{
+            cursor: 'pointer',
+            marginTop: '10px',
+            padding: '10px 20px',
+            backgroundColor: 'var(--primario)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+          }}
+          onClick={() => setModalReserva(true)}
+        >
+          Generar Propuesta
+        </button>
+      </div>
+    )}
+    {comprobarSiUserEsJugador() && (
+      <div className='text-center intro-text'>
+        <p>O inicia un chat para coordinar fechas</p>
+        <button
+          style={{
+            cursor: 'pointer',
+            marginTop: '10px',
+            padding: '10px 20px',
+            backgroundColor: 'var(--primario)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+          }}
+          onClick={() => {
+            let contrincanteId = null;
+            if (usuariosParticipantes && usuariosParticipantes.length > 0) {
+              if (user?.uid === usuariosParticipantes[0]?.id || user?.id === usuariosParticipantes[0]?.id) {
+                contrincanteId = usuariosParticipantes[1]?.id;
+              } else {
+                contrincanteId = usuariosParticipantes[0]?.id;
+              }
+            }
+            if (contrincanteId) {
+              navigate(`/chats/${contrincanteId}`);
+            }
+          }}
+        >
+          <MessageSquare />
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
+                    {/* Mensaje y botón de propuesta para singles */}
+                    
 
 
                     {
@@ -950,7 +1121,7 @@ useEffect(() => {
                             </h3>
 
                             <div style={{display: 'flex', gap: '20px', width: '100%', flexWrap: 'wrap', justifyContent: 'center'}}>
-{(partido.disponibilidades.propuestas || []).map((propuesta) => {
+{(partido?.disponibilidades?.propuestas || []).map((propuesta) => {
                                 const deriveEquipoLocalIds = () => {
                                     if (!partido) return [];
                                     if (Array.isArray(partido.equipoLocal) && partido.equipoLocal.length) return normalizeIds(partido.equipoLocal);
@@ -991,33 +1162,31 @@ useEffect(() => {
 
                             
                         </div>
-                    ) : (
-                        comprobarSiUserEsJugador() && (
-                            obtenerPosicionUsuario() === 'local' || obtenerPosicionUsuario() === 'visitante' ? (
-                                <div className='text-center my-5 intro-text'>
-                                    <p>Todavía no se ha generado ninguna propuesta.</p>
-                                    <button
-                                        style={{
-                                            cursor: 'pointer',
-                                            marginTop: '10px',
-                                            padding: '10px 20px',
-                                            backgroundColor: 'var(--primario)',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '5px',
-                                        }}
-                                        onClick={() => setModalReserva(true)}
-                                    >
-                                        Generar Propuesta
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className='text-center'>
-                                    
-                                </div>
-                            )
-                        ) 
-                    )}
+                     ) : (
+        comprobarSiUserEsJugador() ? (
+            <div className='text-center my-5 intro-text'>
+                <p>Todavía no se ha generado ninguna propuesta.</p>
+                <button
+                    style={{
+                        cursor: 'pointer',
+                        marginTop: '10px',
+                        padding: '10px 20px',
+                        backgroundColor: 'var(--primario)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                    }}
+                    onClick={() => setModalReserva(true)}
+                >
+                    Generar Propuesta
+                </button>
+            </div>
+        ) : (
+            <div className='text-center'>
+                {/* No mostrar nada si no es participante */}
+            </div>
+        )
+    )}
                             </div>
                         )
                     }
