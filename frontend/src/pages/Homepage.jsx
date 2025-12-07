@@ -36,6 +36,13 @@ if (
       filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
       transform: translateY(-4px);
     }
+    @keyframes spin-once {
+      from { transform: rotate(-360deg); }
+      to { transform: rotate(0deg); }
+    }
+    .animate-spin-once {
+      animation: spin-once 1s ease-out forwards;
+    }
     .LightboxOverlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.9);
       display: flex; align-items: center; justify-content: center;
@@ -278,7 +285,7 @@ export default function Home() {
             <img
               src={logoUrl}
               alt="Club del Parque Logo"
-              className="logo-pelota max-h-full w-auto opacity-100 transition-all"
+              className="logo-pelota max-h-full w-auto opacity-100 transition-all animate-spin-once"
             />
           </div>
         </div>
