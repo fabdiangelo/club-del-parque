@@ -6,7 +6,9 @@ const useRankingStats = (usuarioID) => {
     const fetchRanking = async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/rankings/usuario/${usuarioID}/mejor`,
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/rankings/usuario/${usuarioID}/mejor`,
           { credentials: "include" }
         );
         if (!res.ok) return setStats(null);
@@ -25,7 +27,15 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import "../styles/Chats.css";
 import { dbRT } from "../utils/FirebaseService.js";
-import { ref, onValue, getDatabase, push, set, get, update } from "firebase/database";
+import {
+  ref,
+  onValue,
+  getDatabase,
+  push,
+  set,
+  get,
+  update,
+} from "firebase/database";
 import { useAuth } from "../contexts/AuthProvider.jsx";
 import NavbarBlanco from "../components/NavbarBlanco.jsx";
 
@@ -1003,7 +1013,9 @@ const Chats = () => {
               }}
             >
               {usuarios.length === 0 ? (
-                <p style={{ color: "#888" }}>No hay otros usuarios disponibles.</p>
+                <p style={{ color: "#888" }}>
+                  No hay otros usuarios disponibles.
+                </p>
               ) : (
                 usuarios.map((u) => (
                   <div
@@ -1013,7 +1025,9 @@ const Chats = () => {
                       marginBottom: "8px",
                       borderRadius: "8px",
                       background:
-                        usuarioSeleccionado?.id === u.id ? "#e3f2fd" : "#f9f9f9",
+                        usuarioSeleccionado?.id === u.id
+                          ? "#e3f2fd"
+                          : "#f9f9f9",
                       cursor: "pointer",
                       border:
                         usuarioSeleccionado?.id === u.id
@@ -1327,8 +1341,7 @@ const Chats = () => {
                                 fontSize: "0.9em",
                                 marginLeft: "8px",
                                 fontWeight: 700,
-                                boxShadow:
-                                  "0 2px 8px rgba(13,138,188,0.12)",
+                                boxShadow: "0 2px 8px rgba(13,138,188,0.12)",
                               }}
                             >
                               {notificaciones[chat.id]}
@@ -1425,9 +1438,7 @@ const Chats = () => {
                         )}&background=0D8ABC&color=fff&size=128`}
                         alt="avatar"
                       />
-                      <h2
-                        style={{ fontWeight: 400, fontSize: "1.2rem" }}
-                      >
+                      <h2 style={{ fontWeight: 400, fontSize: "1.2rem" }}>
                         {chatSeleccionado.participantes
                           .filter((p) => p.uid !== user.uid)
                           .map((p) => p.nombre)
@@ -1493,8 +1504,7 @@ const Chats = () => {
                                   padding: "16px 20px",
                                   maxWidth: "80%",
                                   fontSize: "1.05em",
-                                  boxShadow:
-                                    "0 2px 8px rgba(251,191,36,0.08)",
+                                  boxShadow: "0 2px 8px rgba(251,191,36,0.08)",
                                   alignSelf: "center",
                                   position: "relative",
                                 }}
@@ -1610,12 +1620,13 @@ const Chats = () => {
                                 }}
                               >
                                 {m.timestamp
-                                  ? new Date(
-                                      m.timestamp
-                                    ).toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })
+                                  ? new Date(m.timestamp).toLocaleTimeString(
+                                      [],
+                                      {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      }
+                                    )
                                   : ""}
                               </div>
                             </div>
@@ -1636,6 +1647,13 @@ const Chats = () => {
                       value={nuevoMensaje}
                       onChange={(e) => setNuevoMensaje(e.target.value)}
                       placeholder="Escribe tu mensaje..."
+                      onKeyDown={(e) => {
+                        // opcional: que Enter envíe el mensaje en mobile
+                        if (isMobile && e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          agregarMensaje(chatSeleccionado.id);
+                        }
+                      }}
                       style={{
                         flex: 1,
                         borderRadius: "8px",
@@ -1644,21 +1662,25 @@ const Chats = () => {
                         fontSize: "1em",
                       }}
                     />
-                    <button
-                      type="submit"
-                      style={{
-                        background: "#0D8ABC",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "0 24px",
-                        fontWeight: 600,
-                        fontSize: "1em",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Enviar
-                    </button>
+
+                    {/* Ocultar botón Enviar en mobile */}
+                    {!isMobile && (
+                      <button
+                        type="submit"
+                        style={{
+                          background: "#0D8ABC",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "8px",
+                          padding: "0 24px",
+                          fontWeight: 600,
+                          fontSize: "1em",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Enviar
+                      </button>
+                    )}
                   </form>
                 </>
               ) : (
