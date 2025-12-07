@@ -159,7 +159,7 @@ export default function Perfil() {
                 <button style={{ padding: '8px 18px', backgroundColor: 'red', color: 'white', borderRadius: '8px', cursor: 'pointer', minWidth: '90px', maxWidth: '130px', textAlign: 'center' }} onClick={handleLogout}>
                   Cerrar sesión
                 </button>
-                {user.rol !== "administrador" && (
+                {userData.rol !== "administrador" && userData.rol !=="federado" && (
                   <button
                     style={{ padding: '8px 18px', backgroundColor: 'var(--primario)', color: 'white', borderRadius: '8px', cursor: 'pointer', minWidth: '90px', maxWidth: '130px', textAlign: 'center' }}
                     onClick={openFederateModal}
@@ -179,14 +179,14 @@ export default function Perfil() {
                 <dl>
                   <dt className="text-xs text-gray-500">Nombre</dt>
                   <dd className="mb-2">
-                    {user.nombre || "-"} {userData?.apellido || ""}
+                    {userData.nombre || "-"} {userData?.apellido || ""}
                   </dd>
 
                   <dt className="text-xs text-gray-500">Email</dt>
                   <dd className="mb-2">{user.email || "-"}</dd>
 
                   <dt className="text-xs text-gray-500">Rol</dt>
-                  <dd className="mb-2">{user.rol || "-"}</dd>
+                  <dd className="mb-2">{userData.rol || "-"}</dd>
                 </dl>
               </div>
 
@@ -199,7 +199,7 @@ export default function Perfil() {
                   <dt className="text-xs text-gray-500">Fecha de Nacimiento</dt>
                   <dd className="mb-2">{userData?.nacimiento || "-"}</dd>
 
-                  {user.rol === "federado" && (
+                  {userData.rol === "federado" && (
                     <>
                       <dt className="text-xs text-gray-500">Federación Válida Hasta</dt>
                       <dd className="mb-2">
