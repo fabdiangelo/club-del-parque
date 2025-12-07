@@ -134,9 +134,9 @@ export default function NavbarBlanco({ transparent = false }) {
         {/* Menú principal */}
         <div
           className={`${menuOpen ? "block" : "hidden"
-            } md:flex flex-col md:flex-row items-center gap-4 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent`}
+            } md:flex flex-col md:flex-row items-center gap-6 absolute md:static top-20 left-0 w-full md:w-auto bg-white md:bg-transparent py-6 md:py-0 shadow-xl md:shadow-none transition-all duration-300 ease-in-out`}
         >
-          <ul className="flex flex-col md:flex-row items-center gap-3 md:gap-6 px-4 md:px-0 text-center w-full md:w-auto justify-center">
+          <ul className="flex flex-col md:flex-row items-center gap-6 md:gap-8 px-4 md:px-0 text-center w-full md:w-auto justify-center">
 
             {/* NOTICIAS – visitante, registrado no federado, federado (no admin para no tocar navbar admin) */}
             {(isVisitante || isRegistradoNoFederado || isFederado) && (
@@ -168,7 +168,7 @@ export default function NavbarBlanco({ transparent = false }) {
               </li>
             )}
 
-            {isLogged  && (isFederado || isAdmin) && (
+            {isLogged && (isFederado || isAdmin) && (
               <li>
                 <NavLink
                   to="/ranking"
@@ -215,7 +215,7 @@ export default function NavbarBlanco({ transparent = false }) {
 
           {/* Zona derecha: iconos / perfil / login */}
           {isLogged ? (
-            <div className="flex flex-col md:flex-row items-center gap-4 px-4 md:px-0 w-full md:w-auto justify-center">
+            <div className="flex flex-col md:flex-row items-center gap-6 px-4 md:px-0 w-full md:w-auto justify-center">
               {/* Iconos (Chat y Notificaciones) - En móvil en la misma fila */}
               <div className="flex flex-row items-center gap-4 justify-center w-full md:w-auto">
                 {/* CHAT – federado + admin (no disponible para registrados no federados) */}
@@ -275,7 +275,7 @@ export default function NavbarBlanco({ transparent = false }) {
               </div>
 
               {/* Botones (Perfil y Logout) - En móvil en la misma fila */}
-              <div className="flex flex-row items-center gap-3 justify-center w-full md:w-auto">
+              <div className="flex flex-row items-center gap-4 justify-center w-full md:w-auto">
                 <button
                   style={{
                     display: "flex",

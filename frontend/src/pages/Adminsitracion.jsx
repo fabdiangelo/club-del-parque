@@ -262,14 +262,14 @@ const Administracion = () => {
       ></div>
       <NavbarBlanco />
       <div
-        className="max-w-7xl mx-auto relative"
-        style={{ marginTop: "3rem", zIndex: 1 }}
+        className="max-w-7xl mx-auto relative mt-20 md:mt-12"
+        style={{ zIndex: 1 }}
       >
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight break-words">
             {ventana === "administracion"
-              ? "Panel de Administración"
+              ? "PANEL DE ADMINISTRACIÓN"
               : ventana === "tickets"
                 ? "Tickets y Usuarios"
                 : "Reservas"}
@@ -282,28 +282,17 @@ const Administracion = () => {
                 : "Gestión de reservas de canchas."}
           </p>
         </div>
-        <div
-          className="mb-8 flex flex-wrap gap-2 md:gap-4"
-          style={{
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            paddingBottom: '0.5rem',
-          }}
-        >
+        <div className="mb-8 flex flex-wrap gap-2 md:gap-4">
           {botones.map((b) => (
             <button
               key={b.nombre}
-              className={`flex-1 min-w-[100px] max-w-[160px] py-2 px-4 rounded-full text-sm md:text-base whitespace-nowrap ${botonActivo === b.ventana
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-800"
+              className={`py-2 px-4 rounded-full text-sm md:text-base whitespace-nowrap transition-colors ${botonActivo === b.ventana
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                 }`}
               onClick={() => {
                 setVentana(b.ventana);
                 setBotonActivo(b.ventana);
-              }}
-              style={{
-                maxWidth: '160px',
-                flexBasis: '0',
               }}
             >
               {b.nombre}

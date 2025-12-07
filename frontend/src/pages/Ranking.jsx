@@ -645,8 +645,8 @@ export default function Rankings() {
         {/* Header */}
         <header className="w-full">
           <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center pt-20 pb-6">
-            <h1 className="text-6xl sm:text-7xl font-extrabold tracking-tight">
-              <AnimatedTitle text="Ranking" />
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
+              Ranking
             </h1>
 
             {/* Controles */}

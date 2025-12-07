@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
@@ -169,8 +169,14 @@ function Login() {
             <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email" className="w-full p-2 border rounded" required />
             <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Contraseña" className="w-full p-2 border rounded" required />
             <div className="flex gap-2 flex-col items-center">
-              <button type="submit" disabled={loading} className="py-2 text-white rounded w-full" style={{ backgroundColor: 'var(--neutro)', padding: '10px 20px', cursor: 'pointer' }}>Acceder</button>
+              {loading ? (<div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>) : (
+                <button type="submit" disabled={loading} className="py-2 text-white rounded w-full" style={{ backgroundColor: 'var(--neutro)', padding: '10px 20px', cursor: 'pointer' }}>Acceder</button>
+
+              )}
             </div>
+
+
+            
           </form>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', backgroundColor: 'var(--primario)', cursor: 'pointer', padding: '10px', borderRadius: '8px', color: 'white' }} onClick={handleGoogleLogin} disabled={loading} className="my-2">

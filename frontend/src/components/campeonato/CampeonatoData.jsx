@@ -216,7 +216,7 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
               {modalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                   <div className="absolute inset-0 bg-white opacity-40" onClick={() => setModalOpen(false)} />
-                  <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+                  <div className="relative bg-white text-black rounded-lg shadow-xl max-w-lg w-full p-6">
                     <button className="absolute top-3 right-3 p-1 rounded-md hover:bg-gray-100" onClick={() => setModalOpen(false)} aria-label="Cerrar">
                       <X className="w-5 h-5 text-gray-600" />
                     </button>
@@ -246,11 +246,11 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
 
           {user?.rol == 'administrador' &&
             <div>
-              <button className='btn btn-info w-full md:w-auto mt-4' onClick={() => setModalAdminOpen(true)} disabled={procesando} >{procesando ? 'Editando...' : 'Editar'}</button>
+              <button className='btn btn-info w-full md:w-auto mt-4' onClick={() => setModalAdminOpen(true)} style={{color: 'white'}} disabled={procesando} >{procesando ? 'Editando...' : 'EDITAR'}</button>
               {modalAdminOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                   <div className="absolute inset-0 bg-black opacity-40" onClick={() => setModalAdminOpen(false)} />
-                  <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+                  <div className="relative bg-white text-black rounded-lg shadow-xl max-w-lg w-full p-6">
                     <button className="absolute top-3 right-3 p-1 rounded-md hover:bg-gray-100" onClick={() => setModalAdminOpen(false)} aria-label="Cerrar">
                       <X className="w-5 h-5 text-gray-600" />
                     </button>
@@ -281,7 +281,7 @@ export default function CampeonatoData({ id = '', nombre = '', descripcion = '',
           <div style={{ marginTop: '20px' }}>
 
             {conRedireccion && (
-              <Link to={`/campeonato/${id}`} className="w-100 w-full mt-4" style={{ padding: '10px 30px', borderRadius: '5px', border: '1px solid var(--primario)', color: 'var(--primario)', backgroundColor: 'white', marginTop: '200px' }}>VER MÁS</Link>
+              <Link to={`/campeonato/${id}`} className="btn w-100 w-full" style={{ padding: '10px 30px', borderRadius: '5px', border: '1px solid var(--primario)', color: 'var(--primario)', backgroundColor: 'white'}}>VER MÁS</Link>
             )}
           </div>
 

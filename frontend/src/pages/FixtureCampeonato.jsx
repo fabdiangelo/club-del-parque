@@ -75,7 +75,8 @@ export default function FixtureCampeonato() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+                    <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
+
           <p className="mt-4 text-gray-600">Cargando Campeonato...</p>
         </div>
       </div>
@@ -136,7 +137,7 @@ export default function FixtureCampeonato() {
         )}
 
         <div className="bg-gray-800 text-white px-8 py-3 rounded-full shadow-lg" style={{ border: '1px solid' }}>
-          <h2 className="text-xl font-semibold text-center uppercase tracking-wide">
+          <h2 className="text-xl font-semibold text-center uppercase tracking-wide" style={{fontSize: '1.1rem'}}>
             {etapa?.nombre}
           </h2>
         </div>

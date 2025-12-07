@@ -15,7 +15,7 @@ const NOTICIAS_ENDPOINT =
 /* Theme (light) */
 const PAGE_BG = "#f8fafc";
 const CARD_BG = "#ffffff";
-const ACCENT  = "#1f6b82";
+const ACCENT = "#1f6b82";
 
 /* Utils */
 function fmtDate(iso) {
@@ -123,82 +123,80 @@ function Carousel({ images, title }) {
   if (!images?.length) return null;
   const cur = images[idx];
 
-return (
-  <div className="mt-0">
-    <div
-      className="relative aspect-[16/9] w-full overflow-hidden select-none bg-neutral-100/60"
-      {...swipe}
-    >
-      <img
-        key={cur.src}
-        src={cur.src}
-        alt={title || "Imagen"}
-        className="h-full w-full object-cover"
-        style={{ opacity: fade ? 1 : 0, transition: "opacity 400ms ease" }}
-        loading="eager"
-      />
+  return (
+    <div className="mt-0">
+      <div
+        className="relative aspect-[16/9] w-full overflow-hidden select-none bg-neutral-100/60"
+        {...swipe}
+      >
+        <img
+          key={cur.src}
+          src={cur.src}
+          alt={title || "Imagen"}
+          className="h-full w-full object-cover"
+          style={{ opacity: fade ? 1 : 0, transition: "opacity 400ms ease" }}
+          loading="eager"
+        />
 
-      {images.length > 1 && (
-        <>
-          <button
-            onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
-            aria-label="Anterior"
-            title="Anterior"
-          >
-            ‹
-          </button>
-          <button
-            onClick={next}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
-            aria-label="Siguiente"
-            title="Siguiente"
-          >
-            ›
-          </button>
-        </>
-      )}
-
-      {images.length > 1 && (
-        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
-          {images.map((_, i) => (
+        {images.length > 1 && (
+          <>
             <button
-              key={i}
+              onClick={prev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
+              aria-label="Anterior"
+              title="Anterior"
+            >
+              ‹
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/20 hover:bg-black/30 p-2 text-white"
+              aria-label="Siguiente"
+              title="Siguiente"
+            >
+              ›
+            </button>
+          </>
+        )}
+
+        {images.length > 1 && (
+          <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => go(i)}
+                className={`h-2 w-2 rounded-full ${i === idx ? "bg-neutral-900" : "bg-neutral-500/60"
+                  }`}
+                aria-label={`Ir a imagen ${i + 1}`}
+                title={`Imagen ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {images.length > 1 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-3 px-6">
+          {images.map((im, i) => (
+            <button
+              key={im.src + i}
               onClick={() => go(i)}
-              className={`h-2 w-2 rounded-full ${
-                i === idx ? "bg-neutral-900" : "bg-neutral-500/60"
-              }`}
-              aria-label={`Ir a imagen ${i + 1}`}
+              className={`relative h-16 w-24 flex-none overflow-hidden rounded-xl border ${i === idx ? "border-neutral-600" : "border-neutral-200"
+                }`}
               title={`Imagen ${i + 1}`}
-            />
+            >
+              <img
+                src={im.src}
+                alt={`${title || "Imagen"} ${i + 1}`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </button>
           ))}
         </div>
       )}
     </div>
-
-    {images.length > 1 && (
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-3 px-6">
-        {images.map((im, i) => (
-          <button
-            key={im.src + i}
-            onClick={() => go(i)}
-            className={`relative h-16 w-24 flex-none overflow-hidden rounded-xl border ${
-              i === idx ? "border-neutral-600" : "border-neutral-200"
-            }`}
-            title={`Imagen ${i + 1}`}
-          >
-            <img
-              src={im.src}
-              alt={`${title || "Imagen"} ${i + 1}`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-);
+  );
 
 }
 
@@ -295,10 +293,10 @@ export default function NoticiaDetalle() {
 
   if (fetching) {
     return (
-      <div className="min-h-dvh w-full flex flex-col text-neutral-900" style={{ backgroundColor: PAGE_BG }}>
+      <div className="min-h-dvh w-full h-full flex flex-col text-neutral-900" style={{ backgroundColor: PAGE_BG }}>
         <NavbarBlanco />
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 text-center">
-          <p className="text-lg text-neutral-500">Cargando…</p>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 text-center flex justify-center items-center flex-grow">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
         </div>
       </div>
     );
@@ -308,12 +306,12 @@ export default function NoticiaDetalle() {
     return (
       <div className="min-h-dvh w-full flex flex-col text-neutral-900" style={{ backgroundColor: PAGE_BG }}>
         <NavbarBlanco />
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16">
+        <div className="mx-auto max-w-4xl px-6 lg:px-8 py-10">
           <div className="rounded-2xl p-8 border border-neutral-200 bg-white">
             <h1 className="text-2xl font-semibold">Noticia no encontrada</h1>
-            <p className="mt-2 text-neutral-600">La noticia que intentas ver no existe o fue movida.</p>
+            <p className="text-neutral-600">La noticia que intentas ver no existe o fue movida.</p>
             {fetchError && <p className="mt-2 text-sm text-red-600">Error al cargar: {fetchError}</p>}
-            <Link to="/noticias" className="mt-6 inline-block rounded-full px-4 py-2 border border-neutral-200 hover:bg-neutral-50">
+            <Link to="/noticias" className="inline-block rounded-full px-4 py-2 border border-neutral-200 hover:bg-neutral-50">
               ← Volver a Noticias
             </Link>
           </div>
@@ -323,10 +321,10 @@ export default function NoticiaDetalle() {
   }
 
   return (
-<div className="min-h-dvh w-full flex flex-col text-neutral-900 bg-gray-100 pt-20">
-  <NavbarBlanco />
-  <section className="relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-10 md:py-14">
+    <div className="min-h-dvh w-full flex flex-col text-neutral-900 bg-gray-100 pt-20">
+      <NavbarBlanco />
+      <section className="relative">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-7 md:py-3">
           <Link
             to="/noticias"
             className="mb-6 inline-block rounded-full px-4 py-1.5 text-sm border border-neutral-200 hover:bg-neutral-200 bg-neutral-100"
@@ -334,39 +332,39 @@ export default function NoticiaDetalle() {
             ← Volver a Noticias
           </Link>
 
-<div className="flex items-center justify-center">
-  <p className="text-xs uppercase tracking-wider text-neutral-500 text-center">
-    {fmtDate(noticia.fechaCreacion)}
-  </p>
-</div>
-<h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 text-center">
-  {noticia.titulo || "Título"}
-</h1>
+          <div className="flex items-center justify-center">
+            <p className="text-xs uppercase tracking-wider text-neutral-500 text-center">
+              {fmtDate(noticia.fechaCreacion)}
+            </p>
+          </div>
+          <h1 className="mt-1 text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 text-center">
+            {noticia.titulo || "Título"}
+          </h1>
 
 
-<div
-  className="mt-8 transition-opacity duration-700"
-  style={{ opacity: ready ? 1 : 0 }}
->
-  <article className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
-    {/* Imagen / carrusel dentro de la tarjeta */}
-    <div className="w-full">
-      <Carousel images={images} title={noticia?.titulo} />
-    </div>
+          <div
+            className="mt-8 transition-opacity duration-700"
+            style={{ opacity: ready ? 1 : 0 }}
+          >
+            <article className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
+              {/* Imagen / carrusel dentro de la tarjeta */}
+              <div className="w-full">
+                <Carousel images={images} title={noticia?.titulo} />
+              </div>
 
-    {/* Texto dentro de la misma tarjeta */}
-    <div className="p-6">
-      <RichTextEditor
-        valueMarkdown={mdForView || "*Sin contenido*"}
-        readOnly
-        hideToolbar
-        transparent
-        autoHeight
-        className="!rounded-none !overflow-visible w-full"
-      />
-    </div>
-  </article>
-</div>
+              {/* Texto dentro de la misma tarjeta */}
+              <div className="p-6">
+                <RichTextEditor
+                  valueMarkdown={mdForView || "*Sin contenido*"}
+                  readOnly
+                  hideToolbar
+                  transparent
+                  autoHeight
+                  className="!rounded-none !overflow-visible w-full"
+                />
+              </div>
+            </article>
+          </div>
 
 
         </div>

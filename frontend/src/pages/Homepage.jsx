@@ -8,12 +8,12 @@ import RichTextEditor from "../components/RichTextEditor";
 import { useAuth } from "../contexts/AuthProvider";
 
 // === Canchas photos
-import img1 from "../assets/CanchasTenisPadel/1.jpg";
-import img2 from "../assets/CanchasTenisPadel/2.jpg";
-import img3 from "../assets/CanchasTenisPadel/3.jpg";
-import img4 from "../assets/CanchasTenisPadel/4.jpg";
-import img5 from "../assets/CanchasTenisPadel/5.jpg";
-import img6 from "../assets/CanchasTenisPadel/6.jpg";
+import img1 from "../assets/CanchasTenisPadel/1.webp";
+import img2 from "../assets/CanchasTenisPadel/2.webp";
+import img3 from "../assets/CanchasTenisPadel/3.webp";
+import img4 from "../assets/CanchasTenisPadel/4.webp";
+import img5 from "../assets/CanchasTenisPadel/5.webp";
+import img6 from "../assets/CanchasTenisPadel/6.webp";
 const CANCHAS_IMAGES = [img1, img2, img3, img4, img5, img6];
 
 // === Leaflet map
@@ -137,9 +137,7 @@ export default function Home() {
       import.meta.env.VITE_BACKEND_URL + "/api/noticias"
     );
     const data = await response.json();
-    console.log("Noticias fetched:", data);
     if (!response.ok) {
-      console.log("Error fetching noticias");
       return;
     }
     setNoticias(data);
@@ -190,7 +188,7 @@ export default function Home() {
         className="flex items-center justify-center w-full"
         style={{
           minHeight: "100vh",
-          backgroundImage: "url('/fondohome.svg')",
+          backgroundImage: "url('/fondohome.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center center",
           position: "relative",

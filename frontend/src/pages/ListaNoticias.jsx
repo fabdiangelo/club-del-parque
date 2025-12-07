@@ -113,8 +113,8 @@ export default function Noticias() {
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8 py-14 lg:py-20 flex flex-col items-center gap-4 text-center">
           <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900">
-              Noticias
+            <h1 className="text-5xl sm:text-5xl font-extrabold tracking-tight">   
+              NOTICIAS
             </h1>
             <p className="mt-4 max-w-2xl mx-auto text-slate-600 text-sm md:text-base">
               Las novedades más recientes del club en un solo lugar.
@@ -180,8 +180,9 @@ export default function Noticias() {
 
           {/* Estados de carga / error */}
           {loading && (
-            <div className="mt-4 space-y-3">
-              <p className="text-sm text-slate-500">Cargando noticias…</p>
+            <div className="mt-4 space-y-3 text-center">
+              <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent "></div>
+          
               <div className="flex flex-col items-center gap-3">
                 {[1, 2, 3].map((i) => (
                   <div

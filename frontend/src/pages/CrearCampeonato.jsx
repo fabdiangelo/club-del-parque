@@ -487,10 +487,10 @@ export default function CrearCampeonato() {
     <div className="min-h-screen bg-base-300 p-6 mt-12 bg-white">
       <NavbarBlanco />
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto mt-10 md:mt-5">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-4xl font-bold mb-2 text-black text-center">Crear Campeonato</h1>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight break-words text-center">CREAR CAMPEONATO</h1>
           <p className="text-base-content/70 text-black text-center">Configure todos los detalles del nuevo campeonato</p>
         </div>
 

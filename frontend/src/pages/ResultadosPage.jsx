@@ -74,16 +74,15 @@ export default function ResultadosPage() {
       <NavbarBlanco transparent={false} />
       <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
         {/* TÍTULO CENTRADO */}
-        <h1 className="text-3xl font-extrabold text-gray-900 text-center">
-          Acuerdo de resultados
-        </h1>
+        <h1 className="text-5xl sm:text-5xl font-extrabold tracking-tight text-center">ACUERDO DE RESULTADOS</h1>
+          
 
         {loading ? (
           <div className="mt-6 text-gray-600 text-center">Cargando partidos…</div>
         ) : err ? (
           <div className="mt-6 text-red-600 font-semibold text-center">{err}</div>
         ) : partidos.length === 0 ? (
-          <p className="mt-8 text-2xl font-extrabold text-gray-700 text-center">
+          <p className="mt-8 text-2xl font-normal text-gray-700 text-center">
             No tienes partidos pendientes de resultado
           </p>
         ) : (
