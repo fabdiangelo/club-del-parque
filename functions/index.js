@@ -138,6 +138,8 @@ app.put("/reportes/marcar-resuelto/:id", (req, res) => ReporteController.marcarR
 app.post("/rankings", (req, res) => RankingsController.crear(req, res));
 app.get("/rankings", (req, res) => RankingsController.listar(req, res));
 app.get("/rankings/:id", (req, res) => RankingsController.getById(req, res));
+// Endpoint para ranking con más puntos en la última temporada del usuario
+app.get("/rankings/usuario/:usuarioID/mejor", (req, res) => RankingsController.getMejorRankingUltimaTemporada(req, res));
 app.patch("/rankings/:id", (req, res) => RankingsController.editar(req, res));
 app.post("/rankings/:id/ajustar", (req, res) => RankingsController.ajustar(req, res));
 app.post("/rankings/:id/reset", (req, res) => RankingsController.reset(req, res));

@@ -1,3 +1,45 @@
+// Obtener el ranking con más puntos del usuario en su última temporada
+import { TemporadaRepository } from "../infraestructure/adapters/TemporadaRepository.js";
+
+const temporadaRepo = new TemporadaRepository();
+
+// GET /rankings/usuario/:usuarioID/mejor
+const getMejorRankingUltimaTemporada = async (req, res) => {
+  try {
+    const { usuarioID } = req.params;
+    // 1. Obtener todos los rankings del usuario
+    const rankings = await repo.getByUsuario(usuarioID);
+    if (!rankings || rankings.length === 0) {
+      return ok(res, null, 200);
+    }
+    // 2. Agrupar rankings por temporadaID y encontrar el de más puntos en cada temporada
+    const rankingsPorTemporada = {};
+    for (const r of rankings) {
+      if (!r.temporadaID) continue;
+      if (!rankingsPorTemporada[r.temporadaID] || Number(r.puntos || 0) > Number(rankingsPorTemporada[r.temporadaID].puntos || 0)) {
+        rankingsPorTemporada[r.temporadaID] = r;
+      }
+    }
+    // 3. Obtener todas las temporadas y ordenarlas por fecha (desc)
+    const temporadas = await temporadaRepo.getAll();
+    if (!temporadas || temporadas.length === 0) {
+      return ok(res, null, 200);
+    }
+    // Ordenar temporadas por fechaInicio descendente (más reciente primero)
+    temporadas.sort((a, b) => new Date(b.fechaInicio || b.fecha || 0) - new Date(a.fechaInicio || a.fecha || 0));
+    // 4. Buscar la temporada más reciente en la que el usuario tenga ranking
+    for (const temporada of temporadas) {
+      const rk = rankingsPorTemporada[temporada.id];
+      if (rk) {
+        return ok(res, { ranking: rk, temporada }, 200);
+      }
+    }
+    // Si no hay ranking en ninguna temporada existente
+    return ok(res, null, 200);
+  } catch (err) {
+    return bad(res, err, 400);
+  }
+};
 // functions/src/controllers/RankingsController.js
 import { RankingRepository } from "../infraestructure/adapters/RankingRepository.js";
 import { RankingCategoriaRepository } from "../infraestructure/adapters/RankingCategoriaRepository.js";
@@ -471,4 +513,5 @@ export default {
   eliminar,
   asignarFiltro,
   quitarFiltro,
+  getMejorRankingUltimaTemporada,
 };

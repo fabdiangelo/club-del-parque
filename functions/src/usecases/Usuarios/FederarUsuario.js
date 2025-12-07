@@ -1,3 +1,4 @@
+
 import Usuario from "../../domain/entities/Usuario.js";
 import Federado from "../../domain/entities/Federado.js";
 import Subscripcion from "../../domain/entities/Subscripcion.js";
@@ -5,6 +6,8 @@ import { UsuarioRepository } from "../../infraestructure/adapters/UsuarioReposit
 import { FederadoRepository } from "../../infraestructure/adapters/FederadoRepository.js";
 import { PlanRepository } from "../../infraestructure/adapters/PlanRepository.js";
 import { SubscripcionRepository } from "../../infraestructure/adapters/SubscripcionRepository.js";
+import DBConnection from "../../infraestructure/ports/DBConnection.js";
+import AuthConnection from "../../infraestructure/ports/AuthConnection.js";
 
 class FederarUsuario {
   constructor(){
@@ -12,89 +15,96 @@ class FederarUsuario {
     this.federadoRepository = new FederadoRepository();
     this.planRepository = new PlanRepository();
     this.subscripcionRepository = new SubscripcionRepository();
+    this.db = new DBConnection();
+    this.auth = new AuthConnection();
   }
 
   async execute(usuario, planId) {
     try {
-      if(!usuario){
+      if (!usuario) {
         throw new Error("Usuario inválido");
       }
       let fechaInicio = new Date();
-      console.log("Usuario a federar:", usuario);
       let federado = null;
-      if(usuario.rol === "usuario"){
-        federado = await this.federadoRepository.getFederadoById(usuario.id);
-        if(federado){
-          const estaFederado = federado.subscripcionesIDs && federado.subscripcionesIDs[0];
-          if(estaFederado){
-            const ultSub = await this.subscripcionRepository.getItem(federado.subscripcionesIDs[0]);
-            if(ultSub && new Date (ultSub.fechaFin) > new Date()){
-              fechaInicio = new Date(ultSub.fechaFin);
-            }
-          }
-        }else{
-          federado = new Federado(
-            usuario.id, 
-            usuario.email, 
-            usuario.nombre,
-            usuario.apellido, 
-            "activo",
-            usuario.nacimiento, 
-            usuario.genero
-          );
-          
-          await this.federadoRepository.save(federado.toPlainObject());
-        }
-      }else if(usuario.rol === "federado"){
-        federado = await this.federadoRepository.getFederadoById(usuario.id);
-        if(!federado){
-          throw new Error("No se encontró el federado asociado al usuario");
-        }
-        const estaFederado = federado.subscripcionesIDs && federado.subscripcionesIDs[0];
-        if(estaFederado){
-          const ultSub = await this.subscripcionRepository.getItem(federado.subscripcionesIDs[0]);
-          if(ultSub && new Date(ultSub.fechaFin) > new Date()){
-            fechaInicio = new Date(ultSub.fechaFin);
-          }
-        }
-      }else{
-        throw new Error("Tipo de usuario inválido");
+      // 1. Obtener usuario y federado
+      federado = await this.federadoRepository.getFederadoById(usuario.id);
+      if (!federado) {
+        federado = new Federado(
+          usuario.id,
+          usuario.email,
+          usuario.nombre,
+          usuario.apellido,
+          "activo",
+          usuario.nacimiento,
+          usuario.genero,
+          null // categoriaId
+        );
+        await this.federadoRepository.save(federado.toPlainObject());
       }
 
+      // 2. Actualizar rol en Auth
+      try {
+        await this.auth.setRole(usuario.id, "federado");
+      } catch (err) {
+        console.error(`Error asignando rol federado en Auth a ${usuario.id}:`, err);
+        // No lanzar, solo loguear
+      }
+
+      // 3. Actualizar/crear en colección usuarios
+      const existsUsuario = await this.db.getItem("usuarios", usuario.id);
+      if (!existsUsuario) {
+        // Si no existe, crear como federado
+        await this.db.putItem("usuarios", {
+          ...usuario,
+          rol: "federado",
+          estado: "activo"
+        }, usuario.id);
+      } else {
+        await this.db.updateItem("usuarios", usuario.id, {
+          rol: "federado",
+          estado: "activo",
+          genero: usuario.genero,
+          nacimiento: usuario.nacimiento
+        });
+      }
+
+      // 4. Calcular fecha de inicio de suscripción
+      if (federado.subscripcionesIDs && federado.subscripcionesIDs.length > 0) {
+        const ultSub = await this.subscripcionRepository.getItem(federado.subscripcionesIDs[0]);
+        if (ultSub && new Date(ultSub.fechaFin) > new Date()) {
+          fechaInicio = new Date(ultSub.fechaFin);
+        }
+      }
+
+      // 5. Crear suscripción
       const plan = await this.planRepository.findById(planId);
-      if(!plan){
+      if (!plan) {
         throw new Error("Plan no encontrado");
       }
-
+      const fechaFin = new Date(fechaInicio);
+      fechaFin.setMonth(fechaFin.getMonth() + plan.frecuenciaRenovacion);
       const nuevaSubscripcion = new Subscripcion(
-        new Date().toISOString() + '-' + usuario.id + '-' + plan.id, 
-        fechaInicio.toISOString(), 
-        new Date(fechaInicio.setMonth(fechaInicio.getMonth() + plan.frecuenciaRenovacion)).toISOString(),
+        new Date().toISOString() + '-' + usuario.id + '-' + plan.id,
+        fechaInicio.toISOString(),
+        fechaFin.toISOString(),
         usuario.id,
         plan.id
       );
-
       const subId = await this.subscripcionRepository.save(nuevaSubscripcion.toPlainObject());
 
-      // await this.federadoRepository.agregarSubscripcion(usuario.id, subId);
-
-      await this.usuarioRepository.update(usuario.id, {
-        ...usuario,
-        rol: "federado",
-        estado: "activo"
-      });
-
+      // 6. Actualizar federado
+      let nuevasSubs = federado.subscripcionesIDs && federado.subscripcionesIDs.length > 0
+        ? [subId, ...federado.subscripcionesIDs]
+        : [subId];
       await this.federadoRepository.update(federado.id, {
         ...federado,
-        subscripcionesIDs: [subId, ...federado.subscripcionesIDs],
+        subscripcionesIDs: nuevasSubs,
         estado: "activo",
         validoHasta: nuevaSubscripcion.fechaFin,
         rol: "federado"
       });
 
-      
-
-    } catch (err){
+    } catch (err) {
       console.error("Error federando usuario:", err);
       throw err;
     }

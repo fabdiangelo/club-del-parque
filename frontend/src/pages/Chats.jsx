@@ -1,3 +1,22 @@
+// Hook para obtener el ranking de un usuario
+const useRankingStats = (usuarioID) => {
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    if (!usuarioID) return;
+    const fetchRanking = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/rankings/usuario/${usuarioID}/mejor`, { credentials: 'include' });
+        if (!res.ok) return setStats(null);
+        const data = await res.json();
+        setStats(data);
+      } catch {
+        setStats(null);
+      }
+    };
+    fetchRanking();
+  }, [usuarioID]);
+  return stats;
+};
 import { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import '../styles/Chats.css'
@@ -7,8 +26,8 @@ import { useAuth } from '../contexts/AuthProvider.jsx';
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
 
 
-const Chats = () => {
 
+const Chats = () => {
   const scrollRef = useRef(null);
 
   const [chats, setChats] = useState([])
@@ -40,6 +59,22 @@ const Chats = () => {
   const { user } = useAuth();
   const { id: routeUserId } = useParams();
   const pendingCreationsRef = useRef(new Set());
+
+  // --- Ranking stats logic ---
+  const [yoID, setYoID] = useState(null);
+  const [otroID, setOtroID] = useState(null);
+  useEffect(() => {
+    if (chatSeleccionado && user?.uid) {
+      const participanteIDs = chatSeleccionado.participantes.map(p => p.uid);
+      setYoID(user.uid);
+      setOtroID(participanteIDs.find(id => id !== user.uid));
+    } else {
+      setYoID(null);
+      setOtroID(null);
+    }
+  }, [chatSeleccionado, user]);
+  const yoStats = useRankingStats(yoID);
+  const otroStats = useRankingStats(otroID);
 
   const generarReservaPartido = async () => {
 
@@ -918,28 +953,23 @@ const Chats = () => {
                 />
                 <h2 style={{ fontWeight: 600, fontSize: "1.4rem", marginBottom: '8px' }}>{usuarioInfo.nombre} {usuarioInfo.apellido || ''}</h2>
 
-
+                {/* Estadísticas reales del otro jugador */}
                 <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                  <p style={{ textAlign: 'center' }}>Ranking: </p>
-                  <p style={{ textAlign: 'left' }}>{usuarioInfo.ranking || '-'}</p>
+                  <span>Ranking: </span>
+                  <span>{otroStats?.ranking?.puntos ?? '-'}</span>
                 </div>
                 <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
                   <span>Categoría: </span>
-                  <span>{usuarioInfo.categoria || '-'}</span>
+                  <span>{otroStats?.ranking?.categoriaId ? String(otroStats.ranking.categoriaId).split('|')[4]?.toUpperCase() : '-'}</span>
                 </div>
                 <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                  <span>Mejor Posición en torneo: </span>
-                  <span>{usuarioInfo.mejorPosicionTorneo || '-'}</span>
+                  <span>Partidos Ganados: </span>
+                  <span>{otroStats?.ranking?.partidosGanados ?? '-'}</span>
                 </div>
                 <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                  <p>Partidos oficiales ganados: </p>
-                  <p>{usuarioInfo.partidosOficialesGanados || '-'}</p>
+                  <span>Partidos Perdidos: </span>
+                  <span>{otroStats?.ranking?.partidosPerdidos ?? '-'}</span>
                 </div>
-                <div style={{ fontSize: '0.8em', color: '#555', marginBottom: '24px', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                  <p>Partidos oficiales perdidos: </p>
-                  <p>{usuarioInfo.partidosOficialesPerdidos || '-'}</p>
-                </div>
-
 
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
@@ -958,14 +988,8 @@ const Chats = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
                     </svg>
-
                   </button>
-
-                  <button style={{ backgroundColor: 'var(--neutro)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 600, fontSize: '1em', cursor: 'pointer' }} onClick={() => setShowModalPartido(true)}>Proponer partido</button>
-
                 </div>
-
-
               </div>
             ) : chats.length === 0 ? (
               <p style={{ color: "#888" }}>No tienes chats aún.</p>

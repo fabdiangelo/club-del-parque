@@ -9,7 +9,8 @@ import { useAuth } from "../contexts/AuthProvider";
 
 const fetchJSON = async (path, opts = {}) => {
   const res = await fetch(path, {
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     cache: "no-store",
     ...opts,
   });
