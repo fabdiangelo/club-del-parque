@@ -171,37 +171,60 @@ export default function NotificationsPage() {
   // Accept / Reject invitation handlers
   async function acceptInvitation(noti) {
     if (!user?.uid || !noti) return;
-    const campeonatoId = noti.campeonatoId || (noti.href && noti.href.split('/').pop());
+    const campeonatoId =
+      noti.campeonatoId || (noti.href && noti.href.split("/").pop());
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/federado-campeonato/${campeonatoId}/invitacion/aceptar`, { method: 'PUT', credentials: 'include' });
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/federado-campeonato/${campeonatoId}/invitacion/aceptar`,
+        { method: "PUT", credentials: "include" }
+      );
       if (res.ok) {
         // mark backend notification as read
-        await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), { leido: true });
+        await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), {
+          leido: true,
+        });
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async function rejectInvitation(noti) {
     if (!user?.uid || !noti) return;
-    const campeonatoId = noti.campeonatoId || (noti.href && noti.href.split('/').pop());
+    const campeonatoId =
+      noti.campeonatoId || (noti.href && noti.href.split("/").pop());
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/federado-campeonato/${campeonatoId}/invitacion/rechazar`, { method: 'PUT', credentials: 'include' });
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/federado-campeonato/${campeonatoId}/invitacion/rechazar`,
+        { method: "PUT", credentials: "include" }
+      );
       if (res.ok) {
-        await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), { leido: true });
+        await update(ref(dbRT, `notificaciones/${user.uid}/${noti.id}`), {
+          leido: true,
+        });
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-base-200 text-base-content w-full bg-white">
+    <div className="min-h-screen flex flex-col bg-white text-base-content w-full">
       <NavbarBlanco transparent={false} />
 
-      <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16 bg-white">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold" style={{color: 'var(--primario)'}}>Notificaciones</h1>
-          <div className="flex items-center gap-2">
-            {/* (el texto de '0 no leídas...' fue eliminado) */}
-            <label className="label cursor-pointer text-sm mx-2">
+      {/* MAIN */}
+      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+        {/* TOP BAR */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+          <h1
+            className="text-2xl sm:text-3xl font-bold"
+            style={{ color: "var(--primario)" }}
+          >
+            Notificaciones
+          </h1>
+
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3 md:items-center md:justify-end">
+            <label className="label cursor-pointer text-sm mx-0 sm:mx-2 flex items-center">
               <input
                 type="checkbox"
                 className="checkbox checkbox-sm mr-2"
@@ -214,34 +237,39 @@ export default function NotificationsPage() {
                   setSelected(s);
                 }}
               />
-              Seleccionar visibles ({paginated.length})
+              <span className="whitespace-nowrap">
+                Seleccionar visibles ({paginated.length})
+              </span>
             </label>
 
             <span className="text-sm opacity-70">
               Seleccionadas: {selected.size}
             </span>
 
-            <button
-              onClick={markSelectedAsRead}
-              className="btn btn-primary btn-sm"
-              disabled={selected.size === 0}
-            >
-              Marcar seleccionadas como leído
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={markSelectedAsRead}
+                className="btn btn-primary btn-sm w-full sm:w-auto"
+                disabled={selected.size === 0}
+              >
+                Marcar seleccionadas como leído
+              </button>
 
-            <button
-              onClick={() => navigate("/chats")}
-              className="btn btn-neutral btn-sm"
-            >
-              Ir a chats
-            </button>
+              <button
+                onClick={() => navigate("/chats")}
+                className="btn btn-neutral btn-sm w-full sm:w-auto"
+              >
+                Ir a chats
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* LISTA / EMPTY STATE */}
         {paginated.length === 0 ? (
           <div className="card border border-neutral-200 bg-neutral-50 shadow">
             <div className="card-body items-center justify-center min-h-[220px] text-neutral-900">
-              <p className="text-xl m-0">
+              <p className="text-xl m-0 text-center">
                 No tienes notificaciones por ahora
               </p>
             </div>
@@ -256,18 +284,20 @@ export default function NotificationsPage() {
               return (
                 <li
                   key={row.id}
-                  className={`card border border-neutral-200 rounded-xl shadow
-                              ${isSelected ? "bg-sky-50" : "bg-neutral-50"}
-                              ${row.leido && !chat ? "opacity-85" : ""}`}
+                  className={`card border border-neutral-200 rounded-xl shadow transition-colors
+                              ${
+                                isSelected ? "bg-sky-50" : "bg-neutral-50"
+                              } ${row.leido && !chat ? "opacity-85" : ""}`}
                   onClick={onCardClick}
                   style={{ cursor: "pointer" }}
                 >
                   <div className="card-body text-neutral-900">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      {/* Left side: checkbox + content */}
+                      <div className="flex items-start gap-3 w-full">
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-sm mt-1"
+                          className="checkbox checkbox-sm mt-1 flex-shrink-0"
                           checked={isSelected}
                           onChange={(e) => {
                             e.stopPropagation();
@@ -277,25 +307,28 @@ export default function NotificationsPage() {
                         />
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          {/* Tipo + fecha */}
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
                             {!row.leido && !chat && (
                               <span className="inline-block h-2 w-2 rounded-full bg-sky-600" />
                             )}
-                            <span className="text-xs uppercase tracking-wide text-neutral-500">
+                            <span className="uppercase tracking-wide">
                               {row.tipo || (chat ? "chat" : "sistema")}
                             </span>
-                            <span className="text-xs text-neutral-500">
-                              {row.fecha
-                                ? new Date(row.fecha).toLocaleString()
-                                : ""}
-                            </span>
+                            {row.fecha && (
+                              <span className="text-[11px] opacity-80">
+                                {new Date(row.fecha).toLocaleString()}
+                              </span>
+                            )}
                           </div>
 
-                          <div className="mt-1 font-medium">
+                          {/* Resumen */}
+                          <div className="mt-1 font-medium text-sm sm:text-base break-words">
                             {row.resumen || "Actividad reciente"}
                           </div>
 
-                          <div className="mt-3 flex items-center gap-2">
+                          {/* Actions */}
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
                             {chat ? (
                               <>
                                 <button
@@ -330,29 +363,42 @@ export default function NotificationsPage() {
                                     Marcar leída
                                   </button>
                                 )}
-                                {row.tipo === 'invitacion_recibida' && (
-                                  <div className="flex gap-2">
+
+                                {row.tipo === "invitacion_recibida" && (
+                                  <div className="flex flex-wrap gap-2">
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); acceptInvitation(row); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        acceptInvitation(row);
+                                      }}
                                       className="btn btn-success btn-sm"
-                                    >Aceptar</button>
+                                    >
+                                      Aceptar
+                                    </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); rejectInvitation(row); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        rejectInvitation(row);
+                                      }}
                                       className="btn btn-error btn-sm"
-                                    >Rechazar</button>
+                                    >
+                                      Rechazar
+                                    </button>
                                   </div>
                                 )}
-                                {row.href && row.tipo !== 'invitacion_recibida' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate(row.href);
-                                    }}
-                                    className="btn btn-outline btn-sm"
-                                  >
-                                    Abrir
-                                  </button>
-                                )}
+
+                                {row.href &&
+                                  row.tipo !== "invitacion_recibida" && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(row.href);
+                                      }}
+                                      className="btn btn-outline btn-sm"
+                                    >
+                                      Abrir
+                                    </button>
+                                  )}
                               </>
                             )}
                           </div>
@@ -366,6 +412,7 @@ export default function NotificationsPage() {
           </ul>
         )}
 
+        {/* LOAD MORE */}
         {PAGE_SIZE * page < merged.length && (
           <div className="mt-6 flex justify-center">
             <button

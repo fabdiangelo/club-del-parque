@@ -6,6 +6,7 @@ import { dbRT } from "../utils/FirebaseService.js";
 import { useAuth } from "../contexts/AuthProvider.jsx";
 
 const toArray = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
+
 const fmt = (ts) => {
   if (!ts) return "";
   try {
@@ -17,7 +18,7 @@ const fmt = (ts) => {
 
 /**
  * BellDropdown
- * 
+ *
  * @param {string} color - "black" o "white" (default "white")
  */
 export default function BellDropdown({ color = "white" }) {
@@ -25,8 +26,8 @@ export default function BellDropdown({ color = "white" }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const [backendNotis, setBackendNotis] = useState([]); 
-  const [chatUnread, setChatUnread] = useState(0);      
+  const [backendNotis, setBackendNotis] = useState([]);
+  const [chatUnread, setChatUnread] = useState(0);
   const box = useRef(null);
 
   // cerrar si clic fuera
@@ -105,13 +106,21 @@ export default function BellDropdown({ color = "white" }) {
   // badge muestra solo backend
   const badgeCount = unreadBackend.length;
 
+  // ---------- Estilos según color del icono ----------
+  const isWhite = color === "white";
+
+  // Bell blanca o negra (stroke = currentColor)
+  const buttonClasses = isWhite
+    ? "relative p-2 rounded-full text-white hover:bg-white/10"
+    : "relative p-2 rounded-full text-black hover:bg-black/10";
+
   return (
-    <div ref={box} className="relative" >
+    <div ref={box} className="relative">
       <button
         aria-label="Notificaciones"
-        style={{cursor: 'pointer'}}
+        style={{ cursor: "pointer" }}
         onClick={() => setOpen((v) => !v)}
-        className={`relative p-2 rounded-full hover:bg-${color}/10 text-${color}`}
+        className={buttonClasses}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -135,19 +144,19 @@ export default function BellDropdown({ color = "white" }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 rounded-xl bg-neutral-900 ring-1 ring-white/10 shadow-xl overflow-hidden z-[300]">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-            <span className="text-white/90 text-sm">Notificaciones</span>
+        <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white ring-1 ring-black/10 shadow-xl overflow-hidden z-[300]">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-black/10">
+            <span className="text-black/90 text-sm">Notificaciones</span>
             <button
               onClick={() => navigate("/notificaciones")}
-              className="text-xs text-white/70 hover:text-white"
+              className="text-xs text-black/70 hover:text-black"
             >
               Ver todo
             </button>
           </div>
 
           {items.length === 0 ? (
-            <div className="px-4 py-6 text-center text-white/60 text-sm">
+            <div className="px-4 py-6 text-center text-black/60 text-sm">
               No tienes notificaciones
             </div>
           ) : (
@@ -155,19 +164,19 @@ export default function BellDropdown({ color = "white" }) {
               {items.map((n) => (
                 <li
                   key={n.id}
-                  className="px-3 py-3 border-b border-white/10 hover:bg-white/[0.04]"
+                  className="px-3 py-3 border-b border-black/10 hover:bg-black/[0.04]"
                 >
                   <div className="flex items-start gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] uppercase tracking-wide text-white/50">
+                        <span className="text-[11px] uppercase tracking-wide text-black/50">
                           {n.tipo || (n.isChatVirtual ? "chat" : "sistema")}
                         </span>
-                        <span className="text-[11px] text-white/40">
+                        <span className="text-[11px] text-black/40">
                           {fmt(n.fecha)}
                         </span>
                       </div>
-                      <div className="text-sm text-white line-clamp-2">
+                      <div className="text-sm text-black line-clamp-2">
                         {n.resumen || "Actividad reciente"}
                       </div>
                       <div className="mt-1">
@@ -177,7 +186,7 @@ export default function BellDropdown({ color = "white" }) {
                             if (n.isChatVirtual) navigate("/chats");
                             else navigate("/notificaciones");
                           }}
-                          className="text-sky-400 hover:text-sky-300 text-[12px]"
+                          className="text-sky-600 hover:text-sky-500 text-[12px]"
                         >
                           Abrir
                         </button>
