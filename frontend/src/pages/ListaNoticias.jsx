@@ -76,7 +76,13 @@ export default function Noticias() {
       isCancelled = true;
     };
   }, []);
-
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, []);
   const dataFilters = useMemo(() => {
     const set = new Set();
     for (const n of noticias) {

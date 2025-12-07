@@ -5,12 +5,10 @@ import { Crown, Search, X } from "lucide-react";
 import rankingBg from "../assets/CanchasTenisPadel/2.jpg";
 import { useAuth } from "../contexts/AuthProvider";
 
-
-
 const fetchJSON = async (path, opts = {}) => {
   const res = await fetch(path, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
     cache: "no-store",
     ...opts,
   });
@@ -32,9 +30,14 @@ const normalizeError = (e) => {
   }
 };
 const normalizeStr = (s = "") =>
-  s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 const titleCase = (s = "") =>
-  String(s).toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+  String(s)
+    .toLowerCase()
+    .replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 
 const uiSportToApi = (label = "") =>
   normalizeStr(label).includes("padel") ? "padel" : "tenis";
@@ -63,7 +66,12 @@ const emailLocal = (s = "") => String(s).split("@")[0];
 const displayNameFromFederado = (u = {}) => {
   const full = [u.nombre, u.apellido].filter(Boolean).join(" ").trim();
   return (
-    full || u.displayName || u.nombre || emailLocal(u.email || "") || u.alias || ""
+    full ||
+    u.displayName ||
+    u.nombre ||
+    emailLocal(u.email || "") ||
+    u.alias ||
+    ""
   );
 };
 
@@ -124,60 +132,62 @@ function AnimatedTitle({ text, className, style }) {
   );
 }
 
-
 /* ------------------------------- page ------------------------------- */
 export default function Rankings() {
   // dictionaries
   const { user } = useAuth();
   const isAdmin = user?.rol === "administrador";
-  const [deportes, setDeportes] = useState([{"id":"padel","nombre":"Pádel"},{"id":"tenis","nombre":"Tenis"}]);
+  const [deportes, setDeportes] = useState([
+    { id: "padel", nombre: "Pádel" },
+    { id: "tenis", nombre: "Tenis" },
+  ]);
   const [filtros, setFiltros] = useState([
     {
-      "id": 1,
-      "modalidad": {
-          "nombre": "doble"
+      id: 1,
+      modalidad: {
+        nombre: "doble",
       },
-      "genero": {
-          "nombre": "masculino"
-      }
-    },
-    {
-      "id": 2,
-      "modalidad": {
-          "nombre": "single"
-      },
-      "genero": {
-          "nombre": "femenino"
+      genero: {
+        nombre: "masculino",
       },
     },
     {
-      "id": 3,
-      "modalidad": {
-          "nombre": "doble"
+      id: 2,
+      modalidad: {
+        nombre: "single",
       },
-      "genero": {
-          "nombre": "mixto"
-      },
-    },
-    {
-      "id": 4,
-      "modalidad": {
-          "nombre": "single"
-      },
-      "genero": {
-          "nombre": "masculino"
+      genero: {
+        nombre: "femenino",
       },
     },
     {
-      "id": 5,
-      "modalidad": {
-          "nombre": "doble"
+      id: 3,
+      modalidad: {
+        nombre: "doble",
       },
-      "genero": {
-          "nombre": "femenino"
+      genero: {
+        nombre: "mixto",
       },
-    }
-]);
+    },
+    {
+      id: 4,
+      modalidad: {
+        nombre: "single",
+      },
+      genero: {
+        nombre: "masculino",
+      },
+    },
+    {
+      id: 5,
+      modalidad: {
+        nombre: "doble",
+      },
+      genero: {
+        nombre: "femenino",
+      },
+    },
+  ]);
   const [temporadas, setTemporadas] = useState([]);
   const [federados, setFederados] = useState([]);
 
@@ -213,10 +223,9 @@ export default function Rankings() {
   // Sincronizar orden de categorías cada vez que se abre el gestor
   useEffect(() => {
     if (showManager) {
-      setRkLocalOrder(rkCategorias.map(c => c.id));
+      setRkLocalOrder(rkCategorias.map((c) => c.id));
     }
   }, [showManager, rkCategorias]);
-
 
   /* boot (load dictionaries + federados so we can resolve names) */
   useEffect(() => {
@@ -225,10 +234,11 @@ export default function Rankings() {
       try {
         const [ts, fed] = await Promise.all([
           fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas`),
-          fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`),
+          fetchJSON(
+            `${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`
+          ),
         ]);
         if (cancelled) return;
-
 
         if (!selectedFiltroId && filtsNorm.length)
           setSelectedFiltroId(String(filtsNorm[0].id));
@@ -265,8 +275,11 @@ export default function Rankings() {
     return {
       temporadaID: t?.id || "",
       deporte: uiSportToApi(sport),
-      tipoDePartido: tipoFromFiltro(filtros.find(f => String(f.id) === String(selectedFiltroId))) || "singles",
-      filtroId: selectedFiltroId || ""
+      tipoDePartido:
+        tipoFromFiltro(
+          filtros.find((f) => String(f.id) === String(selectedFiltroId))
+        ) || "singles",
+      filtroId: selectedFiltroId || "",
     };
   }, [temporadas, season, sport, filtros, selectedFiltroId]);
 
@@ -278,7 +291,9 @@ export default function Rankings() {
       try {
         // Determinar el género del filtro seleccionado
         let genero = "";
-        const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+        const filtro = filtros.find(
+          (f) => String(f.id) === String(selectedFiltroId)
+        );
         if (filtro && filtro.genero && filtro.genero.nombre) {
           genero = filtro.genero.nombre;
         }
@@ -288,18 +303,26 @@ export default function Rankings() {
           deporte: scope.deporte || "",
           leaderboard: "true",
           filtroId: scope.filtroId || "",
-          genero: genero || ""
+          genero: genero || "",
         });
-      const rows = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/rankings?${params.toString()}`);
+        const rows = await fetchJSON(
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/rankings?${params.toString()}`
+        );
         setRankingsRaw(Array.isArray(rows) ? rows : []);
         // Cargar categorías asociadas al scope actual
         const catParams = new URLSearchParams({
           temporadaID: scope.temporadaID || "",
           deporte: scope.deporte || "",
           tipoDePartido: scope.tipoDePartido || "",
-          filtroId: scope.filtroId || ""
+          filtroId: scope.filtroId || "",
         });
-        const catRes = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${catParams.toString()}`);
+        const catRes = await fetchJSON(
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/ranking-categorias?${catParams.toString()}`
+        );
         setRkCategorias(Array.isArray(catRes) ? catRes : []);
       } catch (e) {
         setErr(normalizeError(e));
@@ -312,14 +335,11 @@ export default function Rankings() {
     fetchLeaderboardAndCategorias();
   }, [scope, filtros, selectedFiltroId]);
 
-  // ...existing code...
-
-  /* maps */
   const nameById = useMemo(() => {
     const m = new Map();
     (federados || []).forEach((u, i) => {
       const id = u.id || u.uid || u.email || String(i);
-      const name = displayNameFromFederado(u) || id;
+      const name = displayNameFromFederado(u) || ""; // <– nunca ID
       m.set(id, name);
       if (u.id) m.set(u.id, name);
       if (u.uid) m.set(u.uid, name);
@@ -336,10 +356,9 @@ export default function Rankings() {
     return m;
   }, [rkCategorias]);
 
-  /* ----------- GROUPED rows (by categoría) con empates y corona ----------- */
   const grouped = useMemo(() => {
     const items = (rankingsRaw || []).map((rk) => {
-      const name = nameById.get(rk.usuarioID) || rk.usuarioID;
+      const name = nameById.get(rk.usuarioID) || "";
       const catId = rk.categoriaId ?? null;
       const meta = (catId && catMetaById.get(catId)) || null;
       return {
@@ -408,7 +427,10 @@ export default function Rankings() {
 
   const filtroOptions = useMemo(
     () =>
-      (filtros || []).map((f) => ({ id: String(f.id), label: buildFilterLabel(f) })),
+      (filtros || []).map((f) => ({
+        id: String(f.id),
+        label: buildFilterLabel(f),
+      })),
     [filtros]
   );
 
@@ -416,7 +438,9 @@ export default function Rankings() {
     const { temporadaID, deporte, tipoDePartido, filtroId } = scope;
     if (!temporadaID || !deporte || !tipoDePartido || !filtroId) return;
     let genero = "";
-    const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+    const filtro = filtros.find(
+      (f) => String(f.id) === String(selectedFiltroId)
+    );
     if (filtro && filtro.genero && filtro.genero.nombre) {
       genero = filtro.genero.nombre;
     }
@@ -427,21 +451,27 @@ export default function Rankings() {
         tipoDePartido,
         filtroId: String(filtroId),
         leaderboard: "true",
-        genero: genero || ""
+        genero: genero || "",
       });
-      const rk = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/rankings?${params.toString()}`);
+      const rk = await fetchJSON(
+        `${import.meta.env.VITE_BACKEND_URL}/api/rankings?${params.toString()}`
+      );
       setRankingsRaw(Array.isArray(rk) ? rk : []);
       // Cargar categorías asociadas al scope actual
       const catParams = new URLSearchParams({
         temporadaID,
         deporte,
         tipoDePartido,
-        filtroId: String(filtroId)
+        filtroId: String(filtroId),
       });
-      const catRes = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${catParams.toString()}`);
+      const catRes = await fetchJSON(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/ranking-categorias?${catParams.toString()}`
+      );
       const cats = Array.isArray(catRes) ? catRes : [];
       setRkCategorias(cats);
-      setRkLocalOrder(cats.map(c => c.id));
+      setRkLocalOrder(cats.map((c) => c.id));
     } catch {
       setRankingsRaw([]);
       setRkCategorias([]);
@@ -456,7 +486,9 @@ export default function Rankings() {
     if (!federados.length) {
       setLoadingFederados(true);
       try {
-        const fs = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`);
+        const fs = await fetchJSON(
+          `${import.meta.env.VITE_BACKEND_URL}/api/usuarios/federados`
+        );
         setFederados(Array.isArray(fs) ? fs : []);
       } catch (e) {
         alert(normalizeError(e));
@@ -474,26 +506,33 @@ export default function Rankings() {
       return alert("Falta seleccionar temporada/filtro/tipo.");
     // Deducir género del filtro seleccionado
     let genero = "";
-    const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+    const filtro = filtros.find(
+      (f) => String(f.id) === String(selectedFiltroId)
+    );
     if (filtro && filtro.genero && filtro.genero.nombre) {
       genero = filtro.genero.nombre;
     }
     try {
-      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/federados/${encodeURIComponent(usuarioID)}/categoria`, {
-        method: "POST",
-        body: JSON.stringify({
-          categoriaId: assignCategoriaId || null,
-          temporadaID: scope.temporadaID,
-          deporte: scope.deporte,
-          tipoDePartido: scope.tipoDePartido,
-          filtroId: scope.filtroId ?? null,
-          genero: genero || "",
-          puntos:
-            assignPoints === "" || assignPoints === null
-              ? undefined
-              : Number(assignPoints),
-        }),
-      });
+      await fetchJSON(
+        `${import.meta.env.VITE_BACKEND_URL}/api/federados/${encodeURIComponent(
+          usuarioID
+        )}/categoria`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            categoriaId: assignCategoriaId || null,
+            temporadaID: scope.temporadaID,
+            deporte: scope.deporte,
+            tipoDePartido: scope.tipoDePartido,
+            filtroId: scope.filtroId ?? null,
+            genero: genero || "",
+            puntos:
+              assignPoints === "" || assignPoints === null
+                ? undefined
+                : Number(assignPoints),
+          }),
+        }
+      );
       await reloadRankings();
       setShowAddModal(false);
     } catch (e) {
@@ -511,7 +550,9 @@ export default function Rankings() {
     setBusy(true);
     // Deducir género del filtro seleccionado
     let genero = "";
-    const filtro = filtros.find(f => String(f.id) === String(selectedFiltroId));
+    const filtro = filtros.find(
+      (f) => String(f.id) === String(selectedFiltroId)
+    );
     if (filtro && filtro.genero && filtro.genero.nombre) {
       genero = filtro.genero.nombre;
     }
@@ -525,10 +566,13 @@ export default function Rankings() {
         nombre: nm,
         capacidad: cap,
       };
-      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+      await fetchJSON(
+        `${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias`,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        }
+      );
       setNewCatName("");
       setNewCatCap(32);
       const qs = new URLSearchParams({
@@ -537,9 +581,15 @@ export default function Rankings() {
         tipoDePartido: scope.tipoDePartido,
       });
       if (scope.filtroId != null) qs.set("filtroId", scope.filtroId);
-      const rows = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${qs.toString()}`);
+      const rows = await fetchJSON(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/ranking-categorias?${qs.toString()}`
+      );
       const list = Array.isArray(rows) ? rows : [];
-      list.sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre));
+      list.sort(
+        (a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre)
+      );
       setRkCategorias(list);
       setRkLocalOrder(list.map((c) => c.id));
     } catch (e) {
@@ -570,25 +620,34 @@ export default function Rankings() {
   const saveRkOrder = async () => {
     if (!scope.temporadaID || !scope.tipoDePartido) return;
     try {
-      await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias/orden`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          temporadaID: scope.temporadaID,
-          deporte: scope.deporte,
-          tipoDePartido: scope.tipoDePartido,
-          filtroId: scope.filtroId,
-          ids: rkLocalOrder,
-        }),
-      });
+      await fetchJSON(
+        `${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias/orden`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            temporadaID: scope.temporadaID,
+            deporte: scope.deporte,
+            tipoDePartido: scope.tipoDePartido,
+            filtroId: scope.filtroId,
+            ids: rkLocalOrder,
+          }),
+        }
+      );
       const qs = new URLSearchParams({
         temporadaID: scope.temporadaID,
         deporte: scope.deporte,
         tipoDePartido: scope.tipoDePartido,
       });
       if (scope.filtroId != null) qs.set("filtroId", scope.filtroId);
-      const rows = await fetchJSON(`${import.meta.env.VITE_BACKEND_URL}/api/ranking-categorias?${qs.toString()}`);
+      const rows = await fetchJSON(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/ranking-categorias?${qs.toString()}`
+      );
       const list = Array.isArray(rows) ? rows : [];
-      list.sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre));
+      list.sort(
+        (a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre)
+      );
       setRkCategorias(list);
       setRkLocalOrder(list.map((c) => c.id));
       alert("Orden guardado");
@@ -596,12 +655,22 @@ export default function Rankings() {
       alert(normalizeError(e));
     }
   };
+  if (loading && !rankingsRaw.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
+          <p className="mt-4 text-lg">Cargando ranking...</p>
+        </div>
+      </div>
+    );
+  }
 
   /* ------------------------------- render ------------------------------- */
   return (
-  <div className="relative min-h-screen w-full text-neutral-900">
-    {/* Fondo con foto + colores muy sutiles */}
-    <style>{`
+    <div className="relative min-h-screen w-full text-neutral-900">
+      {/* Fondo con foto + colores muy sutiles */}
+      <style>{`
       @keyframes moveGradient {
         0% { background-position: 0% 0%; }
         25% { background-position: 100% 0%; }
@@ -611,34 +680,31 @@ export default function Rankings() {
       }
     `}</style>
 
-    {/* Foto de fondo */}
-<div
-  aria-hidden
-  className="fixed inset-0 z-0 pointer-events-none"
->
-  <div
-    className="w-full h-full bg-cover bg-center"
-    style={{
-      backgroundImage: `url(${rankingBg})`,
-      backgroundAttachment: "fixed",
-      filter: "blur(10px)",
-      transform: "scale(1.06)", // evita bordes duros del blur
-    }}
-  />
-</div>
+      {/* Foto de fondo */}
+      <div aria-hidden className="fixed inset-0 z-0 pointer-events-none">
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${rankingBg})`,
+            backgroundAttachment: "fixed",
+            filter: "blur(10px)",
+            transform: "scale(1.06)", // evita bordes duros del blur
+          }}
+        />
+      </div>
 
-    {/* Colores muy suaves encima de la foto */}
-    <div
-      aria-hidden
-      className="fixed inset-0 z-0"
-      style={{
-        background:
-          "linear-gradient(120deg, rgba(56,189,248,0.18), rgba(251,191,36,0.16), rgba(147,51,234,0.16))",
-        backgroundSize: "400% 400%",
-        animation: "moveGradient 40s ease-in-out infinite",
-        mixBlendMode: "soft-light",
-      }}
-    />
+      {/* Colores muy suaves encima de la foto */}
+      <div
+        aria-hidden
+        className="fixed inset-0 z-0"
+        style={{
+          background:
+            "linear-gradient(120deg, rgba(56,189,248,0.18), rgba(251,191,36,0.16), rgba(147,51,234,0.16))",
+          backgroundSize: "400% 400%",
+          animation: "moveGradient 40s ease-in-out infinite",
+          mixBlendMode: "soft-light",
+        }}
+      />
       <div className="relative z-10 flex min-h-screen flex-col">
         <NavbarBlanco />
 
@@ -723,7 +789,10 @@ export default function Rankings() {
 
               {/* Search */}
               <div className="relative w-full max-w-sm ml-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" aria-hidden />
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500"
+                  aria-hidden
+                />
                 <input
                   type="search"
                   inputMode="search"
@@ -744,41 +813,58 @@ export default function Rankings() {
                 )}
               </div>
 
-             {isAdmin && (
-    <Link to="/temporadas" className="ml-2">
-      <button className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white shadow-sm">
-        Crear Temporadas
-      </button>
-    </Link>
-  )}
+              {isAdmin && (
+                <Link to="/temporadas" className="ml-2">
+                  <button className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white shadow-sm">
+                    Crear Temporadas
+                  </button>
+                </Link>
+              )}
 
-  {isAdmin && (
-    <button
-      onClick={openAddModal}
-      disabled={!scope.temporadaID || !scope.filtroId || !scope.tipoDePartido}
-      className="h-11 px-4 rounded-lg border border-neutral-300 bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-40 shadow-sm"
-      title="Agregar un federado al ranking (popup)"
-    >
-      Agregar al ranking
-    </button>
-  )}
+              {isAdmin && (
+                <button
+                  onClick={openAddModal}
+                  disabled={
+                    !scope.temporadaID ||
+                    !scope.filtroId ||
+                    !scope.tipoDePartido
+                  }
+                  className="h-11 px-4 rounded-lg border border-neutral-300 bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-40 shadow-sm"
+                  title="Agregar un federado al ranking (popup)"
+                >
+                  Agregar al ranking
+                </button>
+              )}
 
-  {isAdmin && (
-    <button
-      onClick={() => setShowManager(true)}
-      disabled={!scope.temporadaID || !scope.filtroId || !scope.tipoDePartido}
-      className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white disabled:opacity-40 shadow-sm"
-      title="Crear y ordenar categorías (mejor→peor) del scope actual"
-    >
-      Gestionar categorías
-    </button>
-  )}
-</div>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowManager(true)}
+                  disabled={
+                    !scope.temporadaID ||
+                    !scope.filtroId ||
+                    !scope.tipoDePartido
+                  }
+                  className="h-11 px-4 rounded-lg border border-neutral-300 bg-white/90 hover:bg-white disabled:opacity-40 shadow-sm"
+                  title="Crear y ordenar categorías (mejor→peor) del scope actual"
+                >
+                  Gestionar categorías
+                </button>
+              )}
+            </div>
 
             {/* Status */}
             <div className="mt-4 text-sm text-neutral-700">
-              {!selectedFiltroId && <p>Elegí un filtro para ver/gestionar el ranking.</p>}
-              {loading && <p>Cargando…</p>}
+              {!selectedFiltroId && !loading && (
+                <p>Elegí un filtro para ver/gestionar el ranking.</p>
+              )}
+
+              {loading && (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full border-primary border-t-transparent"></div>
+                  <span>Cargando ranking…</span>
+                </div>
+              )}
+
               {err && <p className="text-red-600">Error: {err}</p>}
             </div>
           </div>
@@ -792,30 +878,33 @@ export default function Rankings() {
               {/* Top bar */}
               <div className="px-6 py-4 border-b border-neutral-200">
                 <h2 className="text-xl sm:text-2xl font-bold">
-                  {sport || "—"} · {season || "—"} · {scope.tipoDePartido || "—"} · {scope.filtroLabel || "Filtro"}
+                  {sport || "—"} · {season || "—"} ·{" "}
+                  {scope.tipoDePartido || "—"} · {scope.filtroLabel || "Filtro"}
                 </h2>
               </div>
 
               {/* Hierarchical sections */}
-              {(!loading && grouped.length === 0) ? (
+              {!loading && grouped.length === 0 ? (
                 <div className="px-6 py-12 text-center text-neutral-600">
                   No hay datos de ranking aún.
                 </div>
               ) : (
                 <div className="divide-y divide-neutral-200">
                   {grouped.map((group) => (
-                    <section key={String(group.categoriaId ?? "uncat")} className="px-2 sm:px-4">
+                    <section
+                      key={String(group.categoriaId ?? "uncat")}
+                      className="px-2 sm:px-4"
+                    >
                       {/* Sticky section header (light) */}
                       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur px-4 py-3 border-b border-neutral-200 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                         <div className="flex items-center gap-2">
                           <span className="text-lg sm:text-xl font-extrabold">
                             {group.categoriaNombre}
                           </span>
-                          {Number.isFinite(group.categoriaOrden) && group.categoriaOrden < 1e9 && (
-                            <span className="text-xs sm:text-sm text-neutral-500">
-                              
-                            </span>
-                          )}
+                          {Number.isFinite(group.categoriaOrden) &&
+                            group.categoriaOrden < 1e9 && (
+                              <span className="text-xs sm:text-sm text-neutral-500"></span>
+                            )}
                         </div>
                       </div>
 
@@ -824,11 +913,21 @@ export default function Rankings() {
                         <table className="w-full text-left">
                           <thead>
                             <tr className="bg-neutral-100 text-base sm:text-lg">
-                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">Posición</th>
-                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">Jugador</th>
-                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">PG</th>
-                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">PP</th>
-                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">Puntos</th>
+                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">
+                                Posición
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">
+                                Jugador
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">
+                                PG
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">
+                                PP
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-semibold border-y border-neutral-200">
+                                Puntos
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="text-base sm:text-lg">
@@ -887,9 +986,12 @@ export default function Rankings() {
         >
           <div className="w-full max-w-2xl bg-white text-neutral-900 rounded-2xl shadow-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-neutral-200 flex items-center gap-2">
-              <h3 className="text-lg font-extrabold">Agregar federado al ranking</h3>
+              <h3 className="text-lg font-extrabold">
+                Agregar federado al ranking
+              </h3>
               <span className="ml-auto text-xs text-neutral-500">
-                Scope: <b>{sport}</b> · <b>{season}</b> · <b>{scope.tipoDePartido || "—"}</b> · <b>{scope.filtroLabel}</b>
+                Scope: <b>{sport}</b> · <b>{season}</b> ·{" "}
+                <b>{scope.tipoDePartido || "—"}</b> · <b>{scope.filtroLabel}</b>
               </span>
             </div>
 
@@ -905,16 +1007,20 @@ export default function Rankings() {
                   {(federados || [])
                     .filter((u) => {
                       // Filtrar por género del filtro actual
-                      const filtro = filtros.find((f) => String(f.id) === String(selectedFiltroId));
+                      const filtro = filtros.find(
+                        (f) => String(f.id) === String(selectedFiltroId)
+                      );
                       if (!filtro || !filtro.genero?.nombre) return true;
                       const gen = (u.genero || u.sexo || "").toLowerCase();
-                      const filtroGen = (filtro.genero.nombre || "").toLowerCase();
+                      const filtroGen = (
+                        filtro.genero.nombre || ""
+                      ).toLowerCase();
                       if (filtroGen === "mixto") return true;
                       return gen === filtroGen;
                     })
                     .map((u, i) => {
                       const id = u.id || u.uid || u.email || String(i);
-                      const name = displayNameFromFederado(u) || id;
+                      const name = displayNameFromFederado(u) || "Federado sin nombre";
                       return (
                         <option key={id} value={id}>
                           {name}
@@ -922,23 +1028,37 @@ export default function Rankings() {
                       );
                     })}
                 </select>
-                {loadingFederados && <small className="text-neutral-600">Cargando federados…</small>}
+                {loadingFederados && (
+                  <small className="text-neutral-600">
+                    Cargando federados…
+                  </small>
+                )}
                 {/* Mostrar ranking actual si existe */}
-                {assignUserId && (() => {
-                  // Buscar ranking actual del federado en el scope
-                  const rk = rankingsRaw.find(r => String(r.usuarioID) === String(assignUserId));
-                  if (!rk) return null;
-                  return (
-                    <div className="mt-2 text-xs text-neutral-700 bg-neutral-100 rounded p-2">
-                      <b>Ranking actual:</b> Categoría: {rk.categoriaId ? (rkCategorias.find(c => c.id === rk.categoriaId)?.nombre || rk.categoriaId) : "Sin categoría"},
-                      Puntos: {rk.puntos}, PG: {rk.partidosGanados}, PP: {rk.partidosPerdidos}
-                    </div>
-                  );
-                })()}
+                {assignUserId &&
+                  (() => {
+                    // Buscar ranking actual del federado en el scope
+                    const rk = rankingsRaw.find(
+                      (r) => String(r.usuarioID) === String(assignUserId)
+                    );
+                    if (!rk) return null;
+                    return (
+                      <div className="mt-2 text-xs text-neutral-700 bg-neutral-100 rounded p-2">
+                        <b>Ranking actual:</b> Categoría:{" "}
+                        {rk.categoriaId
+                          ? rkCategorias.find((c) => c.id === rk.categoriaId)
+                              ?.nombre || rk.categoriaId
+                          : "Sin categoría"}
+                        , Puntos: {rk.puntos}, PG: {rk.partidosGanados}, PP:{" "}
+                        {rk.partidosPerdidos}
+                      </div>
+                    );
+                  })()}
               </div>
 
               <div className="grid gap-1">
-                <label className="text-sm font-medium">Categoría (opcional)</label>
+                <label className="text-sm font-medium">
+                  Categoría (opcional)
+                </label>
                 <select
                   className="h-10 px-3 rounded-lg border border-neutral-300"
                   value={assignCategoriaId}
@@ -955,7 +1075,8 @@ export default function Rankings() {
 
               <div className="grid gap-1">
                 <label className="text-sm font-medium">
-                  Puntos iniciales (opcional — vacío usa “top de la categoría inferior” o 0)
+                  Puntos iniciales (opcional — vacío usa “top de la categoría
+                  inferior” o 0)
                 </label>
                 <input
                   className="h-10 px-3 rounded-lg border border-neutral-300"
@@ -998,9 +1119,12 @@ export default function Rankings() {
         >
           <div className="w-full max-w-4xl bg-white text-neutral-900 rounded-2xl shadow-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-neutral-200 flex items-center gap-2">
-              <h3 className="text-lg font-extrabold">Gestor de categorías (mejor → peor)</h3>
+              <h3 className="text-lg font-extrabold">
+                Gestor de categorías (mejor → peor)
+              </h3>
               <span className="ml-auto text-xs text-neutral-500">
-                Scope: <b>{sport}</b> · <b>{season}</b> · <b>{scope.tipoDePartido || "—"}</b> · <b>{scope.filtroLabel}</b>
+                Scope: <b>{sport}</b> · <b>{season}</b> ·{" "}
+                <b>{scope.tipoDePartido || "—"}</b> · <b>{scope.filtroLabel}</b>
               </span>
               <button
                 className="ml-3 h-9 px-3 rounded-lg border border-neutral-300 hover:bg-neutral-50"
@@ -1010,7 +1134,10 @@ export default function Rankings() {
               </button>
             </div>
 
-            <form onSubmit={createCategoria} className="p-5 flex flex-wrap gap-3 items-end">
+            <form
+              onSubmit={createCategoria}
+              className="p-5 flex flex-wrap gap-3 items-end"
+            >
               <div className="grid">
                 <label className="text-xs text-neutral-600">Nombre</label>
                 <input
@@ -1045,7 +1172,9 @@ export default function Rankings() {
 
             <div className="px-5 pb-5">
               {rkCategorias.length === 0 ? (
-                <div className="p-4 border-t border-neutral-200 text-sm">No hay categorías en este scope.</div>
+                <div className="p-4 border-t border-neutral-200 text-sm">
+                  No hay categorías en este scope.
+                </div>
               ) : (
                 <>
                   <div className="text-xs text-neutral-600 mb-2">
@@ -1055,10 +1184,18 @@ export default function Rankings() {
                     <table className="w-full text-left border-separate border-spacing-0">
                       <thead>
                         <tr className="bg-neutral-100">
-                          <th className="px-4 py-3 border-b border-neutral-200">Orden</th>
-                          <th className="px-4 py-3 border-b border-neutral-200">Nombre</th>
-                          <th className="px-4 py-3 border-b border-neutral-200">Capacidad</th>
-                          <th className="px-4 py-3 border-b border-neutral-200">Acciones</th>
+                          <th className="px-4 py-3 border-b border-neutral-200">
+                            Orden
+                          </th>
+                          <th className="px-4 py-3 border-b border-neutral-200">
+                            Nombre
+                          </th>
+                          <th className="px-4 py-3 border-b border-neutral-200">
+                            Capacidad
+                          </th>
+                          <th className="px-4 py-3 border-b border-neutral-200">
+                            Acciones
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1066,10 +1203,19 @@ export default function Rankings() {
                           const c = rkCategorias.find((x) => x.id === id);
                           if (!c) return null;
                           return (
-                            <tr key={id} className={idx % 2 ? "" : "bg-neutral-50"}>
-                              <td className="px-4 py-3 border-b border-neutral-200 font-bold">#{idx}</td>
-                              <td className="px-4 py-3 border-b border-neutral-200">{c.nombre}</td>
-                              <td className="px-4 py-3 border-b border-neutral-200">{c.capacidad}</td>
+                            <tr
+                              key={id}
+                              className={idx % 2 ? "" : "bg-neutral-50"}
+                            >
+                              <td className="px-4 py-3 border-b border-neutral-200 font-bold">
+                                #{idx}
+                              </td>
+                              <td className="px-4 py-3 border-b border-neutral-200">
+                                {c.nombre}
+                              </td>
+                              <td className="px-4 py-3 border-b border-neutral-200">
+                                {c.capacidad}
+                              </td>
                               <td className="px-4 py-3 border-b border-neutral-200">
                                 <div className="flex gap-2">
                                   <button

@@ -241,295 +241,295 @@ const Administracion = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-white p-4 md:p-8 relative overflow-hidden">
-      <div
-        className="overflow-hidden"
-        style={{
-          backgroundImage: "url('/FondoAdmin.svg')",
-          width: "100vw",
-          height: "100vh",
-          position: "fixed",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          zIndex: -1,
-        }}
-      ></div>
-      <NavbarBlanco />
-      <div
-        className="max-w-7xl mx-auto relative mt-20 md:mt-12"
-        style={{ zIndex: 1 }}
-      >
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight break-words">
-            {ventana === "administracion"
-              ? "PANEL DE ADMINISTRACIÓN"
-              : ventana === "tickets"
-                ? "Tickets y Usuarios"
-                : "Reservas"}
-          </h1>
-          <p className="text-gray-600">
-            {ventana === "administracion"
-              ? "Monitoreo de consumo y reportes de Firebase"
-              : ventana === "tickets"
-                ? "Gestión de tickets y usuarios del sistema."
-                : "Gestión de reservas de canchas."}
-          </p>
-        </div>
-        <div className="mb-8 flex flex-wrap gap-2 md:gap-4">
-          {botones.map((b) => (
-            <button
-              key={b.nombre}
-              className={`py-2 px-4 rounded-full text-sm md:text-base whitespace-nowrap transition-colors ${botonActivo === b.ventana
+return (
+  <div className="min-h-screen flex flex-col bg-white relative overflow-hidden">
+    <div
+      className="overflow-hidden"
+      style={{
+        backgroundImage: "url('/FondoAdmin.svg')",
+        width: "100vw",
+        height: "100vh",
+        position: "fixed",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+        bottom: 0,
+        left: 0,
+        zIndex: -1,
+      }}
+    ></div>
+
+    <NavbarBlanco transparent={false} />
+
+    <main
+      className="w-full max-w-7xl mx-auto px-4 md:px-8 pt-24 pb-8 relative"
+      style={{ zIndex: 1 }}
+    >
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight break-words">
+          {ventana === "administracion"
+            ? "PANEL DE ADMINISTRACIÓN"
+            : ventana === "tickets"
+            ? "Tickets y Usuarios"
+            : "Reservas"}
+        </h1>
+        <p className="text-gray-600">
+          {ventana === "administracion"
+            ? "Monitoreo de consumo y reportes de Firebase"
+            : ventana === "tickets"
+            ? "Gestión de tickets y usuarios del sistema."
+            : "Gestión de reservas de canchas."}
+        </p>
+      </div>
+
+      <div className="mb-8 flex flex-wrap gap-2 md:gap-4">
+        {botones.map((b) => (
+          <button
+            key={b.nombre}
+            className={`py-2 px-4 rounded-full text-sm md:text-base whitespace-nowrap transition-colors ${
+              botonActivo === b.ventana
                 ? "bg-blue-500 text-white"
                 : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              onClick={() => {
-                setVentana(b.ventana);
-                setBotonActivo(b.ventana);
-              }}
-            >
-              {b.nombre}
-            </button>
-          ))}
-        </div>
-        {ventana === "administracion" ? (
-          <>
-            <div>
-              <h2 className="text-3xl font-bold">Bienvenido, {user.nombre}!</h2>
+            }`}
+            onClick={() => {
+              setVentana(b.ventana);
+              setBotonActivo(b.ventana);
+            }}
+          >
+            {b.nombre}
+          </button>
+        ))}
+      </div>
 
-              {/* Sección de Atajos Rápidos */}
-              <div className="mt-8 mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Atajos Rápidos</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {ventana === "administracion" ? (
+        <>
+          <div>
+            <h2 className="text-3xl font-bold">Bienvenido, {user.nombre}!</h2>
 
-                  {/* Crear Temporada */}
-                  <Link
-                    to="/temporadas"
-                    className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                        <Calendar className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg">Temporadas</h4>
-                        <p className="text-sm opacity-90">Crear/ver temporadas</p>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Crear Noticia */}
-                  <Link
-                    to="/crear-noticia"
-                    className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                        <Plus className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg">Nueva Noticia</h4>
-                        <p className="text-sm opacity-90">Crear noticia</p>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Ver Noticias */}
-                  <Link
-                    to="/noticias"
-                    className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                        <Newspaper className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg">Noticias</h4>
-                        <p className="text-sm opacity-90">Ver todas las noticias</p>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Rankings */}
-                  <Link
-                    to="/ranking"
-                    className="group bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                        <Trophy className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg">Rankings</h4>
-                        <p className="text-sm opacity-90">Ver rankings</p>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Resultados */}
-                  <Link
-                    to="/resultados"
-                    className="group bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                        <BarChart3 className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg">Resultados</h4>
-                        <p className="text-sm opacity-90">Ver resultados</p>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Gestionar Campeonatos */}
-                  <Link
-                    to="/crear-campeonato"
-                    className="group bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-white"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                        <Award className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-lg">Campeonatos</h4>
-                        <p className="text-sm opacity-90">Crear campeonato</p>
-                      </div>
-                    </div>
-                  </Link>
-
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 mb-8 text-white">
-
-
-
-              <h2 className="text-xl font-semibold mb-2">
-                Gasto Total del Mes
-              </h2>
-              <p className="text-4xl font-bold">
-                ${metricas?.gastoTotal.toFixed(2)}
-              </p>
-              <p className="text-sm opacity-90 mt-2">
-                Período:{" "}
-                {new Date(metricas?.periodo.inicio).toLocaleDateString()} -{" "}
-                {new Date(metricas?.periodo.fin).toLocaleDateString()}
-              </p>
-            </div>
-
-            {/* Gauges de Uso */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <GraficoGauge
-                value={metricas?.cloudFunctions.usado}
-                max={metricas?.cloudFunctions.limite}
-                title="Servidor (invocaciones)"
-                icon={Flame}
-                color="#F59E0B"
-              />
-
-              <GraficoGauge
-                value={metricas?.hosting.usado}
-                max={metricas?.hosting.limite}
-                title="Hosting (GB)"
-                icon={Server}
-                color="#8B5CF6"
-              />
-
-              <GraficoGauge
-                value={metricas?.firestore.porcentajePromedio}
-                max={100}
-                title="Almacenamiento"
-                icon={Database}
-                color="#3B82F6"
-              />
-            </div>
-
-            {/* Detalles de Firestore */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Database className="w-6 h-6 text-blue-600" />
-                Detalles de Almacenamiento
+            {/* Sección de Atajos Rápidos */}
+            <div className="mt-8 mb-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                Atajos Rápidos
               </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Crear Temporada */}
+                <Link
+                  to="/temporadas"
+                  className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duración-300 transform hover:-translate-y-1 text-white"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                      <Calendar className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Temporadas</h4>
+                      <p className="text-sm opacity-90">Crear/ver temporadas</p>
+                    </div>
+                  </div>
+                </Link>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="border-l-4 border-blue-500 pl-4">
-                  <p className="text-sm text-gray-600">Lecturas</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {metricas?.firestore.lecturas.porcentaje}%
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {metricas?.firestore.lecturas.usado.toLocaleString()} /{" "}
-                    {metricas?.firestore.lecturas.limite.toLocaleString()}
-                  </p>
-                </div>
+                {/* Crear Noticia */}
+                <Link
+                  to="/crear-noticia"
+                  className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duración-300 transform hover:-translate-y-1 text-white"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                      <Plus className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Nueva Noticia</h4>
+                      <p className="text-sm opacity-90">Crear noticia</p>
+                    </div>
+                  </div>
+                </Link>
 
-                <div className="border-l-4 border-green-500 pl-4">
-                  <p className="text-sm text-gray-600">Escrituras</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {metricas?.firestore.escrituras.porcentaje}%
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {metricas?.firestore.escrituras.usado.toLocaleString()} /{" "}
-                    {metricas?.firestore.escrituras.limite.toLocaleString()}
-                  </p>
-                </div>
+                {/* Ver Noticias */}
+                <Link
+                  to="/noticias"
+                  className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duración-300 transform hover:-translate-y-1 text-white"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                      <Newspaper className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Noticias</h4>
+                      <p className="text-sm opacity-90">Ver todas las noticias</p>
+                    </div>
+                  </div>
+                </Link>
 
-                <div className="border-l-4 border-red-500 pl-4">
-                  <p className="text-sm text-gray-600">Eliminaciones</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {metricas?.firestore.eliminaciones.porcentaje}%
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {metricas?.firestore.eliminaciones.usado.toLocaleString()} /{" "}
-                    {metricas?.firestore.eliminaciones.limite.toLocaleString()}
-                  </p>
-                </div>
+                {/* Rankings */}
+                <Link
+                  to="/ranking"
+                  className="group bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duración-300 transform hover:-translate-y-1 text-white"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                      <Trophy className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Rankings</h4>
+                      <p className="text-sm opacity-90">Ver rankings</p>
+                    </div>
+                  </div>
+                </Link>
 
-                <div className="border-l-4 border-purple-500 pl-4">
-                  <p className="text-sm text-gray-600">Almacenamiento</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {metricas?.firestore.almacenamiento.porcentaje}%
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {metricas?.firestore.almacenamiento.usado} GB /{" "}
-                    {metricas?.firestore.almacenamiento.limite} GB
-                  </p>
-                </div>
+                {/* Resultados */}
+                <Link
+                  to="/resultados"
+                  className="group bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duración-300 transform hover:-translate-y-1 text-white"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                      <BarChart3 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Resultados</h4>
+                      <p className="text-sm opacity-90">Ver resultados</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Gestionar Campeonatos */}
+                <Link
+                  to="/crear-campeonato"
+                  className="group bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duración-300 transform hover:-translate-y-1 text-white"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                      <Award className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Campeonatos</h4>
+                      <p className="text-sm opacity-90">Crear campeonato</p>
+                    </div>
+                  </div>
+                </Link>
               </div>
             </div>
-          </>
-        ) : ventana === "tickets" ? (
-          <>
-            <div className="bg-gray-800 rounded-lg shadow-lg p-4 md:p-8">
-              {/* Tickets/Reportes */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-6 mt-8 md:mt-0">
-                  <h2 className="text-2xl md:text-3xl font-bold text-white">
-                    TICKETS ({reportes.length})
-                  </h2>
-                </div>
+          </div>
 
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="table w-full">
-                    <thead>
-                      <tr className="text-gray-300">
-                        <th>Datos</th>
-                        <th>Mensaje</th>
-                        <th>Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reportes?.filter(r => r.estado !== "resuelto").map((reporte) => {
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+            <h2 className="text-xl font-semibold mb-2">Gasto Total del Mes</h2>
+            <p className="text-4xl font-bold">
+              ${metricas?.gastoTotal.toFixed(2)}
+            </p>
+            <p className="text-sm opacity-90 mt-2">
+              Período:{" "}
+              {new Date(metricas?.periodo.inicio).toLocaleDateString()} -{" "}
+              {new Date(metricas?.periodo.fin).toLocaleDateString()}
+            </p>
+          </div>
+
+          {/* Gauges de Uso */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <GraficoGauge
+              value={metricas?.cloudFunctions.usado}
+              max={metricas?.cloudFunctions.limite}
+              title="Servidor (invocaciones)"
+              icon={Flame}
+              color="#F59E0B"
+            />
+
+            <GraficoGauge
+              value={metricas?.hosting.usado}
+              max={metricas?.hosting.limite}
+              title="Hosting (GB)"
+              icon={Server}
+              color="#8B5CF6"
+            />
+
+            <GraficoGauge
+              value={metricas?.firestore.porcentajePromedio}
+              max={100}
+              title="Almacenamiento"
+              icon={Database}
+              color="#3B82F6"
+            />
+          </div>
+
+          {/* Detalles de Firestore */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <Database className="w-6 h-6 text-blue-600" />
+              Detalles de Almacenamiento
+            </h3>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="border-l-4 border-blue-500 pl-4">
+                <p className="text-sm text-gray-600">Lecturas</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {metricas?.firestore.lecturas.porcentaje}%
+                </p>
+                <p className="text-xs text-gray-500">
+                  {metricas?.firestore.lecturas.usado.toLocaleString()} /{" "}
+                  {metricas?.firestore.lecturas.limite.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="border-l-4 border-green-500 pl-4">
+                <p className="text-sm text-gray-600">Escrituras</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {metricas?.firestore.escrituras.porcentaje}%
+                </p>
+                <p className="text-xs text-gray-500">
+                  {metricas?.firestore.escrituras.usado.toLocaleString()} /{" "}
+                  {metricas?.firestore.escrituras.limite.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="border-l-4 border-red-500 pl-4">
+                <p className="text-sm text-gray-600">Eliminaciones</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {metricas?.firestore.eliminaciones.porcentaje}%
+                </p>
+                <p className="text-xs text-gray-500">
+                  {metricas?.firestore.eliminaciones.usado.toLocaleString()} /{" "}
+                  {metricas?.firestore.eliminaciones.limite.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="border-l-4 border-purple-500 pl-4">
+                <p className="text-sm text-gray-600">Almacenamiento</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {metricas?.firestore.almacenamiento.porcentaje}%
+                </p>
+                <p className="text-xs text-gray-500">
+                  {metricas?.firestore.almacenamiento.usado} GB /{" "}
+                  {metricas?.firestore.almacenamiento.limite} GB
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : ventana === "tickets" ? (
+        <>
+          <div className="bg-gray-800 rounded-lg shadow-lg p-4 md:p-8">
+            {/* Tickets/Reportes */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6 mt-8 md:mt-0">
+                <h2 className="text-2xl md:text-3xl font-bold text-white">
+                  TICKETS ({reportes.length})
+                </h2>
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="table w-full">
+                  <thead>
+                    <tr className="text-gray-300">
+                      <th>Datos</th>
+                      <th>Mensaje</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportes
+                      ?.filter((r) => r.estado !== "resuelto")
+                      .map((reporte) => {
                         const TipoIcon = getTipoIcon(reporte.tipo);
                         const reporteProps = {
                           ...reporte,
@@ -538,8 +538,11 @@ const Administracion = () => {
                         return (
                           <tr
                             key={reporte.id}
-                            className={`text-white ${reporte.estado == "resuelto" ? "opacity-50" : ""
-                              }`}
+                            className={`text-white ${
+                              reporte.estado == "resuelto"
+                                ? "opacity-50"
+                                : ""
+                            }`}
                           >
                             <td>
                               <div className="flex items-center gap-2 mb-2">
@@ -563,7 +566,9 @@ const Administracion = () => {
                                   className="w-4 h-4"
                                   style={{ color: "#4AC0E4" }}
                                 />
-                                {new Date(reporte.fecha).toLocaleDateString()}
+                                {new Date(
+                                  reporte.fecha
+                                ).toLocaleDateString()}
                               </div>
                             </td>
                             <td className="text-white max-w-md">
@@ -596,31 +601,41 @@ const Administracion = () => {
                                       borderColor: "#4AC0E4",
                                       color: "white",
                                     }}
-                                    onClick={() => setModalReporte(reporte.id)}
+                                    onClick={() =>
+                                      setModalReporte(reporte.id)
+                                    }
                                   >
                                     VER MÁS
                                   </button>
                                   {modalReporte === reporte.id &&
-                                    (reporte.tipo === "solicitud_federacion" ? (
+                                    (reporte.tipo ===
+                                    "solicitud_federacion" ? (
                                       <ReporteFederacionModal
                                         reporte={reporteProps}
                                         onValidar={validarFederacion}
                                         onNegar={negarFederacion}
-                                        onClose={() => setModalReporte(null)}
+                                        onClose={() =>
+                                          setModalReporte(null)
+                                        }
                                       />
-                                    ) : reporte.tipo === "disputa_resultado" ? (
+                                    ) : reporte.tipo ===
+                                      "disputa_resultado" ? (
                                       <ReporteDisputaPartidoModal
                                         reporte={reporteProps}
                                         onResuelto={async (idRep) => {
                                           await marcarComoResuelto(idRep);
                                         }}
-                                        onClose={() => setModalReporte(null)}
+                                        onClose={() =>
+                                          setModalReporte(null)
+                                        }
                                       />
                                     ) : (
                                       <ReporteDefaultModal
                                         reporte={reporteProps}
                                         onResuelto={marcarComoResuelto}
-                                        onClose={() => setModalReporte(null)}
+                                        onClose={() =>
+                                          setModalReporte(null)
+                                        }
                                       />
                                     ))}
                                 </>
@@ -629,23 +644,25 @@ const Administracion = () => {
                           </tr>
                         );
                       })}
-                      {reportes.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan="3"
-                            className="text-center text-gray-400 py-4"
-                          >
-                            No hay tickets o reportes sin atender.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                    {reportes.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="3"
+                          className="text-center text-gray-400 py-4"
+                        >
+                          No hay tickets o reportes sin atender.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-                {/* Mobile Card View */}
-                <div className="md:hidden space-y-4">
-                  {reportes?.filter(r => r.estado !== "resuelto").map((reporte) => {
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {reportes
+                  ?.filter((r) => r.estado !== "resuelto")
+                  .map((reporte) => {
                     const TipoIcon = getTipoIcon(reporte.tipo);
                     const reporteProps = {
                       ...reporte,
@@ -676,21 +693,32 @@ const Administracion = () => {
 
                         {/* Fecha */}
                         <div className="flex items-center gap-2 text-white">
-                          <Calendar className="w-4 h-4" style={{ color: "#4AC0E4" }} />
-                          <span className="text-sm">{new Date(reporte.fecha).toLocaleDateString()}</span>
+                          <Calendar
+                            className="w-4 h-4"
+                            style={{ color: "#4AC0E4" }}
+                          />
+                          <span className="text-sm">
+                            {new Date(
+                              reporte.fecha
+                            ).toLocaleDateString()}
+                          </span>
                         </div>
 
                         {/* Mensaje */}
                         <div className="text-white">
                           <p className="text-sm mb-1">{reporte.motivo}</p>
-                          <p className="text-xs text-gray-400">{reporte.mailUsuario}</p>
+                          <p className="text-xs text-gray-400">
+                            {reporte.mailUsuario}
+                          </p>
                         </div>
 
                         {/* Acción */}
                         <div className="pt-2">
                           {reporte.estado == "resuelto" ? (
                             <button
-                              onClick={() => marcarComoNoResuelto(reporte.id)}
+                              onClick={() =>
+                                marcarComoNoResuelto(reporte.id)
+                              }
                               className="btn btn-sm w-full"
                               style={{
                                 backgroundColor: "#4AC0E4",
@@ -709,31 +737,41 @@ const Administracion = () => {
                                   borderColor: "#4AC0E4",
                                   color: "white",
                                 }}
-                                onClick={() => setModalReporte(reporte.id)}
+                                onClick={() =>
+                                  setModalReporte(reporte.id)
+                                }
                               >
                                 VER MÁS
                               </button>
                               {modalReporte === reporte.id &&
-                                (reporte.tipo === "solicitud_federacion" ? (
+                                (reporte.tipo ===
+                                "solicitud_federacion" ? (
                                   <ReporteFederacionModal
                                     reporte={reporteProps}
                                     onValidar={validarFederacion}
                                     onNegar={negarFederacion}
-                                    onClose={() => setModalReporte(null)}
+                                    onClose={() =>
+                                      setModalReporte(null)
+                                    }
                                   />
-                                ) : reporte.tipo === "disputa_resultado" ? (
+                                ) : reporte.tipo ===
+                                  "disputa_resultado" ? (
                                   <ReporteDisputaPartidoModal
                                     reporte={reporteProps}
                                     onResuelto={async (idRep) => {
                                       await marcarComoResuelto(idRep);
                                     }}
-                                    onClose={() => setModalReporte(null)}
+                                    onClose={() =>
+                                      setModalReporte(null)
+                                    }
                                   />
                                 ) : (
                                   <ReporteDefaultModal
                                     reporte={reporteProps}
                                     onResuelto={marcarComoResuelto}
-                                    onClose={() => setModalReporte(null)}
+                                    onClose={() =>
+                                      setModalReporte(null)
+                                    }
                                   />
                                 ))}
                             </>
@@ -742,79 +780,82 @@ const Administracion = () => {
                       </div>
                     );
                   })}
-                  {reportes.length === 0 && (
-                    <div className="text-center text-gray-400 py-8">
-                      No hay tickets o reportes sin atender.
-                    </div>
-                  )}
+                {reportes.length === 0 && (
+                  <div className="text-center text-gray-400 py-8">
+                    No hay tickets o reportes sin atender.
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() =>
+                  (window.location.href = "/administracion/reportes")
+                }
+                className="btn btn-lg mt-4 w-full md:w-auto"
+                style={{
+                  fontSize: "16px",
+                  backgroundColor: "#4AC0E4",
+                  borderColor: "#4AC0E4",
+                  color: "white",
+                }}
+              >
+                VER TODOS LOS TICKETS
+              </button>
+            </div>
+
+            {/* Usuarios */}
+            <div className="border-t border-gray-700 pt-8 mt-8 md:mt-0">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2 mt-8 md:mt-0">
+                <Users
+                  className="w-5 h-5 md:w-6 md:h-6"
+                  style={{ color: "#4AC0E4" }}
+                />
+                USUARIOS
+                <span
+                  className="text-4xl md:text-5xl font-bold ml-3"
+                  style={{ color: "#4AC0E4" }}
+                >
+                  {cantidadUsuarios}
+                </span>
+              </h2>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <p className="text-gray-400 text-lg">
+                    Usuarios Federados:{" "}
+                    <span
+                      className="text-xl font-semibold"
+                      style={{ color: "#4AC0E4" }}
+                    >
+                      {cantidadFederados}
+                    </span>
+                  </p>
                 </div>
 
                 <button
                   onClick={() =>
-                    (window.location.href = "/administracion/reportes")
+                    (window.location.href = "/administracion/usuarios")
                   }
-                  className="btn btn-lg mt-4 w-full md:w-auto"
+                  className="btn btn-lg w-full md:w-auto"
                   style={{
-                    fontSize: '16px',
                     backgroundColor: "#4AC0E4",
                     borderColor: "#4AC0E4",
                     color: "white",
+                    fontSize: "16px",
                   }}
                 >
-                  VER TODOS LOS TICKETS
+                  ADMINISTRAR USUARIOS
                 </button>
               </div>
-
-
-              {/* Usuarios */}
-              <div className="border-t border-gray-700 pt-8 mt-8 md:mt-0">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2 mt-8 md:mt-0">
-                  <Users className="w-5 h-5 md:w-6 md:h-6" style={{ color: "#4AC0E4" }} />
-                  USUARIOS
-                  <span
-                    className="text-4xl md:text-5xl font-bold ml-3"
-                    style={{ color: "#4AC0E4" }}
-                  >
-                    {cantidadUsuarios}
-                  </span>
-                </h2>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
-                    <p className="text-gray-400 text-lg">
-                      Usuarios Federados:{" "}
-                      <span
-                        className="text-xl font-semibold"
-                        style={{ color: "#4AC0E4" }}
-                      >
-                        {cantidadFederados}
-                      </span>
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      (window.location.href = "/administracion/usuarios")
-                    }
-                    className="btn btn-lg w-full md:w-auto"
-                    style={{
-                      backgroundColor: "#4AC0E4",
-                      borderColor: "#4AC0E4",
-                      color: "white",
-                      fontSize: '16px',
-                    }}
-                  >
-                    ADMINISTRAR USUARIOS
-                  </button>
-                </div>
-              </div>
             </div>
-          </>
-        ) : (
-          <Reservas />
-        )}
-      </div>
-    </div>
-  );
+          </div>
+        </>
+      ) : (
+        <Reservas />
+      )}
+    </main>
+  </div>
+);
+
 };
 
 export default Administracion;
