@@ -269,7 +269,7 @@ return (
       <div className="mb-8">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight break-words">
           {ventana === "administracion"
-            ? "PANEL DE ADMINISTRACIÓN"
+            ? "Panel de administración"
             : ventana === "tickets"
             ? "Tickets y Usuarios"
             : "Reservas"}

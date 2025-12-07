@@ -788,13 +788,8 @@ export default function AcuerdoResultado() {
   /* --------------------- Render --------------------- */
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
-          <p className="mt-4 text-lg text-neutral-600">
-            Cargando resultado...
-          </p>
-        </div>
+      <div className="min-h-screen grid place-items-center bg-white">
+        <div className="text-neutral-600">Cargando…</div>
       </div>
     );
   }

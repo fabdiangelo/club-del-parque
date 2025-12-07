@@ -50,7 +50,8 @@ export default function ResultadosPage() {
             (Array.isArray(p.jugador1) && p.jugador1.length > 0) ||
             Boolean(p.jugador1Id);
           const rightPopulated =
-            (Array.isArray(p.equipoVisitante) && p.equipoVisitante.length > 0) ||
+            (Array.isArray(p.equipoVisitante) &&
+              p.equipoVisitante.length > 0) ||
             (Array.isArray(p.jugador2) && p.jugador2.length > 0) ||
             Boolean(p.jugador2Id);
           return leftPopulated && rightPopulated;
@@ -69,18 +70,33 @@ export default function ResultadosPage() {
     fetchPartidos();
   }, [user?.uid]);
 
+  // 🔹 FULL-SCREEN SPINNER (igual que Rankings)
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
+          <p className="mt-4 text-lg text-gray-700">
+            Cargando partidos...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900 w-full">
       <NavbarBlanco transparent={false} />
       <main className="mx-auto max-w-5xl px-6 lg:px-8 w-full pt-24 pb-16">
         {/* TÍTULO CENTRADO */}
-        <h1 className="text-5xl sm:text-5xl font-extrabold tracking-tight text-center">ACUERDO DE RESULTADOS</h1>
-          
+        <h1 className="text-5xl sm:text-5xl font-extrabold tracking-tight text-center">
+          Acuerdo de resultados
+        </h1>
 
-        {loading ? (
-          <div className="mt-6 text-gray-600 text-center">Cargando partidos…</div>
-        ) : err ? (
-          <div className="mt-6 text-red-600 font-semibold text-center">{err}</div>
+        {err ? (
+          <div className="mt-6 text-red-600 font-semibold text-center">
+            {err}
+          </div>
         ) : partidos.length === 0 ? (
           <p className="mt-8 text-2xl font-normal text-gray-700 text-center">
             No tienes partidos pendientes de resultado
@@ -97,7 +113,9 @@ export default function ResultadosPage() {
                   <th className="px-4 py-3 text-center font-semibold">
                     Contrincante
                   </th>
-                  <th className="px-4 py-3 text-center font-semibold">Acciones</th>
+                  <th className="px-4 py-3 text-center font-semibold">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -105,9 +123,10 @@ export default function ResultadosPage() {
                   const key = String(p?.id || p?._id || p?.uid || idx);
 
                   // Fecha: si existe una propuesta aceptada usar su fecha, sino "Por definir"
-                  const propuestaAceptada = (
-                    p?.disponibilidades?.propuestas || []
-                  ).find((pr) => pr.aceptada || pr.aceptada === true);
+                  const propuestaAceptada =
+                    (p?.disponibilidades?.propuestas || []).find(
+                      (pr) => pr.aceptada || pr.aceptada === true
+                    );
                   const fechaStr =
                     propuestaAceptada && propuestaAceptada.fechaHoraInicio
                       ? new Date(
@@ -124,7 +143,8 @@ export default function ResultadosPage() {
                     : [p.jugador1Nombre];
 
                   let opponentNames = [];
-                  if (leftNames.includes(user?.nombre)) opponentNames = rightNames;
+                  if (leftNames.includes(user?.nombre))
+                    opponentNames = rightNames;
                   else if (rightNames.includes(user?.nombre))
                     opponentNames = leftNames;
                   else {

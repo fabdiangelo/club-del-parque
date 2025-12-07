@@ -120,7 +120,7 @@ export default function Noticias() {
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8 py-14 lg:py-20 flex flex-col items-center gap-4 text-center">
           <div className="max-w-2xl">
             <h1 className="text-5xl sm:text-5xl font-extrabold tracking-tight">   
-              NOTICIAS
+              Noticias
             </h1>
             <p className="mt-4 max-w-2xl mx-auto text-slate-600 text-sm md:text-base">
               Las novedades más recientes del club en un solo lugar.
