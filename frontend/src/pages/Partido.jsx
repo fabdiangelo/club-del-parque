@@ -145,7 +145,7 @@ const Partido = () => {
         }
 
     const idPartido = id || partido?.id; // fallback to route param if partido.id missing
-    console.log("Aceptar propuesta", propuestaId, "partido.id:", partido?.id, "route id:", id);
+    console.log("Aceptar Propuesta", propuestaId, "partido.id:", partido?.id, "route id:", id);
 
         try {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${idPartido}/confirmar-horario`, {
@@ -664,9 +664,7 @@ useEffect(() => {
          
             {partido && esDobles ? (
                 <div className="container mx-auto py-4 battle-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '10px', padding: '20px' }}>
-
                     <div style={{ paddingTop: '60px', margin: "0 auto", textAlign: 'center', width: '100%' }}>
-
                         {temporada && partido && (
                             <div style={{ paddingBottom: '30px' }}>
                                 <h3 style={{ fontSize: 'clamp(24px, 6vw, 48px)', textTransform: 'uppercase' }}>Partido, {temporada?.nombre} - {partido?.tipoPartido}</h3>
@@ -674,11 +672,8 @@ useEffect(() => {
                             </div>
                         )}
                     </div>
-
-
-
                     <div className="equipos-vs-flex custom-equipos-row">
-                        {/* Equipo Azul */}
+                        {/* ...existing code for equipos... */}
                         <div className="player-circle-left">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
@@ -708,9 +703,7 @@ useEffect(() => {
                                 </p>
                             </div>
                         </div>
-                        {/* VS */}
                         <div className="vs-text" style={{fontSize: 'clamp(1.5rem, 5vw, 2rem)', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '60px'}}>VS</div>
-                        {/* Equipo Rojo */}
                         <div className="player-circle-right">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <div
@@ -773,8 +766,35 @@ useEffect(() => {
                         }
                     `}</style>
                     <br />
-                    {/* Mostrar mensaje y botón si no hay propuestas y el usuario es jugador (dobles) */}
-                    {(!partido?.disponibilidades?.propuestas || partido.disponibilidades.propuestas.length === 0) && comprobarSiUserEsJugador() && (
+                    {/* Propuestas de horarios para dobles: si eres participante y hay propuestas, muéstralas y permite aceptarlas */}
+                    {comprobarSiUserEsJugador() && partido?.disponibilidades?.propuestas && partido.disponibilidades.propuestas.length > 0 && (
+                        <div className="propuestas-panel mt-8 p-6" style={{ width: '90%', maxWidth: '800px' }}>
+                            <h3 className="text-lg font-semibold mb-4 text-center">Propuestas de horarios</h3>
+                            <div style={{display: 'flex', gap: '20px', width: '100%', flexWrap: 'wrap', justifyContent: 'center'}}>
+                                {partido.disponibilidades.propuestas.map((propuesta) => {
+                                    const yaAceptada = propuestaAceptada === propuesta.id || (reserva && reserva.propuestaId === propuesta.id);
+                                    const esAutor = (user?.uid || user?.id) === propuesta.usuarioId;
+                                    return (
+                                        <div key={propuesta.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', minWidth: '220px', background: yaAceptada ? '#e6ffe6' : '#fff' }}>
+                                            <div><b>Fecha:</b> {new Date(propuesta.fechaHoraInicio).toLocaleString()}</div>
+                                            <div><b>Propuesto por:</b> {getNombreForId(propuesta.usuarioId) || 'Desconocido'}</div>
+                                            <div><b>Estado:</b> {propuesta.estado || 'pendiente'}</div>
+                                            {!yaAceptada && !esAutor && (
+                                                <button className="btn btn-primary mt-2" onClick={() => aceptarPropuesta(propuesta.id)}>
+                                                    Aceptar Propuesta
+                                                </button>
+                                            )}
+                                            {yaAceptada && (
+                                                <span style={{ color: 'green', fontWeight: 'bold' }}>Propuesta aceptada</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    {/* Si no hay propuestas, mostrar mensaje y botón para generarlas */}
+                    {comprobarSiUserEsJugador() && (!partido?.disponibilidades?.propuestas || partido.disponibilidades.propuestas.length === 0) && (
                         <div className='text-center my-5 intro-text'>
                             <p>Todavía no se ha generado ninguna propuesta.</p>
                             <button
@@ -793,7 +813,7 @@ useEffect(() => {
                             </button>
                         </div>
                     )}
-                    {/* Botón de chat para dobles */}
+                    {/* Botón de chat para dobles, siempre visible si eres participante */}
                     {comprobarSiUserEsJugador() && (
                         <div className='text-center my-5 intro-text'>
                             <p>O inicia un chat para coordinar fechas</p>
@@ -825,9 +845,7 @@ useEffect(() => {
                             </button>
                         </div>
                     )}
-
-
-                    {/* Panel de estadísticas para dobles */}
+                    {/* ...existing code for estadísticas y estado... */}
                     {usuariosParticipantes.length >= 4 && (
                         <div className="stats-panel">
                             <h3 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.5rem', color: '#333' }}>
@@ -854,7 +872,6 @@ useEffect(() => {
                                         </div>
                                     </div>
                                 </div>
-
                                 {/* VS en el centro */}
                                 <div style={{
                                     display: 'flex',
@@ -867,7 +884,6 @@ useEffect(() => {
                                 }}>
                                     VS
                                 </div>
-
                                 {/* Estadísticas Equipo Rojo */}
                                 <div className="player-stats red">
                                     <h4 style={{ textAlign: 'center', marginBottom: '20px', color: '#e74c3c' }}>
@@ -891,9 +907,16 @@ useEffect(() => {
                             </div>
                         </div>
                     )}
-
                     <div className='text-center' style={{ marginTop: '20px' }}>
-                        <p style={{ fontSize: '0.8rem', color: '#555' }}>Fecha y Hora: {partido.fechaHoraPartido ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span> : <span>No definido</span>}</p>
+                                                <p style={{ fontSize: '0.8rem', color: '#555' }}>
+                                                    Fecha y Hora: {
+                                                        reserva?.fechaProgramada
+                                                            ? <span>{new Date(reserva.fechaProgramada).toLocaleString()}</span>
+                                                            : partido.fechaHoraPartido
+                                                                ? <span>{new Date(partido.fechaHoraPartido).toLocaleString()}</span>
+                                                                : <span>No definido</span>
+                                                    }
+                                                </p>
                         <p style={{ fontSize: '0.8rem', color: '#555' }}>Cancha: {cancha ? <span>{cancha.nombre}</span> : <span>No definido</span>}</p>
                         <p style={{ fontSize: '0.8rem', color: '#555' }}>Estado: {partido.estado}</p>
                     </div>
@@ -1071,7 +1094,7 @@ useEffect(() => {
                         <div className="reserva-confirmada-panel mt-8 p-6" style={{ width: '90%', maxWidth: '800px', border: '2px solid green', borderRadius: '8px', backgroundColor: '#e6ffe6' }}>
                             <h3 className="text-lg font-semibold">Reserva Confirmada</h3>
                             <p className="mt-4">La reserva para este partido ha sido confirmada.</p>
-                            <p className="mt-2">Fecha y Hora: {new Date(reserva.fechaHora).toLocaleString()}</p>
+                            <p className="mt-2">Fecha y Hora: {reserva?.fechaProgramada ? new Date(reserva.fechaProgramada).toLocaleString() : 'No definida'}</p>
                             <p className="mt-2">Cancha: {cancha ? cancha.nombre : 'No definida'}</p>
 
                             <h3 className='mt-2'>Respuesta del administrador 

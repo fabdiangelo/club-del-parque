@@ -46,9 +46,11 @@ export default class CerrarCampeonatoYAsignarPuntos {
     // Determinar si es dobles según la configuración del campeonato
     const esDobles = !!camp.dobles;
     // Calcular posiciones sumando victorias en todas las etapas
+    // Ahora devuelve un mapeo de federado individual a posición, incluso en dobles
     const posiciones = this._posicionesPorVictoriasTodasEtapas(etapas, esDobles);
 
     // Calcular partidos ganados y perdidos por federado en todo el campeonato
+    // Ahora, en dobles, se asigna a cada jugador individual
     const partidosStats = {};
     for (const etapa of etapas) {
       if (etapa.tipoEtapa === "eliminacion") {
@@ -57,14 +59,36 @@ export default class CerrarCampeonatoYAsignarPuntos {
           for (const p of Array.isArray(r.partidos) ? r.partidos : []) {
             if (p.estado !== "finalizado" && p.estado !== "cerrado") continue;
             // Ganador
-            if (p.ganadorId) {
+            if (esDobles && Array.isArray(p.ganadorId)) {
+              for (const gid of p.ganadorId) {
+                partidosStats[gid] = partidosStats[gid] || { ganados: 0, perdidos: 0 };
+                partidosStats[gid].ganados++;
+              }
+            } else if (p.ganadorId) {
               partidosStats[p.ganadorId] = partidosStats[p.ganadorId] || { ganados: 0, perdidos: 0 };
               partidosStats[p.ganadorId].ganados++;
             }
             // Perdedor
-            let perdedorId = null;
-            if (p.ganadorId && p.jugador1Id && p.jugador2Id) {
-              perdedorId = p.ganadorId === p.jugador1Id ? p.jugador2Id : p.jugador1Id;
+            if (esDobles && Array.isArray(p.jugador1) && Array.isArray(p.jugador2)) {
+              // Determinar perdedores
+              let perdedores = [];
+              if (Array.isArray(p.ganadorId)) {
+                // Perdedor es el otro equipo
+                const eq1 = p.jugador1.map(j => j && j.id).filter(Boolean);
+                const eq2 = p.jugador2.map(j => j && j.id).filter(Boolean);
+                const ganadorSet = new Set(p.ganadorId);
+                if (eq1.every(id => ganadorSet.has(id))) {
+                  perdedores = eq2;
+                } else {
+                  perdedores = eq1;
+                }
+              }
+              for (const pid of perdedores) {
+                partidosStats[pid] = partidosStats[pid] || { ganados: 0, perdidos: 0 };
+                partidosStats[pid].perdidos++;
+              }
+            } else if (p.ganadorId && p.jugador1Id && p.jugador2Id) {
+              let perdedorId = p.ganadorId === p.jugador1Id ? p.jugador2Id : p.jugador1Id;
               if (perdedorId) {
                 partidosStats[perdedorId] = partidosStats[perdedorId] || { ganados: 0, perdidos: 0 };
                 partidosStats[perdedorId].perdidos++;
@@ -78,7 +102,12 @@ export default class CerrarCampeonatoYAsignarPuntos {
           for (const partido of Array.isArray(g.partidos) ? g.partidos : []) {
             if (partido.estado !== "finalizado" && partido.estado !== "cerrado") continue;
             // Ganadores
-            if (Array.isArray(partido.ganadores)) {
+            if (esDobles && Array.isArray(partido.ganadores)) {
+              for (const ganadorId of partido.ganadores) {
+                partidosStats[ganadorId] = partidosStats[ganadorId] || { ganados: 0, perdidos: 0 };
+                partidosStats[ganadorId].ganados++;
+              }
+            } else if (Array.isArray(partido.ganadores)) {
               for (const ganadorId of partido.ganadores) {
                 partidosStats[ganadorId] = partidosStats[ganadorId] || { ganados: 0, perdidos: 0 };
                 partidosStats[ganadorId].ganados++;
@@ -108,30 +137,39 @@ export default class CerrarCampeonatoYAsignarPuntos {
       const posicionesNumericas = Object.values(posiciones).map(Number);
       const ultimaPosicion = posicionesNumericas.length ? Math.max(...posicionesNumericas) : 1;
       for (const fc of relacionados) {
-              // Eliminar rankings con tipoDePartido inválido antes de actualizar/crear
-              const repo = this.rankingRepo;
-              const allRankings = await repo.getByUsuario(fc.federadoID);
-              for (const r of allRankings) {
-                if (
-                  r.temporadaID === camp.temporadaID &&
-                  r.deporte === camp.deporte &&
-                  r.usuarioID === fc.federadoID &&
-                  r.tipoDePartido && !["singles", "dobles"].includes(String(r.tipoDePartido))
-                ) {
-                  await repo.delete(r.id).catch(()=>{});
-                }
-              }
-        let pos = posiciones[fc.federadoID];
-        if (!pos) {
-          pos = ultimaPosicion + 1;
+        // Si es dobles y el federadoID es un equipo (array), desglosar
+        let federadoIDs = [];
+        if (esDobles && Array.isArray(fc.federadoID)) {
+          federadoIDs = fc.federadoID;
+        } else {
+          federadoIDs = [fc.federadoID];
         }
-        const pts = pos ? this.puntos(camp, pos) : 0;
-        let nombre = '';
-        try {
-          const fed = await this.federadoRepo.getFederadoById(fc.federadoID).catch(() => null);
-          if (fed) nombre = `${fed.nombre || ''}${fed.apellido ? ' ' + fed.apellido : ''}`.trim() || fed.displayName || '';
-        } catch (err) {}
-        rows.push({ federadoID: fc.federadoID, nombre, posicion: pos, puntos: pts });
+        for (const federadoID of federadoIDs) {
+          // Eliminar rankings con tipoDePartido inválido antes de actualizar/crear
+          const repo = this.rankingRepo;
+          const allRankings = await repo.getByUsuario(federadoID);
+          for (const r of allRankings) {
+            if (
+              r.temporadaID === camp.temporadaID &&
+              r.deporte === camp.deporte &&
+              r.usuarioID === federadoID &&
+              r.tipoDePartido && !["singles", "dobles"].includes(String(r.tipoDePartido))
+            ) {
+              await repo.delete(r.id).catch(()=>{});
+            }
+          }
+          let pos = posiciones[federadoID];
+          if (!pos) {
+            pos = ultimaPosicion + 1;
+          }
+          const pts = pos ? this.puntos(camp, pos) : 0;
+          let nombre = '';
+          try {
+            const fed = await this.federadoRepo.getFederadoById(federadoID).catch(() => null);
+            if (fed) nombre = `${fed.nombre || ''}${fed.apellido ? ' ' + fed.apellido : ''}`.trim() || fed.displayName || '';
+          } catch (err) {}
+          rows.push({ federadoID, nombre, posicion: pos, puntos: pts });
+        }
       }
       rows.sort((a, b) => ((a.posicion || 1e9) - (b.posicion || 1e9)));
       console.log('\n===== Tabla: puntos a asignar al cerrar campeonato =====');
@@ -143,94 +181,103 @@ export default class CerrarCampeonatoYAsignarPuntos {
     const UpsertRankingPuntos = (await import("../Rankings/UpsertRankingPuntos.js")).default;
 
     for (const fc of relacionados) {
-      let pos = posiciones[fc.federadoID];
-      if (!pos) {
-        const posicionesNumericas = Object.values(posiciones).map(Number);
-        const ultimaPosicion = posicionesNumericas.length ? Math.max(...posicionesNumericas) : 1;
-        pos = ultimaPosicion + 1;
-      }
-      const pts = pos ? this.puntos(camp, pos) : 0;
-      await this.fcRepo.update(fc.id, { posicionFinal: pos, puntosRanking: pts }).catch(()=>{});
-      if (!camp.temporadaID || !camp.deporte || !fc.federadoID) continue;
-      const modalidad = camp.dobles ? "dobles" : "singles";
-      let genero = "mixto";
-      let rawGenero = camp?.requisitosParticipacion?.genero || camp.genero;
-      if (rawGenero) {
-        const g = String(rawGenero).toLowerCase();
-        if (["masculino", "femenino", "mixto"].includes(g)) genero = g;
-      }
-      const tipoDePartido = camp.dobles ? "dobles" : "singles";
-      const repo = this.rankingRepo;
-      const allRankings = await repo.getByUsuario(fc.federadoID);
-      // Buscar ranking existente por scope (temporada, deporte, tipoDePartido, genero)
-      let ranking = allRankings.find(r =>
-        String(r.temporadaID) === String(camp.temporadaID) &&
-        String(r.deporte).toLowerCase() === String(camp.deporte).toLowerCase() &&
-        String(r.tipoDePartido) === tipoDePartido &&
-        (r.genero ? String(r.genero).toLowerCase() === String(genero).toLowerCase() : true)
-      );
-      let prevPuntos = ranking ? ranking.puntos : 0;
-      // Calcular partidos ganados/perdidos en el campeonato
-      const ganados = partidosStats[fc.federadoID]?.ganados || 0;
-      const perdidos = partidosStats[fc.federadoID]?.perdidos || 0;
-      if (ranking) {
-        const nuevosGanados = (ranking.partidosGanados || 0) + ganados;
-        const nuevosPerdidos = (ranking.partidosPerdidos || 0) + perdidos;
-        const nuevoPuntos = prevPuntos + pts;
-        await repo.update(ranking.id, {
-          puntos: nuevoPuntos,
-          partidosGanados: nuevosGanados,
-          partidosPerdidos: nuevosPerdidos,
-          updatedAt: new Date().toISOString(),
-          tipoDePartido
-        });
-        console.log(`[Ranking] Jugador ${fc.federadoID} (${genero}) actualizado: ${prevPuntos} -> ${nuevoPuntos} puntos, ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
+      // Si es dobles y el federadoID es un equipo (array), desglosar
+      let federadoIDs = [];
+      if (esDobles && Array.isArray(fc.federadoID)) {
+        federadoIDs = fc.federadoID;
       } else {
-        // Buscar si existe un ranking legacy (sin genero) para migrar
-        let legacyRanking = allRankings.find(r =>
+        federadoIDs = [fc.federadoID];
+      }
+      for (const federadoID of federadoIDs) {
+        let pos = posiciones[federadoID];
+        if (!pos) {
+          const posicionesNumericas = Object.values(posiciones).map(Number);
+          const ultimaPosicion = posicionesNumericas.length ? Math.max(...posicionesNumericas) : 1;
+          pos = ultimaPosicion + 1;
+        }
+        const pts = pos ? this.puntos(camp, pos) : 0;
+        await this.fcRepo.update(fc.id, { posicionFinal: pos, puntosRanking: pts }).catch(()=>{});
+        if (!camp.temporadaID || !camp.deporte || !federadoID) continue;
+        const modalidad = camp.dobles ? "dobles" : "singles";
+        let genero = "mixto";
+        let rawGenero = camp?.requisitosParticipacion?.genero || camp.genero;
+        if (rawGenero) {
+          const g = String(rawGenero).toLowerCase();
+          if (["masculino", "femenino", "mixto"].includes(g)) genero = g;
+        }
+        const tipoDePartido = camp.dobles ? "dobles" : "singles";
+        const repo = this.rankingRepo;
+        const allRankings = await repo.getByUsuario(federadoID);
+        // Buscar ranking existente por scope (temporada, deporte, tipoDePartido, genero)
+        let ranking = allRankings.find(r =>
           String(r.temporadaID) === String(camp.temporadaID) &&
           String(r.deporte).toLowerCase() === String(camp.deporte).toLowerCase() &&
           String(r.tipoDePartido) === tipoDePartido &&
-          (!r.genero || r.genero === null || r.genero === "")
+          (r.genero ? String(r.genero).toLowerCase() === String(genero).toLowerCase() : true)
         );
-        if (legacyRanking) {
-          // Actualizar el ranking legacy con genero y sumar puntos/partidos
-          const nuevosGanados = (legacyRanking.partidosGanados || 0) + ganados;
-          const nuevosPerdidos = (legacyRanking.partidosPerdidos || 0) + perdidos;
-          await repo.update(legacyRanking.id, {
-            puntos: (legacyRanking.puntos || 0) + pts,
+        let prevPuntos = ranking ? ranking.puntos : 0;
+        // Calcular partidos ganados/perdidos en el campeonato
+        const ganados = partidosStats[federadoID]?.ganados || 0;
+        const perdidos = partidosStats[federadoID]?.perdidos || 0;
+        if (ranking) {
+          const nuevosGanados = (ranking.partidosGanados || 0) + ganados;
+          const nuevosPerdidos = (ranking.partidosPerdidos || 0) + perdidos;
+          const nuevoPuntos = prevPuntos + pts;
+          await repo.update(ranking.id, {
+            puntos: nuevoPuntos,
             partidosGanados: nuevosGanados,
             partidosPerdidos: nuevosPerdidos,
             updatedAt: new Date().toISOString(),
-            genero,
             tipoDePartido
           });
-          console.log(`[Ranking] Jugador ${fc.federadoID} (legacy->${genero}) actualizado: ${legacyRanking.puntos} -> ${(legacyRanking.puntos || 0) + pts} puntos, ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
+          console.log(`[Ranking] Jugador ${federadoID} (${genero}) actualizado: ${prevPuntos} -> ${nuevoPuntos} puntos, ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
         } else {
-          // Crear nuevo ranking solo si no existe ninguno
-          const id = [
-            String(camp.temporadaID).toLowerCase(),
-            String(fc.federadoID).toLowerCase(),
-            String(camp.deporte).toLowerCase(),
-            String(genero).toLowerCase(),
-            tipoDePartido
-          ].filter(Boolean).join("-");
-          const model = {
-            id,
-            temporadaID: camp.temporadaID,
-            usuarioID: fc.federadoID,
-            deporte: camp.deporte,
-            genero,
-            tipoDePartido,
-            puntos: pts, // CORREGIDO: usar pts directamente
-            partidosGanados: ganados,
-            partidosPerdidos: perdidos,
-            partidosAbandonados: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          await repo.save(model);
-          console.log(`[Ranking] Jugador ${fc.federadoID} (${genero}) creado: ${pts} puntos, ganados: ${ganados}, perdidos: ${perdidos}. [${tipoDePartido}]`);
+          // Buscar si existe un ranking legacy (sin genero) para migrar
+          let legacyRanking = allRankings.find(r =>
+            String(r.temporadaID) === String(camp.temporadaID) &&
+            String(r.deporte).toLowerCase() === String(camp.deporte).toLowerCase() &&
+            String(r.tipoDePartido) === tipoDePartido &&
+            (!r.genero || r.genero === null || r.genero === "")
+          );
+          if (legacyRanking) {
+            // Actualizar el ranking legacy con genero y sumar puntos/partidos
+            const nuevosGanados = (legacyRanking.partidosGanados || 0) + ganados;
+            const nuevosPerdidos = (legacyRanking.partidosPerdidos || 0) + perdidos;
+            await repo.update(legacyRanking.id, {
+              puntos: (legacyRanking.puntos || 0) + pts,
+              partidosGanados: nuevosGanados,
+              partidosPerdidos: nuevosPerdidos,
+              updatedAt: new Date().toISOString(),
+              genero,
+              tipoDePartido
+            });
+            console.log(`[Ranking] Jugador ${federadoID} (legacy->${genero}) actualizado: ${legacyRanking.puntos} -> ${(legacyRanking.puntos || 0) + pts} puntos, ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
+          } else {
+            // Crear nuevo ranking solo si no existe ninguno
+            const id = [
+              String(camp.temporadaID).toLowerCase(),
+              String(federadoID).toLowerCase(),
+              String(camp.deporte).toLowerCase(),
+              String(genero).toLowerCase(),
+              tipoDePartido
+            ].filter(Boolean).join("-");
+            const model = {
+              id,
+              temporadaID: camp.temporadaID,
+              usuarioID: federadoID,
+              deporte: camp.deporte,
+              genero,
+              tipoDePartido,
+              puntos: pts, // CORREGIDO: usar pts directamente
+              partidosGanados: ganados,
+              partidosPerdidos: perdidos,
+              partidosAbandonados: 0,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            await repo.save(model);
+            console.log(`[Ranking] Jugador ${federadoID} (${genero}) creado: ${pts} puntos, ganados: ${ganados}, perdidos: ${perdidos}. [${tipoDePartido}]`);
+          }
         }
       }
     }
@@ -247,23 +294,28 @@ export default class CerrarCampeonatoYAsignarPuntos {
         for (const r of rondas) {
           for (const p of Array.isArray(r.partidos) ? r.partidos : []) {
             if (p.estado !== "finalizado" && p.estado !== "cerrado") continue;
-            if (p.ganadorId) {
+            if (esDobles && Array.isArray(p.ganadorId)) {
+              for (const gid of p.ganadorId) {
+                stats[gid] = (stats[gid] || 0) + 1;
+              }
+            } else if (p.ganadorId) {
               stats[p.ganadorId] = (stats[p.ganadorId] || 0) + 1;
             }
             // Asegura que todos los jugadores del partido estén en el set
-            if (Array.isArray(p.jugador1)) {
-              for (const j1 of p.jugador1) {
-                if (j1 && j1.id) allFederados.add(j1.id);
+            if (esDobles) {
+              if (Array.isArray(p.jugador1)) {
+                for (const j1 of p.jugador1) {
+                  if (j1 && j1.id) allFederados.add(j1.id);
+                }
               }
-            } else if (p.jugador1Id) {
-              allFederados.add(p.jugador1Id);
-            }
-            if (Array.isArray(p.jugador2)) {
-              for (const j2 of p.jugador2) {
-                if (j2 && j2.id) allFederados.add(j2.id);
+              if (Array.isArray(p.jugador2)) {
+                for (const j2 of p.jugador2) {
+                  if (j2 && j2.id) allFederados.add(j2.id);
+                }
               }
-            } else if (p.jugador2Id) {
-              allFederados.add(p.jugador2Id);
+            } else {
+              if (p.jugador1Id) allFederados.add(p.jugador1Id);
+              if (p.jugador2Id) allFederados.add(p.jugador2Id);
             }
           }
         }
@@ -280,7 +332,11 @@ export default class CerrarCampeonatoYAsignarPuntos {
           }
           for (const partido of Array.isArray(g.partidos) ? g.partidos : []) {
             if (partido.estado !== "finalizado" && partido.estado !== "cerrado") continue;
-            if (Array.isArray(partido.ganadores)) {
+            if (esDobles && Array.isArray(partido.ganadores)) {
+              for (const ganadorId of partido.ganadores) {
+                stats[ganadorId] = (stats[ganadorId] || 0) + 1;
+              }
+            } else if (Array.isArray(partido.ganadores)) {
               for (const ganadorId of partido.ganadores) {
                 stats[ganadorId] = (stats[ganadorId] || 0) + 1;
               }
@@ -303,7 +359,8 @@ export default class CerrarCampeonatoYAsignarPuntos {
     const lista = Array.from(allFederados).map(fid => ({ fid, victorias: stats[fid] }));
     lista.sort((a, b) => {
       if (b.victorias !== a.victorias) return b.victorias - a.victorias;
-      return a.fid.localeCompare(b.fid);
+      // Corregido: asegurar que fid es string
+      return String(a.fid).localeCompare(String(b.fid));
     });
     // Asigna posiciones con saltos en caso de empate (ranking olímpico)
     const map = {};

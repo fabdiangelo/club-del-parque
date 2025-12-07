@@ -159,7 +159,7 @@ export default function Perfil() {
                 <button style={{ padding: '8px 18px', backgroundColor: 'red', color: 'white', borderRadius: '8px', cursor: 'pointer', minWidth: '90px', maxWidth: '130px', textAlign: 'center' }} onClick={handleLogout}>
                   Cerrar sesión
                 </button>
-                {userData.rol !== "administrador" && userData.rol !=="federado" && (
+                {userData.rol !== "administrador" && (
                   <button
                     style={{ padding: '8px 18px', backgroundColor: 'var(--primario)', color: 'white', borderRadius: '8px', cursor: 'pointer', minWidth: '90px', maxWidth: '130px', textAlign: 'center' }}
                     onClick={openFederateModal}
