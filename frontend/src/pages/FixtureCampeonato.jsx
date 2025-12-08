@@ -12,7 +12,6 @@ import NavbarBlanco from "../components/NavbarBlanco.jsx";
 import CampeonatoData from "../components/campeonato/CampeonatoData";
 import CanchaBg from "../assets/CanchasTenisPadel/1.jpg";
 import { useNavigate } from "react-router-dom";
-
 export default function FixtureCampeonato() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -72,6 +71,8 @@ export default function FixtureCampeonato() {
   useEffect(() => {
     load();
   }, [id]);
+  
+
 
   const navegarEtapa = (direccion) => {
     if (direccion === "prev" && etapaActual > 0) {
@@ -195,13 +196,17 @@ export default function FixtureCampeonato() {
               etapaId={etapa?.id}
             />
           ) : (
-            <FaseEliminacion
-              rondas={etapa?.rondas}
-              fechaInicio={etapa?.inicio || campeonato?.inicio}
-              duracion={etapa?.duracionDias}
-              dobles={campeonato?.dobles}
-              etapaId={etapa?.id}
-            />
+<FaseEliminacion
+  rondas={etapa?.rondas}
+  fechaInicio={etapa?.inicio || campeonato?.inicio}
+  duracion={etapa?.duracionDias}
+  dobles={campeonato?.dobles}
+  etapaId={etapa?.id}
+  gruposDobles={
+    campeonato?.etapas?.find((e) => e.tipoEtapa === "roundRobin")?.grupos || []
+  }
+/>
+
           )}
         </div>
       </div>
@@ -226,18 +231,17 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
 
   return (
     <>
-<h3
-  style={{ zIndex: 30, position: "sticky", top: "3rem" }}
-  className="flex justify-center mb-4"
->
-  <div className="inline-flex flex-col items-center px-4 py-1.5 rounded-full bg-white/80 border border-slate-200 shadow-sm backdrop-blur text-center">
-    <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wide text-gray-800">
-         {new Date(fechaInicio).toLocaleDateString()} -{" "}
-      {fechaFinEtapa.toLocaleDateString()}
-    </span>
-  </div>
-</h3>
-
+      <h3
+        style={{ zIndex: 30, position: "sticky", top: "3rem" }}
+        className="flex justify-center mb-4"
+      >
+        <div className="inline-flex flex-col items-center px-4 py-1.5 rounded-full bg-white/80 border border-slate-200 shadow-sm backdrop-blur text-center">
+          <span className="text-[11px] md:text-xs font-semibold uppercase tracking-wide text-gray-800">
+            {new Date(fechaInicio).toLocaleDateString()} -{" "}
+            {fechaFinEtapa.toLocaleDateString()}
+          </span>
+        </div>
+      </h3>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {grupos?.map((grupo, idx) => (
@@ -478,24 +482,98 @@ const FaseGrupos = ({ grupos, fechaInicio, duracion, dobles, etapaId }) => {
   );
 };
 
+// === Helpers (puedes ponerlos arriba del archivo) ===
+const formatFechaProgramada = (fecha) => {
+  if (!fecha) return "";
+
+  const d = new Date(fecha);
+  if (!isNaN(d.getTime())) {
+    const pad = (n) => n.toString().padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd} - ${hh}:${mi}`;
+  }
+
+  // fallback por si te llega ya en formato "2025-12-08T08:00"
+  if (fecha.includes("T")) {
+    const [date, time] = fecha.split("T");
+    return `${date} - ${time}`;
+  }
+
+  return fecha;
+};
+
+// Devuelve siempre un array de jugadores para ese lado
+const getPlayersSide = (side) => {
+  if (!side) return [];
+  if (Array.isArray(side)) return side;              // [ {id, nombre}, ... ]
+  if (Array.isArray(side.players)) return side.players; // { players: [...] }
+  return [side];                                     // singles
+};
+
+const getInitialFromSide = (players, fallbackName) => {
+  const name =
+    players?.[0]?.nombre ||
+    players?.[1]?.nombre ||
+    fallbackName ||
+    "?";
+  return name.charAt(0);
+};
+const buildEquiposPorJugadorId = (grupos = []) => {
+  const map = new Map();
+  grupos.forEach((grupo) => {
+    grupo.jugadores?.forEach((j) => {
+      if (Array.isArray(j.players)) {
+        j.players.forEach((p) => {
+          if (p?.id) {
+            // guardamos TODO el equipo para ese id
+            map.set(p.id, j.players);
+          }
+        });
+      }
+    });
+  });
+  return map;
+};
+
+const resolveTeamPlayers = (side, sideId, equiposMap, dobles) => {
+  let players = getPlayersSide(side);
+  if (!dobles) return players;
+
+  // si ya vienen dos jugadores, usamos eso
+  if (players.length > 1) return players;
+
+  const candidateId = players[0]?.id || sideId;
+  if (candidateId && equiposMap.has(candidateId)) {
+    return equiposMap.get(candidateId); // [jugador1, jugador2]
+  }
+
+  return players;
+};
+// === COMPONENTE ===
 const FaseEliminacion = ({
   rondas = [],
   fechaInicio,
   duracion,
   etapaId,
   dobles,
+  gruposDobles = [],
 }) => {
-  const partidoGanado = rondas[rondas.length - 1]?.partidos[0] || null;
+  const partidoGanado = rondas[rondas.length - 1]?.partidos?.[0] || null;
   const ganador = partidoGanado?.ganador;
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Calcular la altura de cada partido basado en la ronda
-  const calcularEspaciado = (rondaIdx) => {
-    return Math.pow(2, rondaIdx) * 120; // Espaciado exponencial
-  };
+  const calcularEspaciado = (rondaIdx) => Math.pow(2, rondaIdx) * 120;
 
-  const diasPorRonda = Math.round(duracion / (rondas.length - 1));
+  const diasPorRonda =
+    rondas.length > 1 ? Math.round(duracion / (rondas.length - 1)) : duracion || 1;
+
+  // mapa jugadorId -> [player1, player2] (misma info que en fase de grupos)
+  const equiposPorJugadorId = buildEquiposPorJugadorId(gruposDobles);
 
   return (
     <div className="relative bg-white rounded-xl shadow-xl overflow-x-auto p-8">
@@ -506,7 +584,7 @@ const FaseEliminacion = ({
         {rondas.map((ronda, rIdx) => {
           const espaciado = calcularEspaciado(rIdx);
           const offsetInicial = espaciado / 2;
-          const margenEntrePartidos = 24; // Margen fijo entre partidos
+          const margenEntrePartidos = 24;
 
           const fechaFinRonda = new Date(fechaInicio);
           fechaFinRonda.setDate(
@@ -539,28 +617,42 @@ const FaseEliminacion = ({
                 style={{ paddingTop: `${offsetInicial}px` }}
               >
                 {ronda.partidos.map((partido, pIdx) => {
+                  // AQUÍ: reconstruimos los equipos igual que en fase de grupos
+                  const jugadores1 = resolveTeamPlayers(
+                    partido.jugador1,
+                    partido.jugador1Id,
+                    equiposPorJugadorId,
+                    dobles
+                  );
+                  const jugadores2 = resolveTeamPlayers(
+                    partido.jugador2,
+                    partido.jugador2Id,
+                    equiposPorJugadorId,
+                    dobles
+                  );
+
                   const esParticipante =
                     user &&
-                    (partido.jugador1Id === user?.uid ||
+                    (
+                      partido.jugador1Id === user?.uid ||
                       partido.jugador2Id === user?.uid ||
-                      (Array.isArray(partido?.jugador1) &&
-                        partido?.jugador1?.some((j) => j.id == user?.uid)) ||
-                      (Array.isArray(partido?.jugador2) &&
-                        partido?.jugador2?.some((j) => j.id == user?.uid)));
+                      jugadores1.some((j) => j?.id == user?.uid) ||
+                      jugadores2.some((j) => j?.id == user?.uid)
+                    );
+
                   let oponenteId = null;
                   if (esParticipante) {
                     if (partido.jugador1Id === user?.uid)
                       oponenteId = partido.jugador2Id;
                     if (partido.jugador2Id === user?.uid)
                       oponenteId = partido.jugador1Id;
-                    if (partido?.jugador1?.some((j) => j.id == user?.uid))
-                      oponenteId = Array.isArray(partido?.jugador2)
-                        ? partido?.jugador2[0]?.id
-                        : partido?.jugador2?.id;
-                    if (partido?.jugador2?.some((j) => j.id == user?.uid))
-                      oponenteId = Array.isArray(partido?.jugador1)
-                        ? partido?.jugador1[0]?.id
-                        : partido?.jugador1?.id;
+
+                    if (jugadores1.some((j) => j?.id == user?.uid)) {
+                      oponenteId = jugadores2[0]?.id || partido.jugador2Id;
+                    }
+                    if (jugadores2.some((j) => j?.id == user?.uid)) {
+                      oponenteId = jugadores1[0]?.id || partido.jugador1Id;
+                    }
                   }
 
                   return (
@@ -583,7 +675,7 @@ const FaseEliminacion = ({
                         position: "relative",
                       }}
                     >
-                      {/* Líneas conectoras hacia la siguiente ronda */}
+                      {/* Líneas hacia la siguiente ronda */}
                       {rIdx < rondas.length - 1 && (
                         <svg
                           className="absolute left-full pointer-events-none"
@@ -594,7 +686,6 @@ const FaseEliminacion = ({
                             overflow: "visible",
                           }}
                         >
-                          {/* Línea horizontal desde el partido */}
                           <line
                             x1="0"
                             y1="15"
@@ -603,8 +694,6 @@ const FaseEliminacion = ({
                             stroke="#000"
                             strokeWidth="2"
                           />
-
-                          {/* Línea vertical conectando */}
                           <line
                             x1="16"
                             y1="15"
@@ -617,8 +706,6 @@ const FaseEliminacion = ({
                             stroke="#000"
                             strokeWidth="2"
                           />
-
-                          {/* Línea horizontal hacia el siguiente partido (solo para partidos pares) */}
                           {pIdx % 2 === 0 && (
                             <line
                               x1="16"
@@ -638,49 +725,48 @@ const FaseEliminacion = ({
                           "bg-opacity-90 backdrop-blur rounded-lg shadow-md hover:shadow-lg transition-shadow relative z-10"
                         }
                       >
-                        {/* Player/Team 1 */}
+                        {/* Equipo 1 */}
                         <div className="flex items-center justify-between p-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {(Array.isArray(partido.jugador1)
-                                ? partido.jugador1[0]?.nombre ||
-                                  partido.jugador1[1]?.nombre
-                                : partido.jugador1Nombre || "?"
-                              )?.charAt(0) || "-"}
+                              {getInitialFromSide(
+                                jugadores1,
+                                partido.jugador1Nombre
+                              ) || "-"}
                             </div>
                             <span className="font-medium text-black truncate flex gap-2">
-                              {Array.isArray(partido.jugador1)
-                                ? partido.jugador1.map((p, i) => (
-                                    <span key={i}>
-                                      {p?.nombre || "Por definir"}
-                                      {i === 0 && dobles ? " / " : ""}
-                                      {!partido.jugador1[1]?.nombre &&
-                                        dobles &&
-                                        " ~~~ "}
-                                    </span>
-                                  ))
-                                : partido.jugador1Nombre ||
-                                  (ronda.inicioDate < new Date()
-                                    ? "Pase Libre"
-                                    : "Por Definirse")}
+                              {jugadores1.length > 0 ? (
+                                jugadores1.map((p, i) => (
+                                  <span key={i}>
+                                    {p?.nombre || "Por definir"}
+                                    {i === 0 &&
+                                      dobles &&
+                                      jugadores1.length > 1 &&
+                                      " / "}
+                                  </span>
+                                ))
+                              ) : (
+                                partido.jugador1Nombre ||
+                                (ronda.inicioDate < new Date()
+                                  ? "Pase Libre"
+                                  : "Por Definirse")
+                              )}
+
                               {Array.isArray(partido.ganadores) ? (
                                 partido.ganadores.some(
                                   (g) =>
-                                    g == partido.jugador1[0]?.id ||
+                                    g == jugadores1[0]?.id ||
                                     g == partido.jugador1Id
-                                ) ? (
-                                  <Crown />
-                                ) : (
-                                  ""
-                                )
-                              ) : partido.ganadorId &&
-                                partido.ganadorId == partido.jugador1Id ? (
-                                <Crown />
+                                ) && <Crown />
                               ) : (
-                                ""
+                                partido.ganadorId &&
+                                partido.ganadorId == partido.jugador1Id && (
+                                  <Crown />
+                                )
                               )}
                             </span>
                           </div>
+
                           {partido.puntaje1 !== undefined ? (
                             <span className="font-bold text-black text-lg ml-2">
                               {partido.puntaje1}
@@ -694,7 +780,7 @@ const FaseEliminacion = ({
                                 right: "1rem",
                               }}
                             >
-                              {partido.fechaProgramada}
+                              {formatFechaProgramada(partido.fechaProgramada)}
                             </span>
                           ) : (
                             <span
@@ -708,11 +794,12 @@ const FaseEliminacion = ({
                               Sin agendar
                             </span>
                           )}
+
                           {partido.estado === "pendiente" &&
                             esParticipante &&
                             oponenteId ==
-                              (Array.isArray(partido.jugador1)
-                                ? partido.jugador1
+                              (jugadores1.length
+                                ? jugadores1
                                     .map((p) => p.id)
                                     .find((id) => id !== user?.uid)
                                 : partido.jugador1Id) && (
@@ -728,59 +815,59 @@ const FaseEliminacion = ({
                             )}
                         </div>
 
-                        {/* Player/Team 2 */}
+                        {/* Equipo 2 */}
                         <div className="flex items-center justify-between p-3 border-t border-cyan-300 border-opacity-30">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold flex-shrink-0">
-                              {(Array.isArray(partido.jugador2)
-                                ? partido.jugador2[0]?.nombre ||
-                                  partido.jugador2[1]?.nombre
-                                : partido.jugador2Nombre || "?"
-                              )?.charAt(0) || "-"}
+                              {getInitialFromSide(
+                                jugadores2,
+                                partido.jugador2Nombre
+                              ) || "-"}
                             </div>
                             <span className="font-medium text-black truncate flex gap-2">
-                              {Array.isArray(partido.jugador2)
-                                ? partido.jugador2.map((p, i) => (
-                                    <span key={i}>
-                                      {p?.nombre || "Por definir"}
-                                      {i === 0 && dobles ? " / " : ""}
-                                      {!partido.jugador2[1]?.nombre &&
-                                        dobles &&
-                                        " ~~~ "}
-                                    </span>
-                                  ))
-                                : partido.jugador2Nombre ||
-                                  (ronda.inicioDate < new Date()
-                                    ? "Pase Libre"
-                                    : "Por Definirse")}
+                              {jugadores2.length > 0 ? (
+                                jugadores2.map((p, i) => (
+                                  <span key={i}>
+                                    {p?.nombre || "Por definir"}
+                                    {i === 0 &&
+                                      dobles &&
+                                      jugadores2.length > 1 &&
+                                      " / "}
+                                  </span>
+                                ))
+                              ) : (
+                                partido.jugador2Nombre ||
+                                (ronda.inicioDate < new Date()
+                                  ? "Pase Libre"
+                                  : "Por Definirse")
+                              )}
+
                               {Array.isArray(partido.ganadores) ? (
                                 partido.ganadores.some(
                                   (g) =>
-                                    g == partido.jugador2[0]?.id ||
+                                    g == jugadores2[0]?.id ||
                                     g == partido.jugador2Id
-                                ) ? (
-                                  <Crown />
-                                ) : (
-                                  ""
-                                )
-                              ) : partido.ganadorId &&
-                                partido.ganadorId == partido.jugador2Id ? (
-                                <Crown />
+                                ) && <Crown />
                               ) : (
-                                ""
+                                partido.ganadorId &&
+                                partido.ganadorId == partido.jugador2Id && (
+                                  <Crown />
+                                )
                               )}
                             </span>
                           </div>
+
                           {partido.puntaje2 !== undefined && (
                             <span className="font-bold text-black text-lg ml-2">
                               {partido.puntaje2}
                             </span>
                           )}
+
                           {partido.estado === "pendiente" &&
                             esParticipante &&
                             oponenteId ==
-                              (Array.isArray(partido.jugador2)
-                                ? partido.jugador2
+                              (jugadores2.length
+                                ? jugadores2
                                     .map((p) => p.id)
                                     .find((id) => id !== user?.uid)
                                 : partido.jugador2Id) && (
@@ -811,7 +898,6 @@ const FaseEliminacion = ({
           );
         })}
 
-        {/* Ganador */}
         {ganador && (
           <div
             className="flex flex-col items-center flex-shrink-0"
@@ -841,3 +927,5 @@ const FaseEliminacion = ({
     </div>
   );
 };
+
+

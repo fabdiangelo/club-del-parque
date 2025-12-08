@@ -69,6 +69,128 @@ export default function ResultadosPage() {
 
     fetchPartidos();
   }, [user?.uid]);
+  const getNamesFromField = (field) => {
+    if (!field) return [];
+
+    // Heurística simple para diferenciar nombres de IDs:
+    // - Si tiene espacio → casi seguro es un nombre ("Bruno Benítez")
+    // - Si NO tiene espacio:
+    //      - si es corto (<= 15 chars) lo tomamos como posible nombre ("Bruno")
+    //      - si es largo (> 15) lo tratamos como ID (Firebase UID, etc.) y lo ignoramos
+    const isProbablyNameString = (str) => {
+      const s = String(str).trim();
+      if (!s) return false;
+      if (s.includes(" ")) return true;
+      if (s.length <= 15) return true;
+      return false; // likely UID / código
+    };
+
+    if (Array.isArray(field)) {
+      return field
+        .map((item) => {
+          if (!item) return null;
+
+          if (typeof item === "string") {
+            return isProbablyNameString(item) ? item.trim() : null;
+          }
+
+          if (typeof item === "object") {
+            if (item.nombre && isProbablyNameString(item.nombre))
+              return item.nombre.trim();
+            if (item.name && isProbablyNameString(item.name))
+              return item.name.trim();
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+    }
+
+    if (typeof field === "string") {
+      return isProbablyNameString(field) ? [field.trim()] : [];
+    }
+
+    if (typeof field === "object") {
+      if (field.nombre && isProbablyNameString(field.nombre))
+        return [field.nombre.trim()];
+      if (field.name && isProbablyNameString(field.name))
+        return [field.name.trim()];
+    }
+
+    return [];
+  };
+
+
+  const userIds = [user?.id, user?.uid].filter(Boolean);
+
+  const isUserInPlayers = (players) => {
+    if (!Array.isArray(players)) return false;
+    return players.some(
+      (p) => p && userIds.includes(p.id)
+    );
+  };
+
+  const getOpponentNames = (p) => {
+    // Nombres posibles de cada lado (singles o dobles)
+    const side1Names = uniq([
+      ...getNamesFromField(p.jugador1Nombre),
+      ...getNamesFromField(p.jugador1),
+      ...getNamesFromField(p.equipoLocal),
+    ]);
+
+    const side2Names = uniq([
+      ...getNamesFromField(p.jugador2Nombre),
+      ...getNamesFromField(p.jugador2),
+      ...getNamesFromField(p.equipoVisitante),
+    ]);
+
+    const isUserSide1 =
+      userIds.includes(p.jugador1Id) ||
+      isUserInPlayers(p.jugador1) ||
+      isUserInPlayers(p.equipoLocal);
+
+    const isUserSide2 =
+      userIds.includes(p.jugador2Id) ||
+      isUserInPlayers(p.jugador2) ||
+      isUserInPlayers(p.equipoVisitante);
+
+    let opponentNames = [];
+
+    if (isUserSide1) {
+      opponentNames = side2Names;
+    } else if (isUserSide2) {
+      opponentNames = side1Names;
+    } else {
+      // Fallback: intenta por nombre exacto
+      const userName = user?.nombre?.toLowerCase?.();
+      const side1HasUser =
+        userName &&
+        side1Names.some((n) => n?.toLowerCase() === userName);
+      const side2HasUser =
+        userName &&
+        side2Names.some((n) => n?.toLowerCase() === userName);
+
+      if (side1HasUser) opponentNames = side2Names;
+      else if (side2HasUser) opponentNames = side1Names;
+      else {
+        // Si no encontramos al usuario, tiramos por el lado 2, o lado 1 si no hay
+        opponentNames = side2Names.length ? side2Names : side1Names;
+      }
+    }
+
+    // Deduplicar por si vino repetido de varios campos
+    return uniq(opponentNames);
+  };
+
+  const uniq = (arr) => {
+    const seen = new Set();
+    return arr.filter((name) => {
+      const key = String(name).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
 
   // 🔹 FULL-SCREEN SPINNER (igual que Rankings)
   if (loading) {
@@ -134,27 +256,11 @@ export default function ResultadosPage() {
                         ).toLocaleString()
                       : "Por definir";
 
-                  // Determine which side is opponent of current user
-                  const leftNames = Array.isArray(p.jugador2Nombre)
-                    ? p.jugador2Nombre
-                    : [p.jugador2Nombre];
-                  const rightNames = Array.isArray(p.jugador1Nombre)
-                    ? p.jugador1Nombre
-                    : [p.jugador1Nombre];
-
-                  let opponentNames = [];
-                  if (leftNames.includes(user?.nombre))
-                    opponentNames = rightNames;
-                  else if (rightNames.includes(user?.nombre))
-                    opponentNames = leftNames;
-                  else {
-                    // if uid not found, pick right by default
-                    opponentNames = rightNames.length ? rightNames : leftNames;
-                  }
-
+                  const opponentNames = getOpponentNames(p);
                   const opponentDisplay = opponentNames.length
-                    ? opponentNames.join(" & ")
+                    ? opponentNames.join(" / ")
                     : "—";
+
 
                   const tieneFecha =
                     propuestaAceptada && propuestaAceptada.fechaHoraInicio;
