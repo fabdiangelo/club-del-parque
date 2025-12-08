@@ -9,30 +9,6 @@ import bgCanchas from "../assets/CanchasTenisPadel/1.webp";
 
 const ITEMS_PER_PAGE = 4;
 
-function getTimestampMs(value) {
-  if (!value) return 0;
-
-  if (typeof value === "string" || value instanceof Date) {
-    const d = new Date(value);
-    return isNaN(d.getTime()) ? 0 : d.getTime();
-  }
-
-  if (typeof value === "number") {
-    return value;
-  }
-
-  if (typeof value === "object" && value.seconds != null) {
-    const msFromSeconds = value.seconds * 1000;
-    const msFromNanos = value.nanoseconds
-      ? value.nanoseconds / 1_000_000
-      : 0;
-    return msFromSeconds + msFromNanos;
-  }
-
-  return 0;
-}
-
-
 export default function ListaCampeonatos() {
   const [campeonatos, setCampeonatos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,33 +17,76 @@ export default function ListaCampeonatos() {
 
   const { user } = useAuth();
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setFetchError("");
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/campeonatos`
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+useEffect(() => {
+  async function load() {
+    setLoading(true);
+    setFetchError("");
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/campeonatos`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-        const arr = Array.isArray(data) ? data : [];
+      const hoy = new Date();
+      // usamos solo la parte de fecha, sin horas
+      hoy.setHours(0, 0, 0, 0);
 
-        const ordenados = [...arr].sort(
-          (a, b) =>
-            getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt)
-        );
-        setCampeonatos(ordenados.sort((a, b) => getTimestampMs(b.id.split('-').slice(-1)[0]) - getTimestampMs(a.id.split('-').slice(-1)[0])));
-      } catch (err) {
-        setFetchError(err?.message || "Error desconocido");
-      } finally {
-        setLoading(false);
-      }
+      const toDateOnly = (value) => {
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return null;
+        d.setHours(0, 0, 0, 0);
+        return d;
+      };
+
+      // 1) Filtrar campeonatos terminados (fin < hoy)
+      const activos = (Array.isArray(data) ? data : []).filter((c) => {
+        const fin = toDateOnly(c.fin);
+        // si no tiene fecha fin válida, lo dejamos
+        if (!fin) return true;
+        return fin >= hoy;
+      });
+
+      // 2) Ordenar por prioridad:
+      //    - primero los que están en curso
+      //    - luego los futuros, más cercanos primero
+      const ordenados = activos.sort((a, b) => {
+        const aInicio = toDateOnly(a.inicio);
+        const aFin = toDateOnly(a.fin);
+        const bInicio = toDateOnly(b.inicio);
+        const bFin = toDateOnly(b.fin);
+
+        // si alguna fecha es inválida, las mandamos al final
+        if (!aInicio || !aFin) return 1;
+        if (!bInicio || !bFin) return -1;
+
+        const aOngoing = aInicio <= hoy && aFin >= hoy;
+        const bOngoing = bInicio <= hoy && bFin >= hoy;
+
+        // campeonatos en curso primero
+        if (aOngoing && !bOngoing) return -1;
+        if (!aOngoing && bOngoing) return 1;
+
+        // si ambos son en curso o ambos futuros/pasados,
+        // ordenamos por cercanía de la fecha de inicio a hoy
+        const diffA = Math.abs(aInicio.getTime() - hoy.getTime());
+        const diffB = Math.abs(bInicio.getTime() - hoy.getTime());
+
+        return diffA - diffB;
+      });
+
+      setCampeonatos(ordenados);
+    } catch (err) {
+      setFetchError(err?.message || "Error desconocido");
+    } finally {
+      setLoading(false);
     }
-    load();
-  }, []);
+  }
+  load();
+}, []);
 
+
+  // si cambia el número de campeonatos, volvemos a la página 1
   useEffect(() => {
     setCurrentPage(1);
   }, [campeonatos.length]);
@@ -164,6 +183,7 @@ export default function ListaCampeonatos() {
               </div>
             ) : (
               <>
+                {/* cards flotando directamente sobre el fondo */}
                 <div className="space-y-6">
                   {campeonatosPage.map((campeonato) => (
                     <CampeonatoData
@@ -173,14 +193,17 @@ export default function ListaCampeonatos() {
                       descripcion={campeonato.descripcion}
                       inicio={campeonato.inicio}
                       fin={campeonato.fin}
-                      requisitosParticipacion={campeonato.requisitosParticipacion}
+                      requisitosParticipacion={
+                        campeonato.requisitosParticipacion
+                      }
                       user={user}
                       participantes={campeonato.federadosCampeonatoIDs}
                       conRedireccion={true}
-                      createdAt={campeonato.createdAt}
                     />
                   ))}
                 </div>
+
+                {/* Controles de paginación */}
                 {totalPages > 1 && (
                   <div className="mt-8 flex items-center justify-center gap-3">
                     <button
