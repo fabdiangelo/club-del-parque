@@ -7,7 +7,31 @@ import CampeonatoData from "../components/campeonato/CampeonatoData";
 
 import bgCanchas from "../assets/CanchasTenisPadel/1.webp";
 
-const ITEMS_PER_PAGE = 4; // cambia cuántos campeonatos quieres por página
+const ITEMS_PER_PAGE = 4;
+
+function getTimestampMs(value) {
+  if (!value) return 0;
+
+  if (typeof value === "string" || value instanceof Date) {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "object" && value.seconds != null) {
+    const msFromSeconds = value.seconds * 1000;
+    const msFromNanos = value.nanoseconds
+      ? value.nanoseconds / 1_000_000
+      : 0;
+    return msFromSeconds + msFromNanos;
+  }
+
+  return 0;
+}
+
 
 export default function ListaCampeonatos() {
   const [campeonatos, setCampeonatos] = useState([]);
@@ -27,7 +51,15 @@ export default function ListaCampeonatos() {
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setCampeonatos(Array.isArray(data) ? data : []);
+
+        const arr = Array.isArray(data) ? data : [];
+
+        const ordenados = [...arr].sort(
+          (a, b) =>
+            getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt)
+        );
+
+        setCampeonatos(ordenados);
       } catch (err) {
         setFetchError(err?.message || "Error desconocido");
       } finally {
@@ -37,7 +69,6 @@ export default function ListaCampeonatos() {
     load();
   }, []);
 
-  // si cambia el número de campeonatos, volvemos a la página 1
   useEffect(() => {
     setCurrentPage(1);
   }, [campeonatos.length]);
@@ -134,7 +165,6 @@ export default function ListaCampeonatos() {
               </div>
             ) : (
               <>
-                {/* cards flotando directamente sobre el fondo */}
                 <div className="space-y-6">
                   {campeonatosPage.map((campeonato) => (
                     <CampeonatoData
@@ -144,17 +174,14 @@ export default function ListaCampeonatos() {
                       descripcion={campeonato.descripcion}
                       inicio={campeonato.inicio}
                       fin={campeonato.fin}
-                      requisitosParticipacion={
-                        campeonato.requisitosParticipacion
-                      }
+                      requisitosParticipacion={campeonato.requisitosParticipacion}
                       user={user}
                       participantes={campeonato.federadosCampeonatoIDs}
                       conRedireccion={true}
+                      createdAt={campeonato.createdAt}
                     />
                   ))}
                 </div>
-
-                {/* Controles de paginación */}
                 {totalPages > 1 && (
                   <div className="mt-8 flex items-center justify-center gap-3">
                     <button
