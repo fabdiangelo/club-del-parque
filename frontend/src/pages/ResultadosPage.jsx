@@ -284,8 +284,7 @@ export default function ResultadosPage() {
                         {opponentDisplay}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {p.estado == "finalizado" &&
-                        p.estadoResultado == "confirmado" ? (
+                        { p.estado == "finalizado" ? (
                           <Link
                             to={`/partido/${p?.id || p?._id}`}
                             className="btn btn-success btn-sm normal-case"
