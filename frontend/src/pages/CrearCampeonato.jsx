@@ -450,10 +450,9 @@ export default function CrearCampeonato() {
         throw new Error(txt || 'Error creando campeonato');
       }
       const saved = await res.json();
-      // If reglamento file selected, upload it to the reglamento endpoint
       if (reglamentoFile) {
         try {
-          const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 20 MB client-side guard
+          const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; 
           if (reglamentoFile.size > MAX_UPLOAD_BYTES) {
             alert(`El archivo seleccionado excede el límite de ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB.`);
           } else {
