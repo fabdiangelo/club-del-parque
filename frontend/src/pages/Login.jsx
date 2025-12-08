@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthProvider";
 import NavbarBlanco from '../components/NavbarBlanco.jsx';
@@ -11,6 +11,9 @@ import {
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../utils/LoginProviders.js";
 import Footer from "../components/Footer.jsx";
+
+const GENERIC_LOGIN_ERROR = "No se pudo iniciar sesión. Verifica tus datos e inténtalo de nuevo.";
+const GENERIC_ACTION_ERROR = "Ocurrió un error, por favor inténtalo nuevamente más tarde.";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -27,6 +30,7 @@ function Login() {
       try {
         await logout();
       } catch (err) {
+        console.error("Error cerrando sesión previa:", err);
       }
     })();
   }, [logout]);
@@ -53,14 +57,20 @@ function Login() {
           try {
             data = JSON.parse(text);
           } catch (e) {
-            // Si no es JSON, usar el texto directamente
+            // Si no es JSON, usamos mensaje genérico
           }
+
           if (data && data.error && data.error.includes("No existe una cuenta previa")) {
             setMsg("No existe una cuenta previa para este usuario. Debes registrarte primero con email y contraseña.");
             setLoading(false);
             return;
           }
-          throw new Error(text || "Backend google login failed");
+
+          // Logeamos el detalle, pero no lo mostramos
+          console.error("Error backend /api/auth/google:", text);
+          setMsg(GENERIC_LOGIN_ERROR);
+          setLoading(false);
+          return;
         }
         await refetchUser();
         navigate("/");
@@ -97,14 +107,19 @@ function Login() {
           try {
             data = JSON.parse(text);
           } catch (e) {
-            // Si no es JSON, usar el texto directamente
+            // Si no es JSON, usamos mensaje genérico
           }
+
           if (data && data.error && data.error.includes("No existe una cuenta previa")) {
             setMsg("No existe una cuenta previa para este usuario. Debes registrarte primero con email y contraseña.");
             setLoading(false);
             return;
           }
-          throw new Error(text || "Backend google login failed");
+
+          console.error("Error backend /api/auth/google (link):", text);
+          setMsg(GENERIC_LOGIN_ERROR);
+          setLoading(false);
+          return;
         }
         await refetchUser();
         navigate("/");
@@ -112,7 +127,8 @@ function Login() {
       }
     } catch (err) {
       console.error("Error en signInWithGoogle flow:", err);
-      setMsg(err.message || "Error en login con Google");
+      // Mensaje genérico, no mostramos err.message
+      setMsg(GENERIC_LOGIN_ERROR);
     } finally {
       setLoading(false);
     }
@@ -120,27 +136,31 @@ function Login() {
 
   const handleLoginEmail = async (e) => {
     e.preventDefault();
-    setLoading(true); setMsg(null);
+    setLoading(true); 
+    setMsg(null);
     try {
       const result = await loginAndSendToBackend(email, password);
       console.log("Backend auth result:", result);
-      if (!result.user.uid) {
-        setMsg("Algo salió mal")
+
+      if (!result.user?.uid) {
+        setMsg(GENERIC_LOGIN_ERROR);
       } else {
         await refetchUser();
         navigate("/");
       }
     } catch (err) {
-      console.error(err);
-      setMsg(err.code?.replace(/-/g, ' ').replace('auth/', '') || JSON.parse(err.message).error)
+      console.error("Error en login con email:", err);
+      // Aquí antes mostrabas err.code o err.message del backend.
+      // Ahora mostramos un texto fijo:
+      setMsg(GENERIC_LOGIN_ERROR);
     } finally {
       setLoading(false);
     }
   };
 
-
   const handlePrecarga = async () => {
-    setLoading(true); setMsg(null);
+    setLoading(true); 
+    setMsg(null);
     try {
       const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/federados/precarga", {
         method: "POST",
@@ -149,9 +169,17 @@ function Login() {
       });
 
       console.log(response);
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Error en precarga:", text);
+        setMsg(GENERIC_ACTION_ERROR);
+        return;
+      }
     } catch (err) {
-      console.error(err);
-      setMsg(err.code?.replace(/-/g, ' ').replace('auth/', '') || JSON.parse(err.message).error)
+      console.error("Error en precarga:", err);
+      // Antes: JSON.parse(err.message).error -> podía venir directamente del backend
+      setMsg(GENERIC_ACTION_ERROR);
     } finally {
       setLoading(false);
     }
@@ -164,30 +192,60 @@ function Login() {
         <div className="w-full max-w-md bg-white p-6 rounded">
           <h2 className="text-center my-5" style={{ fontSize: '30px', fontWeight: 'normal' }}>Login</h2>
 
-
           <form onSubmit={handleLoginEmail} className="space-y-3">
-            <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email" className="w-full p-2 border rounded" required />
-            <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Contraseña" className="w-full p-2 border rounded" required />
+            <input
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              type="email"
+              placeholder="Email"
+              className="w-full p-2 border rounded"
+              required
+            />
+            <input
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              type="password"
+              placeholder="Contraseña"
+              className="w-full p-2 border rounded"
+              required
+            />
             <div className="flex gap-2 flex-col items-center">
-              {loading ? (<div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>) : (
-                <button type="submit" disabled={loading} className="py-2 text-white rounded w-full" style={{ backgroundColor: 'var(--neutro)', padding: '10px 20px', cursor: 'pointer' }}>Acceder</button>
-
+              {loading ? (
+                <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-primary border-t-transparent"></div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="py-2 text-white rounded w-full"
+                  style={{ backgroundColor: 'var(--neutro)', padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  Acceder
+                </button>
               )}
             </div>
-
-
-            
           </form>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', backgroundColor: 'var(--primario)', cursor: 'pointer', padding: '10px', borderRadius: '8px', color: 'white' }} onClick={handleGoogleLogin} disabled={loading} className="my-2">
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', backgroundColor: 'var(--primario)', cursor: 'pointer', padding: '10px', borderRadius: '8px', color: 'white' }}
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="my-2"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
             </svg>
-            <p>Iniciar sesion con Google</p>
+            <p>Iniciar sesión con Google</p>
           </div>
+
           {msg && <p className="text-red-500 text-sm text-center my-2">{msg}</p>}
+
           <div className="text-center my-5">
-            <p onClick={() => navigate("/register")} style={{ fontSize: '14px', cursor: 'pointer', color: 'blue' }}>¿No tienes una cuenta? <Link disabled={loading} to='/register' className="">Registrarse</Link></p>
+            <p style={{ fontSize: '14px', cursor: 'pointer', color: 'blue' }}>
+              ¿No tienes una cuenta?{" "}
+              <Link disabled={loading} to='/register' className="">
+                Registrarse
+              </Link>
+            </p>
           </div>
 
         </div>

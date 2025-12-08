@@ -176,10 +176,7 @@ export default function CampeonatoData({
   return (
     <section className="mb-6">
       <article className="relative overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-slate-100 p-5 md:p-6">
-        {/* Decorative blob */}
         <div className="pointer-events-none absolute -right-16 -top-24 h-40 w-40 rounded-full bg-cyan-100/40 blur-3xl" />
-
-        {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
@@ -189,11 +186,6 @@ export default function CampeonatoData({
               <h1 className="text-sm font-semibold tracking-wide text-gray-800 uppercase">
                 {display.nombre}
               </h1>
-              {descripcion && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {dobles ? 'Campeonato dobles' : 'Campeonato masculino'}
-                </p>
-              )}
             </div>
           </div>
 
