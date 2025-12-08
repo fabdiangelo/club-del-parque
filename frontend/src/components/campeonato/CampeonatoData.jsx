@@ -14,7 +14,6 @@ export default function CampeonatoData({
   onRefresh,
   conRedireccion = false,
   dobles = false,
-  createdAt = null,
 }) {
   const [procesando, setProcesando] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -69,34 +68,6 @@ export default function CampeonatoData({
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-  function parseToDate(value) {
-    if (!value) return null;
-
-    if (value instanceof Date) return value;
-
-    if (typeof value === 'string') {
-      const d = new Date(value);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    if (typeof value === 'number') {
-      const d = new Date(value);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    if (typeof value === 'object' && value.seconds != null) {
-      const msFromSeconds = value.seconds * 1000;
-      const msFromNanos = value.nanoseconds
-        ? value.nanoseconds / 1_000_000
-        : 0;
-      const d = new Date(msFromSeconds + msFromNanos);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    return null;
-  }
-
-  const createdAtDate = parseToDate(createdAt);
 
   async function handleInscripcion() {
     try {
@@ -241,6 +212,7 @@ export default function CampeonatoData({
           </p>
         )}
 
+        {/* Fechas */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs text-gray-600 border border-slate-100">
             <Calendar className="w-4 h-4" />
@@ -250,20 +222,6 @@ export default function CampeonatoData({
             </span>
           </div>
 
-          {createdAtDate && (
-            <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs text-gray-600 border border-slate-100">
-              <Calendar className="w-4 h-4" />
-              <span>
-                Creado el{' '}
-                {createdAtDate.toLocaleDateString('es-UY', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-          )}
-
           {participantes && participantes.length > 0 && (
             <span className="text-xs text-gray-500">
               {participantes.length} usuario
@@ -272,7 +230,6 @@ export default function CampeonatoData({
             </span>
           )}
         </div>
-
 
         {/* Reglamento */}
         {reglamentoUrl && (
