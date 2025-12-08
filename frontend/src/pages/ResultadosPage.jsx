@@ -275,7 +275,7 @@ export default function ResultadosPage() {
                         {fechaStr}
                       </td>
                       <td className="px-4 py-3 text-gray-900 text-center">
-                        {p?.etapa || "—"}
+                        {p?.etapa?.split('(')[0].replace(/-\d{13}-/g, "  |  ").replace(/\d{13}-/g, "")|| "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-900 text-center">
                         {p?.tipoPartido || "—"}
