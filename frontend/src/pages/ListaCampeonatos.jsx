@@ -17,25 +17,74 @@ export default function ListaCampeonatos() {
 
   const { user } = useAuth();
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setFetchError("");
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/campeonatos`
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setCampeonatos(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setFetchError(err?.message || "Error desconocido");
-      } finally {
-        setLoading(false);
-      }
+useEffect(() => {
+  async function load() {
+    setLoading(true);
+    setFetchError("");
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/campeonatos`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const hoy = new Date();
+      // usamos solo la parte de fecha, sin horas
+      hoy.setHours(0, 0, 0, 0);
+
+      const toDateOnly = (value) => {
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return null;
+        d.setHours(0, 0, 0, 0);
+        return d;
+      };
+
+      // 1) Filtrar campeonatos terminados (fin < hoy)
+      const activos = (Array.isArray(data) ? data : []).filter((c) => {
+        const fin = toDateOnly(c.fin);
+        // si no tiene fecha fin válida, lo dejamos
+        if (!fin) return true;
+        return fin >= hoy;
+      });
+
+      // 2) Ordenar por prioridad:
+      //    - primero los que están en curso
+      //    - luego los futuros, más cercanos primero
+      const ordenados = activos.sort((a, b) => {
+        const aInicio = toDateOnly(a.inicio);
+        const aFin = toDateOnly(a.fin);
+        const bInicio = toDateOnly(b.inicio);
+        const bFin = toDateOnly(b.fin);
+
+        // si alguna fecha es inválida, las mandamos al final
+        if (!aInicio || !aFin) return 1;
+        if (!bInicio || !bFin) return -1;
+
+        const aOngoing = aInicio <= hoy && aFin >= hoy;
+        const bOngoing = bInicio <= hoy && bFin >= hoy;
+
+        // campeonatos en curso primero
+        if (aOngoing && !bOngoing) return -1;
+        if (!aOngoing && bOngoing) return 1;
+
+        // si ambos son en curso o ambos futuros/pasados,
+        // ordenamos por cercanía de la fecha de inicio a hoy
+        const diffA = Math.abs(aInicio.getTime() - hoy.getTime());
+        const diffB = Math.abs(bInicio.getTime() - hoy.getTime());
+
+        return diffA - diffB;
+      });
+
+      setCampeonatos(ordenados);
+    } catch (err) {
+      setFetchError(err?.message || "Error desconocido");
+    } finally {
+      setLoading(false);
     }
-    load();
-  }, []);
+  }
+  load();
+}, []);
+
 
   // si cambia el número de campeonatos, volvemos a la página 1
   useEffect(() => {
