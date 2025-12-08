@@ -17,11 +17,16 @@ export default class CerrarCampeonatoYAsignarPuntos {
 
   puntos(camp, pos) {
     // Si no hay tabla configurada, usar DEFAULT_TABLA
-    let tabla = DEFAULT_TABLA;
+    let tabla = camp?.puntosPorPosicion;
+    if (!tabla || typeof tabla !== 'object' || Object.keys(tabla).length === 0) {
+      console.log(`⚠️ Campeonato sin puntosPorPosicion, usando DEFAULT_TABLA`);
+      tabla = DEFAULT_TABLA;
+    }
     
     let posNum = Number(pos);
     
     // Convertir todas las claves de la tabla a números para comparación
+    // JavaScript automáticamente convierte claves numéricas a strings, así que necesitamos normalizarlas
     const tablaNormalizada = {};
     Object.keys(tabla).forEach(k => {
       const key = Number(k);
@@ -35,6 +40,11 @@ export default class CerrarCampeonatoYAsignarPuntos {
     
     const posiciones = Object.keys(tablaNormalizada).map(Number).sort((a, b) => a - b);
     
+    if (posiciones.length === 0) {
+      console.log(`❌ Tabla vacía después de normalización`);
+      return 0;
+    }
+    
     // Si la posición está exactamente en la tabla, devolver ese valor
     if (tablaNormalizada[posNum] !== undefined) {
       console.log(`Posición ${posNum}: ${tablaNormalizada[posNum]} puntos (exacta)`);
@@ -42,7 +52,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
     }
     
     // Si la posición es mayor al máximo definido, usar el último valor de la tabla
-    if (posiciones.length && posNum > Math.max(...posiciones)) {
+    if (posNum > Math.max(...posiciones)) {
       const ultimaPosicion = Math.max(...posiciones);
       const puntos = tablaNormalizada[ultimaPosicion];
       console.log(`Posición ${posNum}: ${puntos} puntos (usando última posición ${ultimaPosicion})`);
@@ -50,7 +60,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
     }
     
     // Si la posición es menor al mínimo definido, usar el primer valor
-    if (posiciones.length && posNum < Math.min(...posiciones)) {
+    if (posNum < Math.min(...posiciones)) {
       const primeraPosicion = Math.min(...posiciones);
       const puntos = tablaNormalizada[primeraPosicion];
       console.log(`Posición ${posNum}: ${puntos} puntos (usando primera posición ${primeraPosicion})`);
@@ -77,107 +87,32 @@ export default class CerrarCampeonatoYAsignarPuntos {
 
     // Determinar si es dobles según la configuración del campeonato
     const esDobles = !!camp.dobles;
+    console.log(`🎾 Modo campeonato: ${esDobles ? 'DOBLES' : 'SINGLES'}`);
+    
     // Calcular posiciones sumando victorias en todas las etapas
-    // Ahora devuelve un mapeo de federado individual a posición, incluso en dobles
     const posiciones = this._posicionesPorVictoriasTodasEtapas(etapas, esDobles);
 
-    // Calcular partidos ganados y perdidos por federado en todo el campeonato
-    // Ahora, en dobles, se asigna a cada jugador individual
-    const partidosStats = {};
-    for (const etapa of etapas) {
-      if (etapa.tipoEtapa === "eliminacion") {
-        const rondas = Array.isArray(etapa.rondas) ? etapa.rondas : [];
-        for (const r of rondas) {
-          for (const p of Array.isArray(r.partidos) ? r.partidos : []) {
-            if (p.estado !== "finalizado" && p.estado !== "cerrado") continue;
-            // Ganador
-            if (esDobles && Array.isArray(p.ganadorId)) {
-              for (const gid of p.ganadorId) {
-                partidosStats[gid] = partidosStats[gid] || { ganados: 0, perdidos: 0 };
-                partidosStats[gid].ganados++;
-              }
-            } else if (p.ganadorId) {
-              partidosStats[p.ganadorId] = partidosStats[p.ganadorId] || { ganados: 0, perdidos: 0 };
-              partidosStats[p.ganadorId].ganados++;
-            }
-            // Perdedor
-            if (esDobles && Array.isArray(p.jugador1) && Array.isArray(p.jugador2)) {
-              // Determinar perdedores
-              let perdedores = [];
-              if (Array.isArray(p.ganadorId)) {
-                // Perdedor es el otro equipo
-                const eq1 = p.jugador1.map(j => j && j.id).filter(Boolean);
-                const eq2 = p.jugador2.map(j => j && j.id).filter(Boolean);
-                const ganadorSet = new Set(p.ganadorId);
-                if (eq1.every(id => ganadorSet.has(id))) {
-                  perdedores = eq2;
-                } else {
-                  perdedores = eq1;
-                }
-              }
-              for (const pid of perdedores) {
-                partidosStats[pid] = partidosStats[pid] || { ganados: 0, perdidos: 0 };
-                partidosStats[pid].perdidos++;
-              }
-            } else if (p.ganadorId && p.jugador1Id && p.jugador2Id) {
-              let perdedorId = p.ganadorId === p.jugador1Id ? p.jugador2Id : p.jugador1Id;
-              if (perdedorId) {
-                partidosStats[perdedorId] = partidosStats[perdedorId] || { ganados: 0, perdidos: 0 };
-                partidosStats[perdedorId].perdidos++;
-              }
-            }
-          }
-        }
-      } else if (etapa.tipoEtapa === "roundRobin") {
-        const grupos = Array.isArray(etapa.grupos) ? etapa.grupos : [];
-        for (const g of grupos) {
-          for (const partido of Array.isArray(g.partidos) ? g.partidos : []) {
-            if (partido.estado !== "finalizado" && partido.estado !== "cerrado") continue;
-            // Ganadores
-            if (esDobles && Array.isArray(partido.ganadores)) {
-              for (const ganadorId of partido.ganadores) {
-                partidosStats[ganadorId] = partidosStats[ganadorId] || { ganados: 0, perdidos: 0 };
-                partidosStats[ganadorId].ganados++;
-              }
-            } else if (Array.isArray(partido.ganadores)) {
-              for (const ganadorId of partido.ganadores) {
-                partidosStats[ganadorId] = partidosStats[ganadorId] || { ganados: 0, perdidos: 0 };
-                partidosStats[ganadorId].ganados++;
-              }
-            }
-            // Perdidos: todos los jugadores menos los ganadores
-            if (Array.isArray(partido.jugadores)) {
-              const ganadoresSet = new Set(Array.isArray(partido.ganadores) ? partido.ganadores : []);
-              for (const fid of partido.jugadores) {
-                if (!ganadoresSet.has(fid)) {
-                  partidosStats[fid] = partidosStats[fid] || { ganados: 0, perdidos: 0 };
-                  partidosStats[fid].perdidos++;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    // ✅ CORREGIDO: Calcular partidos ganados y perdidos por federado
+    const partidosStats = this._calcularPartidosStats(etapas, esDobles);
 
     const allFcs = await this.fcRepo.getAllFederados();
     const relacionados = (allFcs || []).filter(x => x.campeonatoID === campeonatoId);
 
     try {
       const rows = [];
-      // Encuentra la última posición disponible
       const posicionesNumericas = Object.values(posiciones).map(Number);
       const ultimaPosicion = posicionesNumericas.length ? Math.max(...posicionesNumericas) : 1;
+      
       for (const fc of relacionados) {
-        // Si es dobles y el federadoID es un equipo (array), desglosar
         let federadoIDs = [];
         if (esDobles && Array.isArray(fc.federadoID)) {
           federadoIDs = fc.federadoID;
         } else {
           federadoIDs = [fc.federadoID];
         }
+        
         for (const federadoID of federadoIDs) {
-          // Eliminar rankings con tipoDePartido inválido antes de actualizar/crear
+          // Eliminar rankings con tipoDePartido inválido
           const repo = this.rankingRepo;
           const allRankings = await repo.getByUsuario(federadoID);
           for (const r of allRankings) {
@@ -190,19 +125,30 @@ export default class CerrarCampeonatoYAsignarPuntos {
               await repo.delete(r.id).catch(()=>{});
             }
           }
+          
           let pos = posiciones[federadoID];
           if (!pos) {
             pos = ultimaPosicion + 1;
           }
-          const pts = this.puntos(camp, pos); // ✅ CAMBIO: Llamar a this.puntos siempre
+          
+          const pts = this.puntos(camp, pos);
           let nombre = '';
           try {
             const fed = await this.federadoRepo.getFederadoById(federadoID).catch(() => null);
             if (fed) nombre = `${fed.nombre || ''}${fed.apellido ? ' ' + fed.apellido : ''}`.trim() || fed.displayName || '';
           } catch (err) {}
-          rows.push({ federadoID, nombre, posicion: pos, puntos: pts });
+          
+          rows.push({ 
+            federadoID, 
+            nombre, 
+            posicion: pos, 
+            puntos: pts,
+            ganados: partidosStats[federadoID]?.ganados || 0,
+            perdidos: partidosStats[federadoID]?.perdidos || 0
+          });
         }
       }
+      
       rows.sort((a, b) => ((a.posicion || 1e9) - (b.posicion || 1e9)));
       console.log('\n===== Tabla: puntos a asignar al cerrar campeonato =====');
       console.table(rows);
@@ -213,13 +159,13 @@ export default class CerrarCampeonatoYAsignarPuntos {
     const UpsertRankingPuntos = (await import("../Rankings/UpsertRankingPuntos.js")).default;
 
     for (const fc of relacionados) {
-      // Si es dobles y el federadoID es un equipo (array), desglosar
       let federadoIDs = [];
       if (esDobles && Array.isArray(fc.federadoID)) {
         federadoIDs = fc.federadoID;
       } else {
         federadoIDs = [fc.federadoID];
       }
+      
       for (const federadoID of federadoIDs) {
         let pos = posiciones[federadoID];
         if (!pos) {
@@ -227,9 +173,12 @@ export default class CerrarCampeonatoYAsignarPuntos {
           const ultimaPosicion = posicionesNumericas.length ? Math.max(...posicionesNumericas) : 1;
           pos = ultimaPosicion + 1;
         }
-        const pts = this.puntos(camp, pos); // ✅ CAMBIO: Llamar a this.puntos siempre
+        
+        const pts = this.puntos(camp, pos);
         await this.fcRepo.update(fc.id, { posicionFinal: pos, puntosRanking: pts }).catch(()=>{});
+        
         if (!camp.temporadaID || !camp.deporte || !federadoID) continue;
+        
         const modalidad = camp.dobles ? "dobles" : "singles";
         let genero = "mixto";
         let rawGenero = camp?.requisitosParticipacion?.genero || camp.genero;
@@ -237,24 +186,28 @@ export default class CerrarCampeonatoYAsignarPuntos {
           const g = String(rawGenero).toLowerCase();
           if (["masculino", "femenino", "mixto"].includes(g)) genero = g;
         }
+        
         const tipoDePartido = camp.dobles ? "dobles" : "singles";
         const repo = this.rankingRepo;
         const allRankings = await repo.getByUsuario(federadoID);
-        // Buscar ranking existente por scope (temporada, deporte, tipoDePartido, genero)
+        
+        // Buscar ranking existente
         let ranking = allRankings.find(r =>
           String(r.temporadaID) === String(camp.temporadaID) &&
           String(r.deporte).toLowerCase() === String(camp.deporte).toLowerCase() &&
           String(r.tipoDePartido) === tipoDePartido &&
           (r.genero ? String(r.genero).toLowerCase() === String(genero).toLowerCase() : true)
         );
+        
         let prevPuntos = ranking ? ranking.puntos : 0;
-        // Calcular partidos ganados/perdidos en el campeonato
         const ganados = partidosStats[federadoID]?.ganados || 0;
         const perdidos = partidosStats[federadoID]?.perdidos || 0;
+        
         if (ranking) {
           const nuevosGanados = (ranking.partidosGanados || 0) + ganados;
           const nuevosPerdidos = (ranking.partidosPerdidos || 0) + perdidos;
           const nuevoPuntos = prevPuntos + pts;
+          
           await repo.update(ranking.id, {
             puntos: nuevoPuntos,
             partidosGanados: nuevosGanados,
@@ -262,20 +215,22 @@ export default class CerrarCampeonatoYAsignarPuntos {
             updatedAt: new Date().toISOString(),
             tipoDePartido
           });
+          
           console.log(`[Ranking] Jugador ${federadoID} (${genero}) actualizado: ${prevPuntos} -> ${nuevoPuntos} puntos (+${pts}), ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
         } else {
-          // Buscar si existe un ranking legacy (sin genero) para migrar
+          // Buscar ranking legacy
           let legacyRanking = allRankings.find(r =>
             String(r.temporadaID) === String(camp.temporadaID) &&
             String(r.deporte).toLowerCase() === String(camp.deporte).toLowerCase() &&
             String(r.tipoDePartido) === tipoDePartido &&
             (!r.genero || r.genero === null || r.genero === "")
           );
+          
           if (legacyRanking) {
-            // Actualizar el ranking legacy con genero y sumar puntos/partidos
             const nuevosGanados = (legacyRanking.partidosGanados || 0) + ganados;
             const nuevosPerdidos = (legacyRanking.partidosPerdidos || 0) + perdidos;
             const nuevosPuntos = (legacyRanking.puntos || 0) + pts;
+            
             await repo.update(legacyRanking.id, {
               puntos: nuevosPuntos,
               partidosGanados: nuevosGanados,
@@ -284,6 +239,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
               genero,
               tipoDePartido
             });
+            
             console.log(`[Ranking] Jugador ${federadoID} (legacy->${genero}) actualizado: ${legacyRanking.puntos} -> ${nuevosPuntos} puntos (+${pts}), ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
           } else {
             // Crear nuevo ranking
@@ -294,6 +250,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
               String(genero).toLowerCase(),
               tipoDePartido
             ].filter(Boolean).join("-");
+            
             const model = {
               id,
               temporadaID: camp.temporadaID,
@@ -301,32 +258,151 @@ export default class CerrarCampeonatoYAsignarPuntos {
               deporte: camp.deporte,
               genero,
               tipoDePartido,
-              puntos: pts, // ✅ CORREGIDO: usar pts que ya fue calculado correctamente
+              puntos: pts,
               partidosGanados: ganados,
               partidosPerdidos: perdidos,
               partidosAbandonados: 0,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
+            
             await repo.save(model);
             console.log(`[Ranking] Jugador ${federadoID} (${genero}) creado: ${pts} puntos, ganados: ${ganados}, perdidos: ${perdidos}. [${tipoDePartido}]`);
           }
         }
       }
     }
+    
     return { ok: true, posiciones };
   }
 
-
-  _posicionesPorVictoriasTodasEtapas(etapas, esDobles) {
+  /**
+   * ✅ NUEVO MÉTODO: Calcula estadísticas de partidos de forma más robusta
+   */
+  _calcularPartidosStats(etapas, esDobles) {
     const stats = {};
-    const allFederados = new Set();
+    
     for (const etapa of etapas) {
       if (etapa.tipoEtapa === "eliminacion") {
         const rondas = Array.isArray(etapa.rondas) ? etapa.rondas : [];
         for (const r of rondas) {
           for (const p of Array.isArray(r.partidos) ? r.partidos : []) {
             if (p.estado !== "finalizado" && p.estado !== "cerrado") continue;
+            
+            // Extraer IDs de ganadores y todos los jugadores del partido
+            let ganadoresIds = [];
+            let todosJugadores = [];
+            
+            if (esDobles) {
+              // Ganadores en dobles
+              if (Array.isArray(p.ganadorId)) {
+                ganadoresIds = p.ganadorId.map(id => String(id));
+              } else if (Array.isArray(p.ganadores)) {
+                ganadoresIds = p.ganadores.map(id => String(id));
+              }
+              
+              // Todos los jugadores del partido
+              if (Array.isArray(p.jugador1)) {
+                todosJugadores.push(...p.jugador1.map(j => String(j?.id)).filter(Boolean));
+              }
+              if (Array.isArray(p.jugador2)) {
+                todosJugadores.push(...p.jugador2.map(j => String(j?.id)).filter(Boolean));
+              }
+            } else {
+              // Singles
+              if (p.ganadorId) {
+                ganadoresIds = [String(p.ganadorId)];
+              } else if (Array.isArray(p.ganadores) && p.ganadores.length) {
+                ganadoresIds = [String(p.ganadores[0])];
+              }
+              
+              if (p.jugador1Id) todosJugadores.push(String(p.jugador1Id));
+              if (p.jugador2Id) todosJugadores.push(String(p.jugador2Id));
+            }
+            
+            // Inicializar stats para todos los jugadores
+            for (const jId of todosJugadores) {
+              if (!stats[jId]) {
+                stats[jId] = { ganados: 0, perdidos: 0 };
+              }
+            }
+            
+            // Asignar victorias
+            for (const gId of ganadoresIds) {
+              if (stats[gId]) {
+                stats[gId].ganados++;
+              }
+            }
+            
+            // Asignar derrotas (todos menos los ganadores)
+            const ganadoresSet = new Set(ganadoresIds);
+            for (const jId of todosJugadores) {
+              if (!ganadoresSet.has(jId) && stats[jId]) {
+                stats[jId].perdidos++;
+              }
+            }
+          }
+        }
+      } else if (etapa.tipoEtapa === "roundRobin") {
+        const grupos = Array.isArray(etapa.grupos) ? etapa.grupos : [];
+        for (const g of grupos) {
+          for (const partido of Array.isArray(g.partidos) ? g.partidos : []) {
+            if (partido.estado !== "finalizado" && partido.estado !== "cerrado") continue;
+            
+            let ganadoresIds = [];
+            let todosJugadores = [];
+            
+            // Extraer ganadores
+            if (Array.isArray(partido.ganadores)) {
+              ganadoresIds = partido.ganadores.map(id => String(id));
+            }
+            
+            // Extraer todos los jugadores
+            if (Array.isArray(partido.jugadores)) {
+              todosJugadores = partido.jugadores.map(id => String(id));
+            }
+            
+            // Inicializar stats
+            for (const jId of todosJugadores) {
+              if (!stats[jId]) {
+                stats[jId] = { ganados: 0, perdidos: 0 };
+              }
+            }
+            
+            // Asignar victorias
+            for (const gId of ganadoresIds) {
+              if (stats[gId]) {
+                stats[gId].ganados++;
+              }
+            }
+            
+            // Asignar derrotas
+            const ganadoresSet = new Set(ganadoresIds);
+            for (const jId of todosJugadores) {
+              if (!ganadoresSet.has(jId) && stats[jId]) {
+                stats[jId].perdidos++;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return stats;
+  }
+
+  _posicionesPorVictoriasTodasEtapas(etapas, esDobles) {
+    const stats = {};
+    const allFederados = new Set();
+    
+    for (const etapa of etapas) {
+      if (etapa.tipoEtapa === "eliminacion") {
+        const rondas = Array.isArray(etapa.rondas) ? etapa.rondas : [];
+        for (const r of rondas) {
+          for (const p of Array.isArray(r.partidos) ? r.partidos : []) {
+            if (p.estado !== "finalizado" && p.estado !== "cerrado") continue;
+            
+            // Contar victorias
             if (esDobles && Array.isArray(p.ganadorId)) {
               for (const gid of p.ganadorId) {
                 stats[gid] = (stats[gid] || 0) + 1;
@@ -334,7 +410,8 @@ export default class CerrarCampeonatoYAsignarPuntos {
             } else if (p.ganadorId) {
               stats[p.ganadorId] = (stats[p.ganadorId] || 0) + 1;
             }
-            // Asegura que todos los jugadores del partido estén en el set
+            
+            // Registrar todos los jugadores
             if (esDobles) {
               if (Array.isArray(p.jugador1)) {
                 for (const j1 of p.jugador1) {
@@ -355,6 +432,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
       } else if (etapa.tipoEtapa === "roundRobin") {
         const grupos = Array.isArray(etapa.grupos) ? etapa.grupos : [];
         for (const g of grupos) {
+          // Registrar jugadores del grupo
           for (const slot of Array.isArray(g.jugadores) ? g.jugadores : []) {
             const federadoIDs = esDobles
               ? (slot.players || []).map(p => p && p.id).filter(Boolean)
@@ -363,18 +441,18 @@ export default class CerrarCampeonatoYAsignarPuntos {
               allFederados.add(fid);
             }
           }
+          
+          // Contar victorias
           for (const partido of Array.isArray(g.partidos) ? g.partidos : []) {
             if (partido.estado !== "finalizado" && partido.estado !== "cerrado") continue;
-            if (esDobles && Array.isArray(partido.ganadores)) {
-              for (const ganadorId of partido.ganadores) {
-                stats[ganadorId] = (stats[ganadorId] || 0) + 1;
-              }
-            } else if (Array.isArray(partido.ganadores)) {
+            
+            if (Array.isArray(partido.ganadores)) {
               for (const ganadorId of partido.ganadores) {
                 stats[ganadorId] = (stats[ganadorId] || 0) + 1;
               }
             }
-            // Asegura que todos los jugadores del partido estén en el set
+            
+            // Registrar jugadores del partido
             if (Array.isArray(partido.jugadores)) {
               for (const fid of partido.jugadores) {
                 allFederados.add(fid);
@@ -384,22 +462,25 @@ export default class CerrarCampeonatoYAsignarPuntos {
         }
       }
     }
-    // Asegura que todos los federados tengan stats (aunque sea 0)
+    
+    // Asegurar que todos tengan stats
     for (const fid of allFederados) {
       if (!(fid in stats)) stats[fid] = 0;
     }
-    // Ordena por victorias descendente, luego por federadoID para desempatar
+    
+    // Ordenar y asignar posiciones
     const lista = Array.from(allFederados).map(fid => ({ fid, victorias: stats[fid] }));
     lista.sort((a, b) => {
       if (b.victorias !== a.victorias) return b.victorias - a.victorias;
-      // Corregido: asegurar que fid es string
       return String(a.fid).localeCompare(String(b.fid));
     });
-    // Asigna posiciones con saltos en caso de empate (ranking olímpico)
+    
+    // Asignar posiciones con saltos en caso de empate (ranking olímpico)
     const map = {};
     let pos = 1;
     let prevVictorias = null;
     let repes = 0;
+    
     for (let i = 0; i < lista.length; i++) {
       const { fid, victorias } = lista[i];
       if (prevVictorias !== null && victorias !== prevVictorias) {

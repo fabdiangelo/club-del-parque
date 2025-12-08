@@ -58,8 +58,7 @@ export default function ListaCampeonatos() {
           (a, b) =>
             getTimestampMs(b.createdAt) - getTimestampMs(a.createdAt)
         );
-
-        setCampeonatos(ordenados);
+        setCampeonatos(ordenados.sort((a, b) => getTimestampMs(b.id.split('-').slice(-1)[0]) - getTimestampMs(a.id.split('-').slice(-1)[0])));
       } catch (err) {
         setFetchError(err?.message || "Error desconocido");
       } finally {

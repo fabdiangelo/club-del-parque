@@ -811,7 +811,7 @@ export default function CrearCampeonato() {
                               const preview = computeEtapasPreview()[idx];
                               const error = etapasErrors[idx];
                               return (
-                                <div key={et.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center p-2 bg-white rounded">
+                                <div key={et.id} className="flex flex-col md:flex-row md:grid md:grid-cols-5 gap-2 items-left p-2 bg-white rounded">
                                   <div className="md:col-span-2">
                                     <div className="font-medium">{idx + 1}. {et.id}</div>
                                     <div className="text-xs opacity-60">Tipo: {et.nombre}</div>
