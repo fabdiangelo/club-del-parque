@@ -79,7 +79,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-			<Route path="/register" element={<Registro />} />
+      <Route path="/register" element={<Registro />} />
       <Route path="/crear-admin" element={<CrearAdmin />} />
       <Route path="/login" element={<Login />} />
       <Route path="/noticias" element={<Noticias />} />
@@ -90,7 +90,7 @@ function App() {
       <Route path="/campeonato/:id" element={<FixtureCampeonato />} />
       <Route path="/partido/:id" element={<Partido />} />
 
-      {/* Rutas Usuarios (cualquier usuario autenticado) */} 
+      {/* Rutas Usuarios (cualquier usuario autenticado) */}
       <Route
         path="/perfil"
         element={
@@ -192,7 +192,7 @@ function App() {
           </RoleProtectedRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/reservas"
         element={
           <RoleProtectedRoute
@@ -203,7 +203,7 @@ function App() {
             <Reservas />
           </RoleProtectedRoute>
         }
-      />
+      /> */}
       <Route
         path="/reservas/:id"
         element={
