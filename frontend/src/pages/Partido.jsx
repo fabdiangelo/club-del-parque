@@ -768,31 +768,37 @@ useEffect(() => {
                     <br />
                     {/* Propuestas de horarios para dobles: si eres participante y hay propuestas, muéstralas y permite aceptarlas */}
                     {comprobarSiUserEsJugador() && partido?.disponibilidades?.propuestas && partido.disponibilidades.propuestas.length > 0 && (
-                        <div className="propuestas-panel mt-8 p-6" style={{ width: '90%', maxWidth: '800px' }}>
-                            <h3 className="text-lg font-semibold mb-4 text-center">Propuestas de horarios</h3>
-                            <div style={{display: 'flex', gap: '20px', width: '100%', flexWrap: 'wrap', justifyContent: 'center'}}>
-                                {partido.disponibilidades.propuestas.map((propuesta) => {
-                                    const yaAceptada = propuestaAceptada === propuesta.id || (reserva && reserva.propuestaId === propuesta.id);
-                                    const esAutor = (user?.uid || user?.id) === propuesta.usuarioId;
-                                    return (
-                                        <div key={propuesta.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', minWidth: '220px', background: yaAceptada ? '#e6ffe6' : '#fff' }}>
-                                            <div><b>Fecha:</b> {new Date(propuesta.fechaHoraInicio).toLocaleString()}</div>
-                                            <div><b>Propuesto por:</b> {getNombreForId(propuesta.usuarioId) || 'Desconocido'}</div>
-                                            <div><b>Estado:</b> {propuesta.estado || 'pendiente'}</div>
-                                            {!yaAceptada && !esAutor && (
-                                                <button className="btn btn-primary mt-2" onClick={() => aceptarPropuesta(propuesta.id)}>
-                                                    Aceptar Propuesta
-                                                </button>
-                                            )}
-                                            {yaAceptada && (
-                                                <span style={{ color: 'green', fontWeight: 'bold' }}>Propuesta aceptada</span>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+                                                (() => {
+                                                    const hayPropuestaAceptada = partido.disponibilidades.propuestas.some(p => p.aceptada);
+                                                    return (
+                                                        <div className="propuestas-panel mt-8 p-6" style={{ width: '90%', maxWidth: '800px' }}>
+                                                            <h3 className="text-lg font-semibold mb-4 text-center">Propuestas de horarios</h3>
+                                                            <div style={{display: 'flex', gap: '20px', width: '100%', flexWrap: 'wrap', justifyContent: 'center'}}>
+                                                                {partido.disponibilidades.propuestas.map((propuesta) => {
+                                                                    const yaAceptada = propuestaAceptada === propuesta.id || (reserva && reserva.propuestaId === propuesta.id);
+                                                                    const esAutor = (user?.uid || user?.id) === propuesta.usuarioId;
+                                                                    return (
+                                                                        <div key={propuesta.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '16px', minWidth: '220px', background: yaAceptada ? '#e6ffe6' : '#fff' }}>
+                                                                            <div><b>Fecha:</b> {new Date(propuesta.fechaHoraInicio).toLocaleString()}</div>
+                                                                            <div><b>Propuesto por:</b> {getNombreForId(propuesta.usuarioId) || 'Desconocido'}</div>
+                                                                            <div><b>Estado:</b> {propuesta.estado || 'pendiente'}</div>
+                                                                            {/* Solo mostrar el botón si NO hay ninguna propuesta aceptada y NO hay reserva confirmada */}
+                                                                            {!hayPropuestaAceptada && !reserva && !yaAceptada && !esAutor && (
+                                                                                <button className="btn btn-primary mt-2" onClick={() => aceptarPropuesta(propuesta.id)}>
+                                                                                    Aceptar Propuesta
+                                                                                </button>
+                                                                            )}
+                                                                            {yaAceptada && (
+                                                                                <span style={{ color: 'green', fontWeight: 'bold' }}>Propuesta aceptada</span>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()
+                                        )}
                     {/* Si no hay propuestas, mostrar mensaje y botón para generarlas */}
                     {comprobarSiUserEsJugador() && (!partido?.disponibilidades?.propuestas || partido.disponibilidades.propuestas.length === 0) && (
                         <div className='text-center my-5 intro-text'>

@@ -16,16 +16,48 @@ export default class CerrarCampeonatoYAsignarPuntos {
   }
 
   puntos(camp, pos) {
-    const tabla = camp?.puntosPorPosicion || DEFAULT_TABLA;
-    const posStr = String(pos);
-    if (Object.prototype.hasOwnProperty.call(tabla, posStr)) {
-      return Number(tabla[posStr]);
+    // Si no hay tabla configurada, usar DEFAULT_TABLA
+    let tabla = DEFAULT_TABLA;
+    
+    let posNum = Number(pos);
+    
+    // Convertir todas las claves de la tabla a números para comparación
+    const tablaNormalizada = {};
+    Object.keys(tabla).forEach(k => {
+      const key = Number(k);
+      const value = Number(tabla[k]);
+      if (!isNaN(key) && !isNaN(value)) {
+        tablaNormalizada[key] = value;
+      }
+    });
+    
+    console.log(`📊 Tabla normalizada:`, tablaNormalizada);
+    
+    const posiciones = Object.keys(tablaNormalizada).map(Number).sort((a, b) => a - b);
+    
+    // Si la posición está exactamente en la tabla, devolver ese valor
+    if (tablaNormalizada[posNum] !== undefined) {
+      console.log(`Posición ${posNum}: ${tablaNormalizada[posNum]} puntos (exacta)`);
+      return tablaNormalizada[posNum];
     }
+    
     // Si la posición es mayor al máximo definido, usar el último valor de la tabla
-    const posiciones = Object.keys(tabla).map(Number).sort((a, b) => a - b);
-    if (posiciones.length && Number(pos) > Math.max(...posiciones)) {
-      return Number(tabla[String(posiciones[posiciones.length - 1])]) || 0;
+    if (posiciones.length && posNum > Math.max(...posiciones)) {
+      const ultimaPosicion = Math.max(...posiciones);
+      const puntos = tablaNormalizada[ultimaPosicion];
+      console.log(`Posición ${posNum}: ${puntos} puntos (usando última posición ${ultimaPosicion})`);
+      return puntos;
     }
+    
+    // Si la posición es menor al mínimo definido, usar el primer valor
+    if (posiciones.length && posNum < Math.min(...posiciones)) {
+      const primeraPosicion = Math.min(...posiciones);
+      const puntos = tablaNormalizada[primeraPosicion];
+      console.log(`Posición ${posNum}: ${puntos} puntos (usando primera posición ${primeraPosicion})`);
+      return puntos;
+    }
+    
+    console.log(`Posición ${posNum}: 0 puntos (no encontrada)`);
     return 0;
   }
 
@@ -162,7 +194,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
           if (!pos) {
             pos = ultimaPosicion + 1;
           }
-          const pts = pos ? this.puntos(camp, pos) : 0;
+          const pts = this.puntos(camp, pos); // ✅ CAMBIO: Llamar a this.puntos siempre
           let nombre = '';
           try {
             const fed = await this.federadoRepo.getFederadoById(federadoID).catch(() => null);
@@ -195,7 +227,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
           const ultimaPosicion = posicionesNumericas.length ? Math.max(...posicionesNumericas) : 1;
           pos = ultimaPosicion + 1;
         }
-        const pts = pos ? this.puntos(camp, pos) : 0;
+        const pts = this.puntos(camp, pos); // ✅ CAMBIO: Llamar a this.puntos siempre
         await this.fcRepo.update(fc.id, { posicionFinal: pos, puntosRanking: pts }).catch(()=>{});
         if (!camp.temporadaID || !camp.deporte || !federadoID) continue;
         const modalidad = camp.dobles ? "dobles" : "singles";
@@ -230,7 +262,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
             updatedAt: new Date().toISOString(),
             tipoDePartido
           });
-          console.log(`[Ranking] Jugador ${federadoID} (${genero}) actualizado: ${prevPuntos} -> ${nuevoPuntos} puntos, ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
+          console.log(`[Ranking] Jugador ${federadoID} (${genero}) actualizado: ${prevPuntos} -> ${nuevoPuntos} puntos (+${pts}), ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
         } else {
           // Buscar si existe un ranking legacy (sin genero) para migrar
           let legacyRanking = allRankings.find(r =>
@@ -243,17 +275,18 @@ export default class CerrarCampeonatoYAsignarPuntos {
             // Actualizar el ranking legacy con genero y sumar puntos/partidos
             const nuevosGanados = (legacyRanking.partidosGanados || 0) + ganados;
             const nuevosPerdidos = (legacyRanking.partidosPerdidos || 0) + perdidos;
+            const nuevosPuntos = (legacyRanking.puntos || 0) + pts;
             await repo.update(legacyRanking.id, {
-              puntos: (legacyRanking.puntos || 0) + pts,
+              puntos: nuevosPuntos,
               partidosGanados: nuevosGanados,
               partidosPerdidos: nuevosPerdidos,
               updatedAt: new Date().toISOString(),
               genero,
               tipoDePartido
             });
-            console.log(`[Ranking] Jugador ${federadoID} (legacy->${genero}) actualizado: ${legacyRanking.puntos} -> ${(legacyRanking.puntos || 0) + pts} puntos, ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
+            console.log(`[Ranking] Jugador ${federadoID} (legacy->${genero}) actualizado: ${legacyRanking.puntos} -> ${nuevosPuntos} puntos (+${pts}), ganados: ${nuevosGanados}, perdidos: ${nuevosPerdidos}. [${tipoDePartido}]`);
           } else {
-            // Crear nuevo ranking solo si no existe ninguno
+            // Crear nuevo ranking
             const id = [
               String(camp.temporadaID).toLowerCase(),
               String(federadoID).toLowerCase(),
@@ -268,7 +301,7 @@ export default class CerrarCampeonatoYAsignarPuntos {
               deporte: camp.deporte,
               genero,
               tipoDePartido,
-              puntos: pts, // CORREGIDO: usar pts directamente
+              puntos: pts, // ✅ CORREGIDO: usar pts que ya fue calculado correctamente
               partidosGanados: ganados,
               partidosPerdidos: perdidos,
               partidosAbandonados: 0,
