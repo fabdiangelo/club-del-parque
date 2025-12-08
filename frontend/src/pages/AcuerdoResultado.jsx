@@ -864,7 +864,7 @@ export default function AcuerdoResultado() {
       </header>
 
       {/* Contenido principal */}
-      <main className="mx-auto max-w-7xl px-6 lg:px-8 w-full -mt-8 pb-24">
+      <main className="mx-auto max-w-7xl px-6 lg:px-8 w-full mt-5 pb-24">
         {/* Aviso de solo lectura cuando estoy confirmando/rechazando */}
         {puedoConfirmar && (
           <div className="mt-6 alert alert-info">
