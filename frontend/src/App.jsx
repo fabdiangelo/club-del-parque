@@ -80,7 +80,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Registro />} />
-      <Route path="/crear-admin" element={<CrearAdmin />} />
+      {/* <Route path="/crear-admin" element={<CrearAdmin />} /> */}
       <Route path="/login" element={<Login />} />
       <Route path="/noticias" element={<Noticias />} />
       <Route path="/noticias/:id" element={<NoticiaDetalle />} />
