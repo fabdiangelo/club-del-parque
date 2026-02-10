@@ -38,9 +38,16 @@ npm run dev
 firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data
 ```
 
+``` Test de cypresss
 npx cypress run --spec "cypress/e2e/campeonato.cy.js"
+```
 
 ---
+## Build del frontend
+```
+npm run build
+```
+
 
 ## Deploy en Firebase
 ### Hosting (frontend):
