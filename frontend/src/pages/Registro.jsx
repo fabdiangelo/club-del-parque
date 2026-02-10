@@ -36,8 +36,6 @@ function Registro() {
 
     setFormData({ ...formData, estado: "activo" });
 
-    console.log("Registrando usuario:", formData);
-
     try {
       const ok = await register(import.meta.env.VITE_BACKEND_URL + "/api/auth/register", formData)
       if (!ok) {

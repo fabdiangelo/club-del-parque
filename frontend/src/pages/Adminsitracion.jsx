@@ -211,7 +211,6 @@ const Administracion = () => {
     return <SoloAdmin />;
   }
   if (!user || user.rol !== "administrador") {
-    console.log(user);
     return <SoloAdmin />;
   }
   if (loading) {

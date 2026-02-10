@@ -30,8 +30,6 @@ function CrearAdmin() {
     setLoading(true);
     setSuccess("");
 
-    console.log("Registrando usuario:", formData);
-
     try {
       const ok = await register(`${import.meta.env.VITE_BACKEND_URL}/api/administrador/register`, formData);
       if (!ok) {

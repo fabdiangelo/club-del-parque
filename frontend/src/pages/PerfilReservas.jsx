@@ -37,13 +37,11 @@ function PerfilReservas() {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.log(errorText)
                 activarAlerta(errorText || 'Error al aceptar la reserva');
                 return;
             }
 
             const data = await response.json();
-            console.log(data);
             activarAlerta('Reserva aceptada exitosamente', 'success');
             await fetchReserva();
 
@@ -64,13 +62,11 @@ function PerfilReservas() {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.log(errorText)
                 activarAlerta(errorText || 'Error al rechazar la reserva');
                 return;
             }
 
             const data = await response.json();
-            console.log(data);
             activarAlerta('Reserva rechazada exitosamente', 'success');
             await fetchReserva();
 
@@ -91,13 +87,11 @@ function PerfilReservas() {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.log(errorText)
                 activarAlerta(errorText || 'Error al habilitar la reserva');
                 return;
             }
 
             const data = await response.json();
-            console.log(data);
             activarAlerta('Reserva habilitada exitosamente', 'success');
             await fetchReserva();
 
@@ -118,13 +112,11 @@ function PerfilReservas() {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.log(errorText)
                 activarAlerta(errorText || 'Error al deshabilitar la reserva');
                 return;
             }
 
             const data = await response.json();
-            console.log(data);
             activarAlerta('Reserva deshabilitada exitosamente', 'success');
             await fetchReserva();
         } catch (error) {

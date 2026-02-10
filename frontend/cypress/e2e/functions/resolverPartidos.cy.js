@@ -10,9 +10,10 @@ export const resolverPartidos = (email = '', contraseña = '') => {
   cy.contains('a', 'Resultados', { timeout: 40000 }).first().click({ force: true });
   cy.url({ timeout: 40000 }).should('include', '/resultados');
   cy.wait('@getPartidos', { timeout: 40000 });
-  cy.wait(35000);
-
+  
   function procesar(i) {
+    cy.contains('body', 'Acuerdo de resultados', { timeout: 40000 })
+    cy.wait(2000);
     cy.document({ timeout: 40000 }).then(doc => {
       const links = doc.querySelectorAll('a[title="Ir al partido"]');
 
@@ -32,7 +33,7 @@ export const resolverPartidos = (email = '', contraseña = '') => {
       cy.wrap(links[i], { timeout: 40000 }).click({ force: true });
       cy.wait('@getPartido', { timeout: 40000 });
       cy.url({ timeout: 40000 }).should('include', '/partidos/');
-      cy.wait(30000);
+      cy.wait(5000);
 
       cy.get('body', { timeout: 60000 }).then($body => {
         const existeProponer = $body.text().includes('Proponer resultado');

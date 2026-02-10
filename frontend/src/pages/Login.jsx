@@ -140,7 +140,6 @@ function Login() {
     setMsg(null);
     try {
       const result = await loginAndSendToBackend(email, password);
-      console.log("Backend auth result:", result);
 
       if (!result.user?.uid) {
         setMsg(GENERIC_LOGIN_ERROR);
@@ -167,8 +166,6 @@ function Login() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-
-      console.log(response);
 
       if (!response.ok) {
         const text = await response.text();

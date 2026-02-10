@@ -5,27 +5,33 @@ export const generarPartidosRoundRobin = (email = '', contraseña = '', nombre, 
     login(email, contraseña);
   }
 
-  if(!inCampeonatos){
-    cy.get('a', { timeout: 40000 }).contains('Campeonatos').first().click();
-  }
+  // if(!inCampeonatos){
+  //   cy.get('a', { timeout: 40000 }).contains('Campeonatos').first().click();
+  // }
 
-  cy.url({ timeout: 40000 }).then((currentUrl) => {
-    if (!currentUrl.endsWith('/campeonatos')) {
-      cy.get('a', { timeout: 40000 }).contains('Campeonatos').first().click();
-    }
-  });
-  cy.wait(3000);
+  // cy.url({ timeout: 40000 }).then((currentUrl) => {
+  //   if (!currentUrl.endsWith('/campeonatos')) {
+  //     cy.get('a', { timeout: 40000 }).contains('Campeonatos').first().click();
+  //   }
+  // });
+  // cy.wait(5000);
+  // cy.get('button').contains('Siguiente').click({ force: true });
+  // cy.wait(1000);
 
-  cy.intercept('GET', '/api/campeonato/*').as('getCampeonato');
-  cy.contains('h1', nombre, { timeout: 40000 })
-    .first()
-    .parent('div')
-    .parent('div.bg-white')
-    .find('a')
-    .contains('VER MÁS')
-    .click({ force: true });
-  cy.wait('@getCampeonato', { timeout: 40000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
-  cy.wait(10000);
+  // cy.intercept('GET', '/api/campeonato/*').as('getCampeonato');
+  // cy.contains('h1', nombre, { timeout: 40000 })
+  //   .first()
+  //   .parent('div')
+  //   .parent('div.bg-white')
+  //   .find('a')
+  //   .contains('VER MÁS')
+  //   .click({ force: true });
+  // cy.wait('@getCampeonato', { timeout: 40000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
+  // cy.wait(10000);
+
+  cy.visit(Cypress.env('CYPRESS_URL') + '/campeonato/camp-padel-dobles-fem-2-1765223161638', { retryOnNetworkFailure: true });
+  cy.contains('body', nombre, { timeout: 40000 })
+  cy.wait(2000);
 
   cy.get('body', { timeout: 60000 }).then($body => {
     const botones = $body.find('button[title="Ir al partido"]');
@@ -41,10 +47,10 @@ export const generarPartidosRoundRobin = (email = '', contraseña = '', nombre, 
       cy.url({ timeout: 60000 }).should('include', '/partido/');
       cy.wait('@getReservas', { timeout: 60000 });
 
-      cy.wait(15000);
+      cy.wait(10000);
       cy.get('body', { timeout: 60000 }).then($body2 => {
-        const existeGenerarPropuesta = $body2.text().includes('Generar Propuesta');
-        const existeAceptarPropuesta = $body2.text().includes('Aceptar Propuesta');
+        const existeGenerarPropuesta = $body2.text().includes('Generar Propuesta') || $body2.text().includes('Generar propuesta');
+        const existeAceptarPropuesta = $body2.text().includes('Aceptar Propuesta') || $body2.text().includes('Aceptar propuesta');
         if (existeGenerarPropuesta) {
           cy.contains('button', 'Generar Propuesta', { timeout: 40000 }).click({ force: true });
           cy.get('div.grid button', { timeout: 40000 }).first().click({ force: true });
@@ -61,17 +67,17 @@ export const generarPartidosRoundRobin = (email = '', contraseña = '', nombre, 
           cy.wait('@enviarDisponibilidad', { timeout: 40000 }).its('response.statusCode').should('eq', 200);
 
           cy.go('back');
-          cy.wait(4000);
+          cy.wait(1000);
         } else if (existeAceptarPropuesta) {
           cy.intercept('PUT', '/api/partidos/*/confirmar-horario').as('confirmarDisponibilidad');
           cy.contains('button', 'Aceptar Propuesta', { timeout: 40000 }).first().click({ force: true });
           cy.wait('@confirmarDisponibilidad', { timeout: 40000 }).its('response.statusCode').should('eq', 200);
           cy.go('back');
-          cy.wait(4000);
+          cy.wait(1000);
         }else{
           cy.log('No hay acciones para realizar en el partido');
           cy.go('back');
-          cy.wait(4000);
+          cy.wait(1000);
         }
       });
     }

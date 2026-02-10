@@ -83,7 +83,6 @@ export default function CrearCampeonato() {
       const data = await res.json();
       setTemporada(data || null);
 
-      console.log("Fetched temporada:", data);
     } catch (err) {
       console.error('fetchTemporada error', err);
     }
@@ -175,7 +174,6 @@ export default function CrearCampeonato() {
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
-    console.log(name, type, value)
     if (name.startsWith('req.')) {
       const key = name.slice(4);
       setForm(s => ({ ...s, requisitosParticipacion: { ...s.requisitosParticipacion, [key]: value } }));
@@ -435,9 +433,6 @@ export default function CrearCampeonato() {
       const cantidadJugadores = formatos.filter(f => f.id == form.formatoCampeonatoID)[0].cantidadJugadores
 
       const payload = { ...form, requisitosParticipacion: requisitos, etapas: etapasToSend, cantidadJugadores };
-
-      console.log('AAAAAAAAAAAAAAAAA')
-      console.log(payload)
 
       const res = await fetch(`${API_BASE}/campeonatos`, {
         method: 'POST',

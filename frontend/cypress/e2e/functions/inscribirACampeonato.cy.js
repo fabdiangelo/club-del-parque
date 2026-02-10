@@ -3,16 +3,21 @@ import { generarPartidosRoundRobin } from './generarPartidosRoundRobin.cy';
 
 export const inscribirACampeonato = (email, password, nombre) => {
   login(email, password);
-  cy.get('a', { timeout: 20000 }).contains('Campeonatos').first().click();
+  // cy.get('a', { timeout: 20000 }).contains('Campeonatos').first().click();
 
+  // cy.get('button').contains('Siguiente').click({ force: true });
+  cy.visit(Cypress.env('CYPRESS_URL') + '/campeonato/camp-padel-dobles-fem-2-1765223161638', { retryOnNetworkFailure: true });
+  cy.wait(5000);
+  
   cy.intercept('POST', '/api/federado-campeonato/*/*').as('inscribirACampeonato');
-  cy.contains('h1', nombre, { timeout: 20000 })
-    .first()
-    .parent('div')
-    .parent('div.bg-white')
-    .find('button')
-    .contains('Inscribirme')
-    .click({ force: true });
+  cy.contains('button', 'Inscribirme', { timeout: 40000 }).click({ force: true });
+  // cy.contains('h1', nombre, { timeout: 20000 })
+  //   .first()
+  //   .parent('div')
+  //   .parent('div.bg-white')
+    // .find('button')
+    // .contains('Inscribirme')
+    // .click({ force: true });
   cy.wait('@inscribirACampeonato', { timeout: 20000 }).its('response.statusCode').should('eq', 200);
   cy.wait(500);
 

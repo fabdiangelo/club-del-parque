@@ -49,8 +49,6 @@ const Reservas = () => {
     })
 
     const verDetalles = (id) => {
-        console.log("Ver detalles de la reserva:", id);
-
         // Navegar a la página de detalles
         navigate('/reservas/' + id);
     }
@@ -82,13 +80,11 @@ const Reservas = () => {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.log(errorText)
                 activarAlerta(errorText || 'Error al deshabilitar la reserva');
                 return;
             }
 
             const data = await response.json();
-            console.log(data);
             activarAlerta('Reserva deshabilitada exitosamente', 'success');
             await fetchReservas();
         } catch (error) {
@@ -118,14 +114,10 @@ const Reservas = () => {
             }
 
             const data = await response.json();
-            console.log("Partidos fetched:", data);
-
 
             const partidosAceptados = data.filter(partido =>
                 partido?.disponibilidades?.propuestas && partido?.disponibilidades?.propuestas.some(propuesta => propuesta.aceptada)
             );
-
-            console.log("PARTIDOS ACEPTADOS", partidosAceptados);
 
             const reservasMapped = partidosAceptados.map(partido => {
                 // Buscar la propuesta aceptada
@@ -164,7 +156,6 @@ const Reservas = () => {
                 };
             });
 
-            console.log("Reservas mapeadas:", reservasMapped);
             setReservas(reservasMapped);
 
             const habilitadas = [];
@@ -191,7 +182,6 @@ const Reservas = () => {
 
     // Función para obtener las reservas a mostrar según el filtro
     const getReservasAMostrar = () => {
-        console.log("Filtro activo:", reservasHabilitadas);
         switch (filtroActivo) {
             case 'habilitadas':
                 return reservasHabilitadas;
@@ -208,7 +198,6 @@ const Reservas = () => {
     const crearReserva = async (nuevaReserva) => {
         try {
             if (!nuevaReserva.canchaId) {
-                console.log("Debe seleccionar una cancha");
                 activarAlerta("Debe seleccionar una cancha", "error");
                 return;
             }
@@ -248,14 +237,9 @@ const Reservas = () => {
                 estado: 'confirmada'
             };
 
-            console.log(reservaLimpia);
-
             if (nuevaReserva.partidoId && nuevaReserva.partidoId.trim() !== '') {
                 reservaLimpia.partidoId = nuevaReserva.partidoId;
             }
-
-            console.log("NUEVA RESERVA", reservaLimpia);
-            console.log("DATOS DEL FORMULARIO", dataForm);
 
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
                 method: 'POST',
@@ -268,14 +252,11 @@ const Reservas = () => {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.log("Error del servidor:", errorText);
                 activarAlerta(errorText);
                 return;
             }
 
-
             const data = await response.json();
-            console.log("Respuesta del backend:", data);
 
             await fetchReservas();
 
@@ -357,7 +338,6 @@ const Reservas = () => {
             }
 
             const data = await response.json();
-            console.log(data);
             await fetchReservas();
 
         } catch (error) {
@@ -386,7 +366,6 @@ const Reservas = () => {
             }
 
             const data = await response.json();
-            console.log(data);
             await fetchReservas();
 
         } catch (error) {

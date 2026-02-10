@@ -37,8 +37,6 @@ const SistemaReporte = () => {
             leido: false
         }
 
-        console.log('Enviando:', formInfo);
-
         try {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reportes`, {
                 method: 'POST',
@@ -48,15 +46,10 @@ const SistemaReporte = () => {
                 body: JSON.stringify(formInfo),
             });
 
-            console.log('Response status:', response.status);
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Error al enviar el reporte');
             }
-
-            const data = await response.json();
-            console.log('Success:', data);
 
             setMensaje('Reporte enviado con éxito');
             setTipoMensaje('success');

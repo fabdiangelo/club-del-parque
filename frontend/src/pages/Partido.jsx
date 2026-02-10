@@ -109,7 +109,6 @@ const Partido = () => {
             }
             const data = await response.json();
 
-            console.log("FETCH ALL RESERVAS", data);
             setReservas(data);
         } catch(error) {
             console.error("Error al obtener las reservas:", error);
@@ -126,7 +125,6 @@ const Partido = () => {
             }
             const data = await response.json();
 
-            console.log("RESERVA ENCONTRADA", data);
             setReserva(data);
         } catch(error) {
             console.error("Error al obtener la reserva:", error);
@@ -145,8 +143,6 @@ const Partido = () => {
         }
 
     const idPartido = id || partido?.id; // fallback to route param if partido.id missing
-    console.log("Aceptar Propuesta", propuestaId, "partido.id:", partido?.id, "route id:", id);
-
         try {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${idPartido}/confirmar-horario`, {
                 method: 'PUT',
@@ -162,8 +158,6 @@ const Partido = () => {
             }
 
             const data = await response.json();
-            console.log("Propuesta aceptada:", data);
-
             setPropuestaAceptada(propuestaId);
 
             crearReserva(propuestaId);
@@ -190,9 +184,6 @@ const Partido = () => {
         autor: user?.uid,
         estado: 'pendiente'
     };
-
-    console.log("Nueva reserva:", nuevaReserva);
-
 
     try {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
@@ -223,10 +214,6 @@ const Partido = () => {
 useEffect(() => {
     fetchReserva();
 }, [])
-
-    const verPropuestas = () => {
-        console.log(partido.disponibilidades.propuestas);
-    }
 
     const [loading, setLoading] = useState(true);
 const [error, setError] = useState('');
@@ -360,18 +347,15 @@ useEffect(() => {
                 participantes.push({ id: '', nombre: participantes.length === 0 ? 'Jugador 1' : 'Jugador 2', ranking: 'N/A', categoria: 'N/A', partidosGanados: '0', partidosPerdidos: '0', mejorPosicionTorneo: 'N/A', estado: 'N/A' });
             }
             setUsuariosParticipantes(participantes);
-            console.log("Usuarios participantes (reconstruidos):", participantes);
         }
 
         // Fetch temporada and cancha if relevant (tolerant)
         if (partido?.temporadaID) {
             const fetchTemporada = async () => {
-                console.log("Fetch temporada llamado para temporadaID:", partido?.temporadaID);
                 try {
                     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/temporadas/${partido?.temporadaID}`, { credentials: 'include' });
                     if (!response.ok) throw new Error("Error al obtener la temporada");
                     const data = await response.json();
-                    console.log("Temporada obtenida:", data);
                     setTemporada(data);
                 } catch (error) {
                     console.error(error);
@@ -382,12 +366,10 @@ useEffect(() => {
 
         if (partido?.canchaID) {
             const fetchCancha = async () => {
-                console.log("Fetch cancha llamado para canchaID:", partido?.canchaID);
                 try {
                     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas/${partido?.canchaID}`, { credentials: 'include' });
                     if (!response.ok) throw new Error("Error al obtener la cancha");
                     const data = await response.json();
-                    console.log("Cancha obtenida:", data);
                     setCancha(data);
                 } catch (error) {
                     console.error(error);
@@ -399,10 +381,6 @@ useEffect(() => {
 
     useEffect(() => {
         if (!partido || !user) return;
-
-        
-
-        console.log("SOS user", obtenerPosicionUsuario());
     }, [user])
 
     useEffect(() => {
@@ -459,7 +437,6 @@ useEffect(() => {
 
     setFechaSeleccionada(fechaStr);
 
-    console.log("Fecha seleccionada:", fechaStr);
     setHorariosDisponibles(generarHorariosDisponibles());
     setHorarioSeleccionado('');
 };
@@ -490,10 +467,6 @@ useEffect(() => {
         return;
     }
 
-    console.log("Verificando conflictos con reservas existentes...");
-    console.log("Nueva disponibilidad:", { fechaSeleccionada, horaInicio, horaFin });
-    console.log("Reservas existentes:", reservas);
-
     // Convertir horaInicio y horaFin a objetos Date para la nueva disponibilidad
     const fechaHoraInicioNueva = new Date(`${fechaSeleccionada}T${horaInicio}`);
     const fechaHoraFinNueva = new Date(`${fechaSeleccionada}T${horaFin}`);
@@ -509,14 +482,10 @@ useEffect(() => {
             (parseInt(duracionReserva[0]) * 60 + parseInt(duracionReserva[1])) * 60 * 1000
         );
 
-        console.log(`Comparando nueva reserva: ${fechaHoraInicioNueva} - ${fechaHoraFinNueva}`);
-        console.log(`Con reserva existente: ${fechaHoraInicioExistente} - ${fechaHoraFinExistente}`);
-
         const solapamiento = (
             fechaHoraInicioNueva < fechaHoraFinExistente && fechaHoraFinNueva > fechaHoraInicioExistente
         );
 
-        console.log(`Solapamiento detectado: ${solapamiento}`);
         return solapamiento;
     });
 
@@ -537,7 +506,6 @@ useEffect(() => {
         fechaHoraFin: `${fechaSeleccionada}T${horaFin}`
     };
 
-    console.log("Disponibilidad agregada:", item);
     setDisponibilidadUsuario(prev => [...prev, item]);
     setHoraInicio('');
     setHoraFin('');
@@ -546,8 +514,6 @@ useEffect(() => {
         if (!partido || !user) return false;
         const userId = user?.uid || user?.id || '';
         const jugadorIds = normalizeIds(partido.jugadores);
-        console.log("Comprobando si user es jugador:", userId, jugadorIds);
-        console.log("Partido:", jugadorIds.includes(userId));
         if (jugadorIds.includes(userId)) return true;
         // check jugador1Id / jugador2Id
         if (partido.jugador1Id && partido.jugador1Id === userId) return true;
@@ -606,7 +572,6 @@ useEffect(() => {
                 usuarioId,
                 propuestoPor: usuarioId
             }));
-            console.log("disponibilidad usuario", disponibilidadesConUsuario);
 
             const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/partidos/${id}/disponibilidad`, {
                 method: 'POST',
@@ -1246,7 +1211,6 @@ useEffect(() => {
                             contrincanteId = usuariosParticipantes[0]?.id;
                         }
                     }
-                    console.log("Navegando al chat con el contrincante:", contrincanteId);
                     if (contrincanteId) {
                         navigate(`/chats/${contrincanteId}`);
                     }

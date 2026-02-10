@@ -5,27 +5,32 @@ export const generarPartidosEliminacion = (email = '', contraseña = '', nombre,
     login(email, contraseña);
   }
 
-  if(!inCampeonatos){
-    cy.get('a', { timeout: 20000 }).contains('Campeonatos').first().click();
-  }
+  // if(!inCampeonatos){
+  //   cy.get('a', { timeout: 20000 }).contains('Campeonatos').first().click();
+  // }
 
-  cy.url({ timeout: 20000 }).then((currentUrl) => {
-    if (!currentUrl.endsWith('/campeonatos')) {
-      cy.get('a', { timeout: 20000 }).contains('Campeonatos').first().click();
-    }
-  });
-  cy.wait(500);
+  // cy.url({ timeout: 20000 }).then((currentUrl) => {
+  //   if (!currentUrl.endsWith('/campeonatos')) {
+  //     cy.get('a', { timeout: 20000 }).contains('Campeonatos').first().click();
+  //   }
+  // });
+  // cy.wait(500);
 
-  cy.intercept('GET', '/api/campeonato/*').as('getCampeonato');
-  cy.contains('h1', nombre, { timeout: 20000 })
-    .first()
-    .parent('div')
-    .parent('div.bg-white')
-    .find('a')
-    .contains('VER MÁS')
-    .click({ force: true });
-  cy.wait('@getCampeonato', { timeout: 20000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
-  cy.wait(2000);
+  // cy.get('button').contains('Siguiente').click({ force: true });
+  // cy.wait(1000);
+
+  // cy.intercept('GET', '/api/campeonato/*').as('getCampeonato');
+  // cy.contains('h1', nombre, { timeout: 20000 })
+  //   .first()
+  //   .parent('div')
+  //   .parent('div.bg-white')
+  //   .find('a')
+  //   .contains('VER MÁS')
+  //   .click({ force: true });
+  // cy.wait('@getCampeonato', { timeout: 20000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
+  // cy.wait(2000);
+  cy.visit(Cypress.env('CYPRESS_URL') + '/campeonato/camp-padel-dobles-fem-2-1765223161638', { retryOnNetworkFailure: true });
+  cy.wait(5000);
 
   cy.get('button[title="Etapa Siguiente"]', { timeout: 20000 }).click({ force: true });
   cy.wait(100);

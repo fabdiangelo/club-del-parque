@@ -192,7 +192,6 @@ export default function PartidosGestor() {
 
     const known = new Set((federados || []).map((f) => normID(f.id)));
     const payload = sanitizePayload(draft, known);
-    console.log("POST /partidos payload", payload); // <— agrega esto un momento
 
     const isEdit = Boolean(draft.id);
 

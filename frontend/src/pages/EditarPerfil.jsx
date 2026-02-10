@@ -53,7 +53,6 @@ export default function EditarPerfil() {
         throw new Error(`Unexpected /usuario response: ${res.status} ${txt}`);
       }
       const data = await res.json();
-      console.log("fetched user data:", data);
 
       setForm((prev) => ({
         ...prev,

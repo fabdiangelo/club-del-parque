@@ -46,7 +46,6 @@ export default function Perfil() {
         }
         const data = await res.json();
         setUserData(data);
-        console.log(data);
       } catch (err) {
         console.error("fetchUserData error:", err);
         setUserData(null);

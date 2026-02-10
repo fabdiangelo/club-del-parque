@@ -60,7 +60,6 @@ export default function FixtureCampeonato() {
 
         setCampeonato(campeonatoConFechas);
         setEtapa(campeonatoConFechas.etapas[etapaActual]);
-        console.log(data);
       }
     } catch (e) {
       console.log(e);

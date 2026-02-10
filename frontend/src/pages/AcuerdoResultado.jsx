@@ -75,7 +75,6 @@ async function notificarAcuerdoPartido(jugadoresUids = [], partidoId, resumen) {
   try {
 
     if (!Array.isArray(jugadoresUids) || jugadoresUids.length === 0) return;
-    console.log(partidoId)
     const payload = {
       tipo: "partido_acuerdo",
       resumen,

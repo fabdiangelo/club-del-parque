@@ -112,12 +112,6 @@ const Chats = () => {
   const otroStats = useRankingStats(otroID);
 
   const generarReservaPartido = async () => {
-    console.log(
-      "Generando reserva para el partido el día",
-      fechaPartido,
-      "a ser cobrado a",
-      quienPaga
-    );
 
     if (!fechaPartido || !quienPaga) {
       setAlertaReserva(true);
@@ -233,15 +227,12 @@ const Chats = () => {
         }
       );
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Error al enviar el reporte");
       }
 
       const data = await response.json();
-      console.log("Success:", data);
 
       setMensaje("Reporte enviado con éxito");
       setTipoMensaje("success");
@@ -285,7 +276,6 @@ const Chats = () => {
         mensajesArr.forEach((msg) => {
           if (!msg.leido && msg.autor?.uid !== user.uid) {
             const msgRef = ref(dbRT, `chats/${chatId}/mensajes/${msg.id}`);
-            console.log("Marcando mensaje como leído:", msg.id);
             update(msgRef, { leido: true });
           }
         });
@@ -296,7 +286,6 @@ const Chats = () => {
   };
 
   const crearChat = async () => {
-    console.log("ENTRANDO A CREAR CHAT");
     const participante1 = {
       uid: user.uid,
       nombre: user.nombre,
@@ -573,7 +562,6 @@ const Chats = () => {
         }
       );
       if (!response.ok) {
-        console.log(response.text());
         throw new Error("Error cargando usuarios");
       }
 
@@ -588,8 +576,6 @@ const Chats = () => {
 
       const noRepetirChats = dataFiltrada
         .map((d) => {
-          console.log(chats);
-
           if (!chats || chats.length === 0) {
             return d;
           }
@@ -664,8 +650,6 @@ const Chats = () => {
         }
         notifs[chat.id] = count;
       });
-      console.log("NOTIFS", notifs);
-
       setNotificaciones(notifs);
     });
     return () => unsuscribe();
