@@ -160,12 +160,12 @@ useEffect(() => {
         </section>
 
         {/* Listado */}
-        <section className="pb-20 flex-1">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
+<section className="pb-20 flex-1 min-h-screen flex">
+<div className="w-full flex-1 grid place-items-center">
             {!campeonatos || campeonatos.length === 0 ? (
               <div className="w-full py-16 grid place-items-center">
                 <div className="text-center bg-white/90 rounded-2xl shadow-xl px-6 py-8 backdrop-blur-sm">
-                  <h2 className="text-2xl font-semibold mb-2">
+<h2 className="text-2xl font-semibold mb-2 text-gray-900">
                     Todavía no hay campeonatos activos
                   </h2>
                   <p className="text-gray-600 mb-4">
