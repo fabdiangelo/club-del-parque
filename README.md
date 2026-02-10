@@ -1,6 +1,5 @@
 # Club del Parque
 Sistema de administración
-
 ---
 
 ## Pasos de inicialización:
@@ -38,18 +37,19 @@ npm run dev
 firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data
 ```
 
-``` Test de cypresss
+### 3. Test de cypresss
+``` 
 npx cypress run --spec "cypress/e2e/campeonato.cy.js"
 ```
 
+## Deploy en Firebase
+
 ---
-## Build del frontend
+### Build del frontend
 ```
 npm run build
 ```
 
-
-## Deploy en Firebase
 ### Hosting (frontend):
 ```
 firebase deploy --only hosting
