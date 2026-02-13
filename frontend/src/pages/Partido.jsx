@@ -195,16 +195,16 @@ const Partido = () => {
             body: JSON.stringify(nuevaReserva),
         });
 
-        if (!response.ok) {
-            throw new Error(`Error al crear reserva: ${response.statusText}`);
-        }
+        //if (!response.ok) {
+          //  throw new Error(`Error al crear reserva: ${response.statusText}`);
+        //}
 
         fetchReserva();
         
         setMensajeExito('¡La reserva fue creada exitosamente!');
         setTimeout(() => setMensajeExito(''), 3500); 
     } catch (error) {
-        console.error("Error al crear reserva:", error);
+        //console.error("Error al crear reserva:", error);
         alert("Error al crear la reserva");
     }
 

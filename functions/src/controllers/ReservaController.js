@@ -12,8 +12,6 @@ import { DeshabilitarReserva } from '../usecases/Reservas/DeshabilitarReserva.js
 import { habilitarReserva } from '../usecases/Reservas/habilitarReserva.js';
 import { GetReservaByPartido } from '../usecases/Reservas/GetReservaByPartidoId.js';
 
-
-
 class ReservaController {
     constructor() {
         this.getAllReservasUseCase = new GetAllReservas(new ReservaRepository());

@@ -13,17 +13,11 @@ function Registro() {
     apellido: "",
     estado: "",
     nacimiento: "",
-    genero: ""
+    genero: "masculino"
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const { register, error } = useAuth()
-
-  function formatDate(date) {
-    if (!date) return ""; // Maneja el caso de valores vacíos
-    const [year, month, day] = date.split("-");
-    return `${day}-${month}-${year}`;
-  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,14 +28,18 @@ function Registro() {
     setLoading(true);
     setSuccess("");
 
-    setFormData({ ...formData, estado: "activo" });
-
+const dataToSend = {
+  ...formData,
+  estado: "activo"
+};
     try {
-      const ok = await register(import.meta.env.VITE_BACKEND_URL + "/api/auth/register", formData)
-      if (!ok) {
+const ok = await register(
+  import.meta.env.VITE_BACKEND_URL + "/api/auth/register",
+  dataToSend
+);      if (!ok) {
         throw new Error(ok || "Error en el registro");
       }
-      setSuccess("Usuario registrado con éxito ✅");
+      setSuccess("Usuario registrado con éxito");
       setFormData({ nombre: "", email: "", password: "" });
       navigate("/");
     } catch (err) {
@@ -108,7 +106,7 @@ function Registro() {
                 placeholder="Nacimiento"
                 type="date"
                 name="nacimiento"
-                value={formData.nacimiento} // Mantén el formato yyyy-mm-dd aquí
+                value={formData.nacimiento}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300"
                 required

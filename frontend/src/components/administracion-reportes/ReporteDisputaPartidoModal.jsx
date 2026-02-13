@@ -39,9 +39,9 @@ function NamesList({ ids = [], fedMap, inline = false }) {
 }
 
 export default function ReporteDisputaPartidoModal({
-  reporte,        // { id, partidoID | partidoId | partido, motivo, descripcion, mailUsuario, fecha, tipo, ... }
-  onResuelto,     // async (idReporte) => void
-  onClose,        // () => void   (puede cerrar sin resolver)
+  reporte, // { id, partidoID | partidoId | partido, motivo, descripcion, mailUsuario, fecha, tipo, ... }
+  onResuelto, // async (idReporte) => void
+  onClose, // () => void   (puede cerrar sin resolver)
 }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,7 +61,7 @@ export default function ReporteDisputaPartidoModal({
       if (!reporte?.mailUsuario) return;
       try {
         const u = await fetchJSON(
-          `${import.meta.env.VITE_BACKEND_URL}/api/usuarios/byMail/${encodeURIComponent(reporte.mailUsuario)}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/usuarios/byMail/${encodeURIComponent(reporte.mailUsuario)}`,
         );
         setReportador(u);
       } catch {
@@ -78,18 +78,22 @@ export default function ReporteDisputaPartidoModal({
     setLoading(true);
     setError("");
     try {
-      if (!partidoId) throw new Error("Este reporte no tiene partidoID asociado.");
+      if (!partidoId)
+        throw new Error("Este reporte no tiene partidoID asociado.");
+
+      const BASE = import.meta.env.VITE_BACKEND_URL;
 
       const [p, fs] = await Promise.all([
-        fetchJSON(`/partidos/${partidoId}`),
-        fetchJSON(`/usuarios/federados`),
+        fetchJSON(`${BASE}/api/partidos/${partidoId}`),
+        fetchJSON(`${BASE}/api/usuarios/federados`),
       ]);
 
       setPartido(p);
       setFederados(Array.isArray(fs) ? fs : []);
+      console.log("PARTIDO BACKEND:", p);
 
-      const existingRes = p?.resultado || p?.propuestaResultado?.resultado || "";
-      // 👉 Precargar SOLO una vez, luego el admin puede escribir libremente
+      const existingRes =
+        p?.resultado || p?.propuestaResultado?.resultado || "";
       if (!didPrefillRef.current) {
         setResultadoInput(existingRes || "");
         didPrefillRef.current = true;
@@ -108,33 +112,44 @@ export default function ReporteDisputaPartidoModal({
   };
 
   useEffect(() => {
-    didPrefillRef.current = false; // nuevo partido => permitir un prefill
+    didPrefillRef.current = false;
     reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partidoId]);
 
-  // === Map de federados (id -> objeto) para resolver nombres
   const fedMap = useMemo(
-    () => new Map((federados || []).map((f) => [f.id, f])),
-    [federados]
+    () => new Map((federados || []).map((f) => [String(f.id), f])),
+    [federados],
   );
 
-  // Ids de equipos de forma robusta
-  const equipoAIds = useMemo(() => {
-    const raw = partido?.equipoA || partido?.jugadoresA || partido?.equipo1 || [];
-    if (Array.isArray(raw) && raw.length)
-      return raw.map((x) => (typeof x === "object" ? x.id : x)).filter(Boolean);
-    const all = Array.isArray(partido?.jugadores) ? partido.jugadores : [];
-    return partido?.tipoPartido === "dobles" ? all.slice(0, 2) : all.slice(0, 1);
-  }, [partido]);
+  const normalizarEquipo = (raw) => {
+    if (!raw) return [];
 
-  const equipoBIds = useMemo(() => {
-    const raw = partido?.equipoB || partido?.jugadoresB || partido?.equipo2 || [];
-    if (Array.isArray(raw) && raw.length)
-      return raw.map((x) => (typeof x === "object" ? x.id : x)).filter(Boolean);
-    const all = Array.isArray(partido?.jugadores) ? partido.jugadores : [];
-    return partido?.tipoPartido === "dobles" ? all.slice(2, 4) : all.slice(1, 2);
-  }, [partido]);
+    if (Array.isArray(raw)) {
+      return raw
+        .map((x) => {
+          if (!x) return null;
+          if (typeof x === "object") return String(x.id);
+          return String(x);
+        })
+        .filter(Boolean);
+    }
+
+    if (typeof raw === "object") {
+      return raw.id ? [String(raw.id)] : [];
+    }
+
+    return [String(raw)];
+  };
+const equipoAIds = useMemo(() => {
+  if (!partido?.jugador1) return [];
+  return normalizarEquipo(partido.jugador1);
+}, [partido]);
+
+const equipoBIds = useMemo(() => {
+  if (!partido?.jugador2) return [];
+  return normalizarEquipo(partido.jugador2);
+}, [partido]);
+
 
   const equipoAText = useMemo(() => {
     return equipoAIds
@@ -180,13 +195,14 @@ export default function ReporteDisputaPartidoModal({
     setSaving(true);
     setError("");
     try {
-      // 1) fijar ganadores
-      await fetchJSON(`/partidos/${partidoId}/ganadores`, {
+      const BASE = import.meta.env.VITE_BACKEND_URL;
+
+      await fetchJSON(`${BASE}/api/partidos/${partidoId}/ganadores`, {
         method: "POST",
         body: JSON.stringify({ ganadores }),
       });
 
-      await fetchJSON(`/partidos/${partidoId}`, {
+      await fetchJSON(`${BASE}/api/partidos/${partidoId}`, {
         method: "PUT",
         body: JSON.stringify({
           resultado,
@@ -199,7 +215,9 @@ export default function ReporteDisputaPartidoModal({
       });
 
       await onResuelto?.(reporte.id);
-      alert("Disputa resuelta, resultado actualizado y reporte marcado como resuelto.");
+      alert(
+        "Disputa resuelta, resultado actualizado y reporte marcado como resuelto.",
+      );
     } catch (e) {
       try {
         const obj = JSON.parse(String(e?.message ?? e));
@@ -212,19 +230,27 @@ export default function ReporteDisputaPartidoModal({
     }
   };
 
-
-
   const handleClose = () => onClose?.();
 
   return (
-    <div className="fixed inset-0 grid place-items-center bg-black/60 p-4" style={{ zIndex: 1000 }} onClick={handleClose}>
+    <div
+      className="fixed inset-0 grid place-items-center bg-black/60 p-4"
+      style={{ zIndex: 1000 }}
+      onClick={handleClose}
+    >
       <div
         className="max-w-3xl w-full rounded-2xl bg-white text-neutral-900 border border-neutral-200 shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold" style={{ color: 'white' }}>Disputa de resultado</h3>
-          <button className="btn btn-ghost btn-sm" onClick={handleClose} title="Cerrar">
+          <h3 className="text-lg font-semibold" style={{ color: "white" }}>
+            Disputa de resultado
+          </h3>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={handleClose}
+            title="Cerrar"
+          >
             Cerrar
           </button>
         </div>
@@ -243,7 +269,9 @@ export default function ReporteDisputaPartidoModal({
                   <div className="font-mono text-sm">{partidoId}</div>
                 </Field>
                 <Field label="Estado actual">
-                  <div className="badge badge-outline capitalize">{partido?.estado || "—"}</div>
+                  <div className="badge badge-outline capitalize">
+                    {partido?.estado || "—"}
+                  </div>
                 </Field>
                 <Field label="Motivo del reporte">
                   <div className="text-sm">{reporte?.motivo}</div>
@@ -259,10 +287,14 @@ export default function ReporteDisputaPartidoModal({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 <Field label="Equipo A (nombres)">
-                  <div className="text-sm font-medium">{equipoAText || "—"}</div>
+                  <div className="text-sm font-medium">
+                    {equipoAText || "—"}
+                  </div>
                 </Field>
                 <Field label="Equipo B (nombres)">
-                  <div className="text-sm font-medium">{equipoBText || "—"}</div>
+                  <div className="text-sm font-medium">
+                    {equipoBText || "—"}
+                  </div>
                 </Field>
               </div>
 
@@ -296,8 +328,8 @@ export default function ReporteDisputaPartidoModal({
                     </button>
                   </div>
                   <p className="mt-2 text-xs text-neutral-500">
-                    A: <NamesList ids={equipoAIds} fedMap={fedMap} inline /> · B:{" "}
-                    <NamesList ids={equipoBIds} fedMap={fedMap} inline />
+                    A: <NamesList ids={equipoAIds} fedMap={fedMap} inline /> ·
+                    B: <NamesList ids={equipoBIds} fedMap={fedMap} inline />
                   </p>
                 </Field>
 

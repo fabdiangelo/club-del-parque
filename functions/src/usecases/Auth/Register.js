@@ -43,7 +43,15 @@ class Register {
         genero
       );
       await this.db.putItem("usuarios", userData.toPlainObject(), userRecord.uid);
-    }
+    }else {
+  await this.db.updateItem("usuarios", userRecord.uid, {
+    nombre,
+    apellido,
+    estado,
+    nacimiento,
+    genero
+  });
+}
 
     const payload = {
       uid: userRecord.uid,
